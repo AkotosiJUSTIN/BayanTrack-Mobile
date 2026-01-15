@@ -36,6 +36,7 @@ _RegisterRequest _$RegisterRequestFromJson(Map<String, dynamic> json) =>
       passwordConfirm: json['password_confirm'] as String,
       firstName: json['first_name'] as String,
       lastName: json['last_name'] as String,
+      role: json['role'] as String? ?? 'citizen',
     );
 
 Map<String, dynamic> _$RegisterRequestToJson(_RegisterRequest instance) =>
@@ -45,4 +46,103 @@ Map<String, dynamic> _$RegisterRequestToJson(_RegisterRequest instance) =>
       'password_confirm': instance.passwordConfirm,
       'first_name': instance.firstName,
       'last_name': instance.lastName,
+      'role': instance.role,
     };
+
+_RefreshTokenRequest _$RefreshTokenRequestFromJson(Map<String, dynamic> json) =>
+    _RefreshTokenRequest(refreshToken: json['refresh_token'] as String);
+
+Map<String, dynamic> _$RefreshTokenRequestToJson(
+  _RefreshTokenRequest instance,
+) => <String, dynamic>{'refresh_token': instance.refreshToken};
+
+_RefreshTokenResponse _$RefreshTokenResponseFromJson(
+  Map<String, dynamic> json,
+) => _RefreshTokenResponse(
+  accessToken: json['access_token'] as String,
+  refreshToken: json['refresh_token'] as String,
+);
+
+Map<String, dynamic> _$RefreshTokenResponseToJson(
+  _RefreshTokenResponse instance,
+) => <String, dynamic>{
+  'access_token': instance.accessToken,
+  'refresh_token': instance.refreshToken,
+};
+
+_UserProfile _$UserProfileFromJson(Map<String, dynamic> json) => _UserProfile(
+  id: json['_id'] as String,
+  email: json['email'] as String,
+  firstName: json['first_name'] as String,
+  lastName: json['last_name'] as String,
+  role: json['role'] as String,
+  isActive: json['is_active'] as bool? ?? true,
+  createdAt: json['created_at'] as String?,
+  updatedAt: json['updated_at'] as String?,
+);
+
+Map<String, dynamic> _$UserProfileToJson(_UserProfile instance) =>
+    <String, dynamic>{
+      '_id': instance.id,
+      'email': instance.email,
+      'first_name': instance.firstName,
+      'last_name': instance.lastName,
+      'role': instance.role,
+      'is_active': instance.isActive,
+      'created_at': instance.createdAt,
+      'updated_at': instance.updatedAt,
+    };
+
+_ProfileUpdateRequest _$ProfileUpdateRequestFromJson(
+  Map<String, dynamic> json,
+) => _ProfileUpdateRequest(
+  firstName: json['first_name'] as String?,
+  lastName: json['last_name'] as String?,
+);
+
+Map<String, dynamic> _$ProfileUpdateRequestToJson(
+  _ProfileUpdateRequest instance,
+) => <String, dynamic>{
+  'first_name': instance.firstName,
+  'last_name': instance.lastName,
+};
+
+_ChangePasswordRequest _$ChangePasswordRequestFromJson(
+  Map<String, dynamic> json,
+) => _ChangePasswordRequest(
+  currentPassword: json['current_password'] as String,
+  newPassword: json['new_password'] as String,
+  newPasswordConfirm: json['new_password_confirm'] as String,
+);
+
+Map<String, dynamic> _$ChangePasswordRequestToJson(
+  _ChangePasswordRequest instance,
+) => <String, dynamic>{
+  'current_password': instance.currentPassword,
+  'new_password': instance.newPassword,
+  'new_password_confirm': instance.newPasswordConfirm,
+};
+
+_ForgotPasswordRequest _$ForgotPasswordRequestFromJson(
+  Map<String, dynamic> json,
+) => _ForgotPasswordRequest(email: json['email'] as String);
+
+Map<String, dynamic> _$ForgotPasswordRequestToJson(
+  _ForgotPasswordRequest instance,
+) => <String, dynamic>{'email': instance.email};
+
+_ResetPasswordRequest _$ResetPasswordRequestFromJson(
+  Map<String, dynamic> json,
+) => _ResetPasswordRequest(
+  token: json['token'] as String,
+  newPassword: json['new_password'] as String,
+  newPasswordConfirm: json['new_password_confirm'] as String,
+);
+
+Map<String, dynamic> _$ResetPasswordRequestToJson(
+  _ResetPasswordRequest instance,
+) => <String, dynamic>{
+  'token': instance.token,
+  'new_password': instance.newPassword,
+  'new_password_confirm': instance.newPasswordConfirm,
+};

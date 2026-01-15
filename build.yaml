@@ -1,0 +1,7 @@
+targets:
+  $default:
+    builders:
+      freezed:
+        options:
+          # Disable the new mixin-based approach (freezed 3.x)
+          use_mixin_class: false
