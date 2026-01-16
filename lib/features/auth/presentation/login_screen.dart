@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../navigation/main_navigation_shell.dart';
 import 'auth_controller.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
@@ -27,11 +28,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (_formKey.currentState?.validate() ?? false) {
-      ref
+      final success = await ref
           .read(authControllerProvider.notifier)
           .login(_emailController.text.trim(), _passwordController.text);
+
+      if (success && mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainNavigationShell()),
+        );
+      }
     }
   }
 
@@ -56,9 +63,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(authControllerProvider);
+    final authState = ref.watch(authControllerProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isLoading = authState is AuthLoading;
+
+    // Show error snackbar when auth fails
+    ref.listen<AuthState>(authControllerProvider, (previous, next) {
+      if (next is AuthError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.message),
+            backgroundColor: AppColors.alertHigh,
+          ),
+        );
+      }
+    });
 
     return Scaffold(
       body: SafeArea(
@@ -69,16 +89,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 48),
+                const SizedBox(height: 32),
 
                 // Logo
                 Center(
                   child: Image.asset(
                     'assets/images/logo.png',
-                    height: 80,
+                    height: 220,
                     errorBuilder: (_, __, ___) => Icon(
                       Icons.location_on,
-                      size: 80,
+                      size: 220,
                       color: AppColors.accent,
                     ),
                   ),
@@ -110,6 +130,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
+                  enabled: !isLoading,
                   decoration: const InputDecoration(
                     hintText: 'Enter your email',
                     prefixIcon: Icon(Icons.email_outlined),
@@ -133,6 +154,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   textInputAction: TextInputAction.done,
+                  enabled: !isLoading,
                   onFieldSubmitted: (_) => _handleLogin(),
                   decoration: InputDecoration(
                     hintText: 'Enter your password',
@@ -166,43 +188,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: _navigateToForgotPassword,
+                    onPressed: isLoading ? null : _navigateToForgotPassword,
                     child: const Text('Forgot Password?'),
                   ),
                 ),
                 const SizedBox(height: 24),
 
                 // Login button
-                if (state.isLoading)
+                if (isLoading)
                   const Center(child: CircularProgressIndicator())
                 else
                   ElevatedButton(
                     onPressed: _handleLogin,
                     child: const Text('Login'),
                   ),
-
-                // Error message
-                if (state.hasError) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.alertHigh.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      state.error.toString(),
-                      style: TextStyle(color: AppColors.alertHigh),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 32),
 
                 // Divider with text
                 Row(
                   children: [
-                    Expanded(child: Divider()),
+                    const Expanded(child: Divider()),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
@@ -210,14 +215,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         style: theme.textTheme.bodySmall,
                       ),
                     ),
-                    Expanded(child: Divider()),
+                    const Expanded(child: Divider()),
                   ],
                 ),
                 const SizedBox(height: 24),
 
                 // Biometric login button
                 OutlinedButton.icon(
-                  onPressed: _handleBiometricLogin,
+                  onPressed: isLoading ? null : _handleBiometricLogin,
                   icon: const Icon(Icons.fingerprint),
                   label: const Text('Biometric Login'),
                 ),
@@ -232,7 +237,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       style: theme.textTheme.bodyMedium,
                     ),
                     GestureDetector(
-                      onTap: _navigateToRegister,
+                      onTap: isLoading ? null : _navigateToRegister,
                       child: Text(
                         'Register',
                         style: theme.textTheme.bodyMedium?.copyWith(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import 'auth_controller.dart';
 
 /// Forgot Password screen for password reset flow.
 /// User enters email to receive a password reset link.
@@ -15,7 +16,6 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  bool _isLoading = false;
   bool _emailSent = false;
 
   @override
@@ -24,17 +24,17 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  void _handleSendResetLink() async {
+  Future<void> _handleSendResetLink() async {
     if (_formKey.currentState?.validate() ?? false) {
-      setState(() => _isLoading = true);
+      final success = await ref
+          .read(authControllerProvider.notifier)
+          .forgotPassword(_emailController.text.trim());
 
-      // TODO: Implement actual password reset API call
-      await Future.delayed(const Duration(seconds: 2));
-
-      setState(() {
-        _isLoading = false;
-        _emailSent = true;
-      });
+      if (success && mounted) {
+        setState(() {
+          _emailSent = true;
+        });
+      }
     }
   }
 
@@ -44,8 +44,22 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isLoading = authState is AuthLoading;
+
+    // Show error snackbar when auth fails
+    ref.listen<AuthState>(authControllerProvider, (previous, next) {
+      if (next is AuthError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.message),
+            backgroundColor: AppColors.alertHigh,
+          ),
+        );
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -115,6 +129,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.done,
+                    enabled: !isLoading,
                     onFieldSubmitted: (_) => _handleSendResetLink(),
                     decoration: const InputDecoration(
                       hintText: 'Enter your email',
@@ -135,7 +150,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   const SizedBox(height: 32),
 
                   // Send button
-                  if (_isLoading)
+                  if (isLoading)
                     const Center(child: CircularProgressIndicator())
                   else
                     ElevatedButton(
@@ -154,7 +169,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: 16),
                   OutlinedButton(
-                    onPressed: _handleSendResetLink,
+                    onPressed: isLoading ? null : _handleSendResetLink,
                     child: const Text('Resend Email'),
                   ),
                 ],

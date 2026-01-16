@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import 'auth_controller.dart';
 
 /// Register screen matching the BayanTrack design mockup.
 /// Features: Full name, email, phone (optional), password with confirmation.
@@ -14,28 +15,27 @@ class RegisterScreen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _agreeToTerms = false;
-  bool _isLoading = false;
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _handleRegister() async {
+  Future<void> _handleRegister() async {
     if (!_agreeToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please agree to the Terms & Conditions')),
@@ -44,17 +44,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
 
     if (_formKey.currentState?.validate() ?? false) {
-      setState(() => _isLoading = true);
+      final success = await ref
+          .read(authControllerProvider.notifier)
+          .register(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+            passwordConfirm: _confirmPasswordController.text,
+            firstName: _firstNameController.text.trim(),
+            lastName: _lastNameController.text.trim(),
+          );
 
-      // TODO: Implement actual registration
-      await Future.delayed(const Duration(seconds: 2));
-
-      setState(() => _isLoading = false);
-
-      if (mounted) {
+      if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration coming soon')),
+          const SnackBar(
+            content: Text('Registration successful! Please login.'),
+            backgroundColor: Colors.green,
+          ),
         );
+        Navigator.of(context).pop(); // Go back to login
       }
     }
   }
@@ -79,8 +86,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isLoading = authState is AuthLoading;
+
+    // Show error snackbar when auth fails
+    ref.listen<AuthState>(authControllerProvider, (previous, next) {
+      if (next is AuthError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.message),
+            backgroundColor: AppColors.alertHigh,
+          ),
+        );
+      }
+    });
 
     return Scaffold(
       body: SafeArea(
@@ -125,23 +146,42 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Full Name field
-                Text('Full Name', style: theme.textTheme.titleMedium),
+                // First Name field
+                Text('First Name', style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
                 TextFormField(
-                  controller: _nameController,
+                  controller: _firstNameController,
                   textInputAction: TextInputAction.next,
                   textCapitalization: TextCapitalization.words,
+                  enabled: !isLoading,
                   decoration: const InputDecoration(
-                    hintText: 'Enter your full name',
+                    hintText: 'Enter your first name',
                     prefixIcon: Icon(Icons.person_outline),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your full name';
+                      return 'Please enter your first name';
                     }
-                    if (value.trim().length < 2) {
-                      return 'Name must be at least 2 characters';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // Last Name field
+                Text('Last Name', style: theme.textTheme.titleMedium),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _lastNameController,
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.words,
+                  enabled: !isLoading,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter your last name',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter your last name';
                     }
                     return null;
                   },
@@ -155,6 +195,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
+                  enabled: !isLoading,
                   decoration: const InputDecoration(
                     hintText: 'Enter your email',
                     prefixIcon: Icon(Icons.email_outlined),
@@ -173,31 +214,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Phone Number field (optional)
-                Row(
-                  children: [
-                    Text('Phone Number', style: theme.textTheme.titleMedium),
-                    const SizedBox(width: 8),
-                    Text(
-                      '(Optional)',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter your phone number',
-                    prefixIcon: Icon(Icons.phone_outlined),
-                  ),
-                ),
-                const SizedBox(height: 20),
-
                 // Password field
                 Text('Password', style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
@@ -205,6 +221,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   textInputAction: TextInputAction.next,
+                  enabled: !isLoading,
                   decoration: InputDecoration(
                     hintText: 'Create a password',
                     prefixIcon: const Icon(Icons.lock_outline),
@@ -240,6 +257,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
                   textInputAction: TextInputAction.done,
+                  enabled: !isLoading,
                   onFieldSubmitted: (_) => _handleRegister(),
                   decoration: InputDecoration(
                     hintText: 'Confirm your password',
@@ -275,11 +293,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   children: [
                     Checkbox(
                       value: _agreeToTerms,
-                      onChanged: (value) {
-                        setState(() {
-                          _agreeToTerms = value ?? false;
-                        });
-                      },
+                      onChanged: isLoading
+                          ? null
+                          : (value) {
+                              setState(() {
+                                _agreeToTerms = value ?? false;
+                              });
+                            },
                     ),
                     Expanded(
                       child: Padding(
@@ -318,7 +338,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 24),
 
                 // Register button
-                if (_isLoading)
+                if (isLoading)
                   const Center(child: CircularProgressIndicator())
                 else
                   ElevatedButton(
@@ -336,7 +356,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       style: theme.textTheme.bodyMedium,
                     ),
                     GestureDetector(
-                      onTap: _navigateToLogin,
+                      onTap: isLoading ? null : _navigateToLogin,
                       child: Text(
                         'Login',
                         style: theme.textTheme.bodyMedium?.copyWith(
