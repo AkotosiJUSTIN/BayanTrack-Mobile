@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../home/presentation/home_screen.dart';
+import '../notifications/presentation/notifications_screen.dart';
 import '../reports/presentation/my_reports_screen.dart';
+import '../reports/presentation/new_report/new_report_photos_screen.dart';
 import 'placeholder_screens.dart';
 
 /// Main navigation shell with bottom nav bar and center FAB.
@@ -19,7 +21,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const MyReportsScreen(),
-    const NotificationsPlaceholder(),
+    const NotificationsScreen(),
     const ProfilePlaceholder(),
   ];
 
@@ -31,9 +33,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
 
   void _onFabPressed() {
     // Navigate to new report flow
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('New Report flow coming soon')),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const NewReportPhotosScreen()));
   }
 
   @override

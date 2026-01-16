@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../reports/data/report_models.dart';
+import '../../reports/presentation/report_detail_screen.dart';
 import '../../reports/presentation/reports_controller.dart';
 import 'widgets/home_report_card.dart';
 import 'widgets/map_placeholder.dart';
@@ -25,6 +26,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.dispose();
   }
 
+  Future<void> _onRefresh() async {
+    ref.invalidate(reportsControllerProvider());
+  }
+
   @override
   Widget build(BuildContext context) {
     final reportsAsync = ref.watch(reportsControllerProvider());
@@ -32,118 +37,91 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('/home', style: theme.textTheme.bodyMedium),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () {
-                  ref.invalidate(reportsControllerProvider());
-                },
-                child: Icon(
-                  Icons.refresh,
-                  size: 16,
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.tune),
-            onPressed: () {
-              // TODO: Open filter sheet
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search reports...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.tune),
-                  onPressed: () {},
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          ),
-
-          // View toggle and count
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                // Map/List toggle
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurface
-                        : AppColors.lightSurface,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.darkBorder
-                          : AppColors.lightBorder,
+      appBar: AppBar(),
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: CustomScrollView(
+          slivers: [
+            // Search bar
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search reports...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.tune),
+                      onPressed: () {},
                     ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildToggleButton(
-                        label: 'Map',
-                        icon: Icons.map_outlined,
-                        isSelected: _isMapView,
-                        onTap: () => setState(() => _isMapView = true),
-                      ),
-                      _buildToggleButton(
-                        label: 'List',
-                        icon: Icons.list,
-                        isSelected: !_isMapView,
-                        onTap: () => setState(() => _isMapView = false),
-                      ),
-                    ],
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
-                const Spacer(),
-                reportsAsync.when(
-                  data: (data) => Text(
-                    '${data.count} reports nearby',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, __) => const SizedBox.shrink(),
-                ),
-              ],
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
 
-          // Content area
-          Expanded(
-            child: _isMapView
-                ? _buildMapView()
-                : _buildListView(reportsAsync, theme),
-          ),
-        ],
+            // View toggle and count
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    // Map/List toggle
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkSurface
+                            : AppColors.lightSurface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildToggleButton(
+                            label: 'Map',
+                            icon: Icons.map_outlined,
+                            isSelected: _isMapView,
+                            onTap: () => setState(() => _isMapView = true),
+                          ),
+                          _buildToggleButton(
+                            label: 'List',
+                            icon: Icons.list,
+                            isSelected: !_isMapView,
+                            onTap: () => setState(() => _isMapView = false),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    reportsAsync.when(
+                      data: (data) => Text(
+                        '${data.count} reports nearby',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            // Content area
+            SliverFillRemaining(
+              child: _isMapView
+                  ? _buildMapView(reportsAsync, theme)
+                  : _buildListView(reportsAsync, theme),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -204,37 +182,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildMapView() {
-    return Stack(
-      children: [
-        // Map placeholder
-        const MapPlaceholder(),
-
-        // Legend at bottom
-        Positioned(
-          left: 16,
-          bottom: 16,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).scaffoldBackgroundColor.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(8),
+  Widget _buildMapView(
+    AsyncValue<PaginatedReports> reportsAsync,
+    ThemeData theme,
+  ) {
+    return reportsAsync.when(
+      data: (data) {
+        if (data.results.isEmpty) {
+          return _buildEmptyState(theme);
+        }
+        return Stack(
+          children: [
+            const MapPlaceholder(),
+            // Legend at bottom
+            Positioned(
+              left: 16,
+              bottom: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).scaffoldBackgroundColor.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildLegendItem('Low', AppColors.alertLow),
+                    const SizedBox(width: 16),
+                    _buildLegendItem('Medium', AppColors.alertMedium),
+                    const SizedBox(width: 16),
+                    _buildLegendItem('High', AppColors.alertHigh),
+                  ],
+                ),
+              ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildLegendItem('Low', AppColors.alertLow),
-                const SizedBox(width: 16),
-                _buildLegendItem('Medium', AppColors.alertMedium),
-                const SizedBox(width: 16),
-                _buildLegendItem('High', AppColors.alertHigh),
-              ],
-            ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, _) => _buildErrorState(theme, error.toString()),
     );
   }
 
@@ -260,71 +251,70 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return reportsAsync.when(
       data: (data) {
         if (data.results.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.description_outlined,
-                  size: 64,
-                  color: theme.colorScheme.outline,
-                ),
-                const SizedBox(height: 16),
-                Text('No reports nearby', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 8),
-                Text(
-                  'Reports in your area will appear here',
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ),
-          );
+          return _buildEmptyState(theme);
         }
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(reportsControllerProvider());
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: data.results.length,
+          itemBuilder: (context, index) {
+            final report = data.results[index];
+            return HomeReportCard(
+              report: report,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ReportDetailScreen(
+                      reportId: report.id,
+                      initialReport: report,
+                    ),
+                  ),
+                );
+              },
+            );
           },
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: data.results.length,
-            itemBuilder: (context, index) {
-              final report = data.results[index];
-              return HomeReportCard(
-                report: report,
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('View report: ${report.id}')),
-                  );
-                },
-              );
-            },
-          ),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: AppColors.alertHigh),
-            const SizedBox(height: 16),
-            Text('Failed to load reports', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(
-              error.toString(),
+      error: (error, _) => _buildErrorState(theme, error.toString()),
+    );
+  }
+
+  Widget _buildEmptyState(ThemeData theme) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.inbox_outlined,
+            size: 64,
+            color: theme.colorScheme.outline,
+          ),
+          const SizedBox(height: 16),
+          Text('No reports yet', style: theme.textTheme.titleMedium),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(ThemeData theme, String error) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 64, color: AppColors.alertHigh),
+          const SizedBox(height: 16),
+          Text('Failed to load reports', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              error,
               style: theme.textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                ref.invalidate(reportsControllerProvider());
-              },
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

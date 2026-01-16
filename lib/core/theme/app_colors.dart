@@ -16,6 +16,12 @@ abstract final class AppColors {
   static const Color accent = Color(0xFFF97316);
   static const Color accentLight = Color(0xFFFB923C);
 
+  /// Primary variant for AI features
+  static const Color primaryVariant = Color(0xFF7C3AED); // Violet 600
+
+  /// Success green
+  static const Color success = Color(0xFF22C55E); // Green 500
+
   // ─────────────────────────────────────────────────────────
   // ALERT / STATUS COLORS
   // ─────────────────────────────────────────────────────────
