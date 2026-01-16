@@ -1873,7 +1873,7 @@ as String?,
 /// @nodoc
 mixin _$ChangePasswordRequest {
 
-@JsonKey(name: 'current_password') String get currentPassword;@JsonKey(name: 'new_password') String get newPassword;@JsonKey(name: 'new_password_confirm') String get newPasswordConfirm;
+@JsonKey(name: 'old_password') String get currentPassword;@JsonKey(name: 'new_password') String get newPassword;@JsonKey(name: 'new_password_confirm') String get newPasswordConfirm;
 /// Create a copy of ChangePasswordRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1906,7 +1906,7 @@ abstract mixin class $ChangePasswordRequestCopyWith<$Res>  {
   factory $ChangePasswordRequestCopyWith(ChangePasswordRequest value, $Res Function(ChangePasswordRequest) _then) = _$ChangePasswordRequestCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'current_password') String currentPassword,@JsonKey(name: 'new_password') String newPassword,@JsonKey(name: 'new_password_confirm') String newPasswordConfirm
+@JsonKey(name: 'old_password') String currentPassword,@JsonKey(name: 'new_password') String newPassword,@JsonKey(name: 'new_password_confirm') String newPasswordConfirm
 });
 
 
@@ -2010,7 +2010,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'current_password')  String currentPassword, @JsonKey(name: 'new_password')  String newPassword, @JsonKey(name: 'new_password_confirm')  String newPasswordConfirm)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'old_password')  String currentPassword, @JsonKey(name: 'new_password')  String newPassword, @JsonKey(name: 'new_password_confirm')  String newPasswordConfirm)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ChangePasswordRequest() when $default != null:
 return $default(_that.currentPassword,_that.newPassword,_that.newPasswordConfirm);case _:
@@ -2031,7 +2031,7 @@ return $default(_that.currentPassword,_that.newPassword,_that.newPasswordConfirm
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'current_password')  String currentPassword, @JsonKey(name: 'new_password')  String newPassword, @JsonKey(name: 'new_password_confirm')  String newPasswordConfirm)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'old_password')  String currentPassword, @JsonKey(name: 'new_password')  String newPassword, @JsonKey(name: 'new_password_confirm')  String newPasswordConfirm)  $default,) {final _that = this;
 switch (_that) {
 case _ChangePasswordRequest():
 return $default(_that.currentPassword,_that.newPassword,_that.newPasswordConfirm);}
@@ -2048,7 +2048,7 @@ return $default(_that.currentPassword,_that.newPassword,_that.newPasswordConfirm
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'current_password')  String currentPassword, @JsonKey(name: 'new_password')  String newPassword, @JsonKey(name: 'new_password_confirm')  String newPasswordConfirm)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'old_password')  String currentPassword, @JsonKey(name: 'new_password')  String newPassword, @JsonKey(name: 'new_password_confirm')  String newPasswordConfirm)?  $default,) {final _that = this;
 switch (_that) {
 case _ChangePasswordRequest() when $default != null:
 return $default(_that.currentPassword,_that.newPassword,_that.newPasswordConfirm);case _:
@@ -2063,10 +2063,10 @@ return $default(_that.currentPassword,_that.newPassword,_that.newPasswordConfirm
 @JsonSerializable()
 
 class _ChangePasswordRequest implements ChangePasswordRequest {
-  const _ChangePasswordRequest({@JsonKey(name: 'current_password') required this.currentPassword, @JsonKey(name: 'new_password') required this.newPassword, @JsonKey(name: 'new_password_confirm') required this.newPasswordConfirm});
+  const _ChangePasswordRequest({@JsonKey(name: 'old_password') required this.currentPassword, @JsonKey(name: 'new_password') required this.newPassword, @JsonKey(name: 'new_password_confirm') required this.newPasswordConfirm});
   factory _ChangePasswordRequest.fromJson(Map<String, dynamic> json) => _$ChangePasswordRequestFromJson(json);
 
-@override@JsonKey(name: 'current_password') final  String currentPassword;
+@override@JsonKey(name: 'old_password') final  String currentPassword;
 @override@JsonKey(name: 'new_password') final  String newPassword;
 @override@JsonKey(name: 'new_password_confirm') final  String newPasswordConfirm;
 
@@ -2103,7 +2103,7 @@ abstract mixin class _$ChangePasswordRequestCopyWith<$Res> implements $ChangePas
   factory _$ChangePasswordRequestCopyWith(_ChangePasswordRequest value, $Res Function(_ChangePasswordRequest) _then) = __$ChangePasswordRequestCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'current_password') String currentPassword,@JsonKey(name: 'new_password') String newPassword,@JsonKey(name: 'new_password_confirm') String newPasswordConfirm
+@JsonKey(name: 'old_password') String currentPassword,@JsonKey(name: 'new_password') String newPassword,@JsonKey(name: 'new_password_confirm') String newPasswordConfirm
 });
 
 

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import '../auth/presentation/profile_screen.dart';
 import '../home/presentation/home_screen.dart';
 import '../notifications/presentation/notifications_screen.dart';
 import '../reports/presentation/my_reports_screen.dart';
 import '../reports/presentation/new_report/new_report_photos_screen.dart';
-import 'placeholder_screens.dart';
 
 /// Main navigation shell with bottom nav bar and center FAB.
 /// Handles tab switching between Home, My Reports, Notifications, Profile.
@@ -22,7 +22,7 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
     const HomeScreen(),
     const MyReportsScreen(),
     const NotificationsScreen(),
-    const ProfilePlaceholder(),
+    const ProfileScreen(),
   ];
 
   void _onTabTapped(int index) {

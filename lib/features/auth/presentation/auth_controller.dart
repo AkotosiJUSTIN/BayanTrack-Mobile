@@ -34,6 +34,23 @@ class AuthController extends _$AuthController {
   @override
   AuthState build() => const AuthIdle();
 
+  /// Check for existing session
+  Future<void> checkAuth() async {
+    state = const AuthLoading();
+    try {
+      final accessToken = await ref
+          .read(tokenStorageProvider.notifier)
+          .getAccessToken();
+      if (accessToken != null) {
+        state = const AuthSuccess();
+      } else {
+        state = const AuthIdle();
+      }
+    } catch (e) {
+      state = const AuthIdle();
+    }
+  }
+
   /// Login user and save tokens
   Future<bool> login(String email, String password) async {
     state = const AuthLoading();
