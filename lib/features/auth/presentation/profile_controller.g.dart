@@ -78,7 +78,7 @@ final class ProfileStatsControllerProvider
 }
 
 String _$profileStatsControllerHash() =>
-    r'307e285c5aeae0522fe2052e9dcf571e1637d82a';
+    r'23352aa9ffa210b79b69510c0a870b30af7a884a';
 
 abstract class _$ProfileStatsController
     extends $AsyncNotifier<Map<String, int>> {

@@ -5,7 +5,9 @@ import '../../reports/data/report_models.dart';
 import '../../reports/presentation/report_detail_screen.dart';
 import '../../reports/presentation/reports_controller.dart';
 import 'widgets/home_report_card.dart';
+
 import 'widgets/map_placeholder.dart';
+import '../../../core/presentation/widgets/empty_content_placeholder.dart';
 
 /// Home screen with map/list toggle and report list.
 /// Shows nearby reports in either map or list view.
@@ -281,19 +283,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildEmptyState(ThemeData theme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.inbox_outlined,
-            size: 64,
-            color: theme.colorScheme.outline,
-          ),
-          const SizedBox(height: 16),
-          Text('No reports yet', style: theme.textTheme.titleMedium),
-        ],
-      ),
+    return EmptyContentPlaceholder(
+      icon: Icons.location_off_outlined,
+      title: 'No reports nearby',
+      message:
+          'There are no reports in your area yet.\nBe the first to submit one!',
+      onRetry: _onRefresh,
     );
   }
 

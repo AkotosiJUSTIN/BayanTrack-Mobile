@@ -34,7 +34,17 @@ class NotificationsRepository {
       ApiConstants.notifications,
       queryParameters: queryParams,
     );
-    return PaginatedNotifications.fromJson(response.data);
+    try {
+      // ignore: avoid_print
+      print('Notifications Raw JSON: ${response.data}');
+      return PaginatedNotifications.fromJson(response.data);
+    } catch (e, site) {
+      // ignore: avoid_print
+      print('Notifications Parsing Error: $e');
+      // ignore: avoid_print
+      print('Notifications Parsing Stack: $site');
+      rethrow;
+    }
   }
 
   // ==================== GET SINGLE ====================

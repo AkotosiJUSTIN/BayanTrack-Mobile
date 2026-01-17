@@ -7,7 +7,7 @@ part of 'report_models.dart';
 // **************************************************************************
 
 _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
-  id: json['_id'] as String,
+  id: json['id'] as String,
   description: json['description'] as String,
   status:
       $enumDecodeNullable(_$ReportStatusEnumMap, json['status']) ??
@@ -28,7 +28,7 @@ _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
 );
 
 Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
-  '_id': instance.id,
+  'id': instance.id,
   'description': instance.description,
   'status': _$ReportStatusEnumMap[instance.status]!,
   'category': instance.category,
@@ -45,10 +45,12 @@ Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
 };
 
 const _$ReportStatusEnumMap = {
-  ReportStatus.pending: 'pending',
-  ReportStatus.inProgress: 'in_progress',
-  ReportStatus.resolved: 'resolved',
-  ReportStatus.closed: 'closed',
+  ReportStatus.pending: 'Pending',
+  ReportStatus.inProgress: 'In Progress',
+  ReportStatus.resolved: 'Resolved',
+  ReportStatus.rejected: 'Rejected',
+  ReportStatus.verified: 'Verified',
+  ReportStatus.assigned: 'Assigned',
 };
 
 _CreateReportRequest _$CreateReportRequestFromJson(Map<String, dynamic> json) =>
@@ -108,7 +110,9 @@ _ReportStats _$ReportStatsFromJson(Map<String, dynamic> json) => _ReportStats(
   pending: (json['pending'] as num?)?.toInt() ?? 0,
   inProgress: (json['in_progress'] as num?)?.toInt() ?? 0,
   resolved: (json['resolved'] as num?)?.toInt() ?? 0,
-  closed: (json['closed'] as num?)?.toInt() ?? 0,
+  rejected: (json['rejected'] as num?)?.toInt() ?? 0,
+  verified: (json['verified'] as num?)?.toInt() ?? 0,
+  assigned: (json['assigned'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$ReportStatsToJson(_ReportStats instance) =>
@@ -117,5 +121,7 @@ Map<String, dynamic> _$ReportStatsToJson(_ReportStats instance) =>
       'pending': instance.pending,
       'in_progress': instance.inProgress,
       'resolved': instance.resolved,
-      'closed': instance.closed,
+      'rejected': instance.rejected,
+      'verified': instance.verified,
+      'assigned': instance.assigned,
     };

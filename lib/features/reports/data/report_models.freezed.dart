@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Report {
 
-@JsonKey(name: '_id') String get id; String get description; ReportStatus get status; String? get category; String? get barangay; double? get latitude; double? get longitude; List<String> get images;@JsonKey(name: 'created_by') String? get createdBy;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;// AI fields (optional, from backend)
+@JsonKey(name: 'id') String get id; String get description; ReportStatus get status; String? get category; String? get barangay; double? get latitude; double? get longitude; List<String> get images;@JsonKey(name: 'created_by') String? get createdBy;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;// AI fields (optional, from backend)
 @JsonKey(name: 'ai_category') String? get aiCategory;@JsonKey(name: 'ai_priority') int? get aiPriority;@JsonKey(name: 'ai_confidence') double? get aiConfidence;
 /// Create a copy of Report
 /// with the given fields replaced by the non-null parameter values.
@@ -49,7 +49,7 @@ abstract mixin class $ReportCopyWith<$Res>  {
   factory $ReportCopyWith(Report value, $Res Function(Report) _then) = _$ReportCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: '_id') String id, String description, ReportStatus status, String? category, String? barangay, double? latitude, double? longitude, List<String> images,@JsonKey(name: 'created_by') String? createdBy,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt,@JsonKey(name: 'ai_category') String? aiCategory,@JsonKey(name: 'ai_priority') int? aiPriority,@JsonKey(name: 'ai_confidence') double? aiConfidence
+@JsonKey(name: 'id') String id, String description, ReportStatus status, String? category, String? barangay, double? latitude, double? longitude, List<String> images,@JsonKey(name: 'created_by') String? createdBy,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt,@JsonKey(name: 'ai_category') String? aiCategory,@JsonKey(name: 'ai_priority') int? aiPriority,@JsonKey(name: 'ai_confidence') double? aiConfidence
 });
 
 
@@ -164,7 +164,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: '_id')  String id,  String description,  ReportStatus status,  String? category,  String? barangay,  double? latitude,  double? longitude,  List<String> images, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'ai_category')  String? aiCategory, @JsonKey(name: 'ai_priority')  int? aiPriority, @JsonKey(name: 'ai_confidence')  double? aiConfidence)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'id')  String id,  String description,  ReportStatus status,  String? category,  String? barangay,  double? latitude,  double? longitude,  List<String> images, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'ai_category')  String? aiCategory, @JsonKey(name: 'ai_priority')  int? aiPriority, @JsonKey(name: 'ai_confidence')  double? aiConfidence)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Report() when $default != null:
 return $default(_that.id,_that.description,_that.status,_that.category,_that.barangay,_that.latitude,_that.longitude,_that.images,_that.createdBy,_that.createdAt,_that.updatedAt,_that.aiCategory,_that.aiPriority,_that.aiConfidence);case _:
@@ -185,7 +185,7 @@ return $default(_that.id,_that.description,_that.status,_that.category,_that.bar
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: '_id')  String id,  String description,  ReportStatus status,  String? category,  String? barangay,  double? latitude,  double? longitude,  List<String> images, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'ai_category')  String? aiCategory, @JsonKey(name: 'ai_priority')  int? aiPriority, @JsonKey(name: 'ai_confidence')  double? aiConfidence)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'id')  String id,  String description,  ReportStatus status,  String? category,  String? barangay,  double? latitude,  double? longitude,  List<String> images, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'ai_category')  String? aiCategory, @JsonKey(name: 'ai_priority')  int? aiPriority, @JsonKey(name: 'ai_confidence')  double? aiConfidence)  $default,) {final _that = this;
 switch (_that) {
 case _Report():
 return $default(_that.id,_that.description,_that.status,_that.category,_that.barangay,_that.latitude,_that.longitude,_that.images,_that.createdBy,_that.createdAt,_that.updatedAt,_that.aiCategory,_that.aiPriority,_that.aiConfidence);}
@@ -202,7 +202,7 @@ return $default(_that.id,_that.description,_that.status,_that.category,_that.bar
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: '_id')  String id,  String description,  ReportStatus status,  String? category,  String? barangay,  double? latitude,  double? longitude,  List<String> images, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'ai_category')  String? aiCategory, @JsonKey(name: 'ai_priority')  int? aiPriority, @JsonKey(name: 'ai_confidence')  double? aiConfidence)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'id')  String id,  String description,  ReportStatus status,  String? category,  String? barangay,  double? latitude,  double? longitude,  List<String> images, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'ai_category')  String? aiCategory, @JsonKey(name: 'ai_priority')  int? aiPriority, @JsonKey(name: 'ai_confidence')  double? aiConfidence)?  $default,) {final _that = this;
 switch (_that) {
 case _Report() when $default != null:
 return $default(_that.id,_that.description,_that.status,_that.category,_that.barangay,_that.latitude,_that.longitude,_that.images,_that.createdBy,_that.createdAt,_that.updatedAt,_that.aiCategory,_that.aiPriority,_that.aiConfidence);case _:
@@ -217,10 +217,10 @@ return $default(_that.id,_that.description,_that.status,_that.category,_that.bar
 @JsonSerializable()
 
 class _Report implements Report {
-  const _Report({@JsonKey(name: '_id') required this.id, required this.description, this.status = ReportStatus.pending, this.category, this.barangay, this.latitude, this.longitude, final  List<String> images = const [], @JsonKey(name: 'created_by') this.createdBy, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt, @JsonKey(name: 'ai_category') this.aiCategory, @JsonKey(name: 'ai_priority') this.aiPriority, @JsonKey(name: 'ai_confidence') this.aiConfidence}): _images = images;
+  const _Report({@JsonKey(name: 'id') required this.id, required this.description, this.status = ReportStatus.pending, this.category, this.barangay, this.latitude, this.longitude, final  List<String> images = const [], @JsonKey(name: 'created_by') this.createdBy, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt, @JsonKey(name: 'ai_category') this.aiCategory, @JsonKey(name: 'ai_priority') this.aiPriority, @JsonKey(name: 'ai_confidence') this.aiConfidence}): _images = images;
   factory _Report.fromJson(Map<String, dynamic> json) => _$ReportFromJson(json);
 
-@override@JsonKey(name: '_id') final  String id;
+@override@JsonKey(name: 'id') final  String id;
 @override final  String description;
 @override@JsonKey() final  ReportStatus status;
 @override final  String? category;
@@ -275,7 +275,7 @@ abstract mixin class _$ReportCopyWith<$Res> implements $ReportCopyWith<$Res> {
   factory _$ReportCopyWith(_Report value, $Res Function(_Report) _then) = __$ReportCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: '_id') String id, String description, ReportStatus status, String? category, String? barangay, double? latitude, double? longitude, List<String> images,@JsonKey(name: 'created_by') String? createdBy,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt,@JsonKey(name: 'ai_category') String? aiCategory,@JsonKey(name: 'ai_priority') int? aiPriority,@JsonKey(name: 'ai_confidence') double? aiConfidence
+@JsonKey(name: 'id') String id, String description, ReportStatus status, String? category, String? barangay, double? latitude, double? longitude, List<String> images,@JsonKey(name: 'created_by') String? createdBy,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt,@JsonKey(name: 'ai_category') String? aiCategory,@JsonKey(name: 'ai_priority') int? aiPriority,@JsonKey(name: 'ai_confidence') double? aiConfidence
 });
 
 
@@ -1123,7 +1123,7 @@ as String?,
 /// @nodoc
 mixin _$ReportStats {
 
- int get total; int get pending;@JsonKey(name: 'in_progress') int get inProgress; int get resolved; int get closed;
+ int get total; int get pending;@JsonKey(name: 'in_progress') int get inProgress; int get resolved; int get rejected; int get verified; int get assigned;
 /// Create a copy of ReportStats
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1136,16 +1136,16 @@ $ReportStatsCopyWith<ReportStats> get copyWith => _$ReportStatsCopyWithImpl<Repo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportStats&&(identical(other.total, total) || other.total == total)&&(identical(other.pending, pending) || other.pending == pending)&&(identical(other.inProgress, inProgress) || other.inProgress == inProgress)&&(identical(other.resolved, resolved) || other.resolved == resolved)&&(identical(other.closed, closed) || other.closed == closed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportStats&&(identical(other.total, total) || other.total == total)&&(identical(other.pending, pending) || other.pending == pending)&&(identical(other.inProgress, inProgress) || other.inProgress == inProgress)&&(identical(other.resolved, resolved) || other.resolved == resolved)&&(identical(other.rejected, rejected) || other.rejected == rejected)&&(identical(other.verified, verified) || other.verified == verified)&&(identical(other.assigned, assigned) || other.assigned == assigned));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,total,pending,inProgress,resolved,closed);
+int get hashCode => Object.hash(runtimeType,total,pending,inProgress,resolved,rejected,verified,assigned);
 
 @override
 String toString() {
-  return 'ReportStats(total: $total, pending: $pending, inProgress: $inProgress, resolved: $resolved, closed: $closed)';
+  return 'ReportStats(total: $total, pending: $pending, inProgress: $inProgress, resolved: $resolved, rejected: $rejected, verified: $verified, assigned: $assigned)';
 }
 
 
@@ -1156,7 +1156,7 @@ abstract mixin class $ReportStatsCopyWith<$Res>  {
   factory $ReportStatsCopyWith(ReportStats value, $Res Function(ReportStats) _then) = _$ReportStatsCopyWithImpl;
 @useResult
 $Res call({
- int total, int pending,@JsonKey(name: 'in_progress') int inProgress, int resolved, int closed
+ int total, int pending,@JsonKey(name: 'in_progress') int inProgress, int resolved, int rejected, int verified, int assigned
 });
 
 
@@ -1173,13 +1173,15 @@ class _$ReportStatsCopyWithImpl<$Res>
 
 /// Create a copy of ReportStats
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? total = null,Object? pending = null,Object? inProgress = null,Object? resolved = null,Object? closed = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? total = null,Object? pending = null,Object? inProgress = null,Object? resolved = null,Object? rejected = null,Object? verified = null,Object? assigned = null,}) {
   return _then(_self.copyWith(
 total: null == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
 as int,pending: null == pending ? _self.pending : pending // ignore: cast_nullable_to_non_nullable
 as int,inProgress: null == inProgress ? _self.inProgress : inProgress // ignore: cast_nullable_to_non_nullable
 as int,resolved: null == resolved ? _self.resolved : resolved // ignore: cast_nullable_to_non_nullable
-as int,closed: null == closed ? _self.closed : closed // ignore: cast_nullable_to_non_nullable
+as int,rejected: null == rejected ? _self.rejected : rejected // ignore: cast_nullable_to_non_nullable
+as int,verified: null == verified ? _self.verified : verified // ignore: cast_nullable_to_non_nullable
+as int,assigned: null == assigned ? _self.assigned : assigned // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
@@ -1262,10 +1264,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int total,  int pending, @JsonKey(name: 'in_progress')  int inProgress,  int resolved,  int closed)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int total,  int pending, @JsonKey(name: 'in_progress')  int inProgress,  int resolved,  int rejected,  int verified,  int assigned)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ReportStats() when $default != null:
-return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.closed);case _:
+return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.rejected,_that.verified,_that.assigned);case _:
   return orElse();
 
 }
@@ -1283,10 +1285,10 @@ return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int total,  int pending, @JsonKey(name: 'in_progress')  int inProgress,  int resolved,  int closed)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int total,  int pending, @JsonKey(name: 'in_progress')  int inProgress,  int resolved,  int rejected,  int verified,  int assigned)  $default,) {final _that = this;
 switch (_that) {
 case _ReportStats():
-return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.closed);}
+return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.rejected,_that.verified,_that.assigned);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -1300,10 +1302,10 @@ return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int total,  int pending, @JsonKey(name: 'in_progress')  int inProgress,  int resolved,  int closed)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int total,  int pending, @JsonKey(name: 'in_progress')  int inProgress,  int resolved,  int rejected,  int verified,  int assigned)?  $default,) {final _that = this;
 switch (_that) {
 case _ReportStats() when $default != null:
-return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.closed);case _:
+return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.rejected,_that.verified,_that.assigned);case _:
   return null;
 
 }
@@ -1315,14 +1317,16 @@ return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.
 @JsonSerializable()
 
 class _ReportStats implements ReportStats {
-  const _ReportStats({this.total = 0, this.pending = 0, @JsonKey(name: 'in_progress') this.inProgress = 0, this.resolved = 0, this.closed = 0});
+  const _ReportStats({this.total = 0, this.pending = 0, @JsonKey(name: 'in_progress') this.inProgress = 0, this.resolved = 0, this.rejected = 0, this.verified = 0, this.assigned = 0});
   factory _ReportStats.fromJson(Map<String, dynamic> json) => _$ReportStatsFromJson(json);
 
 @override@JsonKey() final  int total;
 @override@JsonKey() final  int pending;
 @override@JsonKey(name: 'in_progress') final  int inProgress;
 @override@JsonKey() final  int resolved;
-@override@JsonKey() final  int closed;
+@override@JsonKey() final  int rejected;
+@override@JsonKey() final  int verified;
+@override@JsonKey() final  int assigned;
 
 /// Create a copy of ReportStats
 /// with the given fields replaced by the non-null parameter values.
@@ -1337,16 +1341,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReportStats&&(identical(other.total, total) || other.total == total)&&(identical(other.pending, pending) || other.pending == pending)&&(identical(other.inProgress, inProgress) || other.inProgress == inProgress)&&(identical(other.resolved, resolved) || other.resolved == resolved)&&(identical(other.closed, closed) || other.closed == closed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReportStats&&(identical(other.total, total) || other.total == total)&&(identical(other.pending, pending) || other.pending == pending)&&(identical(other.inProgress, inProgress) || other.inProgress == inProgress)&&(identical(other.resolved, resolved) || other.resolved == resolved)&&(identical(other.rejected, rejected) || other.rejected == rejected)&&(identical(other.verified, verified) || other.verified == verified)&&(identical(other.assigned, assigned) || other.assigned == assigned));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,total,pending,inProgress,resolved,closed);
+int get hashCode => Object.hash(runtimeType,total,pending,inProgress,resolved,rejected,verified,assigned);
 
 @override
 String toString() {
-  return 'ReportStats(total: $total, pending: $pending, inProgress: $inProgress, resolved: $resolved, closed: $closed)';
+  return 'ReportStats(total: $total, pending: $pending, inProgress: $inProgress, resolved: $resolved, rejected: $rejected, verified: $verified, assigned: $assigned)';
 }
 
 
@@ -1357,7 +1361,7 @@ abstract mixin class _$ReportStatsCopyWith<$Res> implements $ReportStatsCopyWith
   factory _$ReportStatsCopyWith(_ReportStats value, $Res Function(_ReportStats) _then) = __$ReportStatsCopyWithImpl;
 @override @useResult
 $Res call({
- int total, int pending,@JsonKey(name: 'in_progress') int inProgress, int resolved, int closed
+ int total, int pending,@JsonKey(name: 'in_progress') int inProgress, int resolved, int rejected, int verified, int assigned
 });
 
 
@@ -1374,13 +1378,15 @@ class __$ReportStatsCopyWithImpl<$Res>
 
 /// Create a copy of ReportStats
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? total = null,Object? pending = null,Object? inProgress = null,Object? resolved = null,Object? closed = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? total = null,Object? pending = null,Object? inProgress = null,Object? resolved = null,Object? rejected = null,Object? verified = null,Object? assigned = null,}) {
   return _then(_ReportStats(
 total: null == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
 as int,pending: null == pending ? _self.pending : pending // ignore: cast_nullable_to_non_nullable
 as int,inProgress: null == inProgress ? _self.inProgress : inProgress // ignore: cast_nullable_to_non_nullable
 as int,resolved: null == resolved ? _self.resolved : resolved // ignore: cast_nullable_to_non_nullable
-as int,closed: null == closed ? _self.closed : closed // ignore: cast_nullable_to_non_nullable
+as int,rejected: null == rejected ? _self.rejected : rejected // ignore: cast_nullable_to_non_nullable
+as int,verified: null == verified ? _self.verified : verified // ignore: cast_nullable_to_non_nullable
+as int,assigned: null == assigned ? _self.assigned : assigned // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }

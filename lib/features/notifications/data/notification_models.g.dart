@@ -8,25 +8,25 @@ part of 'notification_models.dart';
 
 _AppNotification _$AppNotificationFromJson(Map<String, dynamic> json) =>
     _AppNotification(
-      id: json['_id'] as String,
+      id: json['id'] as String,
       title: json['title'] as String,
       message: json['message'] as String,
       type:
           $enumDecodeNullable(_$NotificationTypeEnumMap, json['type']) ??
           NotificationType.system,
       isRead: json['is_read'] as bool? ?? false,
-      reportId: json['report_id'] as String?,
+      reportId: json['related_report_id'] as String?,
       createdAt: json['created_at'] as String?,
     );
 
 Map<String, dynamic> _$AppNotificationToJson(_AppNotification instance) =>
     <String, dynamic>{
-      '_id': instance.id,
+      'id': instance.id,
       'title': instance.title,
       'message': instance.message,
       'type': _$NotificationTypeEnumMap[instance.type]!,
       'is_read': instance.isRead,
-      'report_id': instance.reportId,
+      'related_report_id': instance.reportId,
       'created_at': instance.createdAt,
     };
 
@@ -40,7 +40,7 @@ const _$NotificationTypeEnumMap = {
 _PaginatedNotifications _$PaginatedNotificationsFromJson(
   Map<String, dynamic> json,
 ) => _PaginatedNotifications(
-  results: (json['results'] as List<dynamic>)
+  results: (json['notifications'] as List<dynamic>)
       .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
       .toList(),
   count: (json['count'] as num?)?.toInt() ?? 0,
@@ -52,7 +52,7 @@ _PaginatedNotifications _$PaginatedNotificationsFromJson(
 Map<String, dynamic> _$PaginatedNotificationsToJson(
   _PaginatedNotifications instance,
 ) => <String, dynamic>{
-  'results': instance.results,
+  'notifications': instance.results,
   'count': instance.count,
   'unread_count': instance.unreadCount,
   'next': instance.next,

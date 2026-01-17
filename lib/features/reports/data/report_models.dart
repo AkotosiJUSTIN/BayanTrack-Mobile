@@ -6,14 +6,18 @@ part 'report_models.g.dart';
 // ==================== REPORT STATUS ====================
 
 enum ReportStatus {
-  @JsonValue('pending')
+  @JsonValue('Pending')
   pending,
-  @JsonValue('in_progress')
+  @JsonValue('In Progress')
   inProgress,
-  @JsonValue('resolved')
+  @JsonValue('Resolved')
   resolved,
-  @JsonValue('closed')
-  closed,
+  @JsonValue('Rejected')
+  rejected,
+  @JsonValue('Verified')
+  verified,
+  @JsonValue('Assigned')
+  assigned,
 }
 
 // ==================== REPORT ====================
@@ -21,7 +25,7 @@ enum ReportStatus {
 @freezed
 sealed class Report with _$Report {
   const factory Report({
-    @JsonKey(name: '_id') required String id,
+    @JsonKey(name: 'id') required String id,
     required String description,
     @Default(ReportStatus.pending) ReportStatus status,
     String? category,
@@ -95,7 +99,9 @@ sealed class ReportStats with _$ReportStats {
     @Default(0) int pending,
     @JsonKey(name: 'in_progress') @Default(0) int inProgress,
     @Default(0) int resolved,
-    @Default(0) int closed,
+    @Default(0) int rejected,
+    @Default(0) int verified,
+    @Default(0) int assigned,
   }) = _ReportStats;
 
   factory ReportStats.fromJson(Map<String, dynamic> json) =>

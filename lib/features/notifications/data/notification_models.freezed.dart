@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AppNotification {
 
-@JsonKey(name: '_id') String get id; String get title; String get message; NotificationType get type;@JsonKey(name: 'is_read') bool get isRead;@JsonKey(name: 'report_id') String? get reportId;@JsonKey(name: 'created_at') String? get createdAt;
+@JsonKey(name: 'id') String get id; String get title; String get message; NotificationType get type;@JsonKey(name: 'is_read') bool get isRead;@JsonKey(name: 'related_report_id') String? get reportId;@JsonKey(name: 'created_at') String? get createdAt;
 /// Create a copy of AppNotification
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $AppNotificationCopyWith<$Res>  {
   factory $AppNotificationCopyWith(AppNotification value, $Res Function(AppNotification) _then) = _$AppNotificationCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: '_id') String id, String title, String message, NotificationType type,@JsonKey(name: 'is_read') bool isRead,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'created_at') String? createdAt
+@JsonKey(name: 'id') String id, String title, String message, NotificationType type,@JsonKey(name: 'is_read') bool isRead,@JsonKey(name: 'related_report_id') String? reportId,@JsonKey(name: 'created_at') String? createdAt
 });
 
 
@@ -156,7 +156,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: '_id')  String id,  String title,  String message,  NotificationType type, @JsonKey(name: 'is_read')  bool isRead, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'created_at')  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'id')  String id,  String title,  String message,  NotificationType type, @JsonKey(name: 'is_read')  bool isRead, @JsonKey(name: 'related_report_id')  String? reportId, @JsonKey(name: 'created_at')  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppNotification() when $default != null:
 return $default(_that.id,_that.title,_that.message,_that.type,_that.isRead,_that.reportId,_that.createdAt);case _:
@@ -177,7 +177,7 @@ return $default(_that.id,_that.title,_that.message,_that.type,_that.isRead,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: '_id')  String id,  String title,  String message,  NotificationType type, @JsonKey(name: 'is_read')  bool isRead, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'created_at')  String? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'id')  String id,  String title,  String message,  NotificationType type, @JsonKey(name: 'is_read')  bool isRead, @JsonKey(name: 'related_report_id')  String? reportId, @JsonKey(name: 'created_at')  String? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _AppNotification():
 return $default(_that.id,_that.title,_that.message,_that.type,_that.isRead,_that.reportId,_that.createdAt);}
@@ -194,7 +194,7 @@ return $default(_that.id,_that.title,_that.message,_that.type,_that.isRead,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: '_id')  String id,  String title,  String message,  NotificationType type, @JsonKey(name: 'is_read')  bool isRead, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'created_at')  String? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'id')  String id,  String title,  String message,  NotificationType type, @JsonKey(name: 'is_read')  bool isRead, @JsonKey(name: 'related_report_id')  String? reportId, @JsonKey(name: 'created_at')  String? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _AppNotification() when $default != null:
 return $default(_that.id,_that.title,_that.message,_that.type,_that.isRead,_that.reportId,_that.createdAt);case _:
@@ -209,15 +209,15 @@ return $default(_that.id,_that.title,_that.message,_that.type,_that.isRead,_that
 @JsonSerializable()
 
 class _AppNotification implements AppNotification {
-  const _AppNotification({@JsonKey(name: '_id') required this.id, required this.title, required this.message, this.type = NotificationType.system, @JsonKey(name: 'is_read') this.isRead = false, @JsonKey(name: 'report_id') this.reportId, @JsonKey(name: 'created_at') this.createdAt});
+  const _AppNotification({@JsonKey(name: 'id') required this.id, required this.title, required this.message, this.type = NotificationType.system, @JsonKey(name: 'is_read') this.isRead = false, @JsonKey(name: 'related_report_id') this.reportId, @JsonKey(name: 'created_at') this.createdAt});
   factory _AppNotification.fromJson(Map<String, dynamic> json) => _$AppNotificationFromJson(json);
 
-@override@JsonKey(name: '_id') final  String id;
+@override@JsonKey(name: 'id') final  String id;
 @override final  String title;
 @override final  String message;
 @override@JsonKey() final  NotificationType type;
 @override@JsonKey(name: 'is_read') final  bool isRead;
-@override@JsonKey(name: 'report_id') final  String? reportId;
+@override@JsonKey(name: 'related_report_id') final  String? reportId;
 @override@JsonKey(name: 'created_at') final  String? createdAt;
 
 /// Create a copy of AppNotification
@@ -253,7 +253,7 @@ abstract mixin class _$AppNotificationCopyWith<$Res> implements $AppNotification
   factory _$AppNotificationCopyWith(_AppNotification value, $Res Function(_AppNotification) _then) = __$AppNotificationCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: '_id') String id, String title, String message, NotificationType type,@JsonKey(name: 'is_read') bool isRead,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'created_at') String? createdAt
+@JsonKey(name: 'id') String id, String title, String message, NotificationType type,@JsonKey(name: 'is_read') bool isRead,@JsonKey(name: 'related_report_id') String? reportId,@JsonKey(name: 'created_at') String? createdAt
 });
 
 
@@ -290,7 +290,7 @@ as String?,
 /// @nodoc
 mixin _$PaginatedNotifications {
 
- List<AppNotification> get results; int get count;@JsonKey(name: 'unread_count') int get unreadCount; String? get next; String? get previous;
+@JsonKey(name: 'notifications') List<AppNotification> get results; int get count;@JsonKey(name: 'unread_count') int get unreadCount; String? get next; String? get previous;
 /// Create a copy of PaginatedNotifications
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -323,7 +323,7 @@ abstract mixin class $PaginatedNotificationsCopyWith<$Res>  {
   factory $PaginatedNotificationsCopyWith(PaginatedNotifications value, $Res Function(PaginatedNotifications) _then) = _$PaginatedNotificationsCopyWithImpl;
 @useResult
 $Res call({
- List<AppNotification> results, int count,@JsonKey(name: 'unread_count') int unreadCount, String? next, String? previous
+@JsonKey(name: 'notifications') List<AppNotification> results, int count,@JsonKey(name: 'unread_count') int unreadCount, String? next, String? previous
 });
 
 
@@ -429,7 +429,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<AppNotification> results,  int count, @JsonKey(name: 'unread_count')  int unreadCount,  String? next,  String? previous)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'notifications')  List<AppNotification> results,  int count, @JsonKey(name: 'unread_count')  int unreadCount,  String? next,  String? previous)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PaginatedNotifications() when $default != null:
 return $default(_that.results,_that.count,_that.unreadCount,_that.next,_that.previous);case _:
@@ -450,7 +450,7 @@ return $default(_that.results,_that.count,_that.unreadCount,_that.next,_that.pre
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<AppNotification> results,  int count, @JsonKey(name: 'unread_count')  int unreadCount,  String? next,  String? previous)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'notifications')  List<AppNotification> results,  int count, @JsonKey(name: 'unread_count')  int unreadCount,  String? next,  String? previous)  $default,) {final _that = this;
 switch (_that) {
 case _PaginatedNotifications():
 return $default(_that.results,_that.count,_that.unreadCount,_that.next,_that.previous);}
@@ -467,7 +467,7 @@ return $default(_that.results,_that.count,_that.unreadCount,_that.next,_that.pre
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<AppNotification> results,  int count, @JsonKey(name: 'unread_count')  int unreadCount,  String? next,  String? previous)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'notifications')  List<AppNotification> results,  int count, @JsonKey(name: 'unread_count')  int unreadCount,  String? next,  String? previous)?  $default,) {final _that = this;
 switch (_that) {
 case _PaginatedNotifications() when $default != null:
 return $default(_that.results,_that.count,_that.unreadCount,_that.next,_that.previous);case _:
@@ -482,11 +482,11 @@ return $default(_that.results,_that.count,_that.unreadCount,_that.next,_that.pre
 @JsonSerializable()
 
 class _PaginatedNotifications implements PaginatedNotifications {
-  const _PaginatedNotifications({required final  List<AppNotification> results, this.count = 0, @JsonKey(name: 'unread_count') this.unreadCount = 0, this.next, this.previous}): _results = results;
+  const _PaginatedNotifications({@JsonKey(name: 'notifications') required final  List<AppNotification> results, this.count = 0, @JsonKey(name: 'unread_count') this.unreadCount = 0, this.next, this.previous}): _results = results;
   factory _PaginatedNotifications.fromJson(Map<String, dynamic> json) => _$PaginatedNotificationsFromJson(json);
 
  final  List<AppNotification> _results;
-@override List<AppNotification> get results {
+@override@JsonKey(name: 'notifications') List<AppNotification> get results {
   if (_results is EqualUnmodifiableListView) return _results;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_results);
@@ -530,7 +530,7 @@ abstract mixin class _$PaginatedNotificationsCopyWith<$Res> implements $Paginate
   factory _$PaginatedNotificationsCopyWith(_PaginatedNotifications value, $Res Function(_PaginatedNotifications) _then) = __$PaginatedNotificationsCopyWithImpl;
 @override @useResult
 $Res call({
- List<AppNotification> results, int count,@JsonKey(name: 'unread_count') int unreadCount, String? next, String? previous
+@JsonKey(name: 'notifications') List<AppNotification> results, int count,@JsonKey(name: 'unread_count') int unreadCount, String? next, String? previous
 });
 
 

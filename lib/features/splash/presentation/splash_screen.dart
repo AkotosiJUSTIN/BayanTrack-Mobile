@@ -23,7 +23,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 4000),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -95,11 +95,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             children: [
               Image.asset(
                 'assets/images/logo.png',
-                width: 150,
-                height: 150,
+                width: 200,
+                height: 200,
                 errorBuilder: (_, __, ___) => Icon(
                   Icons.location_on,
-                  size: 150,
+                  size: 200,
                   color: AppColors.primary,
                 ),
               ),

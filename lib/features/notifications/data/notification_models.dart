@@ -21,12 +21,12 @@ enum NotificationType {
 @freezed
 sealed class AppNotification with _$AppNotification {
   const factory AppNotification({
-    @JsonKey(name: '_id') required String id,
+    @JsonKey(name: 'id') required String id,
     required String title,
     required String message,
     @Default(NotificationType.system) NotificationType type,
     @JsonKey(name: 'is_read') @Default(false) bool isRead,
-    @JsonKey(name: 'report_id') String? reportId,
+    @JsonKey(name: 'related_report_id') String? reportId,
     @JsonKey(name: 'created_at') String? createdAt,
   }) = _AppNotification;
 
@@ -39,7 +39,7 @@ sealed class AppNotification with _$AppNotification {
 @freezed
 sealed class PaginatedNotifications with _$PaginatedNotifications {
   const factory PaginatedNotifications({
-    required List<AppNotification> results,
+    @JsonKey(name: 'notifications') required List<AppNotification> results,
     @Default(0) int count,
     @JsonKey(name: 'unread_count') @Default(0) int unreadCount,
     String? next,

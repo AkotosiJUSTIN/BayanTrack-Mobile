@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../reports/presentation/report_detail_screen.dart';
 import '../data/notification_models.dart';
 import 'notifications_controller.dart';
+import '../../../core/presentation/widgets/empty_content_placeholder.dart';
 
 /// Notifications screen showing list of notifications with read/unread states.
 class NotificationsScreen extends ConsumerWidget {
@@ -64,7 +65,7 @@ class NotificationsScreen extends ConsumerWidget {
     bool isDark,
   ) {
     if (data.results.isEmpty) {
-      return _buildEmptyState(theme);
+      return _buildEmptyState(theme, ref);
     }
 
     return ListView.separated(
@@ -84,20 +85,12 @@ class NotificationsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.notifications_none,
-            size: 64,
-            color: theme.colorScheme.outline,
-          ),
-          const SizedBox(height: 16),
-          Text('No notifications yet', style: theme.textTheme.titleMedium),
-        ],
-      ),
+  Widget _buildEmptyState(ThemeData theme, WidgetRef ref) {
+    return EmptyContentPlaceholder(
+      icon: Icons.notifications_off_outlined,
+      title: 'All caught up!',
+      message: 'You have no new notifications at the moment.',
+      onRetry: () => ref.invalidate(notificationsControllerProvider),
     );
   }
 

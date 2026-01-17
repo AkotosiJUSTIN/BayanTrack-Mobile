@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../data/report_models.dart';
 import 'reports_controller.dart';
+
 import '../../home/presentation/widgets/home_report_card.dart';
+import '../../../core/presentation/widgets/empty_content_placeholder.dart';
 
 /// My Reports screen showing user's submitted reports.
 /// Features filter tabs: All, Pending, In Progress, Resolved.
@@ -145,19 +147,11 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   }
 
   Widget _buildEmptyState(ThemeData theme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.inbox_outlined,
-            size: 64,
-            color: theme.colorScheme.outline,
-          ),
-          const SizedBox(height: 16),
-          Text('No reports yet', style: theme.textTheme.titleMedium),
-        ],
-      ),
+    return EmptyContentPlaceholder(
+      icon: Icons.assignment_outlined,
+      title: 'No reports found',
+      message: 'You haven\'t submitted any reports with this status yet.',
+      onRetry: _onRefresh,
     );
   }
 

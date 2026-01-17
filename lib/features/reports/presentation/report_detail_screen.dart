@@ -385,7 +385,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       ReportStatus.pending => (AppColors.alertMedium, 'Pending'),
       ReportStatus.inProgress => (AppColors.primary, 'In Progress'),
       ReportStatus.resolved => (AppColors.success, 'Resolved'),
-      ReportStatus.closed => (AppColors.lightTextSecondary, 'Closed'),
+      ReportStatus.rejected => (AppColors.alertHigh, 'Rejected'),
+      ReportStatus.verified => (AppColors.alertMedium, 'Verified'),
+      ReportStatus.assigned => (AppColors.primary, 'Assigned'),
     };
 
     return Container(

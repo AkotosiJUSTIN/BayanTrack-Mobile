@@ -38,7 +38,17 @@ class ReportsRepository {
       ApiConstants.reports,
       queryParameters: queryParams,
     );
-    return PaginatedReports.fromJson(response.data);
+    try {
+      // ignore: avoid_print
+      print('Reports Raw JSON: ${response.data}');
+      return PaginatedReports.fromJson(response.data);
+    } catch (e, site) {
+      // ignore: avoid_print
+      print('Reports Parsing Error: $e');
+      // ignore: avoid_print
+      print('Reports Parsing Stack: $site');
+      rethrow;
+    }
   }
 
   /// Get current user's reports
