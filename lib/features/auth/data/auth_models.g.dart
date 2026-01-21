@@ -110,7 +110,7 @@ Map<String, dynamic> _$ProfileUpdateRequestToJson(
 _ChangePasswordRequest _$ChangePasswordRequestFromJson(
   Map<String, dynamic> json,
 ) => _ChangePasswordRequest(
-  currentPassword: json['current_password'] as String,
+  currentPassword: json['old_password'] as String,
   newPassword: json['new_password'] as String,
   newPasswordConfirm: json['new_password_confirm'] as String,
 );
@@ -118,7 +118,7 @@ _ChangePasswordRequest _$ChangePasswordRequestFromJson(
 Map<String, dynamic> _$ChangePasswordRequestToJson(
   _ChangePasswordRequest instance,
 ) => <String, dynamic>{
-  'current_password': instance.currentPassword,
+  'old_password': instance.currentPassword,
   'new_password': instance.newPassword,
   'new_password_confirm': instance.newPasswordConfirm,
 };

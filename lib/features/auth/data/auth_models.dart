@@ -103,7 +103,7 @@ sealed class ProfileUpdateRequest with _$ProfileUpdateRequest {
 @freezed
 sealed class ChangePasswordRequest with _$ChangePasswordRequest {
   const factory ChangePasswordRequest({
-    @JsonKey(name: 'current_password') required String currentPassword,
+    @JsonKey(name: 'old_password') required String currentPassword,
     @JsonKey(name: 'new_password') required String newPassword,
     @JsonKey(name: 'new_password_confirm') required String newPasswordConfirm,
   }) = _ChangePasswordRequest;

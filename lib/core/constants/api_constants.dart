@@ -20,6 +20,19 @@ class ApiConstants {
   static const String reportStats = '/reports/stats/';
   static String reportById(String id) => '/reports/$id/';
 
+  // Images Endpoints
+  static const String images = '/images/';
+  static const String imageUpload = '/images/upload/';
+  static const String imageBulkUpload = '/images/bulk-upload/';
+  static String imageById(String id) => '/images/$id/';
+
+  // Notifications Endpoints
+  static const String notifications = '/notifications/';
+  static const String notificationPreferences = '/notifications/preferences/';
+  static const String notificationMarkAllRead = '/notifications/mark-all-read/';
+  static const String notificationPushToken = '/notifications/push-token/';
+  static String notificationById(String id) => '/notifications/$id/';
+
   // Storage Keys
   static const String accessTokenKey = 'access_token';
   static const String refreshTokenKey = 'refresh_token';

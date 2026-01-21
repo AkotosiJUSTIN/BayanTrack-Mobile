@@ -59,6 +59,7 @@ class ReportsRepository {
 
   // ==================== CREATE / UPDATE / DELETE ====================
 
+  /// Create a report
   Future<Report> createReport(CreateReportRequest request) async {
     final response = await _dio.post(
       ApiConstants.reports,

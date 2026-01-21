@@ -13,10 +13,307 @@ part of 'report_models.dart';
 T _$identity<T>(T value) => value;
 
 /// @nodoc
+mixin _$ReportImage {
+
+ String get id;@JsonKey(name: 'report_id') String? get reportId;@JsonKey(name: 'user_id') String? get userId; String get url;// Backend returns 'url' not 'image_url'
+@JsonKey(name: 's3_key') String? get s3Key; String? get filename;@JsonKey(name: 'file_size') int? get fileSize;@JsonKey(name: 'mime_type') String? get mimeType; int? get width; int? get height;@JsonKey(name: 'is_primary') bool get isPrimary;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;
+/// Create a copy of ReportImage
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ReportImageCopyWith<ReportImage> get copyWith => _$ReportImageCopyWithImpl<ReportImage>(this as ReportImage, _$identity);
+
+  /// Serializes this ReportImage to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportImage&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.url, url) || other.url == url)&&(identical(other.s3Key, s3Key) || other.s3Key == s3Key)&&(identical(other.filename, filename) || other.filename == filename)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.isPrimary, isPrimary) || other.isPrimary == isPrimary)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,reportId,userId,url,s3Key,filename,fileSize,mimeType,width,height,isPrimary,createdAt,updatedAt);
+
+@override
+String toString() {
+  return 'ReportImage(id: $id, reportId: $reportId, userId: $userId, url: $url, s3Key: $s3Key, filename: $filename, fileSize: $fileSize, mimeType: $mimeType, width: $width, height: $height, isPrimary: $isPrimary, createdAt: $createdAt, updatedAt: $updatedAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ReportImageCopyWith<$Res>  {
+  factory $ReportImageCopyWith(ReportImage value, $Res Function(ReportImage) _then) = _$ReportImageCopyWithImpl;
+@useResult
+$Res call({
+ String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String url,@JsonKey(name: 's3_key') String? s3Key, String? filename,@JsonKey(name: 'file_size') int? fileSize,@JsonKey(name: 'mime_type') String? mimeType, int? width, int? height,@JsonKey(name: 'is_primary') bool isPrimary,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
+});
+
+
+
+
+}
+/// @nodoc
+class _$ReportImageCopyWithImpl<$Res>
+    implements $ReportImageCopyWith<$Res> {
+  _$ReportImageCopyWithImpl(this._self, this._then);
+
+  final ReportImage _self;
+  final $Res Function(ReportImage) _then;
+
+/// Create a copy of ReportImage
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? url = null,Object? s3Key = freezed,Object? filename = freezed,Object? fileSize = freezed,Object? mimeType = freezed,Object? width = freezed,Object? height = freezed,Object? isPrimary = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,reportId: freezed == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
+as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String?,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,s3Key: freezed == s3Key ? _self.s3Key : s3Key // ignore: cast_nullable_to_non_nullable
+as String?,filename: freezed == filename ? _self.filename : filename // ignore: cast_nullable_to_non_nullable
+as String?,fileSize: freezed == fileSize ? _self.fileSize : fileSize // ignore: cast_nullable_to_non_nullable
+as int?,mimeType: freezed == mimeType ? _self.mimeType : mimeType // ignore: cast_nullable_to_non_nullable
+as String?,width: freezed == width ? _self.width : width // ignore: cast_nullable_to_non_nullable
+as int?,height: freezed == height ? _self.height : height // ignore: cast_nullable_to_non_nullable
+as int?,isPrimary: null == isPrimary ? _self.isPrimary : isPrimary // ignore: cast_nullable_to_non_nullable
+as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ReportImage].
+extension ReportImagePatterns on ReportImage {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _ReportImage value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _ReportImage() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _ReportImage value)  $default,){
+final _that = this;
+switch (_that) {
+case _ReportImage():
+return $default(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _ReportImage value)?  $default,){
+final _that = this;
+switch (_that) {
+case _ReportImage() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String url, @JsonKey(name: 's3_key')  String? s3Key,  String? filename, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType,  int? width,  int? height, @JsonKey(name: 'is_primary')  bool isPrimary, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _ReportImage() when $default != null:
+return $default(_that.id,_that.reportId,_that.userId,_that.url,_that.s3Key,_that.filename,_that.fileSize,_that.mimeType,_that.width,_that.height,_that.isPrimary,_that.createdAt,_that.updatedAt);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String url, @JsonKey(name: 's3_key')  String? s3Key,  String? filename, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType,  int? width,  int? height, @JsonKey(name: 'is_primary')  bool isPrimary, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)  $default,) {final _that = this;
+switch (_that) {
+case _ReportImage():
+return $default(_that.id,_that.reportId,_that.userId,_that.url,_that.s3Key,_that.filename,_that.fileSize,_that.mimeType,_that.width,_that.height,_that.isPrimary,_that.createdAt,_that.updatedAt);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String url, @JsonKey(name: 's3_key')  String? s3Key,  String? filename, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType,  int? width,  int? height, @JsonKey(name: 'is_primary')  bool isPrimary, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,) {final _that = this;
+switch (_that) {
+case _ReportImage() when $default != null:
+return $default(_that.id,_that.reportId,_that.userId,_that.url,_that.s3Key,_that.filename,_that.fileSize,_that.mimeType,_that.width,_that.height,_that.isPrimary,_that.createdAt,_that.updatedAt);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _ReportImage implements ReportImage {
+  const _ReportImage({required this.id, @JsonKey(name: 'report_id') this.reportId, @JsonKey(name: 'user_id') this.userId, required this.url, @JsonKey(name: 's3_key') this.s3Key, this.filename, @JsonKey(name: 'file_size') this.fileSize, @JsonKey(name: 'mime_type') this.mimeType, this.width, this.height, @JsonKey(name: 'is_primary') this.isPrimary = false, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt});
+  factory _ReportImage.fromJson(Map<String, dynamic> json) => _$ReportImageFromJson(json);
+
+@override final  String id;
+@override@JsonKey(name: 'report_id') final  String? reportId;
+@override@JsonKey(name: 'user_id') final  String? userId;
+@override final  String url;
+// Backend returns 'url' not 'image_url'
+@override@JsonKey(name: 's3_key') final  String? s3Key;
+@override final  String? filename;
+@override@JsonKey(name: 'file_size') final  int? fileSize;
+@override@JsonKey(name: 'mime_type') final  String? mimeType;
+@override final  int? width;
+@override final  int? height;
+@override@JsonKey(name: 'is_primary') final  bool isPrimary;
+@override@JsonKey(name: 'created_at') final  String? createdAt;
+@override@JsonKey(name: 'updated_at') final  String? updatedAt;
+
+/// Create a copy of ReportImage
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ReportImageCopyWith<_ReportImage> get copyWith => __$ReportImageCopyWithImpl<_ReportImage>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$ReportImageToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReportImage&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.url, url) || other.url == url)&&(identical(other.s3Key, s3Key) || other.s3Key == s3Key)&&(identical(other.filename, filename) || other.filename == filename)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.isPrimary, isPrimary) || other.isPrimary == isPrimary)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,reportId,userId,url,s3Key,filename,fileSize,mimeType,width,height,isPrimary,createdAt,updatedAt);
+
+@override
+String toString() {
+  return 'ReportImage(id: $id, reportId: $reportId, userId: $userId, url: $url, s3Key: $s3Key, filename: $filename, fileSize: $fileSize, mimeType: $mimeType, width: $width, height: $height, isPrimary: $isPrimary, createdAt: $createdAt, updatedAt: $updatedAt)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ReportImageCopyWith<$Res> implements $ReportImageCopyWith<$Res> {
+  factory _$ReportImageCopyWith(_ReportImage value, $Res Function(_ReportImage) _then) = __$ReportImageCopyWithImpl;
+@override @useResult
+$Res call({
+ String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String url,@JsonKey(name: 's3_key') String? s3Key, String? filename,@JsonKey(name: 'file_size') int? fileSize,@JsonKey(name: 'mime_type') String? mimeType, int? width, int? height,@JsonKey(name: 'is_primary') bool isPrimary,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
+});
+
+
+
+
+}
+/// @nodoc
+class __$ReportImageCopyWithImpl<$Res>
+    implements _$ReportImageCopyWith<$Res> {
+  __$ReportImageCopyWithImpl(this._self, this._then);
+
+  final _ReportImage _self;
+  final $Res Function(_ReportImage) _then;
+
+/// Create a copy of ReportImage
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? url = null,Object? s3Key = freezed,Object? filename = freezed,Object? fileSize = freezed,Object? mimeType = freezed,Object? width = freezed,Object? height = freezed,Object? isPrimary = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+  return _then(_ReportImage(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,reportId: freezed == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
+as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String?,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,s3Key: freezed == s3Key ? _self.s3Key : s3Key // ignore: cast_nullable_to_non_nullable
+as String?,filename: freezed == filename ? _self.filename : filename // ignore: cast_nullable_to_non_nullable
+as String?,fileSize: freezed == fileSize ? _self.fileSize : fileSize // ignore: cast_nullable_to_non_nullable
+as int?,mimeType: freezed == mimeType ? _self.mimeType : mimeType // ignore: cast_nullable_to_non_nullable
+as String?,width: freezed == width ? _self.width : width // ignore: cast_nullable_to_non_nullable
+as int?,height: freezed == height ? _self.height : height // ignore: cast_nullable_to_non_nullable
+as int?,isPrimary: null == isPrimary ? _self.isPrimary : isPrimary // ignore: cast_nullable_to_non_nullable
+as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
 mixin _$Report {
 
-@JsonKey(name: '_id') String get id; String get description; ReportStatus get status; String? get category; String? get barangay; double? get latitude; double? get longitude; List<String> get images;@JsonKey(name: 'created_by') String? get createdBy;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;// AI fields (optional, from backend)
-@JsonKey(name: 'ai_category') String? get aiCategory;@JsonKey(name: 'ai_priority') int? get aiPriority;@JsonKey(name: 'ai_confidence') double? get aiConfidence;
+ String get id;@JsonKey(name: 'report_id') String? get reportId;@JsonKey(name: 'user_id') String? get userId; String get description; String? get location; String? get barangay; String? get latitude;// Backend returns as string
+ String? get longitude;// Backend returns as string
+ List<ReportImage> get images;// List of image objects from backend
+ ReportStatus get status; String? get category;@JsonKey(name: 'category_confidence') double? get categoryConfidence; String? get priority;@JsonKey(name: 'priority_score') int? get priorityScore;@JsonKey(name: 'duplicate_state') String get duplicateState;@JsonKey(name: 'related_issue_id') String? get relatedIssueId;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;
 /// Create a copy of Report
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -29,16 +326,16 @@ $ReportCopyWith<Report> get copyWith => _$ReportCopyWithImpl<Report>(this as Rep
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Report&&(identical(other.id, id) || other.id == id)&&(identical(other.description, description) || other.description == description)&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&const DeepCollectionEquality().equals(other.images, images)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.aiCategory, aiCategory) || other.aiCategory == aiCategory)&&(identical(other.aiPriority, aiPriority) || other.aiPriority == aiPriority)&&(identical(other.aiConfidence, aiConfidence) || other.aiConfidence == aiConfidence));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Report&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&const DeepCollectionEquality().equals(other.images, images)&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.categoryConfidence, categoryConfidence) || other.categoryConfidence == categoryConfidence)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.priorityScore, priorityScore) || other.priorityScore == priorityScore)&&(identical(other.duplicateState, duplicateState) || other.duplicateState == duplicateState)&&(identical(other.relatedIssueId, relatedIssueId) || other.relatedIssueId == relatedIssueId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,description,status,category,barangay,latitude,longitude,const DeepCollectionEquality().hash(images),createdBy,createdAt,updatedAt,aiCategory,aiPriority,aiConfidence);
+int get hashCode => Object.hash(runtimeType,id,reportId,userId,description,location,barangay,latitude,longitude,const DeepCollectionEquality().hash(images),status,category,categoryConfidence,priority,priorityScore,duplicateState,relatedIssueId,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'Report(id: $id, description: $description, status: $status, category: $category, barangay: $barangay, latitude: $latitude, longitude: $longitude, images: $images, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, aiCategory: $aiCategory, aiPriority: $aiPriority, aiConfidence: $aiConfidence)';
+  return 'Report(id: $id, reportId: $reportId, userId: $userId, description: $description, location: $location, barangay: $barangay, latitude: $latitude, longitude: $longitude, images: $images, status: $status, category: $category, categoryConfidence: $categoryConfidence, priority: $priority, priorityScore: $priorityScore, duplicateState: $duplicateState, relatedIssueId: $relatedIssueId, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -49,7 +346,7 @@ abstract mixin class $ReportCopyWith<$Res>  {
   factory $ReportCopyWith(Report value, $Res Function(Report) _then) = _$ReportCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: '_id') String id, String description, ReportStatus status, String? category, String? barangay, double? latitude, double? longitude, List<String> images,@JsonKey(name: 'created_by') String? createdBy,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt,@JsonKey(name: 'ai_category') String? aiCategory,@JsonKey(name: 'ai_priority') int? aiPriority,@JsonKey(name: 'ai_confidence') double? aiConfidence
+ String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String description, String? location, String? barangay, String? latitude, String? longitude, List<ReportImage> images, ReportStatus status, String? category,@JsonKey(name: 'category_confidence') double? categoryConfidence, String? priority,@JsonKey(name: 'priority_score') int? priorityScore,@JsonKey(name: 'duplicate_state') String duplicateState,@JsonKey(name: 'related_issue_id') String? relatedIssueId,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -66,23 +363,27 @@ class _$ReportCopyWithImpl<$Res>
 
 /// Create a copy of Report
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? description = null,Object? status = null,Object? category = freezed,Object? barangay = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? images = null,Object? createdBy = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,Object? aiCategory = freezed,Object? aiPriority = freezed,Object? aiConfidence = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? description = null,Object? location = freezed,Object? barangay = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? images = null,Object? status = null,Object? category = freezed,Object? categoryConfidence = freezed,Object? priority = freezed,Object? priorityScore = freezed,Object? duplicateState = null,Object? relatedIssueId = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as ReportStatus,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
+as String,reportId: freezed == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
+as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String?,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
 as String?,barangay: freezed == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
 as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
-as double?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
-as double?,images: null == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
-as List<String>,createdBy: freezed == createdBy ? _self.createdBy : createdBy // ignore: cast_nullable_to_non_nullable
+as String?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
+as String?,images: null == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
+as List<ReportImage>,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as ReportStatus,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
+as String?,categoryConfidence: freezed == categoryConfidence ? _self.categoryConfidence : categoryConfidence // ignore: cast_nullable_to_non_nullable
+as double?,priority: freezed == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
+as String?,priorityScore: freezed == priorityScore ? _self.priorityScore : priorityScore // ignore: cast_nullable_to_non_nullable
+as int?,duplicateState: null == duplicateState ? _self.duplicateState : duplicateState // ignore: cast_nullable_to_non_nullable
+as String,relatedIssueId: freezed == relatedIssueId ? _self.relatedIssueId : relatedIssueId // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as String?,aiCategory: freezed == aiCategory ? _self.aiCategory : aiCategory // ignore: cast_nullable_to_non_nullable
-as String?,aiPriority: freezed == aiPriority ? _self.aiPriority : aiPriority // ignore: cast_nullable_to_non_nullable
-as int?,aiConfidence: freezed == aiConfidence ? _self.aiConfidence : aiConfidence // ignore: cast_nullable_to_non_nullable
-as double?,
+as String?,
   ));
 }
 
@@ -164,10 +465,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: '_id')  String id,  String description,  ReportStatus status,  String? category,  String? barangay,  double? latitude,  double? longitude,  List<String> images, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'ai_category')  String? aiCategory, @JsonKey(name: 'ai_priority')  int? aiPriority, @JsonKey(name: 'ai_confidence')  double? aiConfidence)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String description,  String? location,  String? barangay,  String? latitude,  String? longitude,  List<ReportImage> images,  ReportStatus status,  String? category, @JsonKey(name: 'category_confidence')  double? categoryConfidence,  String? priority, @JsonKey(name: 'priority_score')  int? priorityScore, @JsonKey(name: 'duplicate_state')  String duplicateState, @JsonKey(name: 'related_issue_id')  String? relatedIssueId, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Report() when $default != null:
-return $default(_that.id,_that.description,_that.status,_that.category,_that.barangay,_that.latitude,_that.longitude,_that.images,_that.createdBy,_that.createdAt,_that.updatedAt,_that.aiCategory,_that.aiPriority,_that.aiConfidence);case _:
+return $default(_that.id,_that.reportId,_that.userId,_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude,_that.images,_that.status,_that.category,_that.categoryConfidence,_that.priority,_that.priorityScore,_that.duplicateState,_that.relatedIssueId,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -185,10 +486,10 @@ return $default(_that.id,_that.description,_that.status,_that.category,_that.bar
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: '_id')  String id,  String description,  ReportStatus status,  String? category,  String? barangay,  double? latitude,  double? longitude,  List<String> images, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'ai_category')  String? aiCategory, @JsonKey(name: 'ai_priority')  int? aiPriority, @JsonKey(name: 'ai_confidence')  double? aiConfidence)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String description,  String? location,  String? barangay,  String? latitude,  String? longitude,  List<ReportImage> images,  ReportStatus status,  String? category, @JsonKey(name: 'category_confidence')  double? categoryConfidence,  String? priority, @JsonKey(name: 'priority_score')  int? priorityScore, @JsonKey(name: 'duplicate_state')  String duplicateState, @JsonKey(name: 'related_issue_id')  String? relatedIssueId, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Report():
-return $default(_that.id,_that.description,_that.status,_that.category,_that.barangay,_that.latitude,_that.longitude,_that.images,_that.createdBy,_that.createdAt,_that.updatedAt,_that.aiCategory,_that.aiPriority,_that.aiConfidence);}
+return $default(_that.id,_that.reportId,_that.userId,_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude,_that.images,_that.status,_that.category,_that.categoryConfidence,_that.priority,_that.priorityScore,_that.duplicateState,_that.relatedIssueId,_that.createdAt,_that.updatedAt);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -202,10 +503,10 @@ return $default(_that.id,_that.description,_that.status,_that.category,_that.bar
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: '_id')  String id,  String description,  ReportStatus status,  String? category,  String? barangay,  double? latitude,  double? longitude,  List<String> images, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'ai_category')  String? aiCategory, @JsonKey(name: 'ai_priority')  int? aiPriority, @JsonKey(name: 'ai_confidence')  double? aiConfidence)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String description,  String? location,  String? barangay,  String? latitude,  String? longitude,  List<ReportImage> images,  ReportStatus status,  String? category, @JsonKey(name: 'category_confidence')  double? categoryConfidence,  String? priority, @JsonKey(name: 'priority_score')  int? priorityScore, @JsonKey(name: 'duplicate_state')  String duplicateState, @JsonKey(name: 'related_issue_id')  String? relatedIssueId, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Report() when $default != null:
-return $default(_that.id,_that.description,_that.status,_that.category,_that.barangay,_that.latitude,_that.longitude,_that.images,_that.createdBy,_that.createdAt,_that.updatedAt,_that.aiCategory,_that.aiPriority,_that.aiConfidence);case _:
+return $default(_that.id,_that.reportId,_that.userId,_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude,_that.images,_that.status,_that.category,_that.categoryConfidence,_that.priority,_that.priorityScore,_that.duplicateState,_that.relatedIssueId,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -217,30 +518,37 @@ return $default(_that.id,_that.description,_that.status,_that.category,_that.bar
 @JsonSerializable()
 
 class _Report implements Report {
-  const _Report({@JsonKey(name: '_id') required this.id, required this.description, this.status = ReportStatus.pending, this.category, this.barangay, this.latitude, this.longitude, final  List<String> images = const [], @JsonKey(name: 'created_by') this.createdBy, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt, @JsonKey(name: 'ai_category') this.aiCategory, @JsonKey(name: 'ai_priority') this.aiPriority, @JsonKey(name: 'ai_confidence') this.aiConfidence}): _images = images;
+  const _Report({required this.id, @JsonKey(name: 'report_id') this.reportId, @JsonKey(name: 'user_id') this.userId, required this.description, this.location, this.barangay, this.latitude, this.longitude, final  List<ReportImage> images = const [], this.status = ReportStatus.pending, this.category, @JsonKey(name: 'category_confidence') this.categoryConfidence, this.priority, @JsonKey(name: 'priority_score') this.priorityScore, @JsonKey(name: 'duplicate_state') this.duplicateState = 'New', @JsonKey(name: 'related_issue_id') this.relatedIssueId, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt}): _images = images;
   factory _Report.fromJson(Map<String, dynamic> json) => _$ReportFromJson(json);
 
-@override@JsonKey(name: '_id') final  String id;
+@override final  String id;
+@override@JsonKey(name: 'report_id') final  String? reportId;
+@override@JsonKey(name: 'user_id') final  String? userId;
 @override final  String description;
-@override@JsonKey() final  ReportStatus status;
-@override final  String? category;
+@override final  String? location;
 @override final  String? barangay;
-@override final  double? latitude;
-@override final  double? longitude;
- final  List<String> _images;
-@override@JsonKey() List<String> get images {
+@override final  String? latitude;
+// Backend returns as string
+@override final  String? longitude;
+// Backend returns as string
+ final  List<ReportImage> _images;
+// Backend returns as string
+@override@JsonKey() List<ReportImage> get images {
   if (_images is EqualUnmodifiableListView) return _images;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_images);
 }
 
-@override@JsonKey(name: 'created_by') final  String? createdBy;
+// List of image objects from backend
+@override@JsonKey() final  ReportStatus status;
+@override final  String? category;
+@override@JsonKey(name: 'category_confidence') final  double? categoryConfidence;
+@override final  String? priority;
+@override@JsonKey(name: 'priority_score') final  int? priorityScore;
+@override@JsonKey(name: 'duplicate_state') final  String duplicateState;
+@override@JsonKey(name: 'related_issue_id') final  String? relatedIssueId;
 @override@JsonKey(name: 'created_at') final  String? createdAt;
 @override@JsonKey(name: 'updated_at') final  String? updatedAt;
-// AI fields (optional, from backend)
-@override@JsonKey(name: 'ai_category') final  String? aiCategory;
-@override@JsonKey(name: 'ai_priority') final  int? aiPriority;
-@override@JsonKey(name: 'ai_confidence') final  double? aiConfidence;
 
 /// Create a copy of Report
 /// with the given fields replaced by the non-null parameter values.
@@ -255,16 +563,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Report&&(identical(other.id, id) || other.id == id)&&(identical(other.description, description) || other.description == description)&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&const DeepCollectionEquality().equals(other._images, _images)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.aiCategory, aiCategory) || other.aiCategory == aiCategory)&&(identical(other.aiPriority, aiPriority) || other.aiPriority == aiPriority)&&(identical(other.aiConfidence, aiConfidence) || other.aiConfidence == aiConfidence));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Report&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&const DeepCollectionEquality().equals(other._images, _images)&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.categoryConfidence, categoryConfidence) || other.categoryConfidence == categoryConfidence)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.priorityScore, priorityScore) || other.priorityScore == priorityScore)&&(identical(other.duplicateState, duplicateState) || other.duplicateState == duplicateState)&&(identical(other.relatedIssueId, relatedIssueId) || other.relatedIssueId == relatedIssueId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,description,status,category,barangay,latitude,longitude,const DeepCollectionEquality().hash(_images),createdBy,createdAt,updatedAt,aiCategory,aiPriority,aiConfidence);
+int get hashCode => Object.hash(runtimeType,id,reportId,userId,description,location,barangay,latitude,longitude,const DeepCollectionEquality().hash(_images),status,category,categoryConfidence,priority,priorityScore,duplicateState,relatedIssueId,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'Report(id: $id, description: $description, status: $status, category: $category, barangay: $barangay, latitude: $latitude, longitude: $longitude, images: $images, createdBy: $createdBy, createdAt: $createdAt, updatedAt: $updatedAt, aiCategory: $aiCategory, aiPriority: $aiPriority, aiConfidence: $aiConfidence)';
+  return 'Report(id: $id, reportId: $reportId, userId: $userId, description: $description, location: $location, barangay: $barangay, latitude: $latitude, longitude: $longitude, images: $images, status: $status, category: $category, categoryConfidence: $categoryConfidence, priority: $priority, priorityScore: $priorityScore, duplicateState: $duplicateState, relatedIssueId: $relatedIssueId, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -275,7 +583,7 @@ abstract mixin class _$ReportCopyWith<$Res> implements $ReportCopyWith<$Res> {
   factory _$ReportCopyWith(_Report value, $Res Function(_Report) _then) = __$ReportCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: '_id') String id, String description, ReportStatus status, String? category, String? barangay, double? latitude, double? longitude, List<String> images,@JsonKey(name: 'created_by') String? createdBy,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt,@JsonKey(name: 'ai_category') String? aiCategory,@JsonKey(name: 'ai_priority') int? aiPriority,@JsonKey(name: 'ai_confidence') double? aiConfidence
+ String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String description, String? location, String? barangay, String? latitude, String? longitude, List<ReportImage> images, ReportStatus status, String? category,@JsonKey(name: 'category_confidence') double? categoryConfidence, String? priority,@JsonKey(name: 'priority_score') int? priorityScore,@JsonKey(name: 'duplicate_state') String duplicateState,@JsonKey(name: 'related_issue_id') String? relatedIssueId,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -292,23 +600,27 @@ class __$ReportCopyWithImpl<$Res>
 
 /// Create a copy of Report
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? description = null,Object? status = null,Object? category = freezed,Object? barangay = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? images = null,Object? createdBy = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,Object? aiCategory = freezed,Object? aiPriority = freezed,Object? aiConfidence = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? description = null,Object? location = freezed,Object? barangay = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? images = null,Object? status = null,Object? category = freezed,Object? categoryConfidence = freezed,Object? priority = freezed,Object? priorityScore = freezed,Object? duplicateState = null,Object? relatedIssueId = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_Report(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as ReportStatus,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
+as String,reportId: freezed == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
+as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String?,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
+as String,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
 as String?,barangay: freezed == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
 as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
-as double?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
-as double?,images: null == images ? _self._images : images // ignore: cast_nullable_to_non_nullable
-as List<String>,createdBy: freezed == createdBy ? _self.createdBy : createdBy // ignore: cast_nullable_to_non_nullable
+as String?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
+as String?,images: null == images ? _self._images : images // ignore: cast_nullable_to_non_nullable
+as List<ReportImage>,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
+as ReportStatus,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
+as String?,categoryConfidence: freezed == categoryConfidence ? _self.categoryConfidence : categoryConfidence // ignore: cast_nullable_to_non_nullable
+as double?,priority: freezed == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
+as String?,priorityScore: freezed == priorityScore ? _self.priorityScore : priorityScore // ignore: cast_nullable_to_non_nullable
+as int?,duplicateState: null == duplicateState ? _self.duplicateState : duplicateState // ignore: cast_nullable_to_non_nullable
+as String,relatedIssueId: freezed == relatedIssueId ? _self.relatedIssueId : relatedIssueId // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as String?,aiCategory: freezed == aiCategory ? _self.aiCategory : aiCategory // ignore: cast_nullable_to_non_nullable
-as String?,aiPriority: freezed == aiPriority ? _self.aiPriority : aiPriority // ignore: cast_nullable_to_non_nullable
-as int?,aiConfidence: freezed == aiConfidence ? _self.aiConfidence : aiConfidence // ignore: cast_nullable_to_non_nullable
-as double?,
+as String?,
   ));
 }
 
@@ -319,7 +631,8 @@ as double?,
 /// @nodoc
 mixin _$CreateReportRequest {
 
- String get description; String? get category; String? get barangay; double? get latitude; double? get longitude;
+ String get description; String get location; String get barangay; String? get latitude;// Sent as string, backend accepts DecimalField
+ String? get longitude;
 /// Create a copy of CreateReportRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -332,16 +645,16 @@ $CreateReportRequestCopyWith<CreateReportRequest> get copyWith => _$CreateReport
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateReportRequest&&(identical(other.description, description) || other.description == description)&&(identical(other.category, category) || other.category == category)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateReportRequest&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,description,category,barangay,latitude,longitude);
+int get hashCode => Object.hash(runtimeType,description,location,barangay,latitude,longitude);
 
 @override
 String toString() {
-  return 'CreateReportRequest(description: $description, category: $category, barangay: $barangay, latitude: $latitude, longitude: $longitude)';
+  return 'CreateReportRequest(description: $description, location: $location, barangay: $barangay, latitude: $latitude, longitude: $longitude)';
 }
 
 
@@ -352,7 +665,7 @@ abstract mixin class $CreateReportRequestCopyWith<$Res>  {
   factory $CreateReportRequestCopyWith(CreateReportRequest value, $Res Function(CreateReportRequest) _then) = _$CreateReportRequestCopyWithImpl;
 @useResult
 $Res call({
- String description, String? category, String? barangay, double? latitude, double? longitude
+ String description, String location, String barangay, String? latitude, String? longitude
 });
 
 
@@ -369,14 +682,14 @@ class _$CreateReportRequestCopyWithImpl<$Res>
 
 /// Create a copy of CreateReportRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? description = null,Object? category = freezed,Object? barangay = freezed,Object? latitude = freezed,Object? longitude = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? description = null,Object? location = null,Object? barangay = null,Object? latitude = freezed,Object? longitude = freezed,}) {
   return _then(_self.copyWith(
 description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
-as String?,barangay: freezed == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
-as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
-as double?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
-as double?,
+as String,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
+as String,barangay: null == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
+as String,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
+as String?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -458,10 +771,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String description,  String? category,  String? barangay,  double? latitude,  double? longitude)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String description,  String location,  String barangay,  String? latitude,  String? longitude)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CreateReportRequest() when $default != null:
-return $default(_that.description,_that.category,_that.barangay,_that.latitude,_that.longitude);case _:
+return $default(_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude);case _:
   return orElse();
 
 }
@@ -479,10 +792,10 @@ return $default(_that.description,_that.category,_that.barangay,_that.latitude,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String description,  String? category,  String? barangay,  double? latitude,  double? longitude)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String description,  String location,  String barangay,  String? latitude,  String? longitude)  $default,) {final _that = this;
 switch (_that) {
 case _CreateReportRequest():
-return $default(_that.description,_that.category,_that.barangay,_that.latitude,_that.longitude);}
+return $default(_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -496,10 +809,10 @@ return $default(_that.description,_that.category,_that.barangay,_that.latitude,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String description,  String? category,  String? barangay,  double? latitude,  double? longitude)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String description,  String location,  String barangay,  String? latitude,  String? longitude)?  $default,) {final _that = this;
 switch (_that) {
 case _CreateReportRequest() when $default != null:
-return $default(_that.description,_that.category,_that.barangay,_that.latitude,_that.longitude);case _:
+return $default(_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude);case _:
   return null;
 
 }
@@ -511,14 +824,15 @@ return $default(_that.description,_that.category,_that.barangay,_that.latitude,_
 @JsonSerializable()
 
 class _CreateReportRequest implements CreateReportRequest {
-  const _CreateReportRequest({required this.description, this.category, this.barangay, this.latitude, this.longitude});
+  const _CreateReportRequest({required this.description, required this.location, required this.barangay, this.latitude, this.longitude});
   factory _CreateReportRequest.fromJson(Map<String, dynamic> json) => _$CreateReportRequestFromJson(json);
 
 @override final  String description;
-@override final  String? category;
-@override final  String? barangay;
-@override final  double? latitude;
-@override final  double? longitude;
+@override final  String location;
+@override final  String barangay;
+@override final  String? latitude;
+// Sent as string, backend accepts DecimalField
+@override final  String? longitude;
 
 /// Create a copy of CreateReportRequest
 /// with the given fields replaced by the non-null parameter values.
@@ -533,16 +847,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateReportRequest&&(identical(other.description, description) || other.description == description)&&(identical(other.category, category) || other.category == category)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateReportRequest&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,description,category,barangay,latitude,longitude);
+int get hashCode => Object.hash(runtimeType,description,location,barangay,latitude,longitude);
 
 @override
 String toString() {
-  return 'CreateReportRequest(description: $description, category: $category, barangay: $barangay, latitude: $latitude, longitude: $longitude)';
+  return 'CreateReportRequest(description: $description, location: $location, barangay: $barangay, latitude: $latitude, longitude: $longitude)';
 }
 
 
@@ -553,7 +867,7 @@ abstract mixin class _$CreateReportRequestCopyWith<$Res> implements $CreateRepor
   factory _$CreateReportRequestCopyWith(_CreateReportRequest value, $Res Function(_CreateReportRequest) _then) = __$CreateReportRequestCopyWithImpl;
 @override @useResult
 $Res call({
- String description, String? category, String? barangay, double? latitude, double? longitude
+ String description, String location, String barangay, String? latitude, String? longitude
 });
 
 
@@ -570,14 +884,14 @@ class __$CreateReportRequestCopyWithImpl<$Res>
 
 /// Create a copy of CreateReportRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? description = null,Object? category = freezed,Object? barangay = freezed,Object? latitude = freezed,Object? longitude = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? description = null,Object? location = null,Object? barangay = null,Object? latitude = freezed,Object? longitude = freezed,}) {
   return _then(_CreateReportRequest(
 description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
-as String,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
-as String?,barangay: freezed == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
-as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
-as double?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
-as double?,
+as String,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
+as String,barangay: null == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
+as String,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
+as String?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -851,7 +1165,7 @@ as String?,
 /// @nodoc
 mixin _$PaginatedReports {
 
- List<Report> get results; int get count; String? get next; String? get previous;
+ List<Report> get results; int get count; int get total; int get page;@JsonKey(name: 'page_size') int get pageSize;@JsonKey(name: 'total_pages') int get totalPages;
 /// Create a copy of PaginatedReports
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -864,16 +1178,16 @@ $PaginatedReportsCopyWith<PaginatedReports> get copyWith => _$PaginatedReportsCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PaginatedReports&&const DeepCollectionEquality().equals(other.results, results)&&(identical(other.count, count) || other.count == count)&&(identical(other.next, next) || other.next == next)&&(identical(other.previous, previous) || other.previous == previous));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PaginatedReports&&const DeepCollectionEquality().equals(other.results, results)&&(identical(other.count, count) || other.count == count)&&(identical(other.total, total) || other.total == total)&&(identical(other.page, page) || other.page == page)&&(identical(other.pageSize, pageSize) || other.pageSize == pageSize)&&(identical(other.totalPages, totalPages) || other.totalPages == totalPages));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(results),count,next,previous);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(results),count,total,page,pageSize,totalPages);
 
 @override
 String toString() {
-  return 'PaginatedReports(results: $results, count: $count, next: $next, previous: $previous)';
+  return 'PaginatedReports(results: $results, count: $count, total: $total, page: $page, pageSize: $pageSize, totalPages: $totalPages)';
 }
 
 
@@ -884,7 +1198,7 @@ abstract mixin class $PaginatedReportsCopyWith<$Res>  {
   factory $PaginatedReportsCopyWith(PaginatedReports value, $Res Function(PaginatedReports) _then) = _$PaginatedReportsCopyWithImpl;
 @useResult
 $Res call({
- List<Report> results, int count, String? next, String? previous
+ List<Report> results, int count, int total, int page,@JsonKey(name: 'page_size') int pageSize,@JsonKey(name: 'total_pages') int totalPages
 });
 
 
@@ -901,13 +1215,15 @@ class _$PaginatedReportsCopyWithImpl<$Res>
 
 /// Create a copy of PaginatedReports
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? results = null,Object? count = null,Object? next = freezed,Object? previous = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? results = null,Object? count = null,Object? total = null,Object? page = null,Object? pageSize = null,Object? totalPages = null,}) {
   return _then(_self.copyWith(
 results: null == results ? _self.results : results // ignore: cast_nullable_to_non_nullable
 as List<Report>,count: null == count ? _self.count : count // ignore: cast_nullable_to_non_nullable
-as int,next: freezed == next ? _self.next : next // ignore: cast_nullable_to_non_nullable
-as String?,previous: freezed == previous ? _self.previous : previous // ignore: cast_nullable_to_non_nullable
-as String?,
+as int,total: null == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
+as int,page: null == page ? _self.page : page // ignore: cast_nullable_to_non_nullable
+as int,pageSize: null == pageSize ? _self.pageSize : pageSize // ignore: cast_nullable_to_non_nullable
+as int,totalPages: null == totalPages ? _self.totalPages : totalPages // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -989,10 +1305,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Report> results,  int count,  String? next,  String? previous)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Report> results,  int count,  int total,  int page, @JsonKey(name: 'page_size')  int pageSize, @JsonKey(name: 'total_pages')  int totalPages)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PaginatedReports() when $default != null:
-return $default(_that.results,_that.count,_that.next,_that.previous);case _:
+return $default(_that.results,_that.count,_that.total,_that.page,_that.pageSize,_that.totalPages);case _:
   return orElse();
 
 }
@@ -1010,10 +1326,10 @@ return $default(_that.results,_that.count,_that.next,_that.previous);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Report> results,  int count,  String? next,  String? previous)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Report> results,  int count,  int total,  int page, @JsonKey(name: 'page_size')  int pageSize, @JsonKey(name: 'total_pages')  int totalPages)  $default,) {final _that = this;
 switch (_that) {
 case _PaginatedReports():
-return $default(_that.results,_that.count,_that.next,_that.previous);}
+return $default(_that.results,_that.count,_that.total,_that.page,_that.pageSize,_that.totalPages);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -1027,10 +1343,10 @@ return $default(_that.results,_that.count,_that.next,_that.previous);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Report> results,  int count,  String? next,  String? previous)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Report> results,  int count,  int total,  int page, @JsonKey(name: 'page_size')  int pageSize, @JsonKey(name: 'total_pages')  int totalPages)?  $default,) {final _that = this;
 switch (_that) {
 case _PaginatedReports() when $default != null:
-return $default(_that.results,_that.count,_that.next,_that.previous);case _:
+return $default(_that.results,_that.count,_that.total,_that.page,_that.pageSize,_that.totalPages);case _:
   return null;
 
 }
@@ -1042,7 +1358,7 @@ return $default(_that.results,_that.count,_that.next,_that.previous);case _:
 @JsonSerializable()
 
 class _PaginatedReports implements PaginatedReports {
-  const _PaginatedReports({required final  List<Report> results, this.count = 0, this.next, this.previous}): _results = results;
+  const _PaginatedReports({required final  List<Report> results, this.count = 0, this.total = 0, this.page = 1, @JsonKey(name: 'page_size') this.pageSize = 20, @JsonKey(name: 'total_pages') this.totalPages = 1}): _results = results;
   factory _PaginatedReports.fromJson(Map<String, dynamic> json) => _$PaginatedReportsFromJson(json);
 
  final  List<Report> _results;
@@ -1053,8 +1369,10 @@ class _PaginatedReports implements PaginatedReports {
 }
 
 @override@JsonKey() final  int count;
-@override final  String? next;
-@override final  String? previous;
+@override@JsonKey() final  int total;
+@override@JsonKey() final  int page;
+@override@JsonKey(name: 'page_size') final  int pageSize;
+@override@JsonKey(name: 'total_pages') final  int totalPages;
 
 /// Create a copy of PaginatedReports
 /// with the given fields replaced by the non-null parameter values.
@@ -1069,16 +1387,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PaginatedReports&&const DeepCollectionEquality().equals(other._results, _results)&&(identical(other.count, count) || other.count == count)&&(identical(other.next, next) || other.next == next)&&(identical(other.previous, previous) || other.previous == previous));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PaginatedReports&&const DeepCollectionEquality().equals(other._results, _results)&&(identical(other.count, count) || other.count == count)&&(identical(other.total, total) || other.total == total)&&(identical(other.page, page) || other.page == page)&&(identical(other.pageSize, pageSize) || other.pageSize == pageSize)&&(identical(other.totalPages, totalPages) || other.totalPages == totalPages));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_results),count,next,previous);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_results),count,total,page,pageSize,totalPages);
 
 @override
 String toString() {
-  return 'PaginatedReports(results: $results, count: $count, next: $next, previous: $previous)';
+  return 'PaginatedReports(results: $results, count: $count, total: $total, page: $page, pageSize: $pageSize, totalPages: $totalPages)';
 }
 
 
@@ -1089,7 +1407,7 @@ abstract mixin class _$PaginatedReportsCopyWith<$Res> implements $PaginatedRepor
   factory _$PaginatedReportsCopyWith(_PaginatedReports value, $Res Function(_PaginatedReports) _then) = __$PaginatedReportsCopyWithImpl;
 @override @useResult
 $Res call({
- List<Report> results, int count, String? next, String? previous
+ List<Report> results, int count, int total, int page,@JsonKey(name: 'page_size') int pageSize,@JsonKey(name: 'total_pages') int totalPages
 });
 
 
@@ -1106,13 +1424,15 @@ class __$PaginatedReportsCopyWithImpl<$Res>
 
 /// Create a copy of PaginatedReports
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? results = null,Object? count = null,Object? next = freezed,Object? previous = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? results = null,Object? count = null,Object? total = null,Object? page = null,Object? pageSize = null,Object? totalPages = null,}) {
   return _then(_PaginatedReports(
 results: null == results ? _self._results : results // ignore: cast_nullable_to_non_nullable
 as List<Report>,count: null == count ? _self.count : count // ignore: cast_nullable_to_non_nullable
-as int,next: freezed == next ? _self.next : next // ignore: cast_nullable_to_non_nullable
-as String?,previous: freezed == previous ? _self.previous : previous // ignore: cast_nullable_to_non_nullable
-as String?,
+as int,total: null == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
+as int,page: null == page ? _self.page : page // ignore: cast_nullable_to_non_nullable
+as int,pageSize: null == pageSize ? _self.pageSize : pageSize // ignore: cast_nullable_to_non_nullable
+as int,totalPages: null == totalPages ? _self.totalPages : totalPages // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -1123,7 +1443,7 @@ as String?,
 /// @nodoc
 mixin _$ReportStats {
 
- int get total; int get pending;@JsonKey(name: 'in_progress') int get inProgress; int get resolved; int get closed;
+ int get total; int get pending;@JsonKey(name: 'in_progress') int get inProgress; int get resolved; int get rejected; int get verified; int get assigned;
 /// Create a copy of ReportStats
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1136,16 +1456,16 @@ $ReportStatsCopyWith<ReportStats> get copyWith => _$ReportStatsCopyWithImpl<Repo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportStats&&(identical(other.total, total) || other.total == total)&&(identical(other.pending, pending) || other.pending == pending)&&(identical(other.inProgress, inProgress) || other.inProgress == inProgress)&&(identical(other.resolved, resolved) || other.resolved == resolved)&&(identical(other.closed, closed) || other.closed == closed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportStats&&(identical(other.total, total) || other.total == total)&&(identical(other.pending, pending) || other.pending == pending)&&(identical(other.inProgress, inProgress) || other.inProgress == inProgress)&&(identical(other.resolved, resolved) || other.resolved == resolved)&&(identical(other.rejected, rejected) || other.rejected == rejected)&&(identical(other.verified, verified) || other.verified == verified)&&(identical(other.assigned, assigned) || other.assigned == assigned));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,total,pending,inProgress,resolved,closed);
+int get hashCode => Object.hash(runtimeType,total,pending,inProgress,resolved,rejected,verified,assigned);
 
 @override
 String toString() {
-  return 'ReportStats(total: $total, pending: $pending, inProgress: $inProgress, resolved: $resolved, closed: $closed)';
+  return 'ReportStats(total: $total, pending: $pending, inProgress: $inProgress, resolved: $resolved, rejected: $rejected, verified: $verified, assigned: $assigned)';
 }
 
 
@@ -1156,7 +1476,7 @@ abstract mixin class $ReportStatsCopyWith<$Res>  {
   factory $ReportStatsCopyWith(ReportStats value, $Res Function(ReportStats) _then) = _$ReportStatsCopyWithImpl;
 @useResult
 $Res call({
- int total, int pending,@JsonKey(name: 'in_progress') int inProgress, int resolved, int closed
+ int total, int pending,@JsonKey(name: 'in_progress') int inProgress, int resolved, int rejected, int verified, int assigned
 });
 
 
@@ -1173,13 +1493,15 @@ class _$ReportStatsCopyWithImpl<$Res>
 
 /// Create a copy of ReportStats
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? total = null,Object? pending = null,Object? inProgress = null,Object? resolved = null,Object? closed = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? total = null,Object? pending = null,Object? inProgress = null,Object? resolved = null,Object? rejected = null,Object? verified = null,Object? assigned = null,}) {
   return _then(_self.copyWith(
 total: null == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
 as int,pending: null == pending ? _self.pending : pending // ignore: cast_nullable_to_non_nullable
 as int,inProgress: null == inProgress ? _self.inProgress : inProgress // ignore: cast_nullable_to_non_nullable
 as int,resolved: null == resolved ? _self.resolved : resolved // ignore: cast_nullable_to_non_nullable
-as int,closed: null == closed ? _self.closed : closed // ignore: cast_nullable_to_non_nullable
+as int,rejected: null == rejected ? _self.rejected : rejected // ignore: cast_nullable_to_non_nullable
+as int,verified: null == verified ? _self.verified : verified // ignore: cast_nullable_to_non_nullable
+as int,assigned: null == assigned ? _self.assigned : assigned // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
@@ -1262,10 +1584,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int total,  int pending, @JsonKey(name: 'in_progress')  int inProgress,  int resolved,  int closed)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int total,  int pending, @JsonKey(name: 'in_progress')  int inProgress,  int resolved,  int rejected,  int verified,  int assigned)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ReportStats() when $default != null:
-return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.closed);case _:
+return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.rejected,_that.verified,_that.assigned);case _:
   return orElse();
 
 }
@@ -1283,10 +1605,10 @@ return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int total,  int pending, @JsonKey(name: 'in_progress')  int inProgress,  int resolved,  int closed)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int total,  int pending, @JsonKey(name: 'in_progress')  int inProgress,  int resolved,  int rejected,  int verified,  int assigned)  $default,) {final _that = this;
 switch (_that) {
 case _ReportStats():
-return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.closed);}
+return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.rejected,_that.verified,_that.assigned);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -1300,10 +1622,10 @@ return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int total,  int pending, @JsonKey(name: 'in_progress')  int inProgress,  int resolved,  int closed)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int total,  int pending, @JsonKey(name: 'in_progress')  int inProgress,  int resolved,  int rejected,  int verified,  int assigned)?  $default,) {final _that = this;
 switch (_that) {
 case _ReportStats() when $default != null:
-return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.closed);case _:
+return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.rejected,_that.verified,_that.assigned);case _:
   return null;
 
 }
@@ -1315,14 +1637,16 @@ return $default(_that.total,_that.pending,_that.inProgress,_that.resolved,_that.
 @JsonSerializable()
 
 class _ReportStats implements ReportStats {
-  const _ReportStats({this.total = 0, this.pending = 0, @JsonKey(name: 'in_progress') this.inProgress = 0, this.resolved = 0, this.closed = 0});
+  const _ReportStats({this.total = 0, this.pending = 0, @JsonKey(name: 'in_progress') this.inProgress = 0, this.resolved = 0, this.rejected = 0, this.verified = 0, this.assigned = 0});
   factory _ReportStats.fromJson(Map<String, dynamic> json) => _$ReportStatsFromJson(json);
 
 @override@JsonKey() final  int total;
 @override@JsonKey() final  int pending;
 @override@JsonKey(name: 'in_progress') final  int inProgress;
 @override@JsonKey() final  int resolved;
-@override@JsonKey() final  int closed;
+@override@JsonKey() final  int rejected;
+@override@JsonKey() final  int verified;
+@override@JsonKey() final  int assigned;
 
 /// Create a copy of ReportStats
 /// with the given fields replaced by the non-null parameter values.
@@ -1337,16 +1661,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReportStats&&(identical(other.total, total) || other.total == total)&&(identical(other.pending, pending) || other.pending == pending)&&(identical(other.inProgress, inProgress) || other.inProgress == inProgress)&&(identical(other.resolved, resolved) || other.resolved == resolved)&&(identical(other.closed, closed) || other.closed == closed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReportStats&&(identical(other.total, total) || other.total == total)&&(identical(other.pending, pending) || other.pending == pending)&&(identical(other.inProgress, inProgress) || other.inProgress == inProgress)&&(identical(other.resolved, resolved) || other.resolved == resolved)&&(identical(other.rejected, rejected) || other.rejected == rejected)&&(identical(other.verified, verified) || other.verified == verified)&&(identical(other.assigned, assigned) || other.assigned == assigned));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,total,pending,inProgress,resolved,closed);
+int get hashCode => Object.hash(runtimeType,total,pending,inProgress,resolved,rejected,verified,assigned);
 
 @override
 String toString() {
-  return 'ReportStats(total: $total, pending: $pending, inProgress: $inProgress, resolved: $resolved, closed: $closed)';
+  return 'ReportStats(total: $total, pending: $pending, inProgress: $inProgress, resolved: $resolved, rejected: $rejected, verified: $verified, assigned: $assigned)';
 }
 
 
@@ -1357,7 +1681,7 @@ abstract mixin class _$ReportStatsCopyWith<$Res> implements $ReportStatsCopyWith
   factory _$ReportStatsCopyWith(_ReportStats value, $Res Function(_ReportStats) _then) = __$ReportStatsCopyWithImpl;
 @override @useResult
 $Res call({
- int total, int pending,@JsonKey(name: 'in_progress') int inProgress, int resolved, int closed
+ int total, int pending,@JsonKey(name: 'in_progress') int inProgress, int resolved, int rejected, int verified, int assigned
 });
 
 
@@ -1374,13 +1698,15 @@ class __$ReportStatsCopyWithImpl<$Res>
 
 /// Create a copy of ReportStats
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? total = null,Object? pending = null,Object? inProgress = null,Object? resolved = null,Object? closed = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? total = null,Object? pending = null,Object? inProgress = null,Object? resolved = null,Object? rejected = null,Object? verified = null,Object? assigned = null,}) {
   return _then(_ReportStats(
 total: null == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
 as int,pending: null == pending ? _self.pending : pending // ignore: cast_nullable_to_non_nullable
 as int,inProgress: null == inProgress ? _self.inProgress : inProgress // ignore: cast_nullable_to_non_nullable
 as int,resolved: null == resolved ? _self.resolved : resolved // ignore: cast_nullable_to_non_nullable
-as int,closed: null == closed ? _self.closed : closed // ignore: cast_nullable_to_non_nullable
+as int,rejected: null == rejected ? _self.rejected : rejected // ignore: cast_nullable_to_non_nullable
+as int,verified: null == verified ? _self.verified : verified // ignore: cast_nullable_to_non_nullable
+as int,assigned: null == assigned ? _self.assigned : assigned // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
