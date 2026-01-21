@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../core/theme/app_colors.dart';
-import '../../images/data/images_repository.dart';
 import '../data/report_models.dart';
 import '../data/reports_repository.dart';
 
@@ -45,20 +44,8 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       final repo = ref.read(reportsRepositoryProvider);
       final report = await repo.getReport(widget.reportId);
 
-      // Load images
-      List<String> imageUrls = [];
-      if (report.images.isNotEmpty) {
-        imageUrls = report.images;
-      } else {
-        // Try to fetch from images endpoint
-        try {
-          final imagesRepo = ref.read(imagesRepositoryProvider);
-          final images = await imagesRepo.getImagesForReport(widget.reportId);
-          imageUrls = images.map((img) => img.imageUrl).toList();
-        } catch (_) {
-          // Ignore image loading errors
-        }
-      }
+      // Images are now embedded in the report response from backend
+      List<String> imageUrls = report.images.map((img) => img.url).toList();
 
       setState(() {
         _report = report;
@@ -307,7 +294,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        '${report.latitude!.toStringAsFixed(6)}, ${report.longitude!.toStringAsFixed(6)}',
+                        '${report.latitude}, ${report.longitude}',
                         style: theme.textTheme.bodySmall,
                       ),
                     ),
@@ -319,7 +306,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           ],
 
           // AI Analysis (if available)
-          if (report.aiCategory != null || report.aiPriority != null) ...[
+          if (report.category != null || report.priority != null) ...[
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -346,18 +333,18 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  if (report.aiCategory != null)
-                    _buildInfoRow('Category', report.aiCategory!, theme),
-                  if (report.aiPriority != null)
+                  if (report.category != null)
+                    _buildInfoRow('Category', report.category!, theme),
+                  if (report.priority != null)
                     _buildInfoRow(
                       'Priority',
-                      _priorityLabel(report.aiPriority!),
+                      report.priority!,
                       theme,
                     ),
-                  if (report.aiConfidence != null)
+                  if (report.categoryConfidence != null)
                     _buildInfoRow(
                       'Confidence',
-                      '${(report.aiConfidence! * 100).toStringAsFixed(1)}%',
+                      '${(report.categoryConfidence! * 100).toStringAsFixed(1)}%',
                       theme,
                     ),
                 ],
@@ -418,15 +405,5 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
         ],
       ),
     );
-  }
-
-  String _priorityLabel(int priority) {
-    return switch (priority) {
-      1 => 'Low',
-      2 => 'Medium',
-      3 => 'High',
-      4 => 'Critical',
-      _ => 'Unknown',
-    };
   }
 }

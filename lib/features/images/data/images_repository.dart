@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/dio_provider.dart';
@@ -26,6 +27,12 @@ class ImagesRepository {
     required String reportId,
     bool isPrimary = false,
   }) async {
+    debugPrint('=== UPLOADING IMAGE ===');
+    debugPrint('File path: ${imageFile.path}');
+    debugPrint('File exists: ${await imageFile.exists()}');
+    debugPrint('Report ID: $reportId');
+    debugPrint('Is Primary: $isPrimary');
+    
     final formData = FormData.fromMap({
       'image': await MultipartFile.fromFile(
         imageFile.path,
@@ -35,17 +42,25 @@ class ImagesRepository {
       'is_primary': isPrimary.toString(),
     });
 
-    final response = await _dio.post(
-      ApiConstants.imageUpload,
-      data: formData,
-      options: Options(contentType: 'multipart/form-data'),
-    );
+    try {
+      final response = await _dio.post(
+        ApiConstants.imageUpload,
+        data: formData,
+      );
 
-    // Backend returns the image directly or wrapped in response
-    if (response.data is Map && response.data.containsKey('image')) {
-      return UploadedImage.fromJson(response.data['image']);
+      debugPrint('=== UPLOAD SUCCESS ===');
+      debugPrint('Response: ${response.data}');
+
+      // Backend returns the image directly or wrapped in response
+      if (response.data is Map && response.data.containsKey('image')) {
+        return UploadedImage.fromJson(response.data['image']);
+      }
+      return UploadedImage.fromJson(response.data);
+    } on DioException catch (e) {
+      debugPrint('Single image upload error: ${e.response?.statusCode}');
+      debugPrint('Error data: ${e.response?.data}');
+      rethrow;
     }
-    return UploadedImage.fromJson(response.data);
   }
 
   /// Bulk upload multiple images for a report
@@ -68,14 +83,21 @@ class ImagesRepository {
     }
     formData.fields.add(MapEntry('report_id', reportId));
 
-    final response = await _dio.post(
-      ApiConstants.imageBulkUpload,
-      data: formData,
-      options: Options(contentType: 'multipart/form-data'),
-    );
+    try {
+      final response = await _dio.post(
+        ApiConstants.imageBulkUpload,
+        data: formData,
+        // Don't set contentType manually - Dio handles multipart/form-data automatically
+      );
 
-    final List<dynamic> imagesJson = response.data['images'] ?? [];
-    return imagesJson.map((json) => UploadedImage.fromJson(json)).toList();
+      final List<dynamic> imagesJson = response.data['images'] ?? [];
+      return imagesJson.map((json) => UploadedImage.fromJson(json)).toList();
+    } on DioException catch (e) {
+      // Log only the error response for debugging (remove in production)
+      debugPrint('Image upload error: ${e.response?.statusCode}');
+      debugPrint('Error data: ${e.response?.data}');
+      rethrow;
+    }
   }
 
   // ==================== LIST ====================

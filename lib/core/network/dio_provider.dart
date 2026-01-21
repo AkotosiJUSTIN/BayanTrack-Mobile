@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../constants/api_constants.dart';
 import 'auth_interceptor.dart';
@@ -42,8 +41,8 @@ Dio dio(Ref ref) {
   final rawDio = ref.watch(dioRawProvider);
   
   dio.interceptors.addAll([
-    AuthInterceptor(ref, rawDio),
-    LogInterceptor(requestBody: true, responseBody: true),
+    AuthInterceptor(rawDio),
+    // NOTE: LogInterceptor removed - it can expose sensitive data from server errors
   ]);
 
   return dio;

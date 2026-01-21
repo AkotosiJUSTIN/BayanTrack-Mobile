@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'new_report_controller.g.dart';
@@ -9,10 +8,11 @@ class NewReportState {
   final List<File> selectedImages;
   final double? latitude;
   final double? longitude;
-  final String? address;
+  final String? location; // Human-readable address
   final String description;
   final String? category;
-  final String? barangay;
+  final String barangay;
+  final String? imageBase64; // Base64 encoded image for API
   final bool isSubmitting;
   final String? error;
 
@@ -20,10 +20,11 @@ class NewReportState {
     this.selectedImages = const [],
     this.latitude,
     this.longitude,
-    this.address,
+    this.location,
     this.description = '',
     this.category,
-    this.barangay,
+    this.barangay = '',
+    this.imageBase64,
     this.isSubmitting = false,
     this.error,
   });
@@ -32,10 +33,11 @@ class NewReportState {
     List<File>? selectedImages,
     double? latitude,
     double? longitude,
-    String? address,
+    String? location,
     String? description,
     String? category,
     String? barangay,
+    String? imageBase64,
     bool? isSubmitting,
     String? error,
   }) {
@@ -43,10 +45,11 @@ class NewReportState {
       selectedImages: selectedImages ?? this.selectedImages,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
-      address: address ?? this.address,
+      location: location ?? this.location,
       description: description ?? this.description,
       category: category ?? this.category,
       barangay: barangay ?? this.barangay,
+      imageBase64: imageBase64 ?? this.imageBase64,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       error: error,
     );
@@ -55,14 +58,15 @@ class NewReportState {
   /// Check if we have everything needed to submit
   bool get canSubmit =>
       selectedImages.isNotEmpty &&
-      latitude != null &&
-      longitude != null &&
+      location != null &&
+      location!.isNotEmpty &&
+      barangay.isNotEmpty &&
       description.trim().isNotEmpty;
 
   /// Current step validation
   bool get hasPhotos => selectedImages.isNotEmpty;
-  bool get hasLocation => latitude != null && longitude != null;
-  bool get hasDetails => description.trim().isNotEmpty;
+  bool get hasLocation => location != null && location!.isNotEmpty;
+  bool get hasDetails => description.trim().isNotEmpty && barangay.isNotEmpty;
 }
 
 /// Controller for managing new report flow state
@@ -101,12 +105,12 @@ class NewReportController extends _$NewReportController {
   void setLocation({
     required double latitude,
     required double longitude,
-    String? address,
+    required String location,
   }) {
     state = state.copyWith(
       latitude: latitude,
       longitude: longitude,
-      address: address,
+      location: location,
     );
   }
 
@@ -117,6 +121,12 @@ class NewReportController extends _$NewReportController {
       category: state.category,
       barangay: state.barangay,
     );
+  }
+
+  // ==================== IMAGE BASE64 ====================
+
+  void setImageBase64(String? base64) {
+    state = state.copyWith(imageBase64: base64);
   }
 
   // ==================== DETAILS ====================

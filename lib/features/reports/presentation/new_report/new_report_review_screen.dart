@@ -18,6 +18,7 @@ class NewReportReviewScreen extends ConsumerStatefulWidget {
 
 class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
   bool _isSubmitting = false;
+  String _statusMessage = '';
 
   Future<void> _submitReport() async {
     final state = ref.read(newReportControllerProvider);
@@ -29,35 +30,53 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
       return;
     }
 
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _isSubmitting = true;
+      _statusMessage = 'Creating report...';
+    });
 
     try {
-      // 1. Create the report first
+      // Step 1: Create the report (fast - just JSON)
       final reportsRepo = ref.read(reportsRepositoryProvider);
       final request = CreateReportRequest(
         description: state.description,
-        category: state.category,
-        latitude: state.latitude,
-        longitude: state.longitude,
+        location: state.location!,
+        barangay: state.barangay,
+        latitude: state.latitude?.toStringAsFixed(6),
+        longitude: state.longitude?.toStringAsFixed(6),
       );
 
       final createdReport = await reportsRepo.createReport(request);
-
-      // 2. Upload images to the created report
+      
+      // Step 2: Upload images (if any) - upload one at a time for reliability
       if (state.selectedImages.isNotEmpty) {
+        setState(() => _statusMessage = 'Uploading images...');
+        
         final imagesRepo = ref.read(imagesRepositoryProvider);
         try {
-          await imagesRepo.bulkUploadImages(
-            imageFiles: state.selectedImages,
-            reportId: createdReport.id,
-          );
+          for (int i = 0; i < state.selectedImages.length; i++) {
+            setState(() => _statusMessage = 'Uploading image ${i + 1}/${state.selectedImages.length}...');
+            await imagesRepo.uploadImage(
+              imageFile: state.selectedImages[i],
+              reportId: createdReport.id,
+              isPrimary: i == 0, // First image is primary
+            );
+          }
         } catch (e) {
-          // Log image upload error but don't fail the report
+          // Log but don't fail - report was already created
           debugPrint('Image upload failed: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Report created, but image upload failed'),
+                backgroundColor: AppColors.alertMedium,
+              ),
+            );
+          }
         }
       }
 
-      // 3. Reset the form and navigate back
+      // Reset the form and navigate back
       ref.read(newReportControllerProvider.notifier).reset();
 
       // Invalidate reports to refresh the list
@@ -75,7 +94,10 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
         );
       }
     } catch (e) {
-      setState(() => _isSubmitting = false);
+      setState(() {
+        _isSubmitting = false;
+        _statusMessage = '';
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -176,7 +198,21 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                     title: 'Location',
                     trailing: state.hasLocation ? 'Set' : 'Not set',
                     content: Text(
-                      state.address ?? 'Location coordinates saved',
+                      state.location ?? 'Location coordinates saved',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Barangay preview
+                  _buildSection(
+                    theme: theme,
+                    isDark: isDark,
+                    icon: Icons.location_city,
+                    title: 'Barangay',
+                    trailing: state.barangay.isNotEmpty ? 'Set' : 'Not set',
+                    content: Text(
+                      state.barangay.isNotEmpty ? state.barangay : 'Not specified',
                       style: theme.textTheme.bodyMedium,
                     ),
                   ),
@@ -216,7 +252,23 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: _isSubmitting
-                ? const Center(child: CircularProgressIndicator())
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(),
+                      if (_statusMessage.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          _statusMessage,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  )
                 : ElevatedButton(
                     onPressed: state.canSubmit ? _submitReport : null,
                     child: const Text('Submit Report'),

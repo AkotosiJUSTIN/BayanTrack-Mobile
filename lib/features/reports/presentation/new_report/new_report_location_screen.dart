@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -66,34 +68,50 @@ class _NewReportLocationScreenState
         return;
       }
 
-      // Get current position
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 15),
-        ),
-      );
+      // Get current position with timeout
+      try {
+        final position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 20),
+          ),
+        ).timeout(
+          const Duration(seconds: 25),
+          onTimeout: () => throw TimeoutException('Location request timed out'),
+        );
 
-      setState(() {
-        _currentPosition = position;
-        _isLoading = false;
-      });
+        if (mounted) {
+          setState(() {
+            _currentPosition = position;
+            _isLoading = false;
+          });
 
-      // Update controller
-      ref
-          .read(newReportControllerProvider.notifier)
-          .setLocation(
-            latitude: position.latitude,
-            longitude: position.longitude,
-            address:
-                'Lat: ${position.latitude.toStringAsFixed(6)}, '
-                'Lng: ${position.longitude.toStringAsFixed(6)}',
-          );
+          // Update controller with location string (required by backend)
+          ref
+              .read(newReportControllerProvider.notifier)
+              .setLocation(
+                latitude: position.latitude,
+                longitude: position.longitude,
+                location:
+                    '${position.latitude.toStringAsFixed(6)}, '
+                    '${position.longitude.toStringAsFixed(6)}',
+              );
+        }
+      } on TimeoutException {
+        if (mounted) {
+          setState(() {
+            _error = 'Location request timed out. Please try again.';
+            _isLoading = false;
+          });
+        }
+      }
     } catch (e) {
-      setState(() {
-        _error = 'Failed to get location: ${e.toString()}';
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = 'Failed to get location: ${e.toString()}';
+          _isLoading = false;
+        });
+      }
     }
   }
 

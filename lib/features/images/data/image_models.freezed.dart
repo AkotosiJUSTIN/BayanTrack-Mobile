@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$UploadedImage {
 
-@JsonKey(name: '_id') String get id;@JsonKey(name: 'report_id') String get reportId;@JsonKey(name: 'image_url') String get imageUrl;@JsonKey(name: 'thumbnail_url') String? get thumbnailUrl;@JsonKey(name: 'is_primary') bool get isPrimary;@JsonKey(name: 'uploaded_by') String? get uploadedBy;@JsonKey(name: 'created_at') String? get createdAt;
+ String get id;@JsonKey(name: 'report_id') String? get reportId;@JsonKey(name: 'user_id') String? get userId; String get url;// Backend returns 'url' not 'image_url'
+@JsonKey(name: 's3_key') String? get s3Key; String? get filename;@JsonKey(name: 'file_size') int? get fileSize;@JsonKey(name: 'mime_type') String? get mimeType; int? get width; int? get height;@JsonKey(name: 'is_primary') bool get isPrimary;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;
 /// Create a copy of UploadedImage
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +29,16 @@ $UploadedImageCopyWith<UploadedImage> get copyWith => _$UploadedImageCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UploadedImage&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.isPrimary, isPrimary) || other.isPrimary == isPrimary)&&(identical(other.uploadedBy, uploadedBy) || other.uploadedBy == uploadedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UploadedImage&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.url, url) || other.url == url)&&(identical(other.s3Key, s3Key) || other.s3Key == s3Key)&&(identical(other.filename, filename) || other.filename == filename)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.isPrimary, isPrimary) || other.isPrimary == isPrimary)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,reportId,imageUrl,thumbnailUrl,isPrimary,uploadedBy,createdAt);
+int get hashCode => Object.hash(runtimeType,id,reportId,userId,url,s3Key,filename,fileSize,mimeType,width,height,isPrimary,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'UploadedImage(id: $id, reportId: $reportId, imageUrl: $imageUrl, thumbnailUrl: $thumbnailUrl, isPrimary: $isPrimary, uploadedBy: $uploadedBy, createdAt: $createdAt)';
+  return 'UploadedImage(id: $id, reportId: $reportId, userId: $userId, url: $url, s3Key: $s3Key, filename: $filename, fileSize: $fileSize, mimeType: $mimeType, width: $width, height: $height, isPrimary: $isPrimary, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -48,7 +49,7 @@ abstract mixin class $UploadedImageCopyWith<$Res>  {
   factory $UploadedImageCopyWith(UploadedImage value, $Res Function(UploadedImage) _then) = _$UploadedImageCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: '_id') String id,@JsonKey(name: 'report_id') String reportId,@JsonKey(name: 'image_url') String imageUrl,@JsonKey(name: 'thumbnail_url') String? thumbnailUrl,@JsonKey(name: 'is_primary') bool isPrimary,@JsonKey(name: 'uploaded_by') String? uploadedBy,@JsonKey(name: 'created_at') String? createdAt
+ String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String url,@JsonKey(name: 's3_key') String? s3Key, String? filename,@JsonKey(name: 'file_size') int? fileSize,@JsonKey(name: 'mime_type') String? mimeType, int? width, int? height,@JsonKey(name: 'is_primary') bool isPrimary,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -65,15 +66,21 @@ class _$UploadedImageCopyWithImpl<$Res>
 
 /// Create a copy of UploadedImage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? reportId = null,Object? imageUrl = null,Object? thumbnailUrl = freezed,Object? isPrimary = null,Object? uploadedBy = freezed,Object? createdAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? url = null,Object? s3Key = freezed,Object? filename = freezed,Object? fileSize = freezed,Object? mimeType = freezed,Object? width = freezed,Object? height = freezed,Object? isPrimary = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,reportId: null == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
-as String,imageUrl: null == imageUrl ? _self.imageUrl : imageUrl // ignore: cast_nullable_to_non_nullable
-as String,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
-as String?,isPrimary: null == isPrimary ? _self.isPrimary : isPrimary // ignore: cast_nullable_to_non_nullable
-as bool,uploadedBy: freezed == uploadedBy ? _self.uploadedBy : uploadedBy // ignore: cast_nullable_to_non_nullable
-as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String,reportId: freezed == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
+as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String?,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,s3Key: freezed == s3Key ? _self.s3Key : s3Key // ignore: cast_nullable_to_non_nullable
+as String?,filename: freezed == filename ? _self.filename : filename // ignore: cast_nullable_to_non_nullable
+as String?,fileSize: freezed == fileSize ? _self.fileSize : fileSize // ignore: cast_nullable_to_non_nullable
+as int?,mimeType: freezed == mimeType ? _self.mimeType : mimeType // ignore: cast_nullable_to_non_nullable
+as String?,width: freezed == width ? _self.width : width // ignore: cast_nullable_to_non_nullable
+as int?,height: freezed == height ? _self.height : height // ignore: cast_nullable_to_non_nullable
+as int?,isPrimary: null == isPrimary ? _self.isPrimary : isPrimary // ignore: cast_nullable_to_non_nullable
+as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -156,10 +163,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: '_id')  String id, @JsonKey(name: 'report_id')  String reportId, @JsonKey(name: 'image_url')  String imageUrl, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'is_primary')  bool isPrimary, @JsonKey(name: 'uploaded_by')  String? uploadedBy, @JsonKey(name: 'created_at')  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String url, @JsonKey(name: 's3_key')  String? s3Key,  String? filename, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType,  int? width,  int? height, @JsonKey(name: 'is_primary')  bool isPrimary, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UploadedImage() when $default != null:
-return $default(_that.id,_that.reportId,_that.imageUrl,_that.thumbnailUrl,_that.isPrimary,_that.uploadedBy,_that.createdAt);case _:
+return $default(_that.id,_that.reportId,_that.userId,_that.url,_that.s3Key,_that.filename,_that.fileSize,_that.mimeType,_that.width,_that.height,_that.isPrimary,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -177,10 +184,10 @@ return $default(_that.id,_that.reportId,_that.imageUrl,_that.thumbnailUrl,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: '_id')  String id, @JsonKey(name: 'report_id')  String reportId, @JsonKey(name: 'image_url')  String imageUrl, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'is_primary')  bool isPrimary, @JsonKey(name: 'uploaded_by')  String? uploadedBy, @JsonKey(name: 'created_at')  String? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String url, @JsonKey(name: 's3_key')  String? s3Key,  String? filename, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType,  int? width,  int? height, @JsonKey(name: 'is_primary')  bool isPrimary, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _UploadedImage():
-return $default(_that.id,_that.reportId,_that.imageUrl,_that.thumbnailUrl,_that.isPrimary,_that.uploadedBy,_that.createdAt);}
+return $default(_that.id,_that.reportId,_that.userId,_that.url,_that.s3Key,_that.filename,_that.fileSize,_that.mimeType,_that.width,_that.height,_that.isPrimary,_that.createdAt,_that.updatedAt);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -194,10 +201,10 @@ return $default(_that.id,_that.reportId,_that.imageUrl,_that.thumbnailUrl,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: '_id')  String id, @JsonKey(name: 'report_id')  String reportId, @JsonKey(name: 'image_url')  String imageUrl, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'is_primary')  bool isPrimary, @JsonKey(name: 'uploaded_by')  String? uploadedBy, @JsonKey(name: 'created_at')  String? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String url, @JsonKey(name: 's3_key')  String? s3Key,  String? filename, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType,  int? width,  int? height, @JsonKey(name: 'is_primary')  bool isPrimary, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _UploadedImage() when $default != null:
-return $default(_that.id,_that.reportId,_that.imageUrl,_that.thumbnailUrl,_that.isPrimary,_that.uploadedBy,_that.createdAt);case _:
+return $default(_that.id,_that.reportId,_that.userId,_that.url,_that.s3Key,_that.filename,_that.fileSize,_that.mimeType,_that.width,_that.height,_that.isPrimary,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -209,16 +216,23 @@ return $default(_that.id,_that.reportId,_that.imageUrl,_that.thumbnailUrl,_that.
 @JsonSerializable()
 
 class _UploadedImage implements UploadedImage {
-  const _UploadedImage({@JsonKey(name: '_id') required this.id, @JsonKey(name: 'report_id') required this.reportId, @JsonKey(name: 'image_url') required this.imageUrl, @JsonKey(name: 'thumbnail_url') this.thumbnailUrl, @JsonKey(name: 'is_primary') this.isPrimary = false, @JsonKey(name: 'uploaded_by') this.uploadedBy, @JsonKey(name: 'created_at') this.createdAt});
+  const _UploadedImage({required this.id, @JsonKey(name: 'report_id') this.reportId, @JsonKey(name: 'user_id') this.userId, required this.url, @JsonKey(name: 's3_key') this.s3Key, this.filename, @JsonKey(name: 'file_size') this.fileSize, @JsonKey(name: 'mime_type') this.mimeType, this.width, this.height, @JsonKey(name: 'is_primary') this.isPrimary = false, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt});
   factory _UploadedImage.fromJson(Map<String, dynamic> json) => _$UploadedImageFromJson(json);
 
-@override@JsonKey(name: '_id') final  String id;
-@override@JsonKey(name: 'report_id') final  String reportId;
-@override@JsonKey(name: 'image_url') final  String imageUrl;
-@override@JsonKey(name: 'thumbnail_url') final  String? thumbnailUrl;
+@override final  String id;
+@override@JsonKey(name: 'report_id') final  String? reportId;
+@override@JsonKey(name: 'user_id') final  String? userId;
+@override final  String url;
+// Backend returns 'url' not 'image_url'
+@override@JsonKey(name: 's3_key') final  String? s3Key;
+@override final  String? filename;
+@override@JsonKey(name: 'file_size') final  int? fileSize;
+@override@JsonKey(name: 'mime_type') final  String? mimeType;
+@override final  int? width;
+@override final  int? height;
 @override@JsonKey(name: 'is_primary') final  bool isPrimary;
-@override@JsonKey(name: 'uploaded_by') final  String? uploadedBy;
 @override@JsonKey(name: 'created_at') final  String? createdAt;
+@override@JsonKey(name: 'updated_at') final  String? updatedAt;
 
 /// Create a copy of UploadedImage
 /// with the given fields replaced by the non-null parameter values.
@@ -233,16 +247,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UploadedImage&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.imageUrl, imageUrl) || other.imageUrl == imageUrl)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.isPrimary, isPrimary) || other.isPrimary == isPrimary)&&(identical(other.uploadedBy, uploadedBy) || other.uploadedBy == uploadedBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UploadedImage&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.url, url) || other.url == url)&&(identical(other.s3Key, s3Key) || other.s3Key == s3Key)&&(identical(other.filename, filename) || other.filename == filename)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.isPrimary, isPrimary) || other.isPrimary == isPrimary)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,reportId,imageUrl,thumbnailUrl,isPrimary,uploadedBy,createdAt);
+int get hashCode => Object.hash(runtimeType,id,reportId,userId,url,s3Key,filename,fileSize,mimeType,width,height,isPrimary,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'UploadedImage(id: $id, reportId: $reportId, imageUrl: $imageUrl, thumbnailUrl: $thumbnailUrl, isPrimary: $isPrimary, uploadedBy: $uploadedBy, createdAt: $createdAt)';
+  return 'UploadedImage(id: $id, reportId: $reportId, userId: $userId, url: $url, s3Key: $s3Key, filename: $filename, fileSize: $fileSize, mimeType: $mimeType, width: $width, height: $height, isPrimary: $isPrimary, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -253,7 +267,7 @@ abstract mixin class _$UploadedImageCopyWith<$Res> implements $UploadedImageCopy
   factory _$UploadedImageCopyWith(_UploadedImage value, $Res Function(_UploadedImage) _then) = __$UploadedImageCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: '_id') String id,@JsonKey(name: 'report_id') String reportId,@JsonKey(name: 'image_url') String imageUrl,@JsonKey(name: 'thumbnail_url') String? thumbnailUrl,@JsonKey(name: 'is_primary') bool isPrimary,@JsonKey(name: 'uploaded_by') String? uploadedBy,@JsonKey(name: 'created_at') String? createdAt
+ String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String url,@JsonKey(name: 's3_key') String? s3Key, String? filename,@JsonKey(name: 'file_size') int? fileSize,@JsonKey(name: 'mime_type') String? mimeType, int? width, int? height,@JsonKey(name: 'is_primary') bool isPrimary,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -270,15 +284,21 @@ class __$UploadedImageCopyWithImpl<$Res>
 
 /// Create a copy of UploadedImage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? reportId = null,Object? imageUrl = null,Object? thumbnailUrl = freezed,Object? isPrimary = null,Object? uploadedBy = freezed,Object? createdAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? url = null,Object? s3Key = freezed,Object? filename = freezed,Object? fileSize = freezed,Object? mimeType = freezed,Object? width = freezed,Object? height = freezed,Object? isPrimary = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_UploadedImage(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,reportId: null == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
-as String,imageUrl: null == imageUrl ? _self.imageUrl : imageUrl // ignore: cast_nullable_to_non_nullable
-as String,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
-as String?,isPrimary: null == isPrimary ? _self.isPrimary : isPrimary // ignore: cast_nullable_to_non_nullable
-as bool,uploadedBy: freezed == uploadedBy ? _self.uploadedBy : uploadedBy // ignore: cast_nullable_to_non_nullable
-as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String,reportId: freezed == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
+as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String?,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
+as String,s3Key: freezed == s3Key ? _self.s3Key : s3Key // ignore: cast_nullable_to_non_nullable
+as String?,filename: freezed == filename ? _self.filename : filename // ignore: cast_nullable_to_non_nullable
+as String?,fileSize: freezed == fileSize ? _self.fileSize : fileSize // ignore: cast_nullable_to_non_nullable
+as int?,mimeType: freezed == mimeType ? _self.mimeType : mimeType // ignore: cast_nullable_to_non_nullable
+as String?,width: freezed == width ? _self.width : width // ignore: cast_nullable_to_non_nullable
+as int?,height: freezed == height ? _self.height : height // ignore: cast_nullable_to_non_nullable
+as int?,isPrimary: null == isPrimary ? _self.isPrimary : isPrimary // ignore: cast_nullable_to_non_nullable
+as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

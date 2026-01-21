@@ -40,7 +40,7 @@ class HomeReportCard extends StatelessWidget {
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          report.images.first,
+                          report.images.first.url,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => _buildPlaceholderIcon(),
                         ),

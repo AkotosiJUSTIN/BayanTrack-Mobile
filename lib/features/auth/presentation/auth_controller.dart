@@ -186,8 +186,9 @@ class AuthController extends _$AuthController {
         if (data.containsKey('error')) return data['error'].toString();
         // Check for field-specific errors
         if (data.containsKey('email')) return 'Email: ${data['email']}';
-        if (data.containsKey('password'))
+        if (data.containsKey('password')) {
           return 'Password: ${data['password']}';
+        }
       }
     }
 

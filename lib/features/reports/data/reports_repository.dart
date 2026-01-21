@@ -38,17 +38,7 @@ class ReportsRepository {
       ApiConstants.reports,
       queryParameters: queryParams,
     );
-    try {
-      // ignore: avoid_print
-      print('Reports Raw JSON: ${response.data}');
-      return PaginatedReports.fromJson(response.data);
-    } catch (e, site) {
-      // ignore: avoid_print
-      print('Reports Parsing Error: $e');
-      // ignore: avoid_print
-      print('Reports Parsing Stack: $site');
-      rethrow;
-    }
+    return PaginatedReports.fromJson(response.data);
   }
 
   /// Get current user's reports
@@ -69,6 +59,7 @@ class ReportsRepository {
 
   // ==================== CREATE / UPDATE / DELETE ====================
 
+  /// Create a report
   Future<Report> createReport(CreateReportRequest request) async {
     final response = await _dio.post(
       ApiConstants.reports,

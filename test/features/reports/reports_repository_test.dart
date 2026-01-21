@@ -191,19 +191,19 @@ void main() {
         // Arrange
         final request = CreateReportRequest(
           description: 'New issue report',
-          category: 'infrastructure',
+          location: '123 Main Street, Quezon City',
           barangay: 'Barangay 5',
-          latitude: 14.5995,
-          longitude: 120.9842,
+          latitude: "14.5995",
+          longitude: "120.9842",
         );
         final responseData = {
-          '_id': 'new_report_123',
+          'id': 'new_report_123',
           'description': 'New issue report',
-          'status': 'pending',
-          'category': 'infrastructure',
+          'status': 'Pending',
+          'location': '123 Main Street, Quezon City',
           'barangay': 'Barangay 5',
-          'latitude': 14.5995,
-          'longitude': 120.9842,
+          'latitude': "14.5995",
+          'longitude': "120.9842",
         };
 
         when(
@@ -298,7 +298,7 @@ void main() {
           'pending': 30,
           'in_progress': 25,
           'resolved': 40,
-          'closed': 5,
+          'rejected': 5,
         };
 
         when(() => mockDio.get(ApiConstants.reportStats)).thenAnswer(
@@ -317,7 +317,7 @@ void main() {
         expect(result.pending, 30);
         expect(result.inProgress, 25);
         expect(result.resolved, 40);
-        expect(result.closed, 5);
+        expect(result.rejected, 5);
       });
     });
   });

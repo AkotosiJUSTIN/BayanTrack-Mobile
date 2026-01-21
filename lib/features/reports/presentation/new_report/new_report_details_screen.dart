@@ -16,6 +16,7 @@ class NewReportDetailsScreen extends ConsumerStatefulWidget {
 class _NewReportDetailsScreenState
     extends ConsumerState<NewReportDetailsScreen> {
   final _descriptionController = TextEditingController();
+  final _barangayController = TextEditingController();
   String? _selectedCategory;
 
   @override
@@ -24,17 +25,23 @@ class _NewReportDetailsScreenState
     // Initialize from state if user navigates back
     final state = ref.read(newReportControllerProvider);
     _descriptionController.text = state.description;
+    _barangayController.text = state.barangay;
     _selectedCategory = state.category;
   }
 
   @override
   void dispose() {
     _descriptionController.dispose();
+    _barangayController.dispose();
     super.dispose();
   }
 
   void _onDescriptionChanged(String value) {
     ref.read(newReportControllerProvider.notifier).setDescription(value);
+  }
+
+  void _onBarangayChanged(String value) {
+    ref.read(newReportControllerProvider.notifier).setBarangay(value);
   }
 
   void _onCategoryChanged(String? value) {
@@ -111,7 +118,7 @@ class _NewReportDetailsScreenState
                   ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: _selectedCategory,
+                    initialValue: _selectedCategory,
                     decoration: const InputDecoration(
                       hintText: 'Select a category',
                       prefixIcon: Icon(Icons.category_outlined),
@@ -123,6 +130,28 @@ class _NewReportDetailsScreenState
                       );
                     }).toList(),
                     onChanged: _onCategoryChanged,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Barangay field (required)
+                  Text(
+                    'Barangay *',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextFormField(
+                    controller: _barangayController,
+                    textInputAction: TextInputAction.next,
+                    onChanged: _onBarangayChanged,
+                    decoration: InputDecoration(
+                      hintText: 'Enter barangay name',
+                      prefixIcon: const Icon(Icons.location_city_outlined),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 24),
 

@@ -36,6 +36,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             // Filter tabs
             SliverToBoxAdapter(
@@ -89,14 +90,14 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
             // Reports list
-            SliverFillRemaining(child: _buildContent(reportsAsync, theme)),
+            _buildSliverContent(reportsAsync, theme),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildContent(
+  Widget _buildSliverContent(
     AsyncValue<PaginatedReports> reportsAsync,
     ThemeData theme,
   ) {
@@ -105,30 +106,43 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
         final filteredResults = _filterReports(data.results);
 
         if (filteredResults.isEmpty) {
-          return _buildEmptyState(theme);
+          return SliverFillRemaining(
+            hasScrollBody: false,
+            child: _buildEmptyState(theme),
+          );
         }
 
-        return ListView.builder(
+        return SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: filteredResults.length,
-          itemBuilder: (context, index) {
-            return HomeReportCard(
-              report: filteredResults[index],
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'View: ${filteredResults[index].description}',
-                    ),
-                  ),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                return HomeReportCard(
+                  report: filteredResults[index],
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'View: ${filteredResults[index].description}',
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
-            );
-          },
+              childCount: filteredResults.length,
+            ),
+          ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _buildErrorState(theme, error.toString()),
+      loading: () => const SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, _) => SliverFillRemaining(
+        hasScrollBody: false,
+        child: _buildErrorState(theme, error.toString()),
+      ),
     );
   }
 

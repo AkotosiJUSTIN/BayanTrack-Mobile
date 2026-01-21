@@ -8,13 +8,19 @@ part 'image_models.g.dart';
 @freezed
 sealed class UploadedImage with _$UploadedImage {
   const factory UploadedImage({
-    @JsonKey(name: '_id') required String id,
-    @JsonKey(name: 'report_id') required String reportId,
-    @JsonKey(name: 'image_url') required String imageUrl,
-    @JsonKey(name: 'thumbnail_url') String? thumbnailUrl,
+    required String id,
+    @JsonKey(name: 'report_id') String? reportId,
+    @JsonKey(name: 'user_id') String? userId,
+    required String url,  // Backend returns 'url' not 'image_url'
+    @JsonKey(name: 's3_key') String? s3Key,
+    String? filename,
+    @JsonKey(name: 'file_size') int? fileSize,
+    @JsonKey(name: 'mime_type') String? mimeType,
+    int? width,
+    int? height,
     @JsonKey(name: 'is_primary') @Default(false) bool isPrimary,
-    @JsonKey(name: 'uploaded_by') String? uploadedBy,
     @JsonKey(name: 'created_at') String? createdAt,
+    @JsonKey(name: 'updated_at') String? updatedAt,
   }) = _UploadedImage;
 
   factory UploadedImage.fromJson(Map<String, dynamic> json) =>
