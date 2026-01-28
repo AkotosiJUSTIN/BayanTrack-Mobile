@@ -70,14 +70,40 @@ class _NewReportLocationScreenState
 
       // Get current position with timeout
       try {
+        // First try to get last known position (faster)
+        Position? lastPosition = await Geolocator.getLastKnownPosition();
+        
+        if (lastPosition != null && mounted) {
+          // Use last known position while getting current
+          setState(() {
+            _currentPosition = lastPosition;
+          });
+          ref
+              .read(newReportControllerProvider.notifier)
+              .setLocation(
+                latitude: lastPosition.latitude,
+                longitude: lastPosition.longitude,
+                location:
+                    '${lastPosition.latitude.toStringAsFixed(6)}, '
+                    '${lastPosition.longitude.toStringAsFixed(6)}',
+              );
+        }
+
+        // Now try to get current position with shorter timeout
         final position = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(
             accuracy: LocationAccuracy.high,
-            timeLimit: Duration(seconds: 20),
+            timeLimit: Duration(seconds: 10),
           ),
         ).timeout(
-          const Duration(seconds: 25),
-          onTimeout: () => throw TimeoutException('Location request timed out'),
+          const Duration(seconds: 15),
+          onTimeout: () {
+            // If we already have last position, use it
+            if (lastPosition != null) {
+              return lastPosition;
+            }
+            throw TimeoutException('Location request timed out');
+          },
         );
 
         if (mounted) {
@@ -113,6 +139,37 @@ class _NewReportLocationScreenState
         });
       }
     }
+  }
+
+  /// Use a default location for testing (Quezon City, Philippines)
+  void _useDefaultLocation() {
+    const double defaultLat = 14.6760;
+    const double defaultLng = 121.0437;
+    
+    setState(() {
+      _currentPosition = Position(
+        latitude: defaultLat,
+        longitude: defaultLng,
+        timestamp: DateTime.now(),
+        accuracy: 0,
+        altitude: 0,
+        altitudeAccuracy: 0,
+        heading: 0,
+        headingAccuracy: 0,
+        speed: 0,
+        speedAccuracy: 0,
+      );
+      _isLoading = false;
+      _error = null;
+    });
+
+    ref
+        .read(newReportControllerProvider.notifier)
+        .setLocation(
+          latitude: defaultLat,
+          longitude: defaultLng,
+          location: '$defaultLat, $defaultLng',
+        );
   }
 
   void _navigateToDetails() {
@@ -215,6 +272,11 @@ class _NewReportLocationScreenState
             const CircularProgressIndicator(),
             const SizedBox(height: 24),
             Text('Getting your location...', style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: _useDefaultLocation,
+              child: const Text('Use default location (for testing)'),
+            ),
           ],
         ),
       );
