@@ -91,8 +91,7 @@ class KycFormState {
       selectedIdType != null &&
       fullName.trim().isNotEmpty &&
       idImagePath != null &&
-      selfieImagePath != null &&
-      (!selectedIdType!.requiresBackImage || idBackImagePath != null);
+      selfieImagePath != null;
 
   bool get hasIdFront => idImagePath != null;
   bool get hasIdBack => idBackImagePath != null;

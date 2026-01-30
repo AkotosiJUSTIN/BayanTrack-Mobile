@@ -11,7 +11,7 @@ class NewReportState {
   final String? location; // Human-readable address
   final String description;
   final String? category;
-  final String barangay;
+  final String zone;
   final String? imageBase64; // Base64 encoded image for API
   final bool isSubmitting;
   final String? error;
@@ -23,7 +23,7 @@ class NewReportState {
     this.location,
     this.description = '',
     this.category,
-    this.barangay = '',
+    this.zone = '',
     this.imageBase64,
     this.isSubmitting = false,
     this.error,
@@ -36,7 +36,7 @@ class NewReportState {
     String? location,
     String? description,
     String? category,
-    String? barangay,
+    String? zone,
     String? imageBase64,
     bool? isSubmitting,
     String? error,
@@ -48,7 +48,7 @@ class NewReportState {
       location: location ?? this.location,
       description: description ?? this.description,
       category: category ?? this.category,
-      barangay: barangay ?? this.barangay,
+      zone: zone ?? this.zone,
       imageBase64: imageBase64 ?? this.imageBase64,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       error: error,
@@ -60,13 +60,13 @@ class NewReportState {
       selectedImages.isNotEmpty &&
       location != null &&
       location!.isNotEmpty &&
-      barangay.isNotEmpty &&
+      zone.isNotEmpty &&
       description.trim().isNotEmpty;
 
   /// Current step validation
   bool get hasPhotos => selectedImages.isNotEmpty;
   bool get hasLocation => location != null && location!.isNotEmpty;
-  bool get hasDetails => description.trim().isNotEmpty && barangay.isNotEmpty;
+  bool get hasDetails => description.trim().isNotEmpty && zone.isNotEmpty;
 }
 
 /// Controller for managing new report flow state
@@ -119,7 +119,7 @@ class NewReportController extends _$NewReportController {
       selectedImages: state.selectedImages,
       description: state.description,
       category: state.category,
-      barangay: state.barangay,
+      zone: state.zone,
     );
   }
 
@@ -139,8 +139,8 @@ class NewReportController extends _$NewReportController {
     state = state.copyWith(category: category);
   }
 
-  void setBarangay(String? barangay) {
-    state = state.copyWith(barangay: barangay);
+  void setZone(String? zone) {
+    state = state.copyWith(zone: zone);
   }
 
   // ==================== SUBMIT ====================

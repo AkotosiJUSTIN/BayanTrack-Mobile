@@ -95,7 +95,7 @@ class HomeReportCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            report.barangay ?? 'Unknown location',
+                            report.zone ?? 'Unknown location',
                             style: theme.textTheme.bodySmall,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

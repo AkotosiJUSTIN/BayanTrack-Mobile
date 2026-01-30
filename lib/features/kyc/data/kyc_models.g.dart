@@ -8,10 +8,10 @@ part of 'kyc_models.dart';
 
 _KycStatusResponse _$KycStatusResponseFromJson(Map<String, dynamic> json) =>
     _KycStatusResponse(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
+      id: json['id'] as String?,
+      userId: json['user_id'] as String?,
       kycStatus: $enumDecode(_$KycStatusEnumMap, json['kyc_status']),
-      idType: $enumDecode(_$IdTypeEnumMap, json['id_type']),
+      idType: $enumDecodeNullable(_$IdTypeEnumMap, json['id_type']),
       idNumber: json['id_number'] as String?,
       fullName: json['full_name'] as String,
       dateOfBirth: json['date_of_birth'] as String?,
@@ -38,7 +38,7 @@ Map<String, dynamic> _$KycStatusResponseToJson(_KycStatusResponse instance) =>
       'id': instance.id,
       'user_id': instance.userId,
       'kyc_status': _$KycStatusEnumMap[instance.kycStatus]!,
-      'id_type': _$IdTypeEnumMap[instance.idType]!,
+      'id_type': _$IdTypeEnumMap[instance.idType],
       'id_number': instance.idNumber,
       'full_name': instance.fullName,
       'date_of_birth': instance.dateOfBirth,

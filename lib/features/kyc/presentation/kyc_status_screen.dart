@@ -217,7 +217,8 @@ class KycStatusScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   _buildInfoRow('Full Name', kycStatus.fullName, context),
-                  _buildInfoRow('ID Type', kycStatus.idType.displayName, context),
+                  if (kycStatus.idType != null)
+                    _buildInfoRow('ID Type', kycStatus.idType!.displayName, context),
                   if (kycStatus.idNumber != null)
                     _buildInfoRow('ID Number', kycStatus.idNumber!, context),
                   if (kycStatus.dateOfBirth != null)

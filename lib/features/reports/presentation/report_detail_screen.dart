@@ -353,9 +353,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             const SizedBox(height: 24),
           ],
 
-          // Barangay info
-          if (report.barangay != null) ...[
-            _buildInfoRow('Barangay', report.barangay!, theme),
+          // Zone info
+          if (report.zone != null) ...[
+            _buildInfoRow('Zone', report.zone!, theme),
             const SizedBox(height: 8),
           ],
 

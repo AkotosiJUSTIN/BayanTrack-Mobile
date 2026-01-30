@@ -27,7 +27,7 @@ void main() {
               'description': 'Broken streetlight',
               'status': 'pending',
               'category': 'infrastructure',
-              'barangay': 'Barangay 1',
+              'zone': 'Zone 1',
               'latitude': 14.5995,
               'longitude': 120.9842,
               'images': [],
@@ -38,7 +38,7 @@ void main() {
               'description': 'Pothole on main road',
               'status': 'in_progress',
               'category': 'roads',
-              'barangay': 'Barangay 2',
+              'zone': 'Zone 2',
               'images': ['image1.jpg'],
             },
           ],
@@ -83,7 +83,7 @@ void main() {
               'page': 2,
               'limit': 5,
               'status': 'pending',
-              'barangay': 'Barangay 1',
+              'zone': 'Zone 1',
             },
           ),
         ).thenAnswer(
@@ -99,7 +99,7 @@ void main() {
           page: 2,
           limit: 5,
           status: ReportStatus.pending,
-          barangay: 'Barangay 1',
+          zone: 'Zone 1',
         );
 
         // Assert
@@ -110,7 +110,7 @@ void main() {
               'page': 2,
               'limit': 5,
               'status': 'pending',
-              'barangay': 'Barangay 1',
+              'zone': 'Zone 5',
             },
           ),
         ).called(1);
@@ -192,7 +192,7 @@ void main() {
         final request = CreateReportRequest(
           description: 'New issue report',
           location: '123 Main Street, Quezon City',
-          barangay: 'Barangay 5',
+          zone: 'Zone 5',
           latitude: "14.5995",
           longitude: "120.9842",
         );
@@ -201,7 +201,7 @@ void main() {
           'description': 'New issue report',
           'status': 'Pending',
           'location': '123 Main Street, Quezon City',
-          'barangay': 'Barangay 5',
+          'zone': 'Zone 5',
           'latitude': "14.5995",
           'longitude': "120.9842",
         };

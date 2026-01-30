@@ -54,7 +54,7 @@ sealed class Report with _$Report {
     @JsonKey(name: 'user_id') String? userId,
     required String description,
     String? location,
-    String? barangay,
+    String? zone,
     String? latitude,   // Backend returns as string
     String? longitude,  // Backend returns as string
     @Default([]) List<ReportImage> images,  // List of image objects from backend
@@ -80,7 +80,7 @@ sealed class CreateReportRequest with _$CreateReportRequest {
   const factory CreateReportRequest({
     required String description,
     required String location,
-    required String barangay,
+    required String zone,
     String? latitude,  // Sent as string, backend accepts DecimalField
     String? longitude, // Sent as string, backend accepts DecimalField
     String? category,
@@ -97,7 +97,7 @@ sealed class UpdateReportRequest with _$UpdateReportRequest {
   const factory UpdateReportRequest({
     ReportStatus? status,
     String? category,
-    String? barangay,
+    String? zone,
   }) = _UpdateReportRequest;
 
   factory UpdateReportRequest.fromJson(Map<String, dynamic> json) =>

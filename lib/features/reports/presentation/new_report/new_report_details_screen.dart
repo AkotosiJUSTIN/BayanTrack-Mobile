@@ -16,7 +16,7 @@ class NewReportDetailsScreen extends ConsumerStatefulWidget {
 class _NewReportDetailsScreenState
     extends ConsumerState<NewReportDetailsScreen> {
   final _descriptionController = TextEditingController();
-  final _barangayController = TextEditingController();
+  final _zoneController = TextEditingController();
   String? _selectedCategory;
 
   @override
@@ -25,14 +25,14 @@ class _NewReportDetailsScreenState
     // Initialize from state if user navigates back
     final state = ref.read(newReportControllerProvider);
     _descriptionController.text = state.description;
-    _barangayController.text = state.barangay;
+    _zoneController.text = state.zone;
     _selectedCategory = state.category;
   }
 
   @override
   void dispose() {
     _descriptionController.dispose();
-    _barangayController.dispose();
+    _zoneController.dispose();
     super.dispose();
   }
 
@@ -40,8 +40,8 @@ class _NewReportDetailsScreenState
     ref.read(newReportControllerProvider.notifier).setDescription(value);
   }
 
-  void _onBarangayChanged(String value) {
-    ref.read(newReportControllerProvider.notifier).setBarangay(value);
+  void _onZoneChanged(String value) {
+    ref.read(newReportControllerProvider.notifier).setZone(value);
   }
 
   void _onCategoryChanged(String? value) {
@@ -133,20 +133,20 @@ class _NewReportDetailsScreenState
                   ),
                   const SizedBox(height: 24),
 
-                  // Barangay field (required)
+                  // Zone field (required)
                   Text(
-                    'Barangay *',
+                    'Zone *',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
-                    controller: _barangayController,
+                    controller: _zoneController,
                     textInputAction: TextInputAction.next,
-                    onChanged: _onBarangayChanged,
+                    onChanged: _onZoneChanged,
                     decoration: InputDecoration(
-                      hintText: 'Enter barangay name',
+                      hintText: 'Enter zone name',
                       prefixIcon: const Icon(Icons.location_city_outlined),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),

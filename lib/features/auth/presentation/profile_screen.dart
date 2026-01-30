@@ -1,3 +1,4 @@
+import 'package:bayantrack_mobile/features/auth/presentation/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
@@ -338,7 +339,13 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
 
-    if (confirmed == true) {
+    if (confirmed == true && context.mounted) {
+      // Navigate immediately, don't wait for logout to complete
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+      // Fire and forget - logout in background
       ref.read(authControllerProvider.notifier).logout();
     }
   }

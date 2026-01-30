@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/verification_widgets.dart';
+import '../../kyc/presentation/kyc_controller.dart';
 import '../../reports/data/report_models.dart';
 import '../../reports/presentation/report_detail_screen.dart';
 import '../../reports/presentation/reports_controller.dart';
@@ -32,6 +33,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _onRefresh() async {
     ref.invalidate(reportsControllerProvider());
+    ref.invalidate(kycStatusControllerProvider);
   }
 
   @override

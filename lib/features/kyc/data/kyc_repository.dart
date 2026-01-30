@@ -48,11 +48,6 @@ class KycRepository {
         request.idImagePath,
         filename: request.idImagePath.split('/').last,
       ),
-      if (request.idBackImagePath != null)
-        'id_back_image': await MultipartFile.fromFile(
-          request.idBackImagePath!,
-          filename: request.idBackImagePath!.split('/').last,
-        ),
       'selfie_image': await MultipartFile.fromFile(
         request.selfieImagePath,
         filename: request.selfieImagePath.split('/').last,
@@ -86,11 +81,6 @@ class KycRepository {
         request.idImagePath,
         filename: request.idImagePath.split('/').last,
       ),
-      if (request.idBackImagePath != null)
-        'id_back_image': await MultipartFile.fromFile(
-          request.idBackImagePath!,
-          filename: request.idBackImagePath!.split('/').last,
-        ),
       'selfie_image': await MultipartFile.fromFile(
         request.selfieImagePath,
         filename: request.selfieImagePath.split('/').last,

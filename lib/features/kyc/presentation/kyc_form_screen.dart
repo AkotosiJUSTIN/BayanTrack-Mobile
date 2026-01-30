@@ -35,9 +35,11 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       _idNumberController.text = widget.existingKyc!.idNumber ?? '';
       
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(kycFormControllerProvider.notifier).setIdType(
-          widget.existingKyc!.idType,
-        );
+        if (widget.existingKyc!.idType != null) {
+          ref.read(kycFormControllerProvider.notifier).setIdType(
+            widget.existingKyc!.idType!,
+          );
+        }
         if (widget.existingKyc!.dateOfBirth != null) {
           try {
             final dob = DateTime.parse(widget.existingKyc!.dateOfBirth!);
@@ -70,11 +72,8 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
       final controller = ref.read(kycFormControllerProvider.notifier);
       switch (imageType) {
-        case 'id_front':
+        case 'id_image':
           controller.setIdImage(pickedFile.path);
-          break;
-        case 'id_back':
-          controller.setIdBackImage(pickedFile.path);
           break;
         case 'selfie':
           controller.setSelfieImage(pickedFile.path);
@@ -140,6 +139,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       } else {
         await controller.submitKyc();
       }
+
+      // Refresh KYC status after successful submission
+      ref.invalidate(kycStatusControllerProvider);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -321,31 +323,17 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ID Front Image
+            // ID Photo
             _buildImagePicker(
-              title: 'ID Front *',
+              title: 'ID Photo *',
               imagePath: state.idImagePath,
-              onTap: () => _showImageSourceDialog('id_front', 'ID Front'),
+              onTap: () => _showImageSourceDialog('id_image', 'ID Photo'),
               onRemove: () {
                 ref.read(kycFormControllerProvider.notifier).setIdImage(null);
               },
             ),
 
             const SizedBox(height: 16),
-
-            // ID Back Image (conditional)
-            if (state.selectedIdType?.requiresBackImage ?? false)
-              _buildImagePicker(
-                title: 'ID Back *',
-                imagePath: state.idBackImagePath,
-                onTap: () => _showImageSourceDialog('id_back', 'ID Back'),
-                onRemove: () {
-                  ref.read(kycFormControllerProvider.notifier).setIdBackImage(null);
-                },
-              ),
-
-            if (state.selectedIdType?.requiresBackImage ?? false)
-              const SizedBox(height: 16),
 
             // Selfie Image
             _buildImagePicker(

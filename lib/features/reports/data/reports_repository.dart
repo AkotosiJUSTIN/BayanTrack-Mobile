@@ -24,14 +24,14 @@ class ReportsRepository {
     int page = 1,
     int limit = 10,
     ReportStatus? status,
-    String? barangay,
+    String? zone,
   }) async {
     final queryParams = <String, dynamic>{'page': page, 'limit': limit};
     if (status != null) {
       queryParams['status'] = status.name;
     }
-    if (barangay != null) {
-      queryParams['barangay'] = barangay;
+    if (zone != null) {
+      queryParams['zone'] = zone;
     }
 
     final response = await _dio.get(

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/storage/secure_storage_provider.dart';
+import '../../kyc/presentation/kyc_controller.dart';
 import '../data/auth_models.dart';
 import '../data/auth_repository.dart';
 
@@ -64,6 +65,13 @@ class AuthController extends _$AuthController {
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,
       );
+
+      // Fetch KYC status after successful login
+      try {
+        ref.invalidate(kycStatusControllerProvider);
+      } catch (_) {
+        // Ignore KYC fetch errors, don't fail login
+      }
 
       state = const AuthSuccess('Login successful');
       return true;

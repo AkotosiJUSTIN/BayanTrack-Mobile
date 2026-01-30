@@ -109,10 +109,10 @@ extension IdTypeExtension on IdType {
 @freezed
 sealed class KycStatusResponse with _$KycStatusResponse {
   const factory KycStatusResponse({
-    required String id,
-    @JsonKey(name: 'user_id') required String userId,
+    String? id,
+    @JsonKey(name: 'user_id') String? userId,
     @JsonKey(name: 'kyc_status') required KycStatus kycStatus,
-    @JsonKey(name: 'id_type') required IdType idType,
+    @JsonKey(name: 'id_type') IdType? idType,
     @JsonKey(name: 'id_number') String? idNumber,
     @JsonKey(name: 'full_name') required String fullName,
     @JsonKey(name: 'date_of_birth') String? dateOfBirth,
@@ -170,7 +170,26 @@ class KycSubmitRequest {
     required this.selfieImagePath,
   });
 
-  String get idTypeValue => idType.name;
+  String get idTypeValue {
+    switch (idType) {
+      case IdType.passport:
+        return 'passport';
+      case IdType.nationalId:
+        return 'national_id';
+      case IdType.driversLicense:
+        return 'drivers_license';
+      case IdType.philsys:
+        return 'philsys';
+      case IdType.sss:
+        return 'sss';
+      case IdType.umid:
+        return 'umid';
+      case IdType.postal:
+        return 'postal';
+      case IdType.voters:
+        return 'voters';
+    }
+  }
 }
 
 // ==================== KYC ERROR RESPONSE ====================

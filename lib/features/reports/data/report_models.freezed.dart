@@ -310,7 +310,7 @@ as String?,
 /// @nodoc
 mixin _$Report {
 
- String get id;@JsonKey(name: 'report_id') String? get reportId;@JsonKey(name: 'user_id') String? get userId; String get description; String? get location; String? get barangay; String? get latitude;// Backend returns as string
+ String get id;@JsonKey(name: 'report_id') String? get reportId;@JsonKey(name: 'user_id') String? get userId; String get description; String? get location; String? get zone; String? get latitude;// Backend returns as string
  String? get longitude;// Backend returns as string
  List<ReportImage> get images;// List of image objects from backend
  ReportStatus get status; String? get category;@JsonKey(name: 'category_confidence') double? get categoryConfidence; String? get priority;@JsonKey(name: 'priority_score') int? get priorityScore;@JsonKey(name: 'duplicate_state') String get duplicateState;@JsonKey(name: 'related_issue_id') String? get relatedIssueId;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;
@@ -326,16 +326,16 @@ $ReportCopyWith<Report> get copyWith => _$ReportCopyWithImpl<Report>(this as Rep
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Report&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&const DeepCollectionEquality().equals(other.images, images)&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.categoryConfidence, categoryConfidence) || other.categoryConfidence == categoryConfidence)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.priorityScore, priorityScore) || other.priorityScore == priorityScore)&&(identical(other.duplicateState, duplicateState) || other.duplicateState == duplicateState)&&(identical(other.relatedIssueId, relatedIssueId) || other.relatedIssueId == relatedIssueId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Report&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&const DeepCollectionEquality().equals(other.images, images)&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.categoryConfidence, categoryConfidence) || other.categoryConfidence == categoryConfidence)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.priorityScore, priorityScore) || other.priorityScore == priorityScore)&&(identical(other.duplicateState, duplicateState) || other.duplicateState == duplicateState)&&(identical(other.relatedIssueId, relatedIssueId) || other.relatedIssueId == relatedIssueId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,reportId,userId,description,location,barangay,latitude,longitude,const DeepCollectionEquality().hash(images),status,category,categoryConfidence,priority,priorityScore,duplicateState,relatedIssueId,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,reportId,userId,description,location,zone,latitude,longitude,const DeepCollectionEquality().hash(images),status,category,categoryConfidence,priority,priorityScore,duplicateState,relatedIssueId,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'Report(id: $id, reportId: $reportId, userId: $userId, description: $description, location: $location, barangay: $barangay, latitude: $latitude, longitude: $longitude, images: $images, status: $status, category: $category, categoryConfidence: $categoryConfidence, priority: $priority, priorityScore: $priorityScore, duplicateState: $duplicateState, relatedIssueId: $relatedIssueId, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Report(id: $id, reportId: $reportId, userId: $userId, description: $description, location: $location, zone: $zone, latitude: $latitude, longitude: $longitude, images: $images, status: $status, category: $category, categoryConfidence: $categoryConfidence, priority: $priority, priorityScore: $priorityScore, duplicateState: $duplicateState, relatedIssueId: $relatedIssueId, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -346,7 +346,7 @@ abstract mixin class $ReportCopyWith<$Res>  {
   factory $ReportCopyWith(Report value, $Res Function(Report) _then) = _$ReportCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String description, String? location, String? barangay, String? latitude, String? longitude, List<ReportImage> images, ReportStatus status, String? category,@JsonKey(name: 'category_confidence') double? categoryConfidence, String? priority,@JsonKey(name: 'priority_score') int? priorityScore,@JsonKey(name: 'duplicate_state') String duplicateState,@JsonKey(name: 'related_issue_id') String? relatedIssueId,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
+ String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String description, String? location, String? zone, String? latitude, String? longitude, List<ReportImage> images, ReportStatus status, String? category,@JsonKey(name: 'category_confidence') double? categoryConfidence, String? priority,@JsonKey(name: 'priority_score') int? priorityScore,@JsonKey(name: 'duplicate_state') String duplicateState,@JsonKey(name: 'related_issue_id') String? relatedIssueId,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -363,14 +363,14 @@ class _$ReportCopyWithImpl<$Res>
 
 /// Create a copy of Report
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? description = null,Object? location = freezed,Object? barangay = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? images = null,Object? status = null,Object? category = freezed,Object? categoryConfidence = freezed,Object? priority = freezed,Object? priorityScore = freezed,Object? duplicateState = null,Object? relatedIssueId = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? description = null,Object? location = freezed,Object? zone = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? images = null,Object? status = null,Object? category = freezed,Object? categoryConfidence = freezed,Object? priority = freezed,Object? priorityScore = freezed,Object? duplicateState = null,Object? relatedIssueId = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,reportId: freezed == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
 as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String?,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
-as String?,barangay: freezed == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
+as String?,zone: freezed == zone ? _self.zone : zone // ignore: cast_nullable_to_non_nullable
 as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
 as String?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
 as String?,images: null == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
@@ -465,10 +465,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String description,  String? location,  String? barangay,  String? latitude,  String? longitude,  List<ReportImage> images,  ReportStatus status,  String? category, @JsonKey(name: 'category_confidence')  double? categoryConfidence,  String? priority, @JsonKey(name: 'priority_score')  int? priorityScore, @JsonKey(name: 'duplicate_state')  String duplicateState, @JsonKey(name: 'related_issue_id')  String? relatedIssueId, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String description,  String? location,  String? zone,  String? latitude,  String? longitude,  List<ReportImage> images,  ReportStatus status,  String? category, @JsonKey(name: 'category_confidence')  double? categoryConfidence,  String? priority, @JsonKey(name: 'priority_score')  int? priorityScore, @JsonKey(name: 'duplicate_state')  String duplicateState, @JsonKey(name: 'related_issue_id')  String? relatedIssueId, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Report() when $default != null:
-return $default(_that.id,_that.reportId,_that.userId,_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude,_that.images,_that.status,_that.category,_that.categoryConfidence,_that.priority,_that.priorityScore,_that.duplicateState,_that.relatedIssueId,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.reportId,_that.userId,_that.description,_that.location,_that.zone,_that.latitude,_that.longitude,_that.images,_that.status,_that.category,_that.categoryConfidence,_that.priority,_that.priorityScore,_that.duplicateState,_that.relatedIssueId,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -486,10 +486,10 @@ return $default(_that.id,_that.reportId,_that.userId,_that.description,_that.loc
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String description,  String? location,  String? barangay,  String? latitude,  String? longitude,  List<ReportImage> images,  ReportStatus status,  String? category, @JsonKey(name: 'category_confidence')  double? categoryConfidence,  String? priority, @JsonKey(name: 'priority_score')  int? priorityScore, @JsonKey(name: 'duplicate_state')  String duplicateState, @JsonKey(name: 'related_issue_id')  String? relatedIssueId, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String description,  String? location,  String? zone,  String? latitude,  String? longitude,  List<ReportImage> images,  ReportStatus status,  String? category, @JsonKey(name: 'category_confidence')  double? categoryConfidence,  String? priority, @JsonKey(name: 'priority_score')  int? priorityScore, @JsonKey(name: 'duplicate_state')  String duplicateState, @JsonKey(name: 'related_issue_id')  String? relatedIssueId, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Report():
-return $default(_that.id,_that.reportId,_that.userId,_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude,_that.images,_that.status,_that.category,_that.categoryConfidence,_that.priority,_that.priorityScore,_that.duplicateState,_that.relatedIssueId,_that.createdAt,_that.updatedAt);}
+return $default(_that.id,_that.reportId,_that.userId,_that.description,_that.location,_that.zone,_that.latitude,_that.longitude,_that.images,_that.status,_that.category,_that.categoryConfidence,_that.priority,_that.priorityScore,_that.duplicateState,_that.relatedIssueId,_that.createdAt,_that.updatedAt);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -503,10 +503,10 @@ return $default(_that.id,_that.reportId,_that.userId,_that.description,_that.loc
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String description,  String? location,  String? barangay,  String? latitude,  String? longitude,  List<ReportImage> images,  ReportStatus status,  String? category, @JsonKey(name: 'category_confidence')  double? categoryConfidence,  String? priority, @JsonKey(name: 'priority_score')  int? priorityScore, @JsonKey(name: 'duplicate_state')  String duplicateState, @JsonKey(name: 'related_issue_id')  String? relatedIssueId, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String description,  String? location,  String? zone,  String? latitude,  String? longitude,  List<ReportImage> images,  ReportStatus status,  String? category, @JsonKey(name: 'category_confidence')  double? categoryConfidence,  String? priority, @JsonKey(name: 'priority_score')  int? priorityScore, @JsonKey(name: 'duplicate_state')  String duplicateState, @JsonKey(name: 'related_issue_id')  String? relatedIssueId, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Report() when $default != null:
-return $default(_that.id,_that.reportId,_that.userId,_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude,_that.images,_that.status,_that.category,_that.categoryConfidence,_that.priority,_that.priorityScore,_that.duplicateState,_that.relatedIssueId,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.reportId,_that.userId,_that.description,_that.location,_that.zone,_that.latitude,_that.longitude,_that.images,_that.status,_that.category,_that.categoryConfidence,_that.priority,_that.priorityScore,_that.duplicateState,_that.relatedIssueId,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -518,7 +518,7 @@ return $default(_that.id,_that.reportId,_that.userId,_that.description,_that.loc
 @JsonSerializable()
 
 class _Report implements Report {
-  const _Report({required this.id, @JsonKey(name: 'report_id') this.reportId, @JsonKey(name: 'user_id') this.userId, required this.description, this.location, this.barangay, this.latitude, this.longitude, final  List<ReportImage> images = const [], this.status = ReportStatus.pending, this.category, @JsonKey(name: 'category_confidence') this.categoryConfidence, this.priority, @JsonKey(name: 'priority_score') this.priorityScore, @JsonKey(name: 'duplicate_state') this.duplicateState = 'New', @JsonKey(name: 'related_issue_id') this.relatedIssueId, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt}): _images = images;
+  const _Report({required this.id, @JsonKey(name: 'report_id') this.reportId, @JsonKey(name: 'user_id') this.userId, required this.description, this.location, this.zone, this.latitude, this.longitude, final  List<ReportImage> images = const [], this.status = ReportStatus.pending, this.category, @JsonKey(name: 'category_confidence') this.categoryConfidence, this.priority, @JsonKey(name: 'priority_score') this.priorityScore, @JsonKey(name: 'duplicate_state') this.duplicateState = 'New', @JsonKey(name: 'related_issue_id') this.relatedIssueId, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt}): _images = images;
   factory _Report.fromJson(Map<String, dynamic> json) => _$ReportFromJson(json);
 
 @override final  String id;
@@ -526,7 +526,7 @@ class _Report implements Report {
 @override@JsonKey(name: 'user_id') final  String? userId;
 @override final  String description;
 @override final  String? location;
-@override final  String? barangay;
+@override final  String? zone;
 @override final  String? latitude;
 // Backend returns as string
 @override final  String? longitude;
@@ -563,16 +563,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Report&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&const DeepCollectionEquality().equals(other._images, _images)&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.categoryConfidence, categoryConfidence) || other.categoryConfidence == categoryConfidence)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.priorityScore, priorityScore) || other.priorityScore == priorityScore)&&(identical(other.duplicateState, duplicateState) || other.duplicateState == duplicateState)&&(identical(other.relatedIssueId, relatedIssueId) || other.relatedIssueId == relatedIssueId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Report&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&const DeepCollectionEquality().equals(other._images, _images)&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.categoryConfidence, categoryConfidence) || other.categoryConfidence == categoryConfidence)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.priorityScore, priorityScore) || other.priorityScore == priorityScore)&&(identical(other.duplicateState, duplicateState) || other.duplicateState == duplicateState)&&(identical(other.relatedIssueId, relatedIssueId) || other.relatedIssueId == relatedIssueId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,reportId,userId,description,location,barangay,latitude,longitude,const DeepCollectionEquality().hash(_images),status,category,categoryConfidence,priority,priorityScore,duplicateState,relatedIssueId,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,reportId,userId,description,location,zone,latitude,longitude,const DeepCollectionEquality().hash(_images),status,category,categoryConfidence,priority,priorityScore,duplicateState,relatedIssueId,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'Report(id: $id, reportId: $reportId, userId: $userId, description: $description, location: $location, barangay: $barangay, latitude: $latitude, longitude: $longitude, images: $images, status: $status, category: $category, categoryConfidence: $categoryConfidence, priority: $priority, priorityScore: $priorityScore, duplicateState: $duplicateState, relatedIssueId: $relatedIssueId, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Report(id: $id, reportId: $reportId, userId: $userId, description: $description, location: $location, zone: $zone, latitude: $latitude, longitude: $longitude, images: $images, status: $status, category: $category, categoryConfidence: $categoryConfidence, priority: $priority, priorityScore: $priorityScore, duplicateState: $duplicateState, relatedIssueId: $relatedIssueId, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -583,7 +583,7 @@ abstract mixin class _$ReportCopyWith<$Res> implements $ReportCopyWith<$Res> {
   factory _$ReportCopyWith(_Report value, $Res Function(_Report) _then) = __$ReportCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String description, String? location, String? barangay, String? latitude, String? longitude, List<ReportImage> images, ReportStatus status, String? category,@JsonKey(name: 'category_confidence') double? categoryConfidence, String? priority,@JsonKey(name: 'priority_score') int? priorityScore,@JsonKey(name: 'duplicate_state') String duplicateState,@JsonKey(name: 'related_issue_id') String? relatedIssueId,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
+ String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String description, String? location, String? zone, String? latitude, String? longitude, List<ReportImage> images, ReportStatus status, String? category,@JsonKey(name: 'category_confidence') double? categoryConfidence, String? priority,@JsonKey(name: 'priority_score') int? priorityScore,@JsonKey(name: 'duplicate_state') String duplicateState,@JsonKey(name: 'related_issue_id') String? relatedIssueId,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -600,14 +600,14 @@ class __$ReportCopyWithImpl<$Res>
 
 /// Create a copy of Report
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? description = null,Object? location = freezed,Object? barangay = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? images = null,Object? status = null,Object? category = freezed,Object? categoryConfidence = freezed,Object? priority = freezed,Object? priorityScore = freezed,Object? duplicateState = null,Object? relatedIssueId = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? description = null,Object? location = freezed,Object? zone = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? images = null,Object? status = null,Object? category = freezed,Object? categoryConfidence = freezed,Object? priority = freezed,Object? priorityScore = freezed,Object? duplicateState = null,Object? relatedIssueId = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_Report(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,reportId: freezed == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
 as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String?,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,location: freezed == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
-as String?,barangay: freezed == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
+as String?,zone: freezed == zone ? _self.zone : zone // ignore: cast_nullable_to_non_nullable
 as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
 as String?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
 as String?,images: null == images ? _self._images : images // ignore: cast_nullable_to_non_nullable
@@ -631,7 +631,7 @@ as String?,
 /// @nodoc
 mixin _$CreateReportRequest {
 
- String get description; String get location; String get barangay; String? get latitude;// Sent as string, backend accepts DecimalField
+ String get description; String get location; String get zone; String? get latitude;// Sent as string, backend accepts DecimalField
  String? get longitude;// Sent as string, backend accepts DecimalField
  String? get category;
 /// Create a copy of CreateReportRequest
@@ -646,16 +646,16 @@ $CreateReportRequestCopyWith<CreateReportRequest> get copyWith => _$CreateReport
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateReportRequest&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.category, category) || other.category == category));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateReportRequest&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.category, category) || other.category == category));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,description,location,barangay,latitude,longitude,category);
+int get hashCode => Object.hash(runtimeType,description,location,zone,latitude,longitude,category);
 
 @override
 String toString() {
-  return 'CreateReportRequest(description: $description, location: $location, barangay: $barangay, latitude: $latitude, longitude: $longitude, category: $category)';
+  return 'CreateReportRequest(description: $description, location: $location, zone: $zone, latitude: $latitude, longitude: $longitude, category: $category)';
 }
 
 
@@ -666,7 +666,7 @@ abstract mixin class $CreateReportRequestCopyWith<$Res>  {
   factory $CreateReportRequestCopyWith(CreateReportRequest value, $Res Function(CreateReportRequest) _then) = _$CreateReportRequestCopyWithImpl;
 @useResult
 $Res call({
- String description, String location, String barangay, String? latitude, String? longitude, String? category
+ String description, String location, String zone, String? latitude, String? longitude, String? category
 });
 
 
@@ -683,11 +683,11 @@ class _$CreateReportRequestCopyWithImpl<$Res>
 
 /// Create a copy of CreateReportRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? description = null,Object? location = null,Object? barangay = null,Object? latitude = freezed,Object? longitude = freezed,Object? category = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? description = null,Object? location = null,Object? zone = null,Object? latitude = freezed,Object? longitude = freezed,Object? category = freezed,}) {
   return _then(_self.copyWith(
 description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
-as String,barangay: null == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
+as String,zone: null == zone ? _self.zone : zone // ignore: cast_nullable_to_non_nullable
 as String,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
 as String?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
 as String?,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
@@ -773,10 +773,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String description,  String location,  String barangay,  String? latitude,  String? longitude,  String? category)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String description,  String location,  String zone,  String? latitude,  String? longitude,  String? category)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CreateReportRequest() when $default != null:
-return $default(_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude,_that.category);case _:
+return $default(_that.description,_that.location,_that.zone,_that.latitude,_that.longitude,_that.category);case _:
   return orElse();
 
 }
@@ -794,10 +794,10 @@ return $default(_that.description,_that.location,_that.barangay,_that.latitude,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String description,  String location,  String barangay,  String? latitude,  String? longitude,  String? category)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String description,  String location,  String zone,  String? latitude,  String? longitude,  String? category)  $default,) {final _that = this;
 switch (_that) {
 case _CreateReportRequest():
-return $default(_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude,_that.category);}
+return $default(_that.description,_that.location,_that.zone,_that.latitude,_that.longitude,_that.category);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -811,10 +811,10 @@ return $default(_that.description,_that.location,_that.barangay,_that.latitude,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String description,  String location,  String barangay,  String? latitude,  String? longitude,  String? category)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String description,  String location,  String zone,  String? latitude,  String? longitude,  String? category)?  $default,) {final _that = this;
 switch (_that) {
 case _CreateReportRequest() when $default != null:
-return $default(_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude,_that.category);case _:
+return $default(_that.description,_that.location,_that.zone,_that.latitude,_that.longitude,_that.category);case _:
   return null;
 
 }
@@ -826,12 +826,12 @@ return $default(_that.description,_that.location,_that.barangay,_that.latitude,_
 @JsonSerializable()
 
 class _CreateReportRequest implements CreateReportRequest {
-  const _CreateReportRequest({required this.description, required this.location, required this.barangay, this.latitude, this.longitude, this.category});
+  const _CreateReportRequest({required this.description, required this.location, required this.zone, this.latitude, this.longitude, this.category});
   factory _CreateReportRequest.fromJson(Map<String, dynamic> json) => _$CreateReportRequestFromJson(json);
 
 @override final  String description;
 @override final  String location;
-@override final  String barangay;
+@override final  String zone;
 @override final  String? latitude;
 // Sent as string, backend accepts DecimalField
 @override final  String? longitude;
@@ -851,16 +851,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateReportRequest&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.category, category) || other.category == category));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateReportRequest&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.category, category) || other.category == category));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,description,location,barangay,latitude,longitude,category);
+int get hashCode => Object.hash(runtimeType,description,location,zone,latitude,longitude,category);
 
 @override
 String toString() {
-  return 'CreateReportRequest(description: $description, location: $location, barangay: $barangay, latitude: $latitude, longitude: $longitude, category: $category)';
+  return 'CreateReportRequest(description: $description, location: $location, zone: $zone, latitude: $latitude, longitude: $longitude, category: $category)';
 }
 
 
@@ -871,7 +871,7 @@ abstract mixin class _$CreateReportRequestCopyWith<$Res> implements $CreateRepor
   factory _$CreateReportRequestCopyWith(_CreateReportRequest value, $Res Function(_CreateReportRequest) _then) = __$CreateReportRequestCopyWithImpl;
 @override @useResult
 $Res call({
- String description, String location, String barangay, String? latitude, String? longitude, String? category
+ String description, String location, String zone, String? latitude, String? longitude, String? category
 });
 
 
@@ -888,11 +888,11 @@ class __$CreateReportRequestCopyWithImpl<$Res>
 
 /// Create a copy of CreateReportRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? description = null,Object? location = null,Object? barangay = null,Object? latitude = freezed,Object? longitude = freezed,Object? category = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? description = null,Object? location = null,Object? zone = null,Object? latitude = freezed,Object? longitude = freezed,Object? category = freezed,}) {
   return _then(_CreateReportRequest(
 description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
-as String,barangay: null == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
+as String,zone: null == zone ? _self.zone : zone // ignore: cast_nullable_to_non_nullable
 as String,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
 as String?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
 as String?,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
@@ -907,7 +907,7 @@ as String?,
 /// @nodoc
 mixin _$UpdateReportRequest {
 
- ReportStatus? get status; String? get category; String? get barangay;
+ ReportStatus? get status; String? get category; String? get zone;
 /// Create a copy of UpdateReportRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -920,16 +920,16 @@ $UpdateReportRequestCopyWith<UpdateReportRequest> get copyWith => _$UpdateReport
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdateReportRequest&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.barangay, barangay) || other.barangay == barangay));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdateReportRequest&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.zone, zone) || other.zone == zone));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,status,category,barangay);
+int get hashCode => Object.hash(runtimeType,status,category,zone);
 
 @override
 String toString() {
-  return 'UpdateReportRequest(status: $status, category: $category, barangay: $barangay)';
+  return 'UpdateReportRequest(status: $status, category: $category, zone: $zone)';
 }
 
 
@@ -940,7 +940,7 @@ abstract mixin class $UpdateReportRequestCopyWith<$Res>  {
   factory $UpdateReportRequestCopyWith(UpdateReportRequest value, $Res Function(UpdateReportRequest) _then) = _$UpdateReportRequestCopyWithImpl;
 @useResult
 $Res call({
- ReportStatus? status, String? category, String? barangay
+ ReportStatus? status, String? category, String? zone
 });
 
 
@@ -957,11 +957,11 @@ class _$UpdateReportRequestCopyWithImpl<$Res>
 
 /// Create a copy of UpdateReportRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? status = freezed,Object? category = freezed,Object? barangay = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? status = freezed,Object? category = freezed,Object? zone = freezed,}) {
   return _then(_self.copyWith(
 status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ReportStatus?,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
-as String?,barangay: freezed == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
+as String?,zone: freezed == zone ? _self.zone : zone // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -1044,10 +1044,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ReportStatus? status,  String? category,  String? barangay)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( ReportStatus? status,  String? category,  String? zone)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UpdateReportRequest() when $default != null:
-return $default(_that.status,_that.category,_that.barangay);case _:
+return $default(_that.status,_that.category,_that.zone);case _:
   return orElse();
 
 }
@@ -1065,10 +1065,10 @@ return $default(_that.status,_that.category,_that.barangay);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ReportStatus? status,  String? category,  String? barangay)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( ReportStatus? status,  String? category,  String? zone)  $default,) {final _that = this;
 switch (_that) {
 case _UpdateReportRequest():
-return $default(_that.status,_that.category,_that.barangay);}
+return $default(_that.status,_that.category,_that.zone);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -1082,10 +1082,10 @@ return $default(_that.status,_that.category,_that.barangay);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ReportStatus? status,  String? category,  String? barangay)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( ReportStatus? status,  String? category,  String? zone)?  $default,) {final _that = this;
 switch (_that) {
 case _UpdateReportRequest() when $default != null:
-return $default(_that.status,_that.category,_that.barangay);case _:
+return $default(_that.status,_that.category,_that.zone);case _:
   return null;
 
 }
@@ -1097,12 +1097,12 @@ return $default(_that.status,_that.category,_that.barangay);case _:
 @JsonSerializable()
 
 class _UpdateReportRequest implements UpdateReportRequest {
-  const _UpdateReportRequest({this.status, this.category, this.barangay});
+  const _UpdateReportRequest({this.status, this.category, this.zone});
   factory _UpdateReportRequest.fromJson(Map<String, dynamic> json) => _$UpdateReportRequestFromJson(json);
 
 @override final  ReportStatus? status;
 @override final  String? category;
-@override final  String? barangay;
+@override final  String? zone;
 
 /// Create a copy of UpdateReportRequest
 /// with the given fields replaced by the non-null parameter values.
@@ -1117,16 +1117,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UpdateReportRequest&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.barangay, barangay) || other.barangay == barangay));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UpdateReportRequest&&(identical(other.status, status) || other.status == status)&&(identical(other.category, category) || other.category == category)&&(identical(other.zone, zone) || other.zone == zone));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,status,category,barangay);
+int get hashCode => Object.hash(runtimeType,status,category,zone);
 
 @override
 String toString() {
-  return 'UpdateReportRequest(status: $status, category: $category, barangay: $barangay)';
+  return 'UpdateReportRequest(status: $status, category: $category, zone: $zone)';
 }
 
 
@@ -1137,7 +1137,7 @@ abstract mixin class _$UpdateReportRequestCopyWith<$Res> implements $UpdateRepor
   factory _$UpdateReportRequestCopyWith(_UpdateReportRequest value, $Res Function(_UpdateReportRequest) _then) = __$UpdateReportRequestCopyWithImpl;
 @override @useResult
 $Res call({
- ReportStatus? status, String? category, String? barangay
+ ReportStatus? status, String? category, String? zone
 });
 
 
@@ -1154,11 +1154,11 @@ class __$UpdateReportRequestCopyWithImpl<$Res>
 
 /// Create a copy of UpdateReportRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? status = freezed,Object? category = freezed,Object? barangay = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? status = freezed,Object? category = freezed,Object? zone = freezed,}) {
   return _then(_UpdateReportRequest(
 status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as ReportStatus?,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
-as String?,barangay: freezed == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
+as String?,zone: freezed == zone ? _self.zone : zone // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

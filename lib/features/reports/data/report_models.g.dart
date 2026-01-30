@@ -45,7 +45,7 @@ _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
   userId: json['user_id'] as String?,
   description: json['description'] as String,
   location: json['location'] as String?,
-  barangay: json['barangay'] as String?,
+  zone: json['zone'] as String?,
   latitude: json['latitude'] as String?,
   longitude: json['longitude'] as String?,
   images:
@@ -72,7 +72,7 @@ Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
   'user_id': instance.userId,
   'description': instance.description,
   'location': instance.location,
-  'barangay': instance.barangay,
+  'zone': instance.zone,
   'latitude': instance.latitude,
   'longitude': instance.longitude,
   'images': instance.images,
@@ -100,7 +100,7 @@ _CreateReportRequest _$CreateReportRequestFromJson(Map<String, dynamic> json) =>
     _CreateReportRequest(
       description: json['description'] as String,
       location: json['location'] as String,
-      barangay: json['barangay'] as String,
+      zone: json['zone'] as String,
       latitude: json['latitude'] as String?,
       longitude: json['longitude'] as String?,
       category: json['category'] as String?,
@@ -111,7 +111,7 @@ Map<String, dynamic> _$CreateReportRequestToJson(
 ) => <String, dynamic>{
   'description': instance.description,
   'location': instance.location,
-  'barangay': instance.barangay,
+  'zone': instance.zone,
   'latitude': instance.latitude,
   'longitude': instance.longitude,
   'category': instance.category,
@@ -121,7 +121,7 @@ _UpdateReportRequest _$UpdateReportRequestFromJson(Map<String, dynamic> json) =>
     _UpdateReportRequest(
       status: $enumDecodeNullable(_$ReportStatusEnumMap, json['status']),
       category: json['category'] as String?,
-      barangay: json['barangay'] as String?,
+      zone: json['zone'] as String?,
     );
 
 Map<String, dynamic> _$UpdateReportRequestToJson(
@@ -129,7 +129,7 @@ Map<String, dynamic> _$UpdateReportRequestToJson(
 ) => <String, dynamic>{
   'status': _$ReportStatusEnumMap[instance.status],
   'category': instance.category,
-  'barangay': instance.barangay,
+  'zone': instance.zone,
 };
 
 _PaginatedReports _$PaginatedReportsFromJson(Map<String, dynamic> json) =>

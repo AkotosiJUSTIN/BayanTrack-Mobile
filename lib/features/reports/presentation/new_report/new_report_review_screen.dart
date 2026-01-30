@@ -41,7 +41,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
       final request = CreateReportRequest(
         description: state.description,
         location: state.location!,
-        barangay: state.barangay,
+        zone: state.zone,
         latitude: state.latitude?.toStringAsFixed(6),
         longitude: state.longitude?.toStringAsFixed(6),
         category: state.category,
@@ -205,15 +205,15 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Barangay preview
+                  // Zone preview
                   _buildSection(
                     theme: theme,
                     isDark: isDark,
                     icon: Icons.location_city,
-                    title: 'Barangay',
-                    trailing: state.barangay.isNotEmpty ? 'Set' : 'Not set',
+                    title: 'Zone',
+                    trailing: state.zone.isNotEmpty ? 'Set' : 'Not set',
                     content: Text(
-                      state.barangay.isNotEmpty ? state.barangay : 'Not specified',
+                      state.zone.isNotEmpty ? state.zone : 'Not specified',
                       style: theme.textTheme.bodyMedium,
                     ),
                   ),
