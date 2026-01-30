@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/data/user_permissions.dart';
+import '../../auth/presentation/verification_widgets.dart';
 import '../../reports/data/report_models.dart';
 import '../../reports/presentation/report_detail_screen.dart';
 import '../../reports/presentation/reports_controller.dart';
@@ -35,14 +37,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final reportsAsync = ref.watch(reportsControllerProvider());
+    final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(),
-      body: RefreshIndicator(
-        onRefresh: _onRefresh,
-        child: CustomScrollView(
+      body: Column(
+        children: [
+          // Verification banner for unverified users
+          VerificationBanner(permissions: permissions),
+
+          // Main content with refresh
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _onRefresh,
+              child: CustomScrollView(
           slivers: [
             // Search bar
             SliverToBoxAdapter(
@@ -123,7 +133,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   : _buildListView(reportsAsync, theme),
             ),
           ],
-        ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

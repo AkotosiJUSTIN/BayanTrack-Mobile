@@ -44,6 +44,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
         barangay: state.barangay,
         latitude: state.latitude?.toStringAsFixed(6),
         longitude: state.longitude?.toStringAsFixed(6),
+        category: state.category,
       );
 
       final createdReport = await reportsRepo.createReport(request);

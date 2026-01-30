@@ -83,6 +83,7 @@ sealed class CreateReportRequest with _$CreateReportRequest {
     required String barangay,
     String? latitude,  // Sent as string, backend accepts DecimalField
     String? longitude, // Sent as string, backend accepts DecimalField
+    String? category,
   }) = _CreateReportRequest;
 
   factory CreateReportRequest.fromJson(Map<String, dynamic> json) =>

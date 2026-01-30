@@ -632,7 +632,8 @@ as String?,
 mixin _$CreateReportRequest {
 
  String get description; String get location; String get barangay; String? get latitude;// Sent as string, backend accepts DecimalField
- String? get longitude;
+ String? get longitude;// Sent as string, backend accepts DecimalField
+ String? get category;
 /// Create a copy of CreateReportRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -645,16 +646,16 @@ $CreateReportRequestCopyWith<CreateReportRequest> get copyWith => _$CreateReport
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateReportRequest&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateReportRequest&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.category, category) || other.category == category));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,description,location,barangay,latitude,longitude);
+int get hashCode => Object.hash(runtimeType,description,location,barangay,latitude,longitude,category);
 
 @override
 String toString() {
-  return 'CreateReportRequest(description: $description, location: $location, barangay: $barangay, latitude: $latitude, longitude: $longitude)';
+  return 'CreateReportRequest(description: $description, location: $location, barangay: $barangay, latitude: $latitude, longitude: $longitude, category: $category)';
 }
 
 
@@ -665,7 +666,7 @@ abstract mixin class $CreateReportRequestCopyWith<$Res>  {
   factory $CreateReportRequestCopyWith(CreateReportRequest value, $Res Function(CreateReportRequest) _then) = _$CreateReportRequestCopyWithImpl;
 @useResult
 $Res call({
- String description, String location, String barangay, String? latitude, String? longitude
+ String description, String location, String barangay, String? latitude, String? longitude, String? category
 });
 
 
@@ -682,13 +683,14 @@ class _$CreateReportRequestCopyWithImpl<$Res>
 
 /// Create a copy of CreateReportRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? description = null,Object? location = null,Object? barangay = null,Object? latitude = freezed,Object? longitude = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? description = null,Object? location = null,Object? barangay = null,Object? latitude = freezed,Object? longitude = freezed,Object? category = freezed,}) {
   return _then(_self.copyWith(
 description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
 as String,barangay: null == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
 as String,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
 as String?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
+as String?,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -771,10 +773,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String description,  String location,  String barangay,  String? latitude,  String? longitude)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String description,  String location,  String barangay,  String? latitude,  String? longitude,  String? category)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CreateReportRequest() when $default != null:
-return $default(_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude);case _:
+return $default(_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude,_that.category);case _:
   return orElse();
 
 }
@@ -792,10 +794,10 @@ return $default(_that.description,_that.location,_that.barangay,_that.latitude,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String description,  String location,  String barangay,  String? latitude,  String? longitude)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String description,  String location,  String barangay,  String? latitude,  String? longitude,  String? category)  $default,) {final _that = this;
 switch (_that) {
 case _CreateReportRequest():
-return $default(_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude);}
+return $default(_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude,_that.category);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -809,10 +811,10 @@ return $default(_that.description,_that.location,_that.barangay,_that.latitude,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String description,  String location,  String barangay,  String? latitude,  String? longitude)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String description,  String location,  String barangay,  String? latitude,  String? longitude,  String? category)?  $default,) {final _that = this;
 switch (_that) {
 case _CreateReportRequest() when $default != null:
-return $default(_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude);case _:
+return $default(_that.description,_that.location,_that.barangay,_that.latitude,_that.longitude,_that.category);case _:
   return null;
 
 }
@@ -824,7 +826,7 @@ return $default(_that.description,_that.location,_that.barangay,_that.latitude,_
 @JsonSerializable()
 
 class _CreateReportRequest implements CreateReportRequest {
-  const _CreateReportRequest({required this.description, required this.location, required this.barangay, this.latitude, this.longitude});
+  const _CreateReportRequest({required this.description, required this.location, required this.barangay, this.latitude, this.longitude, this.category});
   factory _CreateReportRequest.fromJson(Map<String, dynamic> json) => _$CreateReportRequestFromJson(json);
 
 @override final  String description;
@@ -833,6 +835,8 @@ class _CreateReportRequest implements CreateReportRequest {
 @override final  String? latitude;
 // Sent as string, backend accepts DecimalField
 @override final  String? longitude;
+// Sent as string, backend accepts DecimalField
+@override final  String? category;
 
 /// Create a copy of CreateReportRequest
 /// with the given fields replaced by the non-null parameter values.
@@ -847,16 +851,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateReportRequest&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateReportRequest&&(identical(other.description, description) || other.description == description)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.category, category) || other.category == category));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,description,location,barangay,latitude,longitude);
+int get hashCode => Object.hash(runtimeType,description,location,barangay,latitude,longitude,category);
 
 @override
 String toString() {
-  return 'CreateReportRequest(description: $description, location: $location, barangay: $barangay, latitude: $latitude, longitude: $longitude)';
+  return 'CreateReportRequest(description: $description, location: $location, barangay: $barangay, latitude: $latitude, longitude: $longitude, category: $category)';
 }
 
 
@@ -867,7 +871,7 @@ abstract mixin class _$CreateReportRequestCopyWith<$Res> implements $CreateRepor
   factory _$CreateReportRequestCopyWith(_CreateReportRequest value, $Res Function(_CreateReportRequest) _then) = __$CreateReportRequestCopyWithImpl;
 @override @useResult
 $Res call({
- String description, String location, String barangay, String? latitude, String? longitude
+ String description, String location, String barangay, String? latitude, String? longitude, String? category
 });
 
 
@@ -884,13 +888,14 @@ class __$CreateReportRequestCopyWithImpl<$Res>
 
 /// Create a copy of CreateReportRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? description = null,Object? location = null,Object? barangay = null,Object? latitude = freezed,Object? longitude = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? description = null,Object? location = null,Object? barangay = null,Object? latitude = freezed,Object? longitude = freezed,Object? category = freezed,}) {
   return _then(_CreateReportRequest(
 description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
 as String,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
 as String,barangay: null == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
 as String,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
 as String?,longitude: freezed == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
+as String?,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

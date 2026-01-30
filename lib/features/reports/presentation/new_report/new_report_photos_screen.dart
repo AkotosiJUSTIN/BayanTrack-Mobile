@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/data/user_permissions.dart';
+import '../../../auth/presentation/verification_widgets.dart';
 import 'new_report_controller.dart';
 import 'new_report_location_screen.dart';
 
@@ -56,6 +58,7 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(newReportControllerProvider);
+    final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -73,6 +76,9 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Verification banner for unverified users
+          VerificationBanner(permissions: permissions),
+
           // Progress indicator
           LinearProgressIndicator(
             value: 0.25,

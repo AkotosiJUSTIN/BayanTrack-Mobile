@@ -33,6 +33,12 @@ class ApiConstants {
   static const String notificationPushToken = '/notifications/push-token/';
   static String notificationById(String id) => '/notifications/$id/';
 
+  // KYC Endpoints
+  static const String kycIdTypes = '/auth/kyc/id-types/';
+  static const String kycSubmit = '/auth/kyc/submit/';
+  static const String kycStatus = '/auth/kyc/status/';
+  static const String kycResubmit = '/auth/kyc/resubmit/';
+
   // Storage Keys
   static const String accessTokenKey = 'access_token';
   static const String refreshTokenKey = 'refresh_token';

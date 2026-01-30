@@ -103,6 +103,7 @@ _CreateReportRequest _$CreateReportRequestFromJson(Map<String, dynamic> json) =>
       barangay: json['barangay'] as String,
       latitude: json['latitude'] as String?,
       longitude: json['longitude'] as String?,
+      category: json['category'] as String?,
     );
 
 Map<String, dynamic> _$CreateReportRequestToJson(
@@ -113,6 +114,7 @@ Map<String, dynamic> _$CreateReportRequestToJson(
   'barangay': instance.barangay,
   'latitude': instance.latitude,
   'longitude': instance.longitude,
+  'category': instance.category,
 };
 
 _UpdateReportRequest _$UpdateReportRequestFromJson(Map<String, dynamic> json) =>

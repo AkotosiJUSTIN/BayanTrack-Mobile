@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../kyc/data/kyc_models.dart';
+import '../../kyc/presentation/kyc_controller.dart';
+import '../../kyc/presentation/kyc_status_screen.dart';
 import '../../notifications/presentation/notification_settings_screen.dart';
 import '../data/auth_models.dart';
+import '../data/user_permissions.dart';
 import 'auth_controller.dart';
 import 'profile_controller.dart';
 import 'edit_profile_screen.dart';
@@ -42,6 +46,19 @@ class ProfileScreen extends ConsumerWidget {
                 data: (profile) => _buildProfileHeader(context, profile, theme),
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, _) => Center(child: Text('Error: $err')),
+              ),
+              const SizedBox(height: 24),
+
+              // KYC Status Card
+              Consumer(
+                builder: (context, ref, _) {
+                  final kycStatusAsync = ref.watch(kycStatusControllerProvider);
+                  return kycStatusAsync.when(
+                    data: (kycStatus) => _buildKycStatusCard(context, ref, kycStatus),
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
+                  );
+                },
               ),
               const SizedBox(height: 24),
 
@@ -189,7 +206,6 @@ class ProfileScreen extends ConsumerWidget {
             title: const Text('Notification Settings'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              // We'll reuse a dedicated settings screen or build it here.
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const NotificationSettingsScreen(),
@@ -200,6 +216,107 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildKycStatusCard(
+    BuildContext context,
+    WidgetRef ref,
+    KycStatusResponse? kycStatus,
+  ) {
+    final permissions = ref.watch(userPermissionsProvider);
+    final statusColor = _getKycStatusColor(kycStatus?.kycStatus);
+    
+    return Card(
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const KycStatusScreen(),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  _getKycStatusIcon(kycStatus?.kycStatus),
+                  color: statusColor,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Identity Verification',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      permissions.getStatusMessage(),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: statusColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: statusColor),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _getKycStatusColor(KycStatus? status) {
+    if (status == null) return AppColors.alertMedium;
+    
+    switch (status) {
+      case KycStatus.verified:
+        return AppColors.success;
+      case KycStatus.pending:
+        return AppColors.alertMedium;
+      case KycStatus.rejected:
+      case KycStatus.resubmitRequested:
+      case KycStatus.suspended:
+        return AppColors.alertHigh;
+      case KycStatus.unverified:
+        return AppColors.lightTextSecondary;
+    }
+  }
+
+  IconData _getKycStatusIcon(KycStatus? status) {
+    if (status == null) return Icons.shield_outlined;
+    
+    switch (status) {
+      case KycStatus.verified:
+        return Icons.verified_user;
+      case KycStatus.pending:
+        return Icons.hourglass_empty;
+      case KycStatus.rejected:
+        return Icons.cancel;
+      case KycStatus.resubmitRequested:
+        return Icons.refresh;
+      case KycStatus.suspended:
+        return Icons.block;
+      case KycStatus.unverified:
+        return Icons.shield_outlined;
+    }
   }
 
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
