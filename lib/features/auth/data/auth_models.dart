@@ -73,11 +73,11 @@ sealed class RefreshTokenResponse with _$RefreshTokenResponse {
 @freezed
 sealed class UserProfile with _$UserProfile {
   const factory UserProfile({
-    @JsonKey(name: '_id') required String id,
+    @JsonKey(name: 'id', readValue: _readUserId) required String id,
     required String email,
-    @JsonKey(name: 'first_name') required String firstName,
-    @JsonKey(name: 'last_name') required String lastName,
-    required String role,
+    @JsonKey(name: 'first_name') @Default('') String firstName,
+    @JsonKey(name: 'last_name') @Default('') String lastName,
+    @Default('citizen') String role,
     @JsonKey(name: 'is_active') @Default(true) bool isActive,
     @JsonKey(name: 'created_at') String? createdAt,
     @JsonKey(name: 'updated_at') String? updatedAt,
@@ -85,6 +85,13 @@ sealed class UserProfile with _$UserProfile {
 
   factory UserProfile.fromJson(Map<String, dynamic> json) =>
       _$UserProfileFromJson(json);
+}
+
+/// Helper to read user ID from either 'id' or '_id' field
+/// Returns a non-null String, defaulting to empty string if neither field exists
+Object _readUserId(Map<dynamic, dynamic> json, String key) {
+  final id = json['id'] ?? json['_id'];
+  return id?.toString() ?? '';
 }
 
 @freezed

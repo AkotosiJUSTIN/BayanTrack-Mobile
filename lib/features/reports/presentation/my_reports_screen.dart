@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../data/report_models.dart';
+import 'report_detail_screen.dart';
 import 'reports_controller.dart';
 
 import '../../home/presentation/widgets/home_report_card.dart';
@@ -120,10 +121,10 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
                 return HomeReportCard(
                   report: filteredResults[index],
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'View: ${filteredResults[index].description}',
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ReportDetailScreen(
+                          reportId: filteredResults[index].id,
                         ),
                       ),
                     );
@@ -150,9 +151,9 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     if (_selectedFilter == 0) return reports;
 
     final targetStatus = switch (_selectedFilter) {
-      1 => ReportStatus.pending,
-      2 => ReportStatus.inProgress,
-      3 => ReportStatus.resolved,
+      1 => 'submitted',
+      2 => 'in_progress',
+      3 => 'resolved',
       _ => null,
     };
 

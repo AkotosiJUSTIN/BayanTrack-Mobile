@@ -38,64 +38,198 @@ Future<List<String>> idTypes(Ref ref) async {
   return await repo.getIdTypes();
 }
 
+// ==================== FORM OPTIONS PROVIDER ====================
+
+@riverpod
+Future<KycFormOptionsResponse> kycFormOptions(Ref ref) async {
+  final repo = ref.read(kycRepositoryProvider);
+  return await repo.getFormOptions();
+}
+
 // ==================== KYC FORM STATE ====================
 
 class KycFormState {
-  final IdType? selectedIdType;
-  final String? idNumber;
-  final String fullName;
+  // A. Basic Identity Information
+  final String firstName;
+  final String? middleName;
+  final String lastName;
   final DateTime? dateOfBirth;
-  final String? idImagePath;
+  final Sex? sex;
+  final String nationality;
+  final CivilStatus? civilStatus;
+  
+  // B. Contact Information
+  final String email;
+  final String mobileNumber;
+  
+  // C. Address Information
+  final String streetBarangay;
+  final String cityMunicipality;
+  final String province;
+  final String? zipCode;
+  
+  // D. Government ID Details
+  final IdType? selectedIdType;
+  final String idNumber;
+  final DateTime? idExpiryDate;
+  
+  // E. ID Upload Images
+  final String? idFrontImagePath;
   final String? idBackImagePath;
+  
+  // F. Selfie Verification
   final String? selfieImagePath;
+  final String? selfieWithIdImagePath;
+  
+  // G. Declaration
+  final bool declarationAccepted;
+  
+  // Form state
   final bool isSubmitting;
   final String? error;
+  final int currentStep;
 
   const KycFormState({
-    this.selectedIdType,
-    this.idNumber,
-    this.fullName = '',
+    // Basic Identity
+    this.firstName = '',
+    this.middleName,
+    this.lastName = '',
     this.dateOfBirth,
-    this.idImagePath,
+    this.sex,
+    this.nationality = '',
+    this.civilStatus,
+    // Contact
+    this.email = '',
+    this.mobileNumber = '',
+    // Address
+    this.streetBarangay = '',
+    this.cityMunicipality = '',
+    this.province = '',
+    this.zipCode,
+    // ID Details
+    this.selectedIdType,
+    this.idNumber = '',
+    this.idExpiryDate,
+    // Images
+    this.idFrontImagePath,
     this.idBackImagePath,
     this.selfieImagePath,
+    this.selfieWithIdImagePath,
+    // Declaration
+    this.declarationAccepted = false,
+    // Form state
     this.isSubmitting = false,
     this.error,
+    this.currentStep = 0,
   });
 
   KycFormState copyWith({
+    String? firstName,
+    String? middleName,
+    String? lastName,
+    DateTime? dateOfBirth,
+    Sex? sex,
+    String? nationality,
+    CivilStatus? civilStatus,
+    String? email,
+    String? mobileNumber,
+    String? streetBarangay,
+    String? cityMunicipality,
+    String? province,
+    String? zipCode,
     IdType? selectedIdType,
     String? idNumber,
-    String? fullName,
-    DateTime? dateOfBirth,
-    String? idImagePath,
+    DateTime? idExpiryDate,
+    String? idFrontImagePath,
     String? idBackImagePath,
     String? selfieImagePath,
+    String? selfieWithIdImagePath,
+    bool? declarationAccepted,
     bool? isSubmitting,
     String? error,
+    int? currentStep,
   }) {
     return KycFormState(
+      firstName: firstName ?? this.firstName,
+      middleName: middleName ?? this.middleName,
+      lastName: lastName ?? this.lastName,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      sex: sex ?? this.sex,
+      nationality: nationality ?? this.nationality,
+      civilStatus: civilStatus ?? this.civilStatus,
+      email: email ?? this.email,
+      mobileNumber: mobileNumber ?? this.mobileNumber,
+      streetBarangay: streetBarangay ?? this.streetBarangay,
+      cityMunicipality: cityMunicipality ?? this.cityMunicipality,
+      province: province ?? this.province,
+      zipCode: zipCode ?? this.zipCode,
       selectedIdType: selectedIdType ?? this.selectedIdType,
       idNumber: idNumber ?? this.idNumber,
-      fullName: fullName ?? this.fullName,
-      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
-      idImagePath: idImagePath ?? this.idImagePath,
+      idExpiryDate: idExpiryDate ?? this.idExpiryDate,
+      idFrontImagePath: idFrontImagePath ?? this.idFrontImagePath,
       idBackImagePath: idBackImagePath ?? this.idBackImagePath,
       selfieImagePath: selfieImagePath ?? this.selfieImagePath,
+      selfieWithIdImagePath: selfieWithIdImagePath ?? this.selfieWithIdImagePath,
+      declarationAccepted: declarationAccepted ?? this.declarationAccepted,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       error: error,
+      currentStep: currentStep ?? this.currentStep,
     );
   }
 
-  bool get canSubmit =>
+  /// Computed full name
+  String get fullName {
+    final parts = [firstName, middleName, lastName]
+        .where((p) => p != null && p.isNotEmpty)
+        .toList();
+    return parts.join(' ');
+  }
+
+  /// Check if basic identity section is complete
+  bool get isBasicIdentityComplete =>
+      firstName.trim().isNotEmpty &&
+      lastName.trim().isNotEmpty &&
+      nationality.trim().isNotEmpty;
+
+  /// Check if contact section is complete
+  bool get isContactComplete =>
+      email.trim().isNotEmpty &&
+      mobileNumber.trim().isNotEmpty;
+
+  /// Check if address section is complete
+  bool get isAddressComplete =>
+      streetBarangay.trim().isNotEmpty &&
+      cityMunicipality.trim().isNotEmpty &&
+      province.trim().isNotEmpty;
+
+  /// Check if ID details section is complete
+  bool get isIdDetailsComplete =>
       selectedIdType != null &&
-      fullName.trim().isNotEmpty &&
-      idImagePath != null &&
+      idNumber.trim().isNotEmpty;
+
+  /// Check if required images are uploaded
+  bool get isImagesComplete =>
+      idFrontImagePath != null &&
       selfieImagePath != null;
 
-  bool get hasIdFront => idImagePath != null;
+  /// Check if declaration is accepted
+  bool get isDeclarationComplete => declarationAccepted;
+
+  /// Check if form can be submitted
+  bool get canSubmit =>
+      isBasicIdentityComplete &&
+      isContactComplete &&
+      isAddressComplete &&
+      isIdDetailsComplete &&
+      isImagesComplete &&
+      isDeclarationComplete &&
+      !isSubmitting;
+
+  /// Image state helpers
+  bool get hasIdFront => idFrontImagePath != null;
   bool get hasIdBack => idBackImagePath != null;
   bool get hasSelfie => selfieImagePath != null;
+  bool get hasSelfieWithId => selfieWithIdImagePath != null;
 }
 
 // ==================== KYC FORM CONTROLLER ====================
@@ -105,40 +239,70 @@ class KycFormController extends _$KycFormController {
   @override
   KycFormState build() => const KycFormState();
 
-  void setIdType(IdType idType) {
-    state = state.copyWith(selectedIdType: idType);
-  }
+  // ===== A. Basic Identity Setters =====
+  void setFirstName(String value) => state = state.copyWith(firstName: value);
+  void setMiddleName(String? value) => state = state.copyWith(middleName: value);
+  void setLastName(String value) => state = state.copyWith(lastName: value);
+  void setDateOfBirth(DateTime? value) => state = state.copyWith(dateOfBirth: value);
+  void setSex(Sex? value) => state = state.copyWith(sex: value);
+  void setNationality(String value) => state = state.copyWith(nationality: value);
+  void setCivilStatus(CivilStatus? value) => state = state.copyWith(civilStatus: value);
 
-  void setIdNumber(String idNumber) {
-    state = state.copyWith(idNumber: idNumber);
-  }
+  // ===== B. Contact Setters =====
+  void setEmail(String value) => state = state.copyWith(email: value);
+  void setMobileNumber(String value) => state = state.copyWith(mobileNumber: value);
 
-  void setFullName(String fullName) {
-    state = state.copyWith(fullName: fullName);
-  }
+  // ===== C. Address Setters =====
+  void setStreetBarangay(String value) => state = state.copyWith(streetBarangay: value);
+  void setCityMunicipality(String value) => state = state.copyWith(cityMunicipality: value);
+  void setProvince(String value) => state = state.copyWith(province: value);
+  void setZipCode(String? value) => state = state.copyWith(zipCode: value);
 
-  void setDateOfBirth(DateTime? dateOfBirth) {
-    state = state.copyWith(dateOfBirth: dateOfBirth);
-  }
+  // ===== D. ID Details Setters =====
+  void setIdType(IdType value) => state = state.copyWith(selectedIdType: value);
+  void setIdNumber(String value) => state = state.copyWith(idNumber: value);
+  void setIdExpiryDate(DateTime? value) => state = state.copyWith(idExpiryDate: value);
 
-  void setIdImage(String? path) {
-    state = state.copyWith(idImagePath: path);
-  }
+  // ===== E. Image Setters =====
+  void setIdFrontImage(String? path) => state = state.copyWith(idFrontImagePath: path);
+  void setIdBackImage(String? path) => state = state.copyWith(idBackImagePath: path);
+  void setSelfieImage(String? path) => state = state.copyWith(selfieImagePath: path);
+  void setSelfieWithIdImage(String? path) => state = state.copyWith(selfieWithIdImagePath: path);
 
-  void setIdBackImage(String? path) {
-    state = state.copyWith(idBackImagePath: path);
-  }
+  // ===== G. Declaration Setter =====
+  void setDeclarationAccepted(bool value) => state = state.copyWith(declarationAccepted: value);
 
-  void setSelfieImage(String? path) {
-    state = state.copyWith(selfieImagePath: path);
-  }
+  // ===== Form State =====
+  void setCurrentStep(int step) => state = state.copyWith(currentStep: step);
+  void clearError() => state = state.copyWith(error: null);
 
-  void clearError() {
-    state = state.copyWith(error: null);
-  }
+  /// Reset form to initial state
+  void reset() => state = const KycFormState();
 
-  void reset() {
-    state = const KycFormState();
+  /// Populate form from existing KYC data (for resubmission)
+  void populateFromExisting(KycStatusResponse existing) {
+    state = KycFormState(
+      firstName: existing.firstName ?? '',
+      middleName: existing.middleName,
+      lastName: existing.lastName ?? '',
+      dateOfBirth: existing.dateOfBirth != null 
+          ? DateTime.tryParse(existing.dateOfBirth!) 
+          : null,
+      sex: existing.sex,
+      nationality: existing.nationality ?? '',
+      civilStatus: existing.civilStatus,
+      email: existing.email ?? '',
+      mobileNumber: existing.mobileNumber ?? '',
+      streetBarangay: existing.streetBarangay ?? '',
+      cityMunicipality: existing.cityMunicipality ?? '',
+      province: existing.province ?? '',
+      zipCode: existing.zipCode,
+      selectedIdType: existing.idType,
+      idNumber: existing.idNumber ?? '',
+      idExpiryDate: existing.idExpiryDate != null 
+          ? DateTime.tryParse(existing.idExpiryDate!) 
+          : null,
+    );
   }
 
   /// Submit KYC for the first time
@@ -153,13 +317,33 @@ class KycFormController extends _$KycFormController {
       final repo = ref.read(kycRepositoryProvider);
 
       final request = KycSubmitRequest(
+        // Basic Identity
+        firstName: state.firstName,
+        middleName: state.middleName,
+        lastName: state.lastName,
+        dateOfBirth: state.dateOfBirth?.toIso8601String().split('T')[0],
+        sex: state.sex,
+        nationality: state.nationality,
+        civilStatus: state.civilStatus,
+        // Contact
+        email: state.email,
+        mobileNumber: state.mobileNumber,
+        // Address
+        streetBarangay: state.streetBarangay,
+        cityMunicipality: state.cityMunicipality,
+        province: state.province,
+        zipCode: state.zipCode,
+        // ID Details
         idType: state.selectedIdType!,
         idNumber: state.idNumber,
-        fullName: state.fullName,
-        dateOfBirth: state.dateOfBirth?.toIso8601String().split('T')[0],
-        idImagePath: state.idImagePath!,
+        idExpiryDate: state.idExpiryDate?.toIso8601String().split('T')[0],
+        // Images
+        idFrontImagePath: state.idFrontImagePath!,
         idBackImagePath: state.idBackImagePath,
         selfieImagePath: state.selfieImagePath!,
+        selfieWithIdImagePath: state.selfieWithIdImagePath,
+        // Declaration
+        declarationAccepted: state.declarationAccepted,
       );
 
       // Validate image sizes
@@ -196,13 +380,33 @@ class KycFormController extends _$KycFormController {
       final repo = ref.read(kycRepositoryProvider);
 
       final request = KycSubmitRequest(
+        // Basic Identity
+        firstName: state.firstName,
+        middleName: state.middleName,
+        lastName: state.lastName,
+        dateOfBirth: state.dateOfBirth?.toIso8601String().split('T')[0],
+        sex: state.sex,
+        nationality: state.nationality,
+        civilStatus: state.civilStatus,
+        // Contact
+        email: state.email,
+        mobileNumber: state.mobileNumber,
+        // Address
+        streetBarangay: state.streetBarangay,
+        cityMunicipality: state.cityMunicipality,
+        province: state.province,
+        zipCode: state.zipCode,
+        // ID Details
         idType: state.selectedIdType!,
         idNumber: state.idNumber,
-        fullName: state.fullName,
-        dateOfBirth: state.dateOfBirth?.toIso8601String().split('T')[0],
-        idImagePath: state.idImagePath!,
+        idExpiryDate: state.idExpiryDate?.toIso8601String().split('T')[0],
+        // Images
+        idFrontImagePath: state.idFrontImagePath!,
         idBackImagePath: state.idBackImagePath,
         selfieImagePath: state.selfieImagePath!,
+        selfieWithIdImagePath: state.selfieWithIdImagePath,
+        // Declaration
+        declarationAccepted: state.declarationAccepted,
       );
 
       // Validate image sizes

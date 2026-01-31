@@ -9,6 +9,7 @@ import '../../notifications/presentation/notification_settings_screen.dart';
 import '../data/auth_models.dart';
 import '../data/user_permissions.dart';
 import 'auth_controller.dart';
+import 'auth_wrapper.dart';
 import 'profile_controller.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
@@ -85,14 +86,29 @@ class ProfileScreen extends ConsumerWidget {
     UserProfile profile,
     ThemeData theme,
   ) {
+    // Get initials, handling empty names
+    String getInitials() {
+      final firstInitial = profile.firstName.isNotEmpty ? profile.firstName[0].toUpperCase() : '';
+      final lastInitial = profile.lastName.isNotEmpty ? profile.lastName[0].toUpperCase() : '';
+      if (firstInitial.isEmpty && lastInitial.isEmpty) {
+        return profile.email.isNotEmpty ? profile.email[0].toUpperCase() : '?';
+      }
+      return '$firstInitial$lastInitial';
+    }
+    
+    // Get display name, handling empty names
+    String getDisplayName() {
+      final name = '${profile.firstName} ${profile.lastName}'.trim();
+      return name.isNotEmpty ? name : profile.email.split('@').first;
+    }
+    
     return Column(
       children: [
         CircleAvatar(
           radius: 50,
           backgroundColor: AppColors.primary,
           child: Text(
-            profile.firstName[0].toUpperCase() +
-                profile.lastName[0].toUpperCase(),
+            getInitials(),
             style: const TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -102,7 +118,7 @@ class ProfileScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          '${profile.firstName} ${profile.lastName}',
+          getDisplayName(),
           style: theme.textTheme.headlineSmall,
         ),
         Text(
@@ -340,13 +356,13 @@ class ProfileScreen extends ConsumerWidget {
     );
 
     if (confirmed == true && context.mounted) {
-      // Navigate immediately, don't wait for logout to complete
+      // Logout immediately (synchronous state change)
+      ref.read(authControllerProvider.notifier).logout();
+      // Navigate to AuthWrapper which will show LoginScreen based on auth state
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        MaterialPageRoute(builder: (_) => const AuthWrapper()),
         (route) => false,
       );
-      // Fire and forget - logout in background
-      ref.read(authControllerProvider.notifier).logout();
     }
   }
 }

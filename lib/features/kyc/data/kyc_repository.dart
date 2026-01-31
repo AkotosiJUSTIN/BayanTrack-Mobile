@@ -24,12 +24,30 @@ class KycRepository {
     return idTypesResponse.idTypes;
   }
 
+  // ==================== GET FORM OPTIONS ====================
+
+  /// Get all form options (ID types, sex options, civil statuses)
+  Future<KycFormOptionsResponse> getFormOptions() async {
+    final response = await _dio.get(ApiConstants.kycFormOptions);
+    return KycFormOptionsResponse.fromJson(response.data);
+  }
+
   // ==================== GET KYC STATUS ====================
 
   /// Get current KYC status for the authenticated user
   Future<KycStatusResponse> getKycStatus() async {
     final response = await _dio.get(ApiConstants.kycStatus);
-    return KycStatusResponse.fromJson(response.data);
+    final data = response.data as Map<String, dynamic>;
+    
+    // Backend returns different structures:
+    // - No KYC: {'kyc_status': 'unverified', 'message': '...'}
+    // - Has KYC: {'kyc': {...kyc data...}}
+    if (data.containsKey('kyc')) {
+      return KycStatusResponse.fromJson(data['kyc'] as Map<String, dynamic>);
+    } else {
+      // No KYC submitted yet - create minimal response
+      return KycStatusResponse.fromJson(data);
+    }
   }
 
   // ==================== SUBMIT KYC ====================
@@ -37,22 +55,40 @@ class KycRepository {
   /// Submit KYC documents for verification
   /// Uses multipart/form-data for file uploads
   Future<KycStatusResponse> submitKyc(KycSubmitRequest request) async {
-    final formData = FormData.fromMap({
-      'id_type': request.idTypeValue,
-      if (request.idNumber != null && request.idNumber!.isNotEmpty)
-        'id_number': request.idNumber,
-      'full_name': request.fullName,
-      if (request.dateOfBirth != null && request.dateOfBirth!.isNotEmpty)
-        'date_of_birth': request.dateOfBirth,
-      'id_image': await MultipartFile.fromFile(
-        request.idImagePath,
-        filename: request.idImagePath.split('/').last,
-      ),
-      'selfie_image': await MultipartFile.fromFile(
-        request.selfieImagePath,
-        filename: request.selfieImagePath.split('/').last,
-      ),
-    });
+    // Build form data with all text fields
+    final formDataMap = <String, dynamic>{
+      ...request.toFormDataMap(),
+    };
+
+    // Add ID front image (required)
+    formDataMap['id_front_image'] = await MultipartFile.fromFile(
+      request.idFrontImagePath,
+      filename: request.idFrontImagePath.split('/').last,
+    );
+
+    // Add ID back image (optional)
+    if (request.idBackImagePath != null && request.idBackImagePath!.isNotEmpty) {
+      formDataMap['id_back_image'] = await MultipartFile.fromFile(
+        request.idBackImagePath!,
+        filename: request.idBackImagePath!.split('/').last,
+      );
+    }
+
+    // Add selfie image (required)
+    formDataMap['selfie_image'] = await MultipartFile.fromFile(
+      request.selfieImagePath,
+      filename: request.selfieImagePath.split('/').last,
+    );
+
+    // Add selfie with ID image (optional)
+    if (request.selfieWithIdImagePath != null && request.selfieWithIdImagePath!.isNotEmpty) {
+      formDataMap['selfie_with_id_image'] = await MultipartFile.fromFile(
+        request.selfieWithIdImagePath!,
+        filename: request.selfieWithIdImagePath!.split('/').last,
+      );
+    }
+
+    final formData = FormData.fromMap(formDataMap);
 
     final response = await _dio.post(
       ApiConstants.kycSubmit,
@@ -70,22 +106,40 @@ class KycRepository {
   /// Resubmit KYC documents after rejection
   /// Uses multipart/form-data for file uploads
   Future<KycStatusResponse> resubmitKyc(KycSubmitRequest request) async {
-    final formData = FormData.fromMap({
-      'id_type': request.idTypeValue,
-      if (request.idNumber != null && request.idNumber!.isNotEmpty)
-        'id_number': request.idNumber,
-      'full_name': request.fullName,
-      if (request.dateOfBirth != null && request.dateOfBirth!.isNotEmpty)
-        'date_of_birth': request.dateOfBirth,
-      'id_image': await MultipartFile.fromFile(
-        request.idImagePath,
-        filename: request.idImagePath.split('/').last,
-      ),
-      'selfie_image': await MultipartFile.fromFile(
-        request.selfieImagePath,
-        filename: request.selfieImagePath.split('/').last,
-      ),
-    });
+    // Build form data with all text fields
+    final formDataMap = <String, dynamic>{
+      ...request.toFormDataMap(),
+    };
+
+    // Add ID front image (required)
+    formDataMap['id_front_image'] = await MultipartFile.fromFile(
+      request.idFrontImagePath,
+      filename: request.idFrontImagePath.split('/').last,
+    );
+
+    // Add ID back image (optional)
+    if (request.idBackImagePath != null && request.idBackImagePath!.isNotEmpty) {
+      formDataMap['id_back_image'] = await MultipartFile.fromFile(
+        request.idBackImagePath!,
+        filename: request.idBackImagePath!.split('/').last,
+      );
+    }
+
+    // Add selfie image (required)
+    formDataMap['selfie_image'] = await MultipartFile.fromFile(
+      request.selfieImagePath,
+      filename: request.selfieImagePath.split('/').last,
+    );
+
+    // Add selfie with ID image (optional)
+    if (request.selfieWithIdImagePath != null && request.selfieWithIdImagePath!.isNotEmpty) {
+      formDataMap['selfie_with_id_image'] = await MultipartFile.fromFile(
+        request.selfieWithIdImagePath!,
+        filename: request.selfieWithIdImagePath!.split('/').last,
+      );
+    }
+
+    final formData = FormData.fromMap(formDataMap);
 
     final response = await _dio.post(
       ApiConstants.kycResubmit,
@@ -112,17 +166,24 @@ class KycRepository {
   List<String> validateImages(KycSubmitRequest request) {
     final errors = <String>[];
 
-    if (!isValidImageSize(request.idImagePath)) {
+    if (!isValidImageSize(request.idFrontImagePath)) {
       errors.add('ID front image must be less than 10MB');
     }
 
     if (request.idBackImagePath != null &&
+        request.idBackImagePath!.isNotEmpty &&
         !isValidImageSize(request.idBackImagePath!)) {
       errors.add('ID back image must be less than 10MB');
     }
 
     if (!isValidImageSize(request.selfieImagePath)) {
       errors.add('Selfie image must be less than 10MB');
+    }
+
+    if (request.selfieWithIdImagePath != null &&
+        request.selfieWithIdImagePath!.isNotEmpty &&
+        !isValidImageSize(request.selfieWithIdImagePath!)) {
+      errors.add('Selfie with ID image must be less than 10MB');
     }
 
     return errors;

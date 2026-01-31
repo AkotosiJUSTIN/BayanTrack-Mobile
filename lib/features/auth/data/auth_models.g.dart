@@ -71,11 +71,11 @@ Map<String, dynamic> _$RefreshTokenResponseToJson(
 };
 
 _UserProfile _$UserProfileFromJson(Map<String, dynamic> json) => _UserProfile(
-  id: json['_id'] as String,
+  id: _readUserId(json, 'id') as String,
   email: json['email'] as String,
-  firstName: json['first_name'] as String,
-  lastName: json['last_name'] as String,
-  role: json['role'] as String,
+  firstName: json['first_name'] as String? ?? '',
+  lastName: json['last_name'] as String? ?? '',
+  role: json['role'] as String? ?? 'citizen',
   isActive: json['is_active'] as bool? ?? true,
   createdAt: json['created_at'] as String?,
   updatedAt: json['updated_at'] as String?,
@@ -83,7 +83,7 @@ _UserProfile _$UserProfileFromJson(Map<String, dynamic> json) => _UserProfile(
 
 Map<String, dynamic> _$UserProfileToJson(_UserProfile instance) =>
     <String, dynamic>{
-      '_id': instance.id,
+      'id': instance.id,
       'email': instance.email,
       'first_name': instance.firstName,
       'last_name': instance.lastName,

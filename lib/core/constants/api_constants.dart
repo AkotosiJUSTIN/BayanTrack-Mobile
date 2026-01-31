@@ -1,6 +1,18 @@
 class ApiConstants {
   // Use 10.0.2.2 for Android Emulator, localhost for iOS Simulator
   static const String baseUrl = 'http://10.0.2.2:8000/api';
+  
+  // Media base URL (without /api suffix)
+  static const String mediaBaseUrl = 'http://10.0.2.2:8000';
+  
+  /// Build full URL for an image path
+  /// Handles both relative (/media/...) and absolute URLs
+  static String getImageUrl(String url) {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return '$mediaBaseUrl$url';
+  }
 
   // Auth Endpoints (trailing slashes required for Django)
   static const String login = '/auth/login/';
@@ -18,6 +30,7 @@ class ApiConstants {
   static const String reports = '/reports/';
   static const String myReports = '/reports/my-reports/';
   static const String reportStats = '/reports/stats/';
+  static const String reportFormOptions = '/reports/form-options/';
   static String reportById(String id) => '/reports/$id/';
 
   // Images Endpoints
@@ -38,6 +51,7 @@ class ApiConstants {
   static const String kycSubmit = '/auth/kyc/submit/';
   static const String kycStatus = '/auth/kyc/status/';
   static const String kycResubmit = '/auth/kyc/resubmit/';
+  static const String kycFormOptions = '/auth/kyc/form-options/';
 
   // Storage Keys
   static const String accessTokenKey = 'access_token';

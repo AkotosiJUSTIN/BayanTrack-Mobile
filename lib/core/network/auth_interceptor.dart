@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/api_constants.dart';
 
@@ -86,7 +87,8 @@ class AuthInterceptor extends Interceptor {
       );
 
       final newAccessToken = response.data['access_token'] as String;
-      final newRefreshToken = response.data['refresh_token'] as String;
+      // Backend may not return a new refresh token - keep the existing one
+      final newRefreshToken = response.data['refresh_token'] as String? ?? refreshToken;
 
       await _storage.write(key: ApiConstants.accessTokenKey, value: newAccessToken);
       await _storage.write(key: ApiConstants.refreshTokenKey, value: newRefreshToken);
@@ -108,8 +110,11 @@ class AuthInterceptor extends Interceptor {
           );
         }
       }
-    } on DioException {
-      await _clearTokensAndReject(err, handler);
+    } on DioException catch (refreshError) {
+      // Don't clear tokens on refresh failure - just reject this request
+      // User can still try again or manually logout
+      debugPrint('Token refresh failed: ${refreshError.message}');
+      handler.reject(err); // Reject with original error
     } finally {
       _isRefreshing = false;
       _pendingRequests.clear();

@@ -95,6 +95,47 @@ final class IdTypesProvider
 
 String _$idTypesHash() => r'9b82ebf3ff18c13668ffd3938edb584806ce6365';
 
+@ProviderFor(kycFormOptions)
+final kycFormOptionsProvider = KycFormOptionsProvider._();
+
+final class KycFormOptionsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<KycFormOptionsResponse>,
+          KycFormOptionsResponse,
+          FutureOr<KycFormOptionsResponse>
+        >
+    with
+        $FutureModifier<KycFormOptionsResponse>,
+        $FutureProvider<KycFormOptionsResponse> {
+  KycFormOptionsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'kycFormOptionsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$kycFormOptionsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<KycFormOptionsResponse> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<KycFormOptionsResponse> create(Ref ref) {
+    return kycFormOptions(ref);
+  }
+}
+
+String _$kycFormOptionsHash() => r'5e8668ddff56470cacca4677d38d1c28fb53f2e7';
+
 @ProviderFor(KycFormController)
 final kycFormControllerProvider = KycFormControllerProvider._();
 
@@ -127,7 +168,7 @@ final class KycFormControllerProvider
   }
 }
 
-String _$kycFormControllerHash() => r'4a906eeb44c0102569a559f1c92815ef0797e0b9';
+String _$kycFormControllerHash() => r'bc3f057d4cd63f00f66155a16a22d2b1688a8027';
 
 abstract class _$KycFormController extends $Notifier<KycFormState> {
   KycFormState build();

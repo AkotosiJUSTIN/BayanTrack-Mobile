@@ -53,7 +53,9 @@ class AuthRepository {
 
   Future<UserProfile> getProfile() async {
     final response = await _dio.get(ApiConstants.profile);
-    return UserProfile.fromJson(response.data);
+    // Backend returns {"user": {...}}
+    final userData = response.data['user'] ?? response.data;
+    return UserProfile.fromJson(userData);
   }
 
   Future<UserProfile> updateProfile(ProfileUpdateRequest request) async {
@@ -61,7 +63,9 @@ class AuthRepository {
       ApiConstants.profileUpdate,
       data: request.toJson(),
     );
-    return UserProfile.fromJson(response.data);
+    // Backend returns {"message": "...", "user": {...}}
+    final userData = response.data['user'] ?? response.data;
+    return UserProfile.fromJson(userData);
   }
 
   // ==================== PASSWORD MANAGEMENT ====================

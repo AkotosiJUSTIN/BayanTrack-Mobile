@@ -2,7 +2,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../data/auth_models.dart';
 import '../data/auth_repository.dart';
 import '../../reports/data/reports_repository.dart';
-import '../../reports/data/report_models.dart';
 
 part 'profile_controller.g.dart';
 
@@ -39,15 +38,15 @@ class ProfileStatsController extends _$ProfileStatsController {
   Future<Map<String, int>> build() async {
     final reportsRepo = ref.read(reportsRepositoryProvider);
     // Fetch up to 100 recent reports for stats approximation
-    final response = await reportsRepo.getMyReports(limit: 100);
+    final response = await reportsRepo.getMyReports(pageSize: 100);
     final reports = response.results;
 
     return {
       'total': response.count,
       'resolved': reports
-          .where((r) => r.status == ReportStatus.resolved)
+          .where((r) => r.status == 'resolved')
           .length,
-      'pending': reports.where((r) => r.status == ReportStatus.pending).length,
+      'pending': reports.where((r) => r.status == 'submitted').length,
     };
   }
 }

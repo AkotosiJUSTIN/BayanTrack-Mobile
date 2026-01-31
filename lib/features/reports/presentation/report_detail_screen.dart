@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../data/report_models.dart';
 import '../data/reports_repository.dart';
@@ -45,7 +46,10 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       final report = await repo.getReport(widget.reportId);
 
       // Images are now embedded in the report response from backend
-      List<String> imageUrls = report.images.map((img) => img.url).toList();
+      // Convert URLs to absolute if needed
+      List<String> imageUrls = report.images
+          .map((img) => ApiConstants.getImageUrl(img.url))
+          .toList();
 
       setState(() {
         _report = report;
@@ -367,14 +371,16 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     );
   }
 
-  Widget _buildStatusBadge(ReportStatus status) {
+  Widget _buildStatusBadge(String status) {
     final (color, label) = switch (status) {
-      ReportStatus.pending => (AppColors.alertMedium, 'Pending'),
-      ReportStatus.inProgress => (AppColors.primary, 'In Progress'),
-      ReportStatus.resolved => (AppColors.success, 'Resolved'),
-      ReportStatus.rejected => (AppColors.alertHigh, 'Rejected'),
-      ReportStatus.verified => (AppColors.alertMedium, 'Verified'),
-      ReportStatus.assigned => (AppColors.primary, 'Assigned'),
+      'submitted' => (AppColors.alertMedium, 'Submitted'),
+      'under_review' => (AppColors.alertMedium, 'Under Review'),
+      'in_progress' => (AppColors.primary, 'In Progress'),
+      'resolved' => (AppColors.success, 'Resolved'),
+      'rejected' => (AppColors.alertHigh, 'Rejected'),
+      'verified' => (AppColors.alertMedium, 'Verified'),
+      'assigned' => (AppColors.primary, 'Assigned'),
+      _ => (AppColors.alertMedium, status.replaceAll('_', ' ')),
     };
 
     return Container(
