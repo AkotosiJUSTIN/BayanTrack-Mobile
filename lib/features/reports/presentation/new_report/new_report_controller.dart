@@ -11,7 +11,6 @@ class NewReportState {
   
   // Section A: Report Details
   final ReportCategory? category;
-  final IncidentType? incidentType;
   final String? title;
   final String description;
   final DateTime? incidentDatetime;
@@ -43,7 +42,6 @@ class NewReportState {
   const NewReportState({
     this.selectedImages = const [],
     this.category,
-    this.incidentType,
     this.title,
     this.description = '',
     this.incidentDatetime,
@@ -68,7 +66,6 @@ class NewReportState {
   NewReportState copyWith({
     List<File>? selectedImages,
     ReportCategory? category,
-    IncidentType? incidentType,
     String? title,
     String? description,
     DateTime? incidentDatetime,
@@ -92,7 +89,6 @@ class NewReportState {
     return NewReportState(
       selectedImages: selectedImages ?? this.selectedImages,
       category: category ?? this.category,
-      incidentType: incidentType ?? this.incidentType,
       title: title ?? this.title,
       description: description ?? this.description,
       incidentDatetime: incidentDatetime ?? this.incidentDatetime,
@@ -138,17 +134,10 @@ class NewReportState {
   
   bool get hasConsent => declarationConfirmed && dataProcessingConsent;
 
-  /// Available incident types based on selected category
-  List<IncidentType> get availableIncidentTypes {
-    if (category == null) return [];
-    return getIncidentTypesForCategory(category!);
-  }
-
   /// Build CreateReportRequest from current state
   CreateReportRequest toCreateRequest() {
     return CreateReportRequest(
       category: category?.value,
-      incidentType: incidentType?.value,
       title: title,
       description: description,
       incidentDatetime: incidentDatetime?.toIso8601String(),
@@ -204,15 +193,7 @@ class NewReportController extends _$NewReportController {
   // ==================== REPORT DETAILS (Section A) ====================
 
   void setCategory(ReportCategory? category) {
-    // Clear incident type if category changes
-    state = state.copyWith(
-      category: category,
-      incidentType: null,
-    );
-  }
-
-  void setIncidentType(IncidentType? incidentType) {
-    state = state.copyWith(incidentType: incidentType);
+    state = state.copyWith(category: category);
   }
 
   void setTitle(String? title) {

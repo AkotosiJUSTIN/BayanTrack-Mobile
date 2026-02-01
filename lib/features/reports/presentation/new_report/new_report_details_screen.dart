@@ -121,31 +121,6 @@ class _NewReportDetailsScreenState
                   ),
                   const SizedBox(height: 16),
 
-                  // ===== INCIDENT TYPE DROPDOWN =====
-                  if (state.category != null) ...[
-                    _buildSectionLabel(theme, 'Incident Type'),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<IncidentType>(
-                      // Only use value if it exists in available types
-                      value: state.incidentType != null && 
-                             state.availableIncidentTypes.contains(state.incidentType)
-                          ? state.incidentType 
-                          : null,
-                      decoration: const InputDecoration(
-                        hintText: 'Select incident type',
-                        prefixIcon: Icon(Icons.report_outlined),
-                      ),
-                      items: state.availableIncidentTypes.map((type) {
-                        return DropdownMenuItem(
-                          value: type,
-                          child: Text(type.displayName),
-                        );
-                      }).toList(),
-                      onChanged: (value) => controller.setIncidentType(value),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-
                   // ===== TITLE (OPTIONAL) =====
                   _buildSectionLabel(theme, 'Title (Optional)'),
                   const SizedBox(height: 8),

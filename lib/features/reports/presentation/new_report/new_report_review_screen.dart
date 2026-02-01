@@ -200,19 +200,17 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // ===== CATEGORY & INCIDENT TYPE =====
+                  // ===== CATEGORY =====
                   _buildSection(
                     theme: theme,
                     isDark: isDark,
                     icon: Icons.category,
-                    title: 'Category & Type',
+                    title: 'Category',
                     trailing: null,
                     content: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildInfoRow('Category', state.category?.displayName ?? 'Not set'),
-                        if (state.incidentType != null)
-                          _buildInfoRow('Incident Type', state.incidentType!.displayName),
                         if (state.title != null && state.title!.isNotEmpty)
                           _buildInfoRow('Title', state.title!),
                       ],

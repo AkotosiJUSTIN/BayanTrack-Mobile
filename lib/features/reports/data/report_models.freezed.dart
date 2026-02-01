@@ -2175,7 +2175,7 @@ as int,
 /// @nodoc
 mixin _$ReportFormOptions {
 
- List<Map<String, dynamic>> get categories;@JsonKey(name: 'incident_types') Map<String, List<Map<String, dynamic>>> get incidentTypes; List<Map<String, dynamic>> get statuses;@JsonKey(name: 'severity_levels') List<Map<String, dynamic>> get severityLevels;
+ List<Map<String, dynamic>> get categories; List<Map<String, dynamic>> get statuses;@JsonKey(name: 'severity_levels') List<Map<String, dynamic>> get severityLevels;
 /// Create a copy of ReportFormOptions
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2188,16 +2188,16 @@ $ReportFormOptionsCopyWith<ReportFormOptions> get copyWith => _$ReportFormOption
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportFormOptions&&const DeepCollectionEquality().equals(other.categories, categories)&&const DeepCollectionEquality().equals(other.incidentTypes, incidentTypes)&&const DeepCollectionEquality().equals(other.statuses, statuses)&&const DeepCollectionEquality().equals(other.severityLevels, severityLevels));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportFormOptions&&const DeepCollectionEquality().equals(other.categories, categories)&&const DeepCollectionEquality().equals(other.statuses, statuses)&&const DeepCollectionEquality().equals(other.severityLevels, severityLevels));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(categories),const DeepCollectionEquality().hash(incidentTypes),const DeepCollectionEquality().hash(statuses),const DeepCollectionEquality().hash(severityLevels));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(categories),const DeepCollectionEquality().hash(statuses),const DeepCollectionEquality().hash(severityLevels));
 
 @override
 String toString() {
-  return 'ReportFormOptions(categories: $categories, incidentTypes: $incidentTypes, statuses: $statuses, severityLevels: $severityLevels)';
+  return 'ReportFormOptions(categories: $categories, statuses: $statuses, severityLevels: $severityLevels)';
 }
 
 
@@ -2208,7 +2208,7 @@ abstract mixin class $ReportFormOptionsCopyWith<$Res>  {
   factory $ReportFormOptionsCopyWith(ReportFormOptions value, $Res Function(ReportFormOptions) _then) = _$ReportFormOptionsCopyWithImpl;
 @useResult
 $Res call({
- List<Map<String, dynamic>> categories,@JsonKey(name: 'incident_types') Map<String, List<Map<String, dynamic>>> incidentTypes, List<Map<String, dynamic>> statuses,@JsonKey(name: 'severity_levels') List<Map<String, dynamic>> severityLevels
+ List<Map<String, dynamic>> categories, List<Map<String, dynamic>> statuses,@JsonKey(name: 'severity_levels') List<Map<String, dynamic>> severityLevels
 });
 
 
@@ -2225,11 +2225,10 @@ class _$ReportFormOptionsCopyWithImpl<$Res>
 
 /// Create a copy of ReportFormOptions
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? categories = null,Object? incidentTypes = null,Object? statuses = null,Object? severityLevels = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? categories = null,Object? statuses = null,Object? severityLevels = null,}) {
   return _then(_self.copyWith(
 categories: null == categories ? _self.categories : categories // ignore: cast_nullable_to_non_nullable
-as List<Map<String, dynamic>>,incidentTypes: null == incidentTypes ? _self.incidentTypes : incidentTypes // ignore: cast_nullable_to_non_nullable
-as Map<String, List<Map<String, dynamic>>>,statuses: null == statuses ? _self.statuses : statuses // ignore: cast_nullable_to_non_nullable
+as List<Map<String, dynamic>>,statuses: null == statuses ? _self.statuses : statuses // ignore: cast_nullable_to_non_nullable
 as List<Map<String, dynamic>>,severityLevels: null == severityLevels ? _self.severityLevels : severityLevels // ignore: cast_nullable_to_non_nullable
 as List<Map<String, dynamic>>,
   ));
@@ -2313,10 +2312,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Map<String, dynamic>> categories, @JsonKey(name: 'incident_types')  Map<String, List<Map<String, dynamic>>> incidentTypes,  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels')  List<Map<String, dynamic>> severityLevels)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Map<String, dynamic>> categories,  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels')  List<Map<String, dynamic>> severityLevels)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ReportFormOptions() when $default != null:
-return $default(_that.categories,_that.incidentTypes,_that.statuses,_that.severityLevels);case _:
+return $default(_that.categories,_that.statuses,_that.severityLevels);case _:
   return orElse();
 
 }
@@ -2334,10 +2333,10 @@ return $default(_that.categories,_that.incidentTypes,_that.statuses,_that.severi
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Map<String, dynamic>> categories, @JsonKey(name: 'incident_types')  Map<String, List<Map<String, dynamic>>> incidentTypes,  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels')  List<Map<String, dynamic>> severityLevels)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Map<String, dynamic>> categories,  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels')  List<Map<String, dynamic>> severityLevels)  $default,) {final _that = this;
 switch (_that) {
 case _ReportFormOptions():
-return $default(_that.categories,_that.incidentTypes,_that.statuses,_that.severityLevels);}
+return $default(_that.categories,_that.statuses,_that.severityLevels);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -2351,10 +2350,10 @@ return $default(_that.categories,_that.incidentTypes,_that.statuses,_that.severi
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Map<String, dynamic>> categories, @JsonKey(name: 'incident_types')  Map<String, List<Map<String, dynamic>>> incidentTypes,  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels')  List<Map<String, dynamic>> severityLevels)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Map<String, dynamic>> categories,  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels')  List<Map<String, dynamic>> severityLevels)?  $default,) {final _that = this;
 switch (_that) {
 case _ReportFormOptions() when $default != null:
-return $default(_that.categories,_that.incidentTypes,_that.statuses,_that.severityLevels);case _:
+return $default(_that.categories,_that.statuses,_that.severityLevels);case _:
   return null;
 
 }
@@ -2366,7 +2365,7 @@ return $default(_that.categories,_that.incidentTypes,_that.statuses,_that.severi
 @JsonSerializable()
 
 class _ReportFormOptions implements ReportFormOptions {
-  const _ReportFormOptions({required final  List<Map<String, dynamic>> categories, @JsonKey(name: 'incident_types') required final  Map<String, List<Map<String, dynamic>>> incidentTypes, required final  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels') required final  List<Map<String, dynamic>> severityLevels}): _categories = categories,_incidentTypes = incidentTypes,_statuses = statuses,_severityLevels = severityLevels;
+  const _ReportFormOptions({required final  List<Map<String, dynamic>> categories, required final  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels') required final  List<Map<String, dynamic>> severityLevels}): _categories = categories,_statuses = statuses,_severityLevels = severityLevels;
   factory _ReportFormOptions.fromJson(Map<String, dynamic> json) => _$ReportFormOptionsFromJson(json);
 
  final  List<Map<String, dynamic>> _categories;
@@ -2374,13 +2373,6 @@ class _ReportFormOptions implements ReportFormOptions {
   if (_categories is EqualUnmodifiableListView) return _categories;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_categories);
-}
-
- final  Map<String, List<Map<String, dynamic>>> _incidentTypes;
-@override@JsonKey(name: 'incident_types') Map<String, List<Map<String, dynamic>>> get incidentTypes {
-  if (_incidentTypes is EqualUnmodifiableMapView) return _incidentTypes;
-  // ignore: implicit_dynamic_type
-  return EqualUnmodifiableMapView(_incidentTypes);
 }
 
  final  List<Map<String, dynamic>> _statuses;
@@ -2411,16 +2403,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReportFormOptions&&const DeepCollectionEquality().equals(other._categories, _categories)&&const DeepCollectionEquality().equals(other._incidentTypes, _incidentTypes)&&const DeepCollectionEquality().equals(other._statuses, _statuses)&&const DeepCollectionEquality().equals(other._severityLevels, _severityLevels));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReportFormOptions&&const DeepCollectionEquality().equals(other._categories, _categories)&&const DeepCollectionEquality().equals(other._statuses, _statuses)&&const DeepCollectionEquality().equals(other._severityLevels, _severityLevels));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_incidentTypes),const DeepCollectionEquality().hash(_statuses),const DeepCollectionEquality().hash(_severityLevels));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_statuses),const DeepCollectionEquality().hash(_severityLevels));
 
 @override
 String toString() {
-  return 'ReportFormOptions(categories: $categories, incidentTypes: $incidentTypes, statuses: $statuses, severityLevels: $severityLevels)';
+  return 'ReportFormOptions(categories: $categories, statuses: $statuses, severityLevels: $severityLevels)';
 }
 
 
@@ -2431,7 +2423,7 @@ abstract mixin class _$ReportFormOptionsCopyWith<$Res> implements $ReportFormOpt
   factory _$ReportFormOptionsCopyWith(_ReportFormOptions value, $Res Function(_ReportFormOptions) _then) = __$ReportFormOptionsCopyWithImpl;
 @override @useResult
 $Res call({
- List<Map<String, dynamic>> categories,@JsonKey(name: 'incident_types') Map<String, List<Map<String, dynamic>>> incidentTypes, List<Map<String, dynamic>> statuses,@JsonKey(name: 'severity_levels') List<Map<String, dynamic>> severityLevels
+ List<Map<String, dynamic>> categories, List<Map<String, dynamic>> statuses,@JsonKey(name: 'severity_levels') List<Map<String, dynamic>> severityLevels
 });
 
 
@@ -2448,11 +2440,10 @@ class __$ReportFormOptionsCopyWithImpl<$Res>
 
 /// Create a copy of ReportFormOptions
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? categories = null,Object? incidentTypes = null,Object? statuses = null,Object? severityLevels = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? categories = null,Object? statuses = null,Object? severityLevels = null,}) {
   return _then(_ReportFormOptions(
 categories: null == categories ? _self._categories : categories // ignore: cast_nullable_to_non_nullable
-as List<Map<String, dynamic>>,incidentTypes: null == incidentTypes ? _self._incidentTypes : incidentTypes // ignore: cast_nullable_to_non_nullable
-as Map<String, List<Map<String, dynamic>>>,statuses: null == statuses ? _self._statuses : statuses // ignore: cast_nullable_to_non_nullable
+as List<Map<String, dynamic>>,statuses: null == statuses ? _self._statuses : statuses // ignore: cast_nullable_to_non_nullable
 as List<Map<String, dynamic>>,severityLevels: null == severityLevels ? _self._severityLevels : severityLevels // ignore: cast_nullable_to_non_nullable
 as List<Map<String, dynamic>>,
   ));

@@ -289,12 +289,6 @@ _ReportFormOptions _$ReportFormOptionsFromJson(Map<String, dynamic> json) =>
       categories: (json['categories'] as List<dynamic>)
           .map((e) => e as Map<String, dynamic>)
           .toList(),
-      incidentTypes: (json['incident_types'] as Map<String, dynamic>).map(
-        (k, e) => MapEntry(
-          k,
-          (e as List<dynamic>).map((e) => e as Map<String, dynamic>).toList(),
-        ),
-      ),
       statuses: (json['statuses'] as List<dynamic>)
           .map((e) => e as Map<String, dynamic>)
           .toList(),
@@ -306,7 +300,6 @@ _ReportFormOptions _$ReportFormOptionsFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$ReportFormOptionsToJson(_ReportFormOptions instance) =>
     <String, dynamic>{
       'categories': instance.categories,
-      'incident_types': instance.incidentTypes,
       'statuses': instance.statuses,
       'severity_levels': instance.severityLevels,
     };
