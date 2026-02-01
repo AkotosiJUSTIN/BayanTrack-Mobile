@@ -151,19 +151,19 @@ class AuthController extends _$AuthController {
     AuthRepository repository,
   ) async {
     try {
-      // Read refresh token
+      // Read refresh token BEFORE clearing
       final refreshToken = await storage.read(key: ApiConstants.refreshTokenKey);
       
-      // Clear local tokens
-      await storage.delete(key: ApiConstants.accessTokenKey);
-      await storage.delete(key: ApiConstants.refreshTokenKey);
-      
-      // Notify backend (fire and forget)
+      // Notify backend FIRST (while token still exists for auth header)
       if (refreshToken != null) {
         try {
-          repository.logout(refreshToken).catchError((_) {});
+          await repository.logout(refreshToken).catchError((_) {});
         } catch (_) {}
       }
+      
+      // THEN clear local tokens
+      await storage.delete(key: ApiConstants.accessTokenKey);
+      await storage.delete(key: ApiConstants.refreshTokenKey);
     } catch (_) {
       // Ignore all errors - logout UI already succeeded
     }
