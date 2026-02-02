@@ -32,6 +32,7 @@ class ImagesRepository {
     debugPrint('File exists: ${await imageFile.exists()}');
     debugPrint('Report ID: $reportId');
     debugPrint('Is Primary: $isPrimary');
+    debugPrint('Upload URL: ${ApiConstants.imageUpload}');
     
     final formData = FormData.fromMap({
       'image': await MultipartFile.fromFile(
@@ -43,6 +44,7 @@ class ImagesRepository {
     });
 
     try {
+      debugPrint('Sending upload request...');
       final response = await _dio.post(
         ApiConstants.imageUpload,
         data: formData,

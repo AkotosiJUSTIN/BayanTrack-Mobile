@@ -19,7 +19,7 @@ final class ReportsControllerProvider
   /// Controller for fetching reports from backend
   ReportsControllerProvider._({
     required ReportsControllerFamily super.from,
-    required ({int page, ReportStatus? status}) super.argument,
+    required ({int page, String? status}) super.argument,
   }) : super(
          retry: null,
          name: r'reportsControllerProvider',
@@ -53,7 +53,7 @@ final class ReportsControllerProvider
   }
 }
 
-String _$reportsControllerHash() => r'db11add2eb5bdcdbf0f460f8044cb12afad6cc30';
+String _$reportsControllerHash() => r'112d736c2ef8c2a02a13c6b54bade93a4f105335';
 
 /// Controller for fetching reports from backend
 
@@ -64,7 +64,7 @@ final class ReportsControllerFamily extends $Family
           AsyncValue<PaginatedReports>,
           PaginatedReports,
           FutureOr<PaginatedReports>,
-          ({int page, ReportStatus? status})
+          ({int page, String? status})
         > {
   ReportsControllerFamily._()
     : super(
@@ -77,7 +77,7 @@ final class ReportsControllerFamily extends $Family
 
   /// Controller for fetching reports from backend
 
-  ReportsControllerProvider call({int page = 1, ReportStatus? status}) =>
+  ReportsControllerProvider call({int page = 1, String? status}) =>
       ReportsControllerProvider._(
         argument: (page: page, status: status),
         from: this,
@@ -90,11 +90,11 @@ final class ReportsControllerFamily extends $Family
 /// Controller for fetching reports from backend
 
 abstract class _$ReportsController extends $AsyncNotifier<PaginatedReports> {
-  late final _$args = ref.$arg as ({int page, ReportStatus? status});
+  late final _$args = ref.$arg as ({int page, String? status});
   int get page => _$args.page;
-  ReportStatus? get status => _$args.status;
+  String? get status => _$args.status;
 
-  FutureOr<PaginatedReports> build({int page = 1, ReportStatus? status});
+  FutureOr<PaginatedReports> build({int page = 1, String? status});
   @$mustCallSuper
   @override
   void runBuild() {

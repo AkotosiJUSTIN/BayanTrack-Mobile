@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/storage/secure_storage_provider.dart';
+import '../../kyc/presentation/kyc_controller.dart';
 import '../data/auth_models.dart';
 import '../data/auth_repository.dart';
 
@@ -59,11 +62,17 @@ class AuthController extends _$AuthController {
       final request = LoginRequest(email: email, password: password);
       final response = await repository.login(request);
 
-      // Save tokens to secure storage with retry for algorithm change issues
-      await _saveTokensWithRetry(
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-      );
+      // Save tokens directly to secure storage (bypass provider to avoid disposal issues)
+      final storage = ref.read(secureStorageProvider);
+      await storage.write(key: ApiConstants.accessTokenKey, value: response.accessToken);
+      await storage.write(key: ApiConstants.refreshTokenKey, value: response.refreshToken);
+
+      // Fetch KYC status after successful login
+      try {
+        ref.invalidate(kycStatusControllerProvider);
+      } catch (_) {
+        // Ignore KYC fetch errors, don't fail login
+      }
 
       state = const AuthSuccess('Login successful');
       return true;
@@ -73,35 +82,6 @@ class AuthController extends _$AuthController {
     } catch (e) {
       state = AuthError(e.toString());
       return false;
-    }
-  }
-
-  /// Save tokens with retry logic to handle FlutterSecureStorage algorithm changes
-  Future<void> _saveTokensWithRetry({
-    required String accessToken,
-    required String refreshToken,
-    int maxRetries = 3,
-  }) async {
-    int attempts = 0;
-    while (attempts < maxRetries) {
-      try {
-        await ref
-            .read(tokenStorageProvider.notifier)
-            .saveTokens(accessToken: accessToken, refreshToken: refreshToken);
-        return; // Success
-      } catch (e) {
-        attempts++;
-        if (attempts >= maxRetries) {
-          // Log error but don't fail login - tokens will be requested again on next app open
-          // ignore: avoid_print
-          print(
-            'Warning: Failed to save tokens after $maxRetries attempts: $e',
-          );
-          return; // Continue without throwing - login was successful
-        }
-        // Wait a bit before retry (allows secure storage migration to complete)
-        await Future.delayed(Duration(milliseconds: 100 * attempts));
-      }
     }
   }
 
@@ -152,22 +132,41 @@ class AuthController extends _$AuthController {
     }
   }
 
-  /// Logout and clear tokens
-  Future<void> logout() async {
-    state = const AuthLoading();
-    try {
-      final repository = ref.read(authRepositoryProvider);
-      final refreshToken = await ref
-          .read(tokenStorageProvider.notifier)
-          .getRefreshToken();
-      if (refreshToken != null) {
-        await repository.logout(refreshToken);
-      }
-    } catch (_) {
-      // Ignore errors, still clear tokens
-    }
-    await ref.read(tokenStorageProvider.notifier).clearTokens();
+  /// Logout and clear tokens - INSTANT UI response
+  void logout() {
+    // Capture what we need BEFORE changing state (providers may get disposed after)
+    final storage = ref.read(secureStorageProvider);
+    final repository = ref.read(authRepositoryProvider);
+    
+    // Set state to AuthIdle IMMEDIATELY (synchronous) for instant UI
     state = const AuthIdle();
+    
+    // Do all cleanup in background - don't block UI
+    _performLogoutCleanup(storage, repository);
+  }
+  
+  /// Background cleanup after logout
+  Future<void> _performLogoutCleanup(
+    FlutterSecureStorage storage,
+    AuthRepository repository,
+  ) async {
+    try {
+      // Read refresh token BEFORE clearing
+      final refreshToken = await storage.read(key: ApiConstants.refreshTokenKey);
+      
+      // Notify backend FIRST (while token still exists for auth header)
+      if (refreshToken != null) {
+        try {
+          await repository.logout(refreshToken).catchError((_) {});
+        } catch (_) {}
+      }
+      
+      // THEN clear local tokens
+      await storage.delete(key: ApiConstants.accessTokenKey);
+      await storage.delete(key: ApiConstants.refreshTokenKey);
+    } catch (_) {
+      // Ignore all errors - logout UI already succeeded
+    }
   }
 
   /// Reset state to idle

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/api_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 
 /// Status enum for report cards
@@ -62,7 +63,7 @@ class ReportCard extends StatelessWidget {
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          report.imageUrl!,
+                          ApiConstants.getImageUrl(report.imageUrl!),
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => _buildPlaceholderIcon(),
                         ),

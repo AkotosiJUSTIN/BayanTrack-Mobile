@@ -22,17 +22,22 @@ class ReportsRepository {
   /// Get all reports (paginated, filtered by user's role on backend)
   Future<PaginatedReports> getReports({
     int page = 1,
-    int limit = 10,
-    ReportStatus? status,
-    String? barangay,
+    int pageSize = 20,
+    String? status,
+    String? zone,
+    String? category,
+    String? severity,
+    bool? isEmergency,
   }) async {
-    final queryParams = <String, dynamic>{'page': page, 'limit': limit};
-    if (status != null) {
-      queryParams['status'] = status.name;
-    }
-    if (barangay != null) {
-      queryParams['barangay'] = barangay;
-    }
+    final queryParams = <String, dynamic>{
+      'page': page, 
+      'page_size': pageSize,
+    };
+    if (status != null) queryParams['status'] = status;
+    if (zone != null) queryParams['zone'] = zone;
+    if (category != null) queryParams['category'] = category;
+    if (severity != null) queryParams['severity'] = severity;
+    if (isEmergency != null) queryParams['is_emergency'] = isEmergency;
 
     final response = await _dio.get(
       ApiConstants.reports,
@@ -42,10 +47,20 @@ class ReportsRepository {
   }
 
   /// Get current user's reports
-  Future<PaginatedReports> getMyReports({int page = 1, int limit = 10}) async {
+  Future<PaginatedReports> getMyReports({
+    int page = 1, 
+    int pageSize = 20,
+    String? status,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page, 
+      'page_size': pageSize,
+    };
+    if (status != null) queryParams['status'] = status;
+    
     final response = await _dio.get(
       ApiConstants.myReports,
-      queryParameters: {'page': page, 'limit': limit},
+      queryParameters: queryParams,
     );
     return PaginatedReports.fromJson(response.data);
   }
@@ -59,15 +74,25 @@ class ReportsRepository {
 
   // ==================== CREATE / UPDATE / DELETE ====================
 
-  /// Create a report
+  /// Create a report with all new fields
   Future<Report> createReport(CreateReportRequest request) async {
+    final jsonData = request.toJson();
+    // Debug: Print the request payload
+    print('CreateReport request payload: $jsonData');
+    
     final response = await _dio.post(
       ApiConstants.reports,
       data: request.toJson(),
     );
-    return Report.fromJson(response.data);
+    // Backend returns {report: {...}, message: "..."}
+    final data = response.data;
+    if (data is Map && data.containsKey('report')) {
+      return Report.fromJson(data['report']);
+    }
+    return Report.fromJson(data);
   }
 
+  /// Update a report
   Future<Report> updateReport(String id, UpdateReportRequest request) async {
     final response = await _dio.patch(
       ApiConstants.reportById(id),
@@ -76,6 +101,16 @@ class ReportsRepository {
     return Report.fromJson(response.data);
   }
 
+  /// Update report status (admin only)
+  Future<Report> updateReportStatus(String id, ReportStatusUpdateRequest request) async {
+    final response = await _dio.patch(
+      '${ApiConstants.reportById(id)}status/',
+      data: request.toJson(),
+    );
+    return Report.fromJson(response.data);
+  }
+
+  /// Delete a report
   Future<void> deleteReport(String id) async {
     await _dio.delete(ApiConstants.reportById(id));
   }
@@ -85,5 +120,12 @@ class ReportsRepository {
   Future<ReportStats> getStats() async {
     final response = await _dio.get(ApiConstants.reportStats);
     return ReportStats.fromJson(response.data);
+  }
+
+  // ==================== FORM OPTIONS ====================
+
+  Future<ReportFormOptions> getFormOptions() async {
+    final response = await _dio.get(ApiConstants.reportFormOptions);
+    return ReportFormOptions.fromJson(response.data);
   }
 }

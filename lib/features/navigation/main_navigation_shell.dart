@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
+import '../auth/data/user_permissions.dart';
+import '../auth/presentation/verification_widgets.dart';
 import '../auth/presentation/profile_screen.dart';
 import '../home/presentation/home_screen.dart';
 import '../notifications/presentation/notifications_screen.dart';
@@ -8,14 +11,14 @@ import '../reports/presentation/new_report/new_report_photos_screen.dart';
 
 /// Main navigation shell with bottom nav bar and center FAB.
 /// Handles tab switching between Home, My Reports, Notifications, Profile.
-class MainNavigationShell extends StatefulWidget {
+class MainNavigationShell extends ConsumerStatefulWidget {
   const MainNavigationShell({super.key});
 
   @override
-  State<MainNavigationShell> createState() => _MainNavigationShellState();
+  ConsumerState<MainNavigationShell> createState() => _MainNavigationShellState();
 }
 
-class _MainNavigationShellState extends State<MainNavigationShell> {
+class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
@@ -32,6 +35,18 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
   }
 
   void _onFabPressed() {
+    // Check if user has permission to create reports
+    final permissions = ref.read(userPermissionsProvider);
+    
+    if (!permissions.hasPermission(UserPermission.createReports)) {
+      showVerificationRequiredDialog(
+        context,
+        permissions,
+        'create reports',
+      );
+      return;
+    }
+
     // Navigate to new report flow
     Navigator.of(
       context,

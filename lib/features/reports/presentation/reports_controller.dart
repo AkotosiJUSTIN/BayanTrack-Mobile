@@ -9,13 +9,13 @@ part 'reports_controller.g.dart';
 @riverpod
 class ReportsController extends _$ReportsController {
   @override
-  Future<PaginatedReports> build({int page = 1, ReportStatus? status}) async {
+  Future<PaginatedReports> build({int page = 1, String? status}) async {
     return _fetchReports(page: page, status: status);
   }
 
   Future<PaginatedReports> _fetchReports({
     int page = 1,
-    ReportStatus? status,
+    String? status,
   }) async {
     final repository = ref.read(reportsRepositoryProvider);
     return repository.getReports(page: page, status: status);

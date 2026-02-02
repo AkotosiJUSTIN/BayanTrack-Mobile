@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import '../../../../core/constants/api_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../reports/data/report_models.dart';
 
@@ -40,7 +41,7 @@ class HomeReportCard extends StatelessWidget {
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          report.images.first.url,
+                          ApiConstants.getImageUrl(report.images.first.url),
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => _buildPlaceholderIcon(),
                         ),
@@ -95,7 +96,7 @@ class HomeReportCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            report.barangay ?? 'Unknown location',
+                            report.zone ?? 'Unknown location',
                             style: theme.textTheme.bodySmall,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -135,35 +136,45 @@ class HomeReportCard extends StatelessWidget {
 
   Widget _buildStatusBadge(bool isDark) {
     final (bgColor, textColor, label) = switch (report.status) {
-      ReportStatus.pending => (
+      'submitted' => (
         isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
         isDark ? AppColors.pendingTextDark : AppColors.pendingText,
-        'Pending',
+        'Submitted',
       ),
-      ReportStatus.inProgress => (
+      'under_review' => (
+        isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
+        isDark ? AppColors.pendingTextDark : AppColors.pendingText,
+        'Under Review',
+      ),
+      'in_progress' => (
         isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
         isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
         'In Progress',
       ),
-      ReportStatus.resolved => (
+      'resolved' => (
         isDark ? AppColors.resolvedBgDark : AppColors.resolvedBg,
         isDark ? AppColors.resolvedTextDark : AppColors.resolvedText,
         'Resolved',
       ),
-      ReportStatus.rejected => (
+      'rejected' => (
         isDark ? AppColors.rejectedBgDark : AppColors.rejectedBg,
         isDark ? AppColors.rejectedTextDark : AppColors.rejectedText,
         'Rejected',
       ),
-      ReportStatus.verified => (
+      'verified' => (
         isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
         isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
         'Verified',
       ),
-      ReportStatus.assigned => (
+      'assigned' => (
         isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
         isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
         'Assigned',
+      ),
+      _ => (
+        isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
+        isDark ? AppColors.pendingTextDark : AppColors.pendingText,
+        report.status.replaceAll('_', ' ').toUpperCase(),
       ),
     };
 

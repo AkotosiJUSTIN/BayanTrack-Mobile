@@ -21,14 +21,20 @@ class _NewReportLocationScreenState
   bool _isLoading = false;
   String? _error;
   Position? _currentPosition;
+  bool _isGettingPreciseLocation = false;
 
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation();
+    // Use addPostFrameCallback to avoid blocking the UI build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _getCurrentLocation();
+    });
   }
 
   Future<void> _getCurrentLocation() async {
+    if (!mounted) return;
+    
     setState(() {
       _isLoading = true;
       _error = null;
@@ -38,10 +44,12 @@ class _NewReportLocationScreenState
       // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        setState(() {
-          _error = 'Location services are disabled. Please enable GPS.';
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _error = 'Location services are disabled. Please enable GPS.';
+            _isLoading = false;
+          });
+        }
         return;
       }
 
@@ -50,61 +58,45 @@ class _NewReportLocationScreenState
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          setState(() {
-            _error = 'Location permission denied';
-            _isLoading = false;
-          });
+          if (mounted) {
+            setState(() {
+              _error = 'Location permission denied';
+              _isLoading = false;
+            });
+          }
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        setState(() {
-          _error =
-              'Location permissions are permanently denied. '
-              'Please enable them in Settings.';
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _error =
+                'Location permissions are permanently denied. '
+                'Please enable them in Settings.';
+            _isLoading = false;
+          });
+        }
         return;
       }
 
-      // Get current position with timeout
-      try {
-        final position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-            timeLimit: Duration(seconds: 20),
-          ),
-        ).timeout(
-          const Duration(seconds: 25),
-          onTimeout: () => throw TimeoutException('Location request timed out'),
-        );
-
-        if (mounted) {
-          setState(() {
-            _currentPosition = position;
-            _isLoading = false;
-          });
-
-          // Update controller with location string (required by backend)
-          ref
-              .read(newReportControllerProvider.notifier)
-              .setLocation(
-                latitude: position.latitude,
-                longitude: position.longitude,
-                location:
-                    '${position.latitude.toStringAsFixed(6)}, '
-                    '${position.longitude.toStringAsFixed(6)}',
-              );
-        }
-      } on TimeoutException {
-        if (mounted) {
-          setState(() {
-            _error = 'Location request timed out. Please try again.';
-            _isLoading = false;
-          });
-        }
+      // FAST PATH: First try to get last known position (instant, non-blocking)
+      Position? lastPosition = await Geolocator.getLastKnownPosition();
+      
+      if (lastPosition != null && mounted) {
+        // Immediately use last known position - this is instant
+        setState(() {
+          _currentPosition = lastPosition;
+          _isLoading = false;
+          _isGettingPreciseLocation = true;
+        });
+        
+        _updateLocation(lastPosition);
       }
+
+      // BACKGROUND: Get more accurate position without blocking UI
+      _getPreciseLocationInBackground(lastPosition);
+      
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -113,6 +105,111 @@ class _NewReportLocationScreenState
         });
       }
     }
+  }
+
+  /// Get precise location in background without blocking UI
+  Future<void> _getPreciseLocationInBackground(Position? fallbackPosition) async {
+    try {
+      // Use lower accuracy first for faster response
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: AndroidSettings(
+          accuracy: LocationAccuracy.medium, // Lower accuracy = faster
+          distanceFilter: 10,
+          forceLocationManager: false,
+          intervalDuration: const Duration(seconds: 5),
+          foregroundNotificationConfig: const ForegroundNotificationConfig(
+            notificationTitle: "Getting location",
+            notificationText: "BayanTrack is getting your location",
+            enableWakeLock: false,
+          ),
+        ),
+      ).timeout(
+        const Duration(seconds: 8),
+        onTimeout: () {
+          // If timeout and we have last position, use it
+          if (fallbackPosition != null) {
+            return fallbackPosition;
+          }
+          throw TimeoutException('Location request timed out');
+        },
+      );
+
+      if (mounted) {
+        setState(() {
+          _currentPosition = position;
+          _isGettingPreciseLocation = false;
+        });
+        
+        _updateLocation(position);
+      }
+    } on TimeoutException {
+      if (mounted && _currentPosition == null) {
+        setState(() {
+          _error = 'Location request timed out. Please try again.';
+          _isLoading = false;
+          _isGettingPreciseLocation = false;
+        });
+      } else if (mounted) {
+        setState(() {
+          _isGettingPreciseLocation = false;
+        });
+      }
+    } catch (e) {
+      if (mounted && _currentPosition == null) {
+        setState(() {
+          _error = 'Failed to get precise location: ${e.toString()}';
+          _isLoading = false;
+          _isGettingPreciseLocation = false;
+        });
+      } else if (mounted) {
+        setState(() {
+          _isGettingPreciseLocation = false;
+        });
+      }
+    }
+  }
+
+  void _updateLocation(Position position) {
+    ref
+        .read(newReportControllerProvider.notifier)
+        .setLocation(
+          latitude: position.latitude,
+          longitude: position.longitude,
+          location:
+              '${position.latitude.toStringAsFixed(6)}, '
+              '${position.longitude.toStringAsFixed(6)}',
+        );
+  }
+
+  /// Use a default location for testing (Quezon City, Philippines)
+  void _useDefaultLocation() {
+    const double defaultLat = 14.6760;
+    const double defaultLng = 121.0437;
+    
+    setState(() {
+      _currentPosition = Position(
+        latitude: defaultLat,
+        longitude: defaultLng,
+        timestamp: DateTime.now(),
+        accuracy: 0,
+        altitude: 0,
+        altitudeAccuracy: 0,
+        heading: 0,
+        headingAccuracy: 0,
+        speed: 0,
+        speedAccuracy: 0,
+      );
+      _isLoading = false;
+      _error = null;
+    });
+
+    ref
+        .read(newReportControllerProvider.notifier)
+        .setLocation(
+          latitude: defaultLat,
+          longitude: defaultLng,
+          location: '$defaultLat, $defaultLng',
+        );
   }
 
   void _navigateToDetails() {
@@ -207,7 +304,7 @@ class _NewReportLocationScreenState
   }
 
   Widget _buildLocationContent(ThemeData theme, bool isDark) {
-    if (_isLoading) {
+    if (_isLoading && _currentPosition == null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -215,6 +312,11 @@ class _NewReportLocationScreenState
             const CircularProgressIndicator(),
             const SizedBox(height: 24),
             Text('Getting your location...', style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: _useDefaultLocation,
+              child: const Text('Use default location (for testing)'),
+            ),
           ],
         ),
       );
@@ -304,21 +406,51 @@ class _NewReportLocationScreenState
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  'Current Location',
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Current Location',
+                                      style: theme.textTheme.titleSmall?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    if (_isGettingPreciseLocation) ...[
+                                      const SizedBox(width: 8),
+                                      SizedBox(
+                                        width: 12,
+                                        height: 12,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                                 Text(
                                   '${_currentPosition!.latitude.toStringAsFixed(6)}, '
                                   '${_currentPosition!.longitude.toStringAsFixed(6)}',
                                   style: theme.textTheme.bodySmall,
                                 ),
+                                if (_isGettingPreciseLocation)
+                                  Text(
+                                    'Refining accuracy...',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: AppColors.primary,
+                                      fontSize: 11,
+                                    ),
+                                  ),
                               ],
                             ),
                           ),
-                          Icon(Icons.check_circle, color: AppColors.success),
+                          Icon(
+                            _isGettingPreciseLocation 
+                                ? Icons.gps_not_fixed 
+                                : Icons.check_circle, 
+                            color: _isGettingPreciseLocation 
+                                ? AppColors.alertMedium 
+                                : AppColors.success,
+                          ),
                         ],
                       ),
                     ),

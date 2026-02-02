@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../images/data/images_repository.dart';
-import '../../data/report_models.dart';
 import '../../data/reports_repository.dart';
 import '../reports_controller.dart';
 import 'new_report_controller.dart';
 
-/// Fourth step: Review and submit the report
+/// Fourth step: Review, consent, and submit the report
 class NewReportReviewScreen extends ConsumerStatefulWidget {
   const NewReportReviewScreen({super.key});
 
@@ -25,7 +24,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
 
     if (!state.canSubmit) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please complete all required fields')),
+        const SnackBar(content: Text('Please complete all required fields and accept the declaration')),
       );
       return;
     }
@@ -36,15 +35,9 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     });
 
     try {
-      // Step 1: Create the report (fast - just JSON)
+      // Step 1: Create the report using the new comprehensive request
       final reportsRepo = ref.read(reportsRepositoryProvider);
-      final request = CreateReportRequest(
-        description: state.description,
-        location: state.location!,
-        barangay: state.barangay,
-        latitude: state.latitude?.toStringAsFixed(6),
-        longitude: state.longitude?.toStringAsFixed(6),
-      );
+      final request = state.toCreateRequest();
 
       final createdReport = await reportsRepo.createReport(request);
       
@@ -99,10 +92,26 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
         _statusMessage = '';
       });
       if (mounted) {
+        // Extract detailed error message
+        String errorMessage = 'Failed to submit';
+        if (e.toString().contains('DioException')) {
+          // Try to get more details from the response
+          final errorStr = e.toString();
+          debugPrint('Full error: $errorStr');
+          
+          // Check if there's a response body with details
+          if (errorStr.contains('details')) {
+            errorMessage = 'Validation error - check form fields';
+          }
+        } else {
+          errorMessage = e.toString();
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to submit: ${e.toString()}'),
+            content: Text('$errorMessage'),
             backgroundColor: AppColors.alertHigh,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -112,6 +121,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(newReportControllerProvider);
+    final controller = ref.read(newReportControllerProvider.notifier);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -145,23 +155,23 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Review',
+                    'Review & Submit',
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Review your report before submitting',
+                    'Review your report and confirm submission',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: isDark
                           ? AppColors.darkTextSecondary
                           : AppColors.lightTextSecondary,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
-                  // Images preview
+                  // ===== IMAGES PREVIEW =====
                   _buildSection(
                     theme: theme,
                     isDark: isDark,
@@ -190,46 +200,89 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Location preview
+                  // ===== CATEGORY =====
+                  _buildSection(
+                    theme: theme,
+                    isDark: isDark,
+                    icon: Icons.category,
+                    title: 'Category',
+                    trailing: null,
+                    content: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildInfoRow('Category', state.category?.displayName ?? 'Not set'),
+                        if (state.title != null && state.title!.isNotEmpty)
+                          _buildInfoRow('Title', state.title!),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ===== LOCATION PREVIEW =====
                   _buildSection(
                     theme: theme,
                     isDark: isDark,
                     icon: Icons.location_on,
                     title: 'Location',
                     trailing: state.hasLocation ? 'Set' : 'Not set',
-                    content: Text(
-                      state.location ?? 'Location coordinates saved',
-                      style: theme.textTheme.bodyMedium,
+                    content: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (state.zone != null && state.zone!.isNotEmpty)
+                          _buildInfoRow('Zone', state.zone!),
+                        if (state.streetLandmark != null && state.streetLandmark!.isNotEmpty)
+                          _buildInfoRow('Street/Landmark', state.streetLandmark!),
+                        if (state.location != null && state.location!.isNotEmpty)
+                          _buildInfoRow('Address', state.location!),
+                        if (state.latitude != null && state.longitude != null)
+                          _buildInfoRow('GPS', '${state.latitude!.toStringAsFixed(6)}, ${state.longitude!.toStringAsFixed(6)}'),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),
 
-                  // Barangay preview
+                  // ===== SEVERITY & IMPACT =====
                   _buildSection(
                     theme: theme,
                     isDark: isDark,
-                    icon: Icons.location_city,
-                    title: 'Barangay',
-                    trailing: state.barangay.isNotEmpty ? 'Set' : 'Not set',
-                    content: Text(
-                      state.barangay.isNotEmpty ? state.barangay : 'Not specified',
-                      style: theme.textTheme.bodyMedium,
+                    icon: Icons.warning_amber,
+                    title: 'Severity & Impact',
+                    trailing: null,
+                    content: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildInfoRow('Severity', state.severity.displayName),
+                        if (state.peopleAffected != null)
+                          _buildInfoRow('People Affected', '~${state.peopleAffected}'),
+                        _buildInfoRow('Is Happening Now', state.isHappeningNow ? 'Yes' : 'No'),
+                        if (state.isEmergency)
+                          Container(
+                            margin: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.alertHigh.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: AppColors.alertHigh.withOpacity(0.3)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.warning, color: AppColors.alertHigh, size: 16),
+                                SizedBox(width: 6),
+                                Text('EMERGENCY', style: TextStyle(
+                                  color: AppColors.alertHigh,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                )),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),
 
-                  // Category preview
-                  _buildSection(
-                    theme: theme,
-                    isDark: isDark,
-                    icon: Icons.category,
-                    title: 'Category',
-                    trailing: state.category ?? 'Not set',
-                    content: null,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Description preview
+                  // ===== DESCRIPTION PREVIEW =====
                   _buildSection(
                     theme: theme,
                     isDark: isDark,
@@ -239,10 +292,79 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                     content: Text(
                       state.description,
                       style: theme.textTheme.bodyMedium,
-                      maxLines: 5,
+                      maxLines: 6,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  const SizedBox(height: 24),
+
+                  // ===== CONSENT SECTION =====
+                  Text(
+                    'Declaration & Consent',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Declaration checkbox
+                  CheckboxListTile(
+                    value: state.declarationConfirmed,
+                    onChanged: (v) => controller.setDeclarationConfirmed(v ?? false),
+                    title: const Text('I confirm the information is accurate'),
+                    subtitle: Text(
+                      'I declare that all information provided is true and accurate to the best of my knowledge.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      ),
+                    ),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                    activeColor: AppColors.primary,
+                  ),
+
+                  // Data processing consent
+                  CheckboxListTile(
+                    value: state.dataProcessingConsent,
+                    onChanged: (v) => controller.setDataProcessingConsent(v ?? false),
+                    title: const Text('I consent to data processing'),
+                    subtitle: Text(
+                      'I consent to the processing of my personal data for the purpose of handling this report.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                      ),
+                    ),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                    activeColor: AppColors.primary,
+                  ),
+                  
+                  if (!state.hasConsent)
+                    Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.alertMedium.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, color: AppColors.alertMedium, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'You must confirm the declaration and consent to submit',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.alertMedium,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -323,6 +445,33 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
             ],
           ),
           if (content != null) ...[const SizedBox(height: 12), content],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 13),
+            ),
+          ),
         ],
       ),
     );

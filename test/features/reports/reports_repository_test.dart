@@ -23,28 +23,30 @@ void main() {
         final responseData = {
           'results': [
             {
-              '_id': 'report_1',
+              'id': 'report_1',
               'description': 'Broken streetlight',
-              'status': 'pending',
+              'status': 'submitted',
               'category': 'infrastructure',
-              'barangay': 'Barangay 1',
-              'latitude': 14.5995,
-              'longitude': 120.9842,
+              'zone': 'Zone 1',
+              'latitude': '14.5995',
+              'longitude': '120.9842',
               'images': [],
               'created_at': '2026-01-15T00:00:00Z',
             },
             {
-              '_id': 'report_2',
+              'id': 'report_2',
               'description': 'Pothole on main road',
               'status': 'in_progress',
               'category': 'roads',
-              'barangay': 'Barangay 2',
-              'images': ['image1.jpg'],
+              'zone': 'Zone 2',
+              'images': [],
             },
           ],
           'count': 2,
-          'next': null,
-          'previous': null,
+          'total': 2,
+          'page': 1,
+          'page_size': 20,
+          'total_pages': 1,
         };
 
         when(
@@ -68,22 +70,29 @@ void main() {
         expect(result.count, 2);
         expect(result.results.first.id, 'report_1');
         expect(result.results.first.description, 'Broken streetlight');
-        expect(result.results.first.status, ReportStatus.pending);
-        expect(result.results[1].status, ReportStatus.inProgress);
+        expect(result.results.first.status, 'submitted');
+        expect(result.results[1].status, 'in_progress');
       });
 
       test('should pass filter parameters correctly', () async {
         // Arrange
-        final responseData = {'results': [], 'count': 0};
+        final responseData = {
+          'results': [],
+          'count': 0,
+          'total': 0,
+          'page': 2,
+          'page_size': 5,
+          'total_pages': 0,
+        };
 
         when(
           () => mockDio.get(
             ApiConstants.reports,
             queryParameters: {
               'page': 2,
-              'limit': 5,
-              'status': 'pending',
-              'barangay': 'Barangay 1',
+              'page_size': 5,
+              'status': 'submitted',
+              'zone': 'Zone 1',
             },
           ),
         ).thenAnswer(
@@ -97,9 +106,9 @@ void main() {
         // Act
         await reportsRepository.getReports(
           page: 2,
-          limit: 5,
-          status: ReportStatus.pending,
-          barangay: 'Barangay 1',
+          pageSize: 5,
+          status: 'submitted',
+          zone: 'Zone 1',
         );
 
         // Assert
@@ -108,9 +117,9 @@ void main() {
             ApiConstants.reports,
             queryParameters: {
               'page': 2,
-              'limit': 5,
-              'status': 'pending',
-              'barangay': 'Barangay 1',
+              'page_size': 5,
+              'status': 'submitted',
+              'zone': 'Zone 1',
             },
           ),
         ).called(1);
@@ -123,12 +132,16 @@ void main() {
         final responseData = {
           'results': [
             {
-              '_id': 'my_report_1',
+              'id': 'my_report_1',
               'description': 'My report',
-              'status': 'pending',
+              'status': 'submitted',
             },
           ],
           'count': 1,
+          'total': 1,
+          'page': 1,
+          'page_size': 20,
+          'total_pages': 1,
         };
 
         when(
@@ -158,12 +171,12 @@ void main() {
         // Arrange
         const reportId = 'report_123';
         final responseData = {
-          '_id': reportId,
+          'id': reportId,
           'description': 'Detailed report',
           'status': 'resolved',
           'category': 'sanitation',
-          'latitude': 14.5995,
-          'longitude': 120.9842,
+          'latitude': '14.5995',
+          'longitude': '120.9842',
         };
 
         when(() => mockDio.get(ApiConstants.reportById(reportId))).thenAnswer(
@@ -182,7 +195,7 @@ void main() {
         // Assert
         expect(result.id, reportId);
         expect(result.description, 'Detailed report');
-        expect(result.status, ReportStatus.resolved);
+        expect(result.status, 'resolved');
       });
     });
 
@@ -191,19 +204,21 @@ void main() {
         // Arrange
         final request = CreateReportRequest(
           description: 'New issue report',
-          location: '123 Main Street, Quezon City',
-          barangay: 'Barangay 5',
+          streetLandmark: '123 Main Street, Quezon City',
+          barangay: 'Zone 5',
           latitude: "14.5995",
           longitude: "120.9842",
         );
         final responseData = {
-          'id': 'new_report_123',
-          'description': 'New issue report',
-          'status': 'Pending',
-          'location': '123 Main Street, Quezon City',
-          'barangay': 'Barangay 5',
-          'latitude': "14.5995",
-          'longitude': "120.9842",
+          'report': {
+            'id': 'new_report_123',
+            'description': 'New issue report',
+            'status': 'submitted',
+            'street_landmark': '123 Main Street, Quezon City',
+            'barangay': 'Zone 5',
+            'latitude': "14.5995",
+            'longitude': "120.9842",
+          },
         };
 
         when(
@@ -222,7 +237,7 @@ void main() {
         // Assert
         expect(result.id, 'new_report_123');
         expect(result.description, 'New issue report');
-        expect(result.status, ReportStatus.pending);
+        expect(result.status, 'submitted');
         verify(
           () => mockDio.post(ApiConstants.reports, data: request.toJson()),
         ).called(1);
@@ -230,13 +245,13 @@ void main() {
     });
 
     group('updateReport', () {
-      test('should update report status', () async {
+      test('should update report', () async {
         // Arrange
         const reportId = 'report_123';
-        final request = UpdateReportRequest(status: ReportStatus.inProgress);
+        final request = UpdateReportRequest(description: 'Updated description');
         final responseData = {
-          '_id': reportId,
-          'description': 'Updated report',
+          'id': reportId,
+          'description': 'Updated description',
           'status': 'in_progress',
         };
 
@@ -259,7 +274,7 @@ void main() {
         final result = await reportsRepository.updateReport(reportId, request);
 
         // Assert
-        expect(result.status, ReportStatus.inProgress);
+        expect(result.status, 'in_progress');
       });
     });
 
@@ -295,7 +310,7 @@ void main() {
         // Arrange
         final responseData = {
           'total': 100,
-          'pending': 30,
+          'submitted': 30,
           'in_progress': 25,
           'resolved': 40,
           'rejected': 5,
@@ -314,7 +329,7 @@ void main() {
 
         // Assert
         expect(result.total, 100);
-        expect(result.pending, 30);
+        expect(result.submitted, 30);
         expect(result.inProgress, 25);
         expect(result.resolved, 40);
         expect(result.rejected, 5);
