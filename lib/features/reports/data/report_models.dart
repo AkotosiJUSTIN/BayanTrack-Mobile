@@ -5,40 +5,33 @@ part 'report_models.g.dart';
 
 // ==================== REPORT CATEGORIES ====================
 
+/// Report categories aligned with AI classifier
 enum ReportCategory {
-  @JsonValue('road_infrastructure')
-  roadInfrastructure,
+  @JsonValue('road_traffic')
+  roadTraffic,
   @JsonValue('flooding_drainage')
   floodingDrainage,
-  @JsonValue('waste_management')
-  wasteManagement,
-  @JsonValue('public_safety_hazards')
-  publicSafetyHazards,
-  @JsonValue('street_lighting')
-  streetLighting,
-  @JsonValue('traffic_obstructions')
-  trafficObstructions,
-  @JsonValue('environmental_issues')
-  environmentalIssues;
+  @JsonValue('waste_environment')
+  wasteEnvironment,
+  @JsonValue('public_safety_utilities')
+  publicSafetyUtilities,
+  @JsonValue('community_concerns')
+  communityConcerns;
 
   String get displayName => switch (this) {
-    roadInfrastructure => 'Road & Infrastructure Issues',
-    floodingDrainage => 'Flooding & Drainage Problems',
-    wasteManagement => 'Waste Management Concerns',
-    publicSafetyHazards => 'Public Safety & Hazards',
-    streetLighting => 'Street Lighting',
-    trafficObstructions => 'Traffic & Road Obstructions',
-    environmentalIssues => 'Environmental Issues',
+    roadTraffic => 'Road & Traffic Issues',
+    floodingDrainage => 'Flooding & Drainage',
+    wasteEnvironment => 'Waste & Environment',
+    publicSafetyUtilities => 'Public Safety & Utilities',
+    communityConcerns => 'Community Concerns',
   };
   
   String get value => switch (this) {
-    roadInfrastructure => 'road_infrastructure',
+    roadTraffic => 'road_traffic',
     floodingDrainage => 'flooding_drainage',
-    wasteManagement => 'waste_management',
-    publicSafetyHazards => 'public_safety_hazards',
-    streetLighting => 'street_lighting',
-    trafficObstructions => 'traffic_obstructions',
-    environmentalIssues => 'environmental_issues',
+    wasteEnvironment => 'waste_environment',
+    publicSafetyUtilities => 'public_safety_utilities',
+    communityConcerns => 'community_concerns',
   };
 }
 
