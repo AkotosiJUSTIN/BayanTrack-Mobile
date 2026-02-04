@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../auth_di.dart';
 import '../data/auth_models.dart';
-import '../../reports/data/reports_repository.dart';
+import '../../reports/reports_di.dart';
 
 part 'profile_controller.g.dart';
 
@@ -76,15 +76,16 @@ class ProfileController extends _$ProfileController {
 class ProfileStatsController extends _$ProfileStatsController {
   @override
   Future<Map<String, int>> build() async {
-    final reportsRepo = ref.read(reportsRepositoryProvider);
-    // Fetch up to 100 recent reports for stats approximation
-    final response = await reportsRepo.getMyReports(pageSize: 100);
-    final reports = response.results;
+    final getStats = ref.read(getReportStatsUseCaseProvider);
+    final result = await getStats();
 
-    return {
-      'total': response.count,
-      'resolved': reports.where((r) => r.status == 'resolved').length,
-      'pending': reports.where((r) => r.status == 'submitted').length,
-    };
+    return result.when(
+      success: (stats) => {
+        'total': stats.total,
+        'resolved': stats.resolved,
+        'pending': stats.submitted,
+      },
+      failure: (failure) => throw Exception(failure.message),
+    );
   }
 }

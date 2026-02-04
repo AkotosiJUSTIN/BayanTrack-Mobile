@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../reports/data/report_models.dart';
+import '../../../reports/domain/entities/report.dart';
+import '../../../reports/domain/entities/report_enums.dart';
 
 /// Report card widget for home screen matching the design mockup.
 /// Shows thumbnail, category, title, location, time, and status badge.
@@ -59,7 +60,7 @@ class HomeReportCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          (report.category ?? 'UNCATEGORIZED').toUpperCase(),
+                          (report.category?.displayName ?? 'UNCATEGORIZED').toUpperCase(),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -136,45 +137,40 @@ class HomeReportCard extends StatelessWidget {
 
   Widget _buildStatusBadge(bool isDark) {
     final (bgColor, textColor, label) = switch (report.status) {
-      'submitted' => (
+      ReportStatus.submitted => (
         isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
         isDark ? AppColors.pendingTextDark : AppColors.pendingText,
         'Submitted',
       ),
-      'under_review' => (
+      ReportStatus.underReview => (
         isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
         isDark ? AppColors.pendingTextDark : AppColors.pendingText,
         'Under Review',
       ),
-      'in_progress' => (
+      ReportStatus.inProgress => (
         isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
         isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
         'In Progress',
       ),
-      'resolved' => (
+      ReportStatus.resolved => (
         isDark ? AppColors.resolvedBgDark : AppColors.resolvedBg,
         isDark ? AppColors.resolvedTextDark : AppColors.resolvedText,
         'Resolved',
       ),
-      'rejected' => (
+      ReportStatus.rejected => (
         isDark ? AppColors.rejectedBgDark : AppColors.rejectedBg,
         isDark ? AppColors.rejectedTextDark : AppColors.rejectedText,
         'Rejected',
       ),
-      'verified' => (
+      ReportStatus.verified => (
         isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
         isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
         'Verified',
       ),
-      'assigned' => (
+      ReportStatus.assigned => (
         isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
         isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
         'Assigned',
-      ),
-      _ => (
-        isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
-        isDark ? AppColors.pendingTextDark : AppColors.pendingText,
-        report.status.replaceAll('_', ' ').toUpperCase(),
       ),
     };
 
@@ -195,36 +191,30 @@ class HomeReportCard extends StatelessWidget {
     );
   }
 
-  String _formatTimeAgo(String? dateStr) {
-    if (dateStr == null) return 'Unknown';
-    try {
-      final date = DateTime.parse(dateStr);
-      return timeago.format(date);
-    } catch (_) {
-      return 'Unknown';
-    }
+  String _formatTimeAgo(DateTime? date) {
+    if (date == null) return 'Unknown';
+    return timeago.format(date);
   }
 
-  Color _getCategoryColor(String? category) {
-    final cat = (category ?? '').toUpperCase();
-    return switch (cat) {
-      'ROAD DAMAGE' || 'INFRASTRUCTURE' => AppColors.alertHigh,
-      'ELECTRICAL' || 'UTILITIES' => AppColors.alertMedium,
-      'GARBAGE' || 'SANITATION' => AppColors.alertLow,
-      'FLOODING' || 'WATER' => AppColors.primary,
-      _ => AppColors.primary,
+  Color _getCategoryColor(ReportCategory? category) {
+    return switch (category) {
+      ReportCategory.roadTraffic => AppColors.alertHigh,
+      ReportCategory.publicSafetyUtilities => AppColors.alertMedium,
+      ReportCategory.wasteEnvironment => AppColors.alertLow,
+      ReportCategory.floodingDrainage => AppColors.primary,
+      ReportCategory.communityConcerns => AppColors.primary,
+      null => AppColors.primary,
     };
   }
 
-  IconData _getCategoryIcon(String? category) {
-    final cat = (category ?? '').toUpperCase();
-    return switch (cat) {
-      'ROAD DAMAGE' => Icons.warning_amber_rounded,
-      'ELECTRICAL' || 'UTILITIES' => Icons.electrical_services,
-      'GARBAGE' || 'SANITATION' => Icons.delete_outline,
-      'FLOODING' || 'WATER' => Icons.water_damage_outlined,
-      'INFRASTRUCTURE' => Icons.construction,
-      _ => Icons.report_problem_outlined,
+  IconData _getCategoryIcon(ReportCategory? category) {
+    return switch (category) {
+      ReportCategory.roadTraffic => Icons.warning_amber_rounded,
+      ReportCategory.publicSafetyUtilities => Icons.electrical_services,
+      ReportCategory.wasteEnvironment => Icons.delete_outline,
+      ReportCategory.floodingDrainage => Icons.water_damage_outlined,
+      ReportCategory.communityConcerns => Icons.people_outline,
+      null => Icons.report_problem_outlined,
     };
   }
 }

@@ -8,15 +8,24 @@ part of 'reports_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Controller for fetching reports from backend
+/// Controller for fetching reports from backend.
+///
+/// Uses [GetReportsUseCase] for proper clean architecture layering.
+/// Returns domain [PaginatedReports] entity.
 
 @ProviderFor(ReportsController)
 final reportsControllerProvider = ReportsControllerFamily._();
 
-/// Controller for fetching reports from backend
+/// Controller for fetching reports from backend.
+///
+/// Uses [GetReportsUseCase] for proper clean architecture layering.
+/// Returns domain [PaginatedReports] entity.
 final class ReportsControllerProvider
     extends $AsyncNotifierProvider<ReportsController, PaginatedReports> {
-  /// Controller for fetching reports from backend
+  /// Controller for fetching reports from backend.
+  ///
+  /// Uses [GetReportsUseCase] for proper clean architecture layering.
+  /// Returns domain [PaginatedReports] entity.
   ReportsControllerProvider._({
     required ReportsControllerFamily super.from,
     required ({int page, String? status}) super.argument,
@@ -53,9 +62,12 @@ final class ReportsControllerProvider
   }
 }
 
-String _$reportsControllerHash() => r'112d736c2ef8c2a02a13c6b54bade93a4f105335';
+String _$reportsControllerHash() => r'798c9e4658a8942e09228fb72665b09d0d0f338d';
 
-/// Controller for fetching reports from backend
+/// Controller for fetching reports from backend.
+///
+/// Uses [GetReportsUseCase] for proper clean architecture layering.
+/// Returns domain [PaginatedReports] entity.
 
 final class ReportsControllerFamily extends $Family
     with
@@ -75,7 +87,10 @@ final class ReportsControllerFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Controller for fetching reports from backend
+  /// Controller for fetching reports from backend.
+  ///
+  /// Uses [GetReportsUseCase] for proper clean architecture layering.
+  /// Returns domain [PaginatedReports] entity.
 
   ReportsControllerProvider call({int page = 1, String? status}) =>
       ReportsControllerProvider._(
@@ -87,7 +102,10 @@ final class ReportsControllerFamily extends $Family
   String toString() => r'reportsControllerProvider';
 }
 
-/// Controller for fetching reports from backend
+/// Controller for fetching reports from backend.
+///
+/// Uses [GetReportsUseCase] for proper clean architecture layering.
+/// Returns domain [PaginatedReports] entity.
 
 abstract class _$ReportsController extends $AsyncNotifier<PaginatedReports> {
   late final _$args = ref.$arg as ({int page, String? status});
@@ -115,15 +133,24 @@ abstract class _$ReportsController extends $AsyncNotifier<PaginatedReports> {
   }
 }
 
-/// Controller for fetching user's own reports
+/// Controller for fetching user's own reports.
+///
+/// Uses [GetMyReportsUseCase] for proper clean architecture layering.
+/// Returns domain [PaginatedReports] entity.
 
 @ProviderFor(MyReportsController)
 final myReportsControllerProvider = MyReportsControllerFamily._();
 
-/// Controller for fetching user's own reports
+/// Controller for fetching user's own reports.
+///
+/// Uses [GetMyReportsUseCase] for proper clean architecture layering.
+/// Returns domain [PaginatedReports] entity.
 final class MyReportsControllerProvider
     extends $AsyncNotifierProvider<MyReportsController, PaginatedReports> {
-  /// Controller for fetching user's own reports
+  /// Controller for fetching user's own reports.
+  ///
+  /// Uses [GetMyReportsUseCase] for proper clean architecture layering.
+  /// Returns domain [PaginatedReports] entity.
   MyReportsControllerProvider._({
     required MyReportsControllerFamily super.from,
     required int super.argument,
@@ -161,9 +188,12 @@ final class MyReportsControllerProvider
 }
 
 String _$myReportsControllerHash() =>
-    r'603082ffaed5160e85dc1bad8f88b97c4db3092a';
+    r'7c680009810b1ffae3c18c11c9802e7ce79f1532';
 
-/// Controller for fetching user's own reports
+/// Controller for fetching user's own reports.
+///
+/// Uses [GetMyReportsUseCase] for proper clean architecture layering.
+/// Returns domain [PaginatedReports] entity.
 
 final class MyReportsControllerFamily extends $Family
     with
@@ -183,7 +213,10 @@ final class MyReportsControllerFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Controller for fetching user's own reports
+  /// Controller for fetching user's own reports.
+  ///
+  /// Uses [GetMyReportsUseCase] for proper clean architecture layering.
+  /// Returns domain [PaginatedReports] entity.
 
   MyReportsControllerProvider call({int page = 1}) =>
       MyReportsControllerProvider._(argument: page, from: this);
@@ -192,7 +225,10 @@ final class MyReportsControllerFamily extends $Family
   String toString() => r'myReportsControllerProvider';
 }
 
-/// Controller for fetching user's own reports
+/// Controller for fetching user's own reports.
+///
+/// Uses [GetMyReportsUseCase] for proper clean architecture layering.
+/// Returns domain [PaginatedReports] entity.
 
 abstract class _$MyReportsController extends $AsyncNotifier<PaginatedReports> {
   late final _$args = ref.$arg as int;

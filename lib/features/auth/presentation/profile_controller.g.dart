@@ -45,7 +45,7 @@ final class ProfileControllerProvider
   ProfileController create() => ProfileController();
 }
 
-String _$profileControllerHash() => r'6ddae5aaf93c4d706c89dbf80f07ec47114d385f';
+String _$profileControllerHash() => r'a95f1587acc95aacfd227777796b8708bbb996df';
 
 /// ProfileController - manages user profile state.
 ///
@@ -95,7 +95,7 @@ final class ProfileStatsControllerProvider
 }
 
 String _$profileStatsControllerHash() =>
-    r'2449b6c701c549922e642dcf86cc505206e2098f';
+    r'6158122b73be1ad36cd3a26938fba0cca75a24a3';
 
 abstract class _$ProfileStatsController
     extends $AsyncNotifier<Map<String, int>> {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../images/data/images_repository.dart';
-import '../../data/reports_repository.dart';
+import '../../reports_di.dart';
 import '../reports_controller.dart';
 import 'new_report_controller.dart';
 
@@ -35,11 +35,33 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     });
 
     try {
-      // Step 1: Create the report using the new comprehensive request
-      final reportsRepo = ref.read(reportsRepositoryProvider);
-      final request = state.toCreateRequest();
+      // Step 1: Create the report using the CreateReportUseCase
+      final createReport = ref.read(createReportUseCaseProvider);
+      final result = await createReport(
+        category: state.category?.value,
+        title: state.title,
+        description: state.description,
+        incidentDatetime: state.incidentDatetime?.toIso8601String(),
+        isHappeningNow: state.isHappeningNow,
+        zone: state.zone,
+        streetLandmark: state.streetLandmark,
+        cityMunicipality: state.cityMunicipality,
+        province: state.province,
+        latitude: state.latitude?.toString(),
+        longitude: state.longitude?.toString(),
+        locationAccuracy: state.locationAccuracy.name,
+        location: state.streetLandmark ?? state.location,
+        severity: state.severity.value,
+        peopleAffected: state.peopleAffected,
+        isEmergency: state.isEmergency,
+        declarationConfirmed: state.declarationConfirmed,
+        dataProcessingConsent: state.dataProcessingConsent,
+      );
 
-      final createdReport = await reportsRepo.createReport(request);
+      final createdReport = result.when(
+        success: (report) => report,
+        failure: (failure) => throw Exception(failure.message),
+      );
       
       // Step 2: Upload images (if any) - upload one at a time for reliability
       if (state.selectedImages.isNotEmpty) {

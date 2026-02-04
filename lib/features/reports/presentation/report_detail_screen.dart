@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_colors.dart';
-import '../data/report_models.dart';
-import '../data/reports_repository.dart';
+import '../domain/entities/report.dart';
+import '../domain/entities/report_enums.dart';
+import 'report_detail_controller.dart';
 
 /// Report Detail Screen showing full report with images and details
 class ReportDetailScreen extends ConsumerStatefulWidget {
@@ -22,83 +23,95 @@ class ReportDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
-  Report? _report;
-  List<String> _imageUrls = [];
-  bool _isLoading = true;
-  String? _error;
   int _currentImageIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _report = widget.initialReport;
-    _loadReport();
-  }
-
-  Future<void> _loadReport() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      final repo = ref.read(reportsRepositoryProvider);
-      final report = await repo.getReport(widget.reportId);
-
-      // Images are now embedded in the report response from backend
-      // Convert URLs to absolute if needed
-      List<String> imageUrls = report.images
-          .map((img) => ApiConstants.getImageUrl(img.url))
-          .toList();
-
-      setState(() {
-        _report = report;
-        _imageUrls = imageUrls;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    
+    // Use the controller to fetch the report
+    final reportAsync = ref.watch(reportDetailControllerProvider(widget.reportId));
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // App bar with image carousel
-          SliverAppBar(
-            expandedHeight: 300,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              background: _buildImageCarousel(isDark),
+      body: reportAsync.when(
+        loading: () => CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 300,
+              pinned: true,
+              flexibleSpace: FlexibleSpaceBar(
+                background: _buildImagePlaceholder(isDark),
+              ),
             ),
-          ),
-
-          // Content
-          SliverToBoxAdapter(
-            child: _isLoading
-                ? const Padding(
-                    padding: EdgeInsets.all(48),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                : _error != null
-                ? _buildErrorState(theme)
-                : _buildReportContent(theme, isDark),
-          ),
-        ],
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(48),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ),
+          ],
+        ),
+        error: (error, stack) => CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 300,
+              pinned: true,
+              flexibleSpace: FlexibleSpaceBar(
+                background: _buildImagePlaceholder(isDark),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: _buildErrorState(theme, error.toString()),
+            ),
+          ],
+        ),
+        data: (report) {
+          final imageUrls = report.images
+              .map((img) => ApiConstants.getImageUrl(img.url))
+              .toList();
+          
+          return CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 300,
+                pinned: true,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: _buildImageCarousel(isDark, imageUrls),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _buildReportContent(theme, isDark, report),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildImageCarousel(bool isDark) {
-    if (_imageUrls.isEmpty) {
+  Widget _buildImagePlaceholder(bool isDark) {
+    return Container(
+      color: isDark ? AppColors.darkSurface : AppColors.lightSurfaceVariant,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.image_outlined,
+              size: 64,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageCarousel(bool isDark, List<String> imageUrls) {
+    if (imageUrls.isEmpty) {
       return Container(
         color: isDark ? AppColors.darkSurface : AppColors.lightSurfaceVariant,
         child: Center(
@@ -131,13 +144,13 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       fit: StackFit.expand,
       children: [
         PageView.builder(
-          itemCount: _imageUrls.length,
+          itemCount: imageUrls.length,
           onPageChanged: (index) {
             setState(() => _currentImageIndex = index);
           },
           itemBuilder: (context, index) {
             return Image.network(
-              _imageUrls[index],
+              imageUrls[index],
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 color: isDark
@@ -149,14 +162,14 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           },
         ),
         // Page indicator
-        if (_imageUrls.length > 1)
+        if (imageUrls.length > 1)
           Positioned(
             bottom: 16,
             left: 0,
             right: 0,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(_imageUrls.length, (index) {
+              children: List.generate(imageUrls.length, (index) {
                 return Container(
                   width: 8,
                   height: 8,
@@ -175,7 +188,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     );
   }
 
-  Widget _buildErrorState(ThemeData theme) {
+  Widget _buildErrorState(ThemeData theme, String error) {
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Column(
@@ -184,16 +197,18 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           const SizedBox(height: 16),
           Text('Failed to load report', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
-          Text(_error!, style: theme.textTheme.bodySmall),
+          Text(error, style: theme.textTheme.bodySmall),
           const SizedBox(height: 16),
-          ElevatedButton(onPressed: _loadReport, child: const Text('Retry')),
+          ElevatedButton(
+            onPressed: () => ref.invalidate(reportDetailControllerProvider(widget.reportId)),
+            child: const Text('Retry'),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildReportContent(ThemeData theme, bool isDark) {
-    final report = _report!;
+  Widget _buildReportContent(ThemeData theme, bool isDark, Report report) {
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -218,14 +233,14 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
-                    report.category!,
+                    report.category!.displayName,
                     style: theme.textTheme.labelSmall,
                   ),
                 ),
               const Spacer(),
               if (report.createdAt != null)
                 Text(
-                  timeago.format(DateTime.parse(report.createdAt!)),
+                  timeago.format(report.createdAt!),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: isDark
                         ? AppColors.darkTextSecondary
@@ -338,7 +353,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   ),
                   const SizedBox(height: 12),
                   if (report.category != null)
-                    _buildInfoRow('Category', report.category!, theme),
+                    _buildInfoRow('Category', report.category!.displayName, theme),
                   if (report.priority != null)
                     _buildInfoRow(
                       'Priority',
@@ -371,16 +386,15 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     );
   }
 
-  Widget _buildStatusBadge(String status) {
+  Widget _buildStatusBadge(ReportStatus status) {
     final (color, label) = switch (status) {
-      'submitted' => (AppColors.alertMedium, 'Submitted'),
-      'under_review' => (AppColors.alertMedium, 'Under Review'),
-      'in_progress' => (AppColors.primary, 'In Progress'),
-      'resolved' => (AppColors.success, 'Resolved'),
-      'rejected' => (AppColors.alertHigh, 'Rejected'),
-      'verified' => (AppColors.alertMedium, 'Verified'),
-      'assigned' => (AppColors.primary, 'Assigned'),
-      _ => (AppColors.alertMedium, status.replaceAll('_', ' ')),
+      ReportStatus.submitted => (AppColors.alertMedium, 'Submitted'),
+      ReportStatus.underReview => (AppColors.alertMedium, 'Under Review'),
+      ReportStatus.inProgress => (AppColors.primary, 'In Progress'),
+      ReportStatus.resolved => (AppColors.success, 'Resolved'),
+      ReportStatus.rejected => (AppColors.alertHigh, 'Rejected'),
+      ReportStatus.verified => (AppColors.alertMedium, 'Verified'),
+      ReportStatus.assigned => (AppColors.primary, 'Assigned'),
     };
 
     return Container(
