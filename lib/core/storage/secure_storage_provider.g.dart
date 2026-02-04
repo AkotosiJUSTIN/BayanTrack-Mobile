@@ -26,7 +26,7 @@ final class SecureStorageProvider
         argument: null,
         retry: null,
         name: r'secureStorageProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -54,7 +54,7 @@ final class SecureStorageProvider
   }
 }
 
-String _$secureStorageHash() => r'39b6a2355a8398a2c25bb6e7dd3111ede1fc9c9b';
+String _$secureStorageHash() => r'a4f75721472cf77465bf47f759c90de5ca30856e';
 
 @ProviderFor(TokenStorage)
 final tokenStorageProvider = TokenStorageProvider._();

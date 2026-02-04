@@ -1,9 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../data/kyc_models.dart';
-import '../data/kyc_repository.dart';
 import '../domain/entities/kyc_form_options.dart' as domain;
 import '../domain/entities/kyc_status.dart';
+import '../domain/usecases/submit_kyc_usecase.dart';
 import '../kyc_di.dart';
 
 part 'kyc_controller.g.dart';
@@ -37,8 +37,13 @@ class KycStatusController extends _$KycStatusController {
 
 @riverpod
 Future<List<String>> idTypes(Ref ref) async {
-  final repo = ref.read(kycRepositoryProvider);
-  return await repo.getIdTypes();
+  // Use domain layer - extract idTypes from form options
+  final getFormOptions = ref.read(getFormOptionsUseCaseProvider);
+  final result = await getFormOptions();
+  return result.when(
+    success: (options) => options.idTypes.map((item) => item.value).toList(),
+    failure: (failure) => throw Exception(failure.message),
+  );
 }
 
 // ==================== FORM OPTIONS PROVIDER ====================
@@ -347,7 +352,7 @@ class KycFormController extends _$KycFormController {
   }
 
   /// Submit KYC for the first time
-  Future<KycStatusResponse> submitKyc() async {
+  Future<KycStatusEntity> submitKyc() async {
     if (!state.canSubmit) {
       throw Exception('Please complete all required fields');
     }
@@ -355,17 +360,30 @@ class KycFormController extends _$KycFormController {
     state = state.copyWith(isSubmitting: true, error: null);
 
     try {
-      final repo = ref.read(kycRepositoryProvider);
+      final domainRepo = ref.read(kycDomainRepositoryProvider);
+      final submitKycUseCase = ref.read(submitKycUseCaseProvider);
 
-      final request = KycSubmitRequest(
+      // Validate image sizes using domain repository
+      final validationErrors = domainRepo.validateImages(
+        idFrontImagePath: state.idFrontImagePath!,
+        idBackImagePath: state.idBackImagePath,
+        selfieImagePath: state.selfieImagePath!,
+        selfieWithIdImagePath: state.selfieWithIdImagePath,
+      );
+      if (validationErrors.isNotEmpty) {
+        throw Exception(validationErrors.join('\n'));
+      }
+
+      // Create domain params
+      final params = SubmitKycParams(
         // Basic Identity
         firstName: state.firstName,
         middleName: state.middleName,
         lastName: state.lastName,
         dateOfBirth: state.dateOfBirth?.toIso8601String().split('T')[0],
-        sex: state.sex,
+        sex: state.sex?.apiValue,
         nationality: state.nationality,
-        civilStatus: state.civilStatus,
+        civilStatus: state.civilStatus?.apiValue,
         // Contact
         email: state.email,
         mobileNumber: state.mobileNumber,
@@ -375,7 +393,7 @@ class KycFormController extends _$KycFormController {
         province: state.province,
         zipCode: state.zipCode,
         // ID Details
-        idType: state.selectedIdType!,
+        idType: state.selectedIdType!.apiValue,
         idNumber: state.idNumber,
         idExpiryDate: state.idExpiryDate?.toIso8601String().split('T')[0],
         // Images
@@ -387,19 +405,17 @@ class KycFormController extends _$KycFormController {
         declarationAccepted: state.declarationAccepted,
       );
 
-      // Validate image sizes
-      final validationErrors = repo.validateImages(request);
-      if (validationErrors.isNotEmpty) {
-        throw Exception(validationErrors.join('\n'));
-      }
-
-      final response = await repo.submitKyc(request);
+      final result = await submitKycUseCase(params);
 
       // Refresh the status controller
       ref.invalidate(kycStatusControllerProvider);
 
       state = state.copyWith(isSubmitting: false);
-      return response;
+
+      return result.when(
+        success: (entity) => entity,
+        failure: (failure) => throw Exception(failure.message),
+      );
     } catch (e) {
       state = state.copyWith(isSubmitting: false, error: e.toString());
       rethrow;
@@ -407,7 +423,7 @@ class KycFormController extends _$KycFormController {
   }
 
   /// Resubmit KYC after rejection
-  Future<KycStatusResponse> resubmitKyc() async {
+  Future<KycStatusEntity> resubmitKyc() async {
     if (!state.canSubmit) {
       throw Exception('Please complete all required fields');
     }
@@ -415,17 +431,30 @@ class KycFormController extends _$KycFormController {
     state = state.copyWith(isSubmitting: true, error: null);
 
     try {
-      final repo = ref.read(kycRepositoryProvider);
+      final domainRepo = ref.read(kycDomainRepositoryProvider);
+      final resubmitKycUseCase = ref.read(resubmitKycUseCaseProvider);
 
-      final request = KycSubmitRequest(
+      // Validate image sizes using domain repository
+      final validationErrors = domainRepo.validateImages(
+        idFrontImagePath: state.idFrontImagePath!,
+        idBackImagePath: state.idBackImagePath,
+        selfieImagePath: state.selfieImagePath!,
+        selfieWithIdImagePath: state.selfieWithIdImagePath,
+      );
+      if (validationErrors.isNotEmpty) {
+        throw Exception(validationErrors.join('\n'));
+      }
+
+      // Create domain params
+      final params = SubmitKycParams(
         // Basic Identity
         firstName: state.firstName,
         middleName: state.middleName,
         lastName: state.lastName,
         dateOfBirth: state.dateOfBirth?.toIso8601String().split('T')[0],
-        sex: state.sex,
+        sex: state.sex?.apiValue,
         nationality: state.nationality,
-        civilStatus: state.civilStatus,
+        civilStatus: state.civilStatus?.apiValue,
         // Contact
         email: state.email,
         mobileNumber: state.mobileNumber,
@@ -435,7 +464,7 @@ class KycFormController extends _$KycFormController {
         province: state.province,
         zipCode: state.zipCode,
         // ID Details
-        idType: state.selectedIdType!,
+        idType: state.selectedIdType!.apiValue,
         idNumber: state.idNumber,
         idExpiryDate: state.idExpiryDate?.toIso8601String().split('T')[0],
         // Images
@@ -447,19 +476,17 @@ class KycFormController extends _$KycFormController {
         declarationAccepted: state.declarationAccepted,
       );
 
-      // Validate image sizes
-      final validationErrors = repo.validateImages(request);
-      if (validationErrors.isNotEmpty) {
-        throw Exception(validationErrors.join('\n'));
-      }
-
-      final response = await repo.resubmitKyc(request);
+      final result = await resubmitKycUseCase(params);
 
       // Refresh the status controller
       ref.invalidate(kycStatusControllerProvider);
 
       state = state.copyWith(isSubmitting: false);
-      return response;
+
+      return result.when(
+        success: (entity) => entity,
+        failure: (failure) => throw Exception(failure.message),
+      );
     } catch (e) {
       state = state.copyWith(isSubmitting: false, error: e.toString());
       rethrow;

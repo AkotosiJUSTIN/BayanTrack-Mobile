@@ -92,7 +92,7 @@ final class IdTypesProvider
   }
 }
 
-String _$idTypesHash() => r'9b82ebf3ff18c13668ffd3938edb584806ce6365';
+String _$idTypesHash() => r'78a8f594f78c31b70b55009cb2910e009dc462d5';
 
 @ProviderFor(kycFormOptions)
 final kycFormOptionsProvider = KycFormOptionsProvider._();
@@ -167,7 +167,7 @@ final class KycFormControllerProvider
   }
 }
 
-String _$kycFormControllerHash() => r'4062f76b2eac377d18ba3525f4e938fa887a35fe';
+String _$kycFormControllerHash() => r'719e20d557816712217144404e1bc333ce64649b';
 
 abstract class _$KycFormController extends $Notifier<KycFormState> {
   KycFormState build();
