@@ -9,14 +9,14 @@ class MockDio extends Mock implements Dio {}
 
 void main() {
   late MockDio mockDio;
-  late AuthRepository authRepository;
+  late LegacyAuthRepository authRepository;
 
   setUp(() {
     mockDio = MockDio();
-    authRepository = AuthRepository(mockDio);
+    authRepository = LegacyAuthRepository(mockDio);
   });
 
-  group('AuthRepository', () {
+  group('LegacyAuthRepository', () {
     group('login', () {
       test('should return LoginResponse on successful login', () async {
         // Arrange

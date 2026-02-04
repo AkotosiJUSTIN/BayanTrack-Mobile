@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../constants/api_constants.dart';
+import '../../features/auth/auth_di.dart';
 import 'auth_interceptor.dart';
 
 part 'dio_provider.g.dart';
@@ -39,12 +40,14 @@ Dio dio(Ref ref) {
 
   // Use raw dio for refresh to avoid circular dependency
   final rawDio = ref.watch(dioRawProvider);
-  
+
+  // Inject AuthSessionRepository for Clean Architecture compliance
+  final sessionRepository = ref.watch(authSessionRepositoryProvider);
+
   dio.interceptors.addAll([
-    AuthInterceptor(rawDio),
+    AuthInterceptor(rawDio, sessionRepository),
     // NOTE: LogInterceptor removed - it can expose sensitive data from server errors
   ]);
 
   return dio;
 }
-

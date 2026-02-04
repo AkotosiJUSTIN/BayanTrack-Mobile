@@ -8,12 +8,24 @@ part of 'profile_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// ProfileController - manages user profile state.
+///
+/// Uses domain AuthRepository internally but exposes UserProfile DTO
+/// for backward compatibility with screens.
 
 @ProviderFor(ProfileController)
 final profileControllerProvider = ProfileControllerProvider._();
 
+/// ProfileController - manages user profile state.
+///
+/// Uses domain AuthRepository internally but exposes UserProfile DTO
+/// for backward compatibility with screens.
 final class ProfileControllerProvider
     extends $AsyncNotifierProvider<ProfileController, UserProfile> {
+  /// ProfileController - manages user profile state.
+  ///
+  /// Uses domain AuthRepository internally but exposes UserProfile DTO
+  /// for backward compatibility with screens.
   ProfileControllerProvider._()
     : super(
         from: null,
@@ -33,7 +45,12 @@ final class ProfileControllerProvider
   ProfileController create() => ProfileController();
 }
 
-String _$profileControllerHash() => r'7ae403a5ed3001a9e0f694f436dc54cbf6fe761b';
+String _$profileControllerHash() => r'6ddae5aaf93c4d706c89dbf80f07ec47114d385f';
+
+/// ProfileController - manages user profile state.
+///
+/// Uses domain AuthRepository internally but exposes UserProfile DTO
+/// for backward compatibility with screens.
 
 abstract class _$ProfileController extends $AsyncNotifier<UserProfile> {
   FutureOr<UserProfile> build();

@@ -1,21 +1,16 @@
 import 'package:dio/dio.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/constants/api_constants.dart';
-import '../../../core/network/dio_provider.dart';
 import 'auth_models.dart';
 
-part 'auth_repository.g.dart';
-
-@riverpod
-AuthRepository authRepository(Ref ref) {
-  final dio = ref.watch(dioProvider);
-  return AuthRepository(dio);
-}
-
-class AuthRepository {
+/// Legacy AuthRepository class - kept for backward compatibility
+/// during migration. New code should use AuthRepositoryImpl from
+/// data/repositories/auth_repository_impl.dart.
+///
+/// @deprecated Use AuthRepositoryImpl and AuthRepository interface instead.
+class LegacyAuthRepository {
   final Dio _dio;
 
-  AuthRepository(this._dio);
+  LegacyAuthRepository(this._dio);
 
   // ==================== LOGIN / REGISTER ====================
 
