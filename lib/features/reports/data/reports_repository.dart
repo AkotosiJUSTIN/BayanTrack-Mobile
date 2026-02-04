@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/dio_provider.dart';
@@ -78,7 +79,7 @@ class ReportsRepository {
   Future<Report> createReport(CreateReportRequest request) async {
     final jsonData = request.toJson();
     // Debug: Print the request payload
-    print('CreateReport request payload: $jsonData');
+    debugPrint('CreateReport request payload: $jsonData');
     
     final response = await _dio.post(
       ApiConstants.reports,

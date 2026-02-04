@@ -1,6 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../data/notification_models.dart';
-import '../data/notifications_repository.dart';
+
+import '../domain/entities/notification_preferences.dart';
+import '../domain/entities/paginated_notifications.dart';
+import '../notifications_di.dart';
 
 part 'notifications_controller.g.dart';
 
@@ -16,26 +18,39 @@ class NotificationsController extends _$NotificationsController {
     int page = 1,
     bool? unreadOnly,
   }) async {
-    final repository = ref.read(notificationsRepositoryProvider);
-    return repository.getNotifications(
+    final getNotifications = ref.read(getNotificationsUseCaseProvider);
+    final result = await getNotifications(
       page: page,
       pageSize: 20,
       unreadOnly: unreadOnly,
+    );
+
+    return result.when(
+      success: (data) => data,
+      failure: (failure) => throw Exception(failure.message),
     );
   }
 
   /// Mark a single notification as read and refresh
   Future<void> markAsRead(String id) async {
-    final repository = ref.read(notificationsRepositoryProvider);
-    await repository.markAsRead(id);
-    ref.invalidateSelf();
+    final markAsReadUseCase = ref.read(markAsReadUseCaseProvider);
+    final result = await markAsReadUseCase(id);
+
+    result.when(
+      success: (_) => ref.invalidateSelf(),
+      failure: (failure) => throw Exception(failure.message),
+    );
   }
 
   /// Mark all notifications as read and refresh
   Future<void> markAllAsRead() async {
-    final repository = ref.read(notificationsRepositoryProvider);
-    await repository.markAllAsRead();
-    ref.invalidateSelf();
+    final markAllReadUseCase = ref.read(markAllReadUseCaseProvider);
+    final result = await markAllReadUseCase();
+
+    result.when(
+      success: (_) => ref.invalidateSelf(),
+      failure: (failure) => throw Exception(failure.message),
+    );
   }
 
   /// Refresh notifications
@@ -50,14 +65,35 @@ class NotificationPreferencesController
     extends _$NotificationPreferencesController {
   @override
   Future<NotificationPreferences> build() async {
-    final repository = ref.read(notificationsRepositoryProvider);
-    return repository.getPreferences();
+    final getPreferences = ref.read(getPreferencesUseCaseProvider);
+    final result = await getPreferences();
+
+    return result.when(
+      success: (data) => data,
+      failure: (failure) => throw Exception(failure.message),
+    );
   }
 
   /// Update preferences
-  Future<void> updatePreferences(UpdatePreferencesRequest request) async {
-    final repository = ref.read(notificationsRepositoryProvider);
-    await repository.updatePreferences(request);
-    ref.invalidateSelf();
+  Future<void> updatePreferences({
+    bool? emailEnabled,
+    bool? pushEnabled,
+    bool? notifyOnStatusChange,
+    bool? notifyOnComment,
+    bool? notifyOnAssignment,
+  }) async {
+    final updatePreferencesUseCase = ref.read(updatePreferencesUseCaseProvider);
+    final result = await updatePreferencesUseCase(
+      emailEnabled: emailEnabled,
+      pushEnabled: pushEnabled,
+      notifyOnStatusChange: notifyOnStatusChange,
+      notifyOnComment: notifyOnComment,
+      notifyOnAssignment: notifyOnAssignment,
+    );
+
+    result.when(
+      success: (_) => ref.invalidateSelf(),
+      failure: (failure) => throw Exception(failure.message),
+    );
   }
 }

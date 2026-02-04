@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../kyc/data/kyc_models.dart';
+import '../../kyc/domain/entities/kyc_enums.dart';
 import '../../kyc/presentation/kyc_controller.dart';
 import '../../kyc/presentation/kyc_status_screen.dart';
 import '../../notifications/presentation/notification_settings_screen.dart';
+import '../../kyc/domain/entities/kyc_status.dart';
 import '../data/auth_models.dart';
 import '../data/user_permissions.dart';
 import 'auth_controller.dart';
@@ -55,7 +56,8 @@ class ProfileScreen extends ConsumerWidget {
                 builder: (context, ref, _) {
                   final kycStatusAsync = ref.watch(kycStatusControllerProvider);
                   return kycStatusAsync.when(
-                    data: (kycStatus) => _buildKycStatusCard(context, ref, kycStatus),
+                    data: (kycStatus) =>
+                        _buildKycStatusCard(context, ref, kycStatus),
                     loading: () => const SizedBox.shrink(),
                     error: (_, __) => const SizedBox.shrink(),
                   );
@@ -87,20 +89,24 @@ class ProfileScreen extends ConsumerWidget {
   ) {
     // Get initials, handling empty names
     String getInitials() {
-      final firstInitial = profile.firstName.isNotEmpty ? profile.firstName[0].toUpperCase() : '';
-      final lastInitial = profile.lastName.isNotEmpty ? profile.lastName[0].toUpperCase() : '';
+      final firstInitial = profile.firstName.isNotEmpty
+          ? profile.firstName[0].toUpperCase()
+          : '';
+      final lastInitial = profile.lastName.isNotEmpty
+          ? profile.lastName[0].toUpperCase()
+          : '';
       if (firstInitial.isEmpty && lastInitial.isEmpty) {
         return profile.email.isNotEmpty ? profile.email[0].toUpperCase() : '?';
       }
       return '$firstInitial$lastInitial';
     }
-    
+
     // Get display name, handling empty names
     String getDisplayName() {
       final name = '${profile.firstName} ${profile.lastName}'.trim();
       return name.isNotEmpty ? name : profile.email.split('@').first;
     }
-    
+
     return Column(
       children: [
         CircleAvatar(
@@ -116,10 +122,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Text(
-          getDisplayName(),
-          style: theme.textTheme.headlineSmall,
-        ),
+        Text(getDisplayName(), style: theme.textTheme.headlineSmall),
         Text(
           profile.email,
           style: theme.textTheme.bodyMedium?.copyWith(
@@ -237,19 +240,17 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildKycStatusCard(
     BuildContext context,
     WidgetRef ref,
-    KycStatusResponse? kycStatus,
+    KycStatusEntity? kycStatus,
   ) {
     final permissions = ref.watch(userPermissionsProvider);
-    final statusColor = _getKycStatusColor(kycStatus?.kycStatus);
-    
+    final statusColor = _getKycStatusColor(kycStatus?.status);
+
     return Card(
       child: InkWell(
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const KycStatusScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const KycStatusScreen()),
           );
         },
         child: Padding(
@@ -259,11 +260,11 @@ class ProfileScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
+                  color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  _getKycStatusIcon(kycStatus?.kycStatus),
+                  _getKycStatusIcon(kycStatus?.status),
                   color: statusColor,
                   size: 32,
                 ),
@@ -283,10 +284,7 @@ class ProfileScreen extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       permissions.getStatusMessage(),
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: statusColor,
-                      ),
+                      style: TextStyle(fontSize: 14, color: statusColor),
                     ),
                   ],
                 ),
@@ -299,38 +297,38 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Color _getKycStatusColor(KycStatus? status) {
+  Color _getKycStatusColor(KycVerificationStatus? status) {
     if (status == null) return AppColors.alertMedium;
-    
+
     switch (status) {
-      case KycStatus.verified:
+      case KycVerificationStatus.verified:
         return AppColors.success;
-      case KycStatus.pending:
+      case KycVerificationStatus.pending:
         return AppColors.alertMedium;
-      case KycStatus.rejected:
-      case KycStatus.resubmitRequested:
-      case KycStatus.suspended:
+      case KycVerificationStatus.rejected:
+      case KycVerificationStatus.resubmitRequested:
+      case KycVerificationStatus.suspended:
         return AppColors.alertHigh;
-      case KycStatus.unverified:
+      case KycVerificationStatus.unverified:
         return AppColors.lightTextSecondary;
     }
   }
 
-  IconData _getKycStatusIcon(KycStatus? status) {
+  IconData _getKycStatusIcon(KycVerificationStatus? status) {
     if (status == null) return Icons.shield_outlined;
-    
+
     switch (status) {
-      case KycStatus.verified:
+      case KycVerificationStatus.verified:
         return Icons.verified_user;
-      case KycStatus.pending:
+      case KycVerificationStatus.pending:
         return Icons.hourglass_empty;
-      case KycStatus.rejected:
+      case KycVerificationStatus.rejected:
         return Icons.cancel;
-      case KycStatus.resubmitRequested:
+      case KycVerificationStatus.resubmitRequested:
         return Icons.refresh;
-      case KycStatus.suspended:
+      case KycVerificationStatus.suspended:
         return Icons.block;
-      case KycStatus.unverified:
+      case KycVerificationStatus.unverified:
         return Icons.shield_outlined;
     }
   }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/notification_models.dart';
+import '../domain/entities/notification_preferences.dart';
 import 'notifications_controller.dart';
 
 class NotificationSettingsScreen extends ConsumerWidget {
@@ -86,17 +86,15 @@ class NotificationSettingsScreen extends ConsumerWidget {
     bool? notifyOnComment,
     bool? notifyOnAssignment,
   }) {
-    final request = UpdatePreferencesRequest(
-      emailEnabled: emailEnabled ?? current.emailEnabled,
-      pushEnabled: pushEnabled ?? current.pushEnabled,
-      notifyOnStatusChange:
-          notifyOnStatusChange ?? current.notifyOnStatusChange,
-      notifyOnComment: notifyOnComment ?? current.notifyOnComment,
-      notifyOnAssignment: notifyOnAssignment ?? current.notifyOnAssignment,
-    );
-
     ref
         .read(notificationPreferencesControllerProvider.notifier)
-        .updatePreferences(request);
+        .updatePreferences(
+          emailEnabled: emailEnabled ?? current.emailEnabled,
+          pushEnabled: pushEnabled ?? current.pushEnabled,
+          notifyOnStatusChange:
+              notifyOnStatusChange ?? current.notifyOnStatusChange,
+          notifyOnComment: notifyOnComment ?? current.notifyOnComment,
+          notifyOnAssignment: notifyOnAssignment ?? current.notifyOnAssignment,
+        );
   }
 }

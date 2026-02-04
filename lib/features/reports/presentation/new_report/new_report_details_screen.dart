@@ -106,7 +106,7 @@ class _NewReportDetailsScreenState
                   _buildSectionLabel(theme, 'Category *'),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<ReportCategory>(
-                    value: state.category,
+                    initialValue: state.category,
                     decoration: const InputDecoration(
                       hintText: 'Select a category',
                       prefixIcon: Icon(Icons.category_outlined),
@@ -172,7 +172,7 @@ class _NewReportDetailsScreenState
                     ),
                     value: state.isHappeningNow,
                     onChanged: controller.setIsHappeningNow,
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                     contentPadding: EdgeInsets.zero,
                   ),
                   const SizedBox(height: 16),
@@ -190,7 +190,7 @@ class _NewReportDetailsScreenState
                   _buildSectionLabel(theme, 'Zone *'),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: state.zone,
+                    initialValue: state.zone,
                     decoration: InputDecoration(
                       hintText: 'Select zone',
                       prefixIcon: const Icon(Icons.location_city_outlined),
@@ -254,7 +254,7 @@ class _NewReportDetailsScreenState
                     style: ButtonStyle(
                       backgroundColor: WidgetStateProperty.resolveWith((states) {
                         if (states.contains(WidgetState.selected)) {
-                          return _getSeverityColor(state.severity).withOpacity(0.2);
+                          return _getSeverityColor(state.severity).withValues(alpha: 0.2);
                         }
                         return null;
                       }),
@@ -296,7 +296,7 @@ class _NewReportDetailsScreenState
                     ),
                     value: state.isEmergency,
                     onChanged: controller.setIsEmergency,
-                    activeColor: AppColors.alertHigh,
+                    activeThumbColor: AppColors.alertHigh,
                     contentPadding: EdgeInsets.zero,
                   ),
                   
@@ -305,9 +305,9 @@ class _NewReportDetailsScreenState
                       padding: const EdgeInsets.all(12),
                       margin: const EdgeInsets.only(top: 8),
                       decoration: BoxDecoration(
-                        color: AppColors.alertHigh.withOpacity(0.1),
+                        color: AppColors.alertHigh.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.alertHigh.withOpacity(0.3)),
+                        border: Border.all(color: AppColors.alertHigh.withValues(alpha: 0.3)),
                       ),
                       child: const Row(
                         children: [

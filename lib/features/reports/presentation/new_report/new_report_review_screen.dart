@@ -131,7 +131,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('$errorMessage'),
+            content: Text(errorMessage),
             backgroundColor: AppColors.alertHigh,
             duration: const Duration(seconds: 5),
           ),
@@ -282,9 +282,9 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                             margin: const EdgeInsets.only(top: 8),
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: AppColors.alertHigh.withOpacity(0.1),
+                              color: AppColors.alertHigh.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: AppColors.alertHigh.withOpacity(0.3)),
+                              border: Border.all(color: AppColors.alertHigh.withValues(alpha: 0.3)),
                             ),
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
@@ -368,7 +368,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                       margin: const EdgeInsets.only(top: 8),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.alertMedium.withOpacity(0.1),
+                        color: AppColors.alertMedium.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(

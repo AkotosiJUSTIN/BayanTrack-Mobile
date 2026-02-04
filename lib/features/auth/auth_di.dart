@@ -15,11 +15,9 @@ part 'auth_di.g.dart';
 
 // ==================== STORAGE ====================
 
-@riverpod
+@Riverpod(keepAlive: true)
 FlutterSecureStorage secureStorage(Ref ref) {
-  return const FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
+  return const FlutterSecureStorage();
 }
 
 // ==================== REPOSITORIES ====================

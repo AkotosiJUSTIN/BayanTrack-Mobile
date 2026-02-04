@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
-import '../data/kyc_models.dart';
+import '../domain/entities/kyc_enums.dart';
+import '../domain/entities/kyc_status.dart';
 import 'kyc_controller.dart';
 import 'kyc_form_screen.dart';
 
@@ -71,10 +72,7 @@ class KycStatusScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             const Text(
               'Identity Verification',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Text(
@@ -113,9 +111,9 @@ class KycStatusScreen extends ConsumerWidget {
   Widget _buildStatusView(
     BuildContext context,
     WidgetRef ref,
-    KycStatusResponse kycStatus,
+    KycStatusEntity kycStatus,
   ) {
-    final statusColor = _getStatusColor(kycStatus.kycStatus);
+    final statusColor = _getStatusColor(kycStatus.status);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -132,7 +130,7 @@ class KycStatusScreen extends ConsumerWidget {
                   Row(
                     children: [
                       Icon(
-                        _getStatusIcon(kycStatus.kycStatus),
+                        _getStatusIcon(kycStatus.status),
                         color: statusColor,
                         size: 32,
                       ),
@@ -142,7 +140,7 @@ class KycStatusScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              kycStatus.kycStatus.displayName,
+                              kycStatus.status.displayName,
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -151,7 +149,7 @@ class KycStatusScreen extends ConsumerWidget {
                             ),
                             if (kycStatus.submittedAt != null)
                               Text(
-                                'Submitted: ${_formatDate(kycStatus.submittedAt!)}',
+                                'Submitted: ${_formatDateTime(kycStatus.submittedAt!)}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Theme.of(context).colorScheme.outline,
@@ -163,7 +161,7 @@ class KycStatusScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text(_getStatusMessage(kycStatus.kycStatus)),
+                  Text(_getStatusMessage(kycStatus.status)),
                 ],
               ),
             ),
@@ -174,7 +172,7 @@ class KycStatusScreen extends ConsumerWidget {
           if (kycStatus.rejectionReason != null &&
               kycStatus.rejectionReason!.isNotEmpty)
             Card(
-              color: AppColors.alertHigh.withOpacity(0.1),
+              color: AppColors.alertHigh.withValues(alpha: 0.1),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -205,10 +203,7 @@ class KycStatusScreen extends ConsumerWidget {
           // Submitted Information
           const Text(
             'Submitted Information',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Card(
@@ -218,11 +213,19 @@ class KycStatusScreen extends ConsumerWidget {
                 children: [
                   _buildInfoRow('Full Name', kycStatus.fullName, context),
                   if (kycStatus.idType != null)
-                    _buildInfoRow('ID Type', kycStatus.idType!.displayName, context),
+                    _buildInfoRow(
+                      'ID Type',
+                      kycStatus.idType!.displayName,
+                      context,
+                    ),
                   if (kycStatus.idNumber != null)
                     _buildInfoRow('ID Number', kycStatus.idNumber!, context),
                   if (kycStatus.dateOfBirth != null)
-                    _buildInfoRow('Date of Birth', kycStatus.dateOfBirth!, context),
+                    _buildInfoRow(
+                      'Date of Birth',
+                      _formatDateTime(kycStatus.dateOfBirth!),
+                      context,
+                    ),
                   if (kycStatus.resubmissionCount > 0)
                     _buildInfoRow(
                       'Resubmissions',
@@ -237,7 +240,7 @@ class KycStatusScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // Action Buttons
-          if (kycStatus.kycStatus.canResubmit)
+          if (kycStatus.status.canResubmit)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -291,62 +294,57 @@ class KycStatusScreen extends ConsumerWidget {
     );
   }
 
-  Color _getStatusColor(KycStatus status) {
+  Color _getStatusColor(KycVerificationStatus status) {
     switch (status) {
-      case KycStatus.verified:
+      case KycVerificationStatus.verified:
         return AppColors.success;
-      case KycStatus.pending:
+      case KycVerificationStatus.pending:
         return AppColors.alertMedium;
-      case KycStatus.rejected:
-      case KycStatus.suspended:
+      case KycVerificationStatus.rejected:
+      case KycVerificationStatus.suspended:
         return AppColors.alertHigh;
-      case KycStatus.resubmitRequested:
+      case KycVerificationStatus.resubmitRequested:
         return AppColors.alertMedium;
-      case KycStatus.unverified:
+      case KycVerificationStatus.unverified:
         return AppColors.lightTextSecondary;
     }
   }
 
-  IconData _getStatusIcon(KycStatus status) {
+  IconData _getStatusIcon(KycVerificationStatus status) {
     switch (status) {
-      case KycStatus.verified:
+      case KycVerificationStatus.verified:
         return Icons.check_circle;
-      case KycStatus.pending:
+      case KycVerificationStatus.pending:
         return Icons.hourglass_empty;
-      case KycStatus.rejected:
+      case KycVerificationStatus.rejected:
         return Icons.cancel;
-      case KycStatus.resubmitRequested:
+      case KycVerificationStatus.resubmitRequested:
         return Icons.refresh;
-      case KycStatus.suspended:
+      case KycVerificationStatus.suspended:
         return Icons.block;
-      case KycStatus.unverified:
+      case KycVerificationStatus.unverified:
         return Icons.help_outline;
     }
   }
 
-  String _getStatusMessage(KycStatus status) {
+  String _getStatusMessage(KycVerificationStatus status) {
     switch (status) {
-      case KycStatus.verified:
+      case KycVerificationStatus.verified:
         return 'Your identity has been verified successfully!';
-      case KycStatus.pending:
+      case KycVerificationStatus.pending:
         return 'Your documents are being reviewed. This usually takes 1-3 business days.';
-      case KycStatus.rejected:
+      case KycVerificationStatus.rejected:
         return 'Your submission was rejected. Please review the reason and resubmit.';
-      case KycStatus.resubmitRequested:
+      case KycVerificationStatus.resubmitRequested:
         return 'Additional information is required. Please resubmit your documents.';
-      case KycStatus.suspended:
+      case KycVerificationStatus.suspended:
         return 'Your account verification has been suspended. Please contact support.';
-      case KycStatus.unverified:
+      case KycVerificationStatus.unverified:
         return 'Please submit your documents for verification.';
     }
   }
 
-  String _formatDate(String isoDate) {
-    try {
-      final date = DateTime.parse(isoDate);
-      return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-    } catch (e) {
-      return isoDate;
-    }
+  String _formatDateTime(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 }

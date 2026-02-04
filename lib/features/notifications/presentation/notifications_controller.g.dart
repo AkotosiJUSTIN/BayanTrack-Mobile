@@ -41,7 +41,7 @@ final class NotificationsControllerProvider
 }
 
 String _$notificationsControllerHash() =>
-    r'3d7455956ed604eb20609ad3e977fecba5da478d';
+    r'e949d8064f162c8bd1fcfef7df5f894146dab267';
 
 /// Controller for notifications list - auto-fetches on first access
 
@@ -105,7 +105,7 @@ final class NotificationPreferencesControllerProvider
 }
 
 String _$notificationPreferencesControllerHash() =>
-    r'3ac7e9215bc6b8a2e854557d15cf33c784403c03';
+    r'b5e0008765e2415e19d519f03c291ce42cf0674c';
 
 /// Controller for notification preferences
 
