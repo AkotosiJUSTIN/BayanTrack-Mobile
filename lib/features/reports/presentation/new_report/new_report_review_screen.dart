@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../images/data/images_repository.dart';
-import '../../reports_di.dart';
+import '../../data/reports_repository.dart';
 import '../reports_controller.dart';
 import 'new_report_controller.dart';
 
@@ -35,33 +35,11 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     });
 
     try {
-      // Step 1: Create the report using the CreateReportUseCase
-      final createReport = ref.read(createReportUseCaseProvider);
-      final result = await createReport(
-        category: state.category?.value,
-        title: state.title,
-        description: state.description,
-        incidentDatetime: state.incidentDatetime?.toIso8601String(),
-        isHappeningNow: state.isHappeningNow,
-        zone: state.zone,
-        streetLandmark: state.streetLandmark,
-        cityMunicipality: state.cityMunicipality,
-        province: state.province,
-        latitude: state.latitude?.toString(),
-        longitude: state.longitude?.toString(),
-        locationAccuracy: state.locationAccuracy.name,
-        location: state.streetLandmark ?? state.location,
-        severity: state.severity.value,
-        peopleAffected: state.peopleAffected,
-        isEmergency: state.isEmergency,
-        declarationConfirmed: state.declarationConfirmed,
-        dataProcessingConsent: state.dataProcessingConsent,
-      );
+      // Step 1: Create the report using the new comprehensive request
+      final reportsRepo = ref.read(reportsRepositoryProvider);
+      final request = state.toCreateRequest();
 
-      final createdReport = result.when(
-        success: (report) => report,
-        failure: (failure) => throw Exception(failure.message),
-      );
+      final createdReport = await reportsRepo.createReport(request);
       
       // Step 2: Upload images (if any) - upload one at a time for reliability
       if (state.selectedImages.isNotEmpty) {
@@ -222,23 +200,18 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // ===== CATEGORY =====
-                  _buildSection(
-                    theme: theme,
-                    isDark: isDark,
-                    icon: Icons.category,
-                    title: 'Category',
-                    trailing: null,
-                    content: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildInfoRow('Category', state.category?.displayName ?? 'Not set'),
-                        if (state.title != null && state.title!.isNotEmpty)
-                          _buildInfoRow('Title', state.title!),
-                      ],
+                  // ===== TITLE (IF PROVIDED) =====
+                  if (state.title != null && state.title!.isNotEmpty)
+                    _buildSection(
+                      theme: theme,
+                      isDark: isDark,
+                      icon: Icons.title,
+                      title: 'Title',
+                      trailing: null,
+                      content: _buildInfoRow('Title', state.title!),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                  if (state.title != null && state.title!.isNotEmpty)
+                    const SizedBox(height: 16),
 
                   // ===== LOCATION PREVIEW =====
                   _buildSection(
@@ -263,42 +236,50 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // ===== SEVERITY & IMPACT =====
+                  // ===== REPORT TIMING =====
                   _buildSection(
                     theme: theme,
                     isDark: isDark,
-                    icon: Icons.warning_amber,
-                    title: 'Severity & Impact',
+                    icon: Icons.schedule,
+                    title: 'Report Timing',
                     trailing: null,
                     content: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildInfoRow('Severity', state.severity.displayName),
-                        if (state.peopleAffected != null)
-                          _buildInfoRow('People Affected', '~${state.peopleAffected}'),
                         _buildInfoRow('Is Happening Now', state.isHappeningNow ? 'Yes' : 'No'),
-                        if (state.isEmergency)
-                          Container(
-                            margin: const EdgeInsets.only(top: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: AppColors.alertHigh.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: AppColors.alertHigh.withValues(alpha: 0.3)),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.warning, color: AppColors.alertHigh, size: 16),
-                                SizedBox(width: 6),
-                                Text('EMERGENCY', style: TextStyle(
-                                  color: AppColors.alertHigh,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                )),
-                              ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ===== AI INFO =====
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'AI will automatically detect category, severity, and urgency',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : AppColors.lightTextPrimary,
                             ),
                           ),
+                        ),
                       ],
                     ),
                   ),
@@ -368,7 +349,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                       margin: const EdgeInsets.only(top: 8),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.alertMedium.withValues(alpha: 0.1),
+                        color: AppColors.alertMedium.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(

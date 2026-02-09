@@ -44,6 +44,10 @@ class Report extends Equatable {
   final double? categoryConfidence;
   final String? priority;
   final int? priorityScore;
+  final PriorityLevel? priorityLevel;
+  final List<String> priorityReasons;
+  final int? baseScore;
+  final int? hotspotScore;
   final double? urgencyScore;
   final DuplicateState? duplicateState;
   final String? relatedReportId;
@@ -89,6 +93,10 @@ class Report extends Equatable {
     this.categoryConfidence,
     this.priority,
     this.priorityScore,
+    this.priorityLevel,
+    this.priorityReasons = const [],
+    this.baseScore,
+    this.hotspotScore,
     this.urgencyScore,
     this.duplicateState,
     this.relatedReportId,
