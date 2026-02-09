@@ -13,7 +13,7 @@ part of 'kyc_controller.dart';
 final kycStatusControllerProvider = KycStatusControllerProvider._();
 
 final class KycStatusControllerProvider
-    extends $AsyncNotifierProvider<KycStatusController, KycStatusResponse?> {
+    extends $AsyncNotifierProvider<KycStatusController, KycStatusEntity?> {
   KycStatusControllerProvider._()
     : super(
         from: null,
@@ -34,21 +34,20 @@ final class KycStatusControllerProvider
 }
 
 String _$kycStatusControllerHash() =>
-    r'412e0f05051e9b964549b82397436e5ef1256189';
+    r'686d1d47d0482df33033f01a81f2cf56c85b4ed8';
 
-abstract class _$KycStatusController
-    extends $AsyncNotifier<KycStatusResponse?> {
-  FutureOr<KycStatusResponse?> build();
+abstract class _$KycStatusController extends $AsyncNotifier<KycStatusEntity?> {
+  FutureOr<KycStatusEntity?> build();
   @$mustCallSuper
   @override
   void runBuild() {
     final ref =
-        this.ref as $Ref<AsyncValue<KycStatusResponse?>, KycStatusResponse?>;
+        this.ref as $Ref<AsyncValue<KycStatusEntity?>, KycStatusEntity?>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<KycStatusResponse?>, KycStatusResponse?>,
-              AsyncValue<KycStatusResponse?>,
+              AnyNotifier<AsyncValue<KycStatusEntity?>, KycStatusEntity?>,
+              AsyncValue<KycStatusEntity?>,
               Object?,
               Object?
             >;
@@ -93,7 +92,7 @@ final class IdTypesProvider
   }
 }
 
-String _$idTypesHash() => r'9b82ebf3ff18c13668ffd3938edb584806ce6365';
+String _$idTypesHash() => r'78a8f594f78c31b70b55009cb2910e009dc462d5';
 
 @ProviderFor(kycFormOptions)
 final kycFormOptionsProvider = KycFormOptionsProvider._();
@@ -101,13 +100,13 @@ final kycFormOptionsProvider = KycFormOptionsProvider._();
 final class KycFormOptionsProvider
     extends
         $FunctionalProvider<
-          AsyncValue<KycFormOptionsResponse>,
-          KycFormOptionsResponse,
-          FutureOr<KycFormOptionsResponse>
+          AsyncValue<domain.KycFormOptions>,
+          domain.KycFormOptions,
+          FutureOr<domain.KycFormOptions>
         >
     with
-        $FutureModifier<KycFormOptionsResponse>,
-        $FutureProvider<KycFormOptionsResponse> {
+        $FutureModifier<domain.KycFormOptions>,
+        $FutureProvider<domain.KycFormOptions> {
   KycFormOptionsProvider._()
     : super(
         from: null,
@@ -124,17 +123,17 @@ final class KycFormOptionsProvider
 
   @$internal
   @override
-  $FutureProviderElement<KycFormOptionsResponse> $createElement(
+  $FutureProviderElement<domain.KycFormOptions> $createElement(
     $ProviderPointer pointer,
   ) => $FutureProviderElement(pointer);
 
   @override
-  FutureOr<KycFormOptionsResponse> create(Ref ref) {
+  FutureOr<domain.KycFormOptions> create(Ref ref) {
     return kycFormOptions(ref);
   }
 }
 
-String _$kycFormOptionsHash() => r'5e8668ddff56470cacca4677d38d1c28fb53f2e7';
+String _$kycFormOptionsHash() => r'b54f7a4340b9654a5cf507a717482ad8d1142abc';
 
 @ProviderFor(KycFormController)
 final kycFormControllerProvider = KycFormControllerProvider._();
@@ -168,7 +167,7 @@ final class KycFormControllerProvider
   }
 }
 
-String _$kycFormControllerHash() => r'bc3f057d4cd63f00f66155a16a22d2b1688a8027';
+String _$kycFormControllerHash() => r'719e20d557816712217144404e1bc333ce64649b';
 
 abstract class _$KycFormController extends $Notifier<KycFormState> {
   KycFormState build();

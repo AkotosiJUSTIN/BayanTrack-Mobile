@@ -95,15 +95,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             children: [
               Image.asset(
                 'assets/images/logo.png',
-                width: 200,
-                height: 200,
+                width: 280,
+                height: 280,
                 errorBuilder: (_, __, ___) => Icon(
                   Icons.location_on,
-                  size: 200,
+                  size: 280,
                   color: AppColors.primary,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               Text(
                 'BayanTrack',
                 style: Theme.of(context).textTheme.displayMedium?.copyWith(

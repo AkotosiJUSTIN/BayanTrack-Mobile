@@ -26,12 +26,7 @@ class NewReportState {
   final LocationAccuracy locationAccuracy;
   final String? location; // Human-readable full address
   
-  // Section C: Severity & Impact
-  final SeverityLevel severity;
-  final int? peopleAffected;
-  final bool isEmergency;
-  
-  // Section D: Consent & Declaration
+  // Section C: Consent & Declaration
   final bool declarationConfirmed;
   final bool dataProcessingConsent;
   
@@ -54,9 +49,6 @@ class NewReportState {
     this.longitude,
     this.locationAccuracy = LocationAccuracy.approximate,
     this.location,
-    this.severity = SeverityLevel.medium,
-    this.peopleAffected,
-    this.isEmergency = false,
     this.declarationConfirmed = false,
     this.dataProcessingConsent = false,
     this.isSubmitting = false,
@@ -78,9 +70,6 @@ class NewReportState {
     double? longitude,
     LocationAccuracy? locationAccuracy,
     String? location,
-    SeverityLevel? severity,
-    int? peopleAffected,
-    bool? isEmergency,
     bool? declarationConfirmed,
     bool? dataProcessingConsent,
     bool? isSubmitting,
@@ -101,9 +90,6 @@ class NewReportState {
       longitude: longitude ?? this.longitude,
       locationAccuracy: locationAccuracy ?? this.locationAccuracy,
       location: location ?? this.location,
-      severity: severity ?? this.severity,
-      peopleAffected: peopleAffected ?? this.peopleAffected,
-      isEmergency: isEmergency ?? this.isEmergency,
       declarationConfirmed: declarationConfirmed ?? this.declarationConfirmed,
       dataProcessingConsent: dataProcessingConsent ?? this.dataProcessingConsent,
       isSubmitting: isSubmitting ?? this.isSubmitting,
@@ -130,8 +116,6 @@ class NewReportState {
   bool get hasDetails => 
       description.trim().isNotEmpty;
   
-  bool get hasCategory => category != null;
-  
   bool get hasConsent => declarationConfirmed && dataProcessingConsent;
 
   /// Build CreateReportRequest from current state
@@ -150,9 +134,6 @@ class NewReportState {
       longitude: longitude?.toString(),
       locationAccuracy: locationAccuracy.name,
       location: streetLandmark ?? location,
-      severity: severity.value,
-      peopleAffected: peopleAffected,
-      isEmergency: isEmergency,
       declarationConfirmed: declarationConfirmed,
       dataProcessingConsent: dataProcessingConsent,
     );
@@ -259,24 +240,7 @@ class NewReportController extends _$NewReportController {
     );
   }
 
-  // ==================== SEVERITY & IMPACT (Section C) ====================
-
-  void setSeverity(SeverityLevel severity) {
-    state = state.copyWith(severity: severity);
-  }
-
-  void setPeopleAffected(int? count) {
-    state = state.copyWith(peopleAffected: count);
-  }
-
-  void setIsEmergency(bool value) {
-    state = state.copyWith(
-      isEmergency: value,
-      severity: value ? SeverityLevel.critical : state.severity,
-    );
-  }
-
-  // ==================== CONSENT (Section D) ====================
+  // ==================== CONSENT (Section C) ====================
 
   void setDeclarationConfirmed(bool value) {
     state = state.copyWith(declarationConfirmed: value);

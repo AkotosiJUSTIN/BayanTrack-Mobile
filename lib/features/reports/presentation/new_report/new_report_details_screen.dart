@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../data/report_models.dart';
 import 'new_report_controller.dart';
 import 'new_report_review_screen.dart';
 
@@ -19,7 +18,6 @@ class _NewReportDetailsScreenState
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _streetLandmarkController = TextEditingController();
-  final _peopleAffectedController = TextEditingController();
 
   @override
   void initState() {
@@ -29,9 +27,6 @@ class _NewReportDetailsScreenState
     _titleController.text = state.title ?? '';
     _descriptionController.text = state.description;
     _streetLandmarkController.text = state.streetLandmark ?? '';
-    if (state.peopleAffected != null) {
-      _peopleAffectedController.text = state.peopleAffected.toString();
-    }
   }
 
   @override
@@ -39,7 +34,6 @@ class _NewReportDetailsScreenState
     _titleController.dispose();
     _descriptionController.dispose();
     _streetLandmarkController.dispose();
-    _peopleAffectedController.dispose();
     super.dispose();
   }
 
@@ -102,22 +96,36 @@ class _NewReportDetailsScreenState
                   ),
                   const SizedBox(height: 24),
 
-                  // ===== CATEGORY DROPDOWN =====
-                  _buildSectionLabel(theme, 'Category *'),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<ReportCategory>(
-                    value: state.category,
-                    decoration: const InputDecoration(
-                      hintText: 'Select a category',
-                      prefixIcon: Icon(Icons.category_outlined),
+                  // ===== AI AUTO-CATEGORIZATION INFO =====
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.3),
+                      ),
                     ),
-                    items: ReportCategory.values.map((category) {
-                      return DropdownMenuItem(
-                        value: category,
-                        child: Text(category.displayName),
-                      );
-                    }).toList(),
-                    onChanged: (value) => controller.setCategory(value),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'AI will automatically categorize your report',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : AppColors.lightTextPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
 
@@ -172,7 +180,7 @@ class _NewReportDetailsScreenState
                     ),
                     value: state.isHappeningNow,
                     onChanged: controller.setIsHappeningNow,
-                    activeColor: AppColors.primary,
+                    activeThumbColor: AppColors.primary,
                     contentPadding: EdgeInsets.zero,
                   ),
                   const SizedBox(height: 16),
@@ -190,7 +198,7 @@ class _NewReportDetailsScreenState
                   _buildSectionLabel(theme, 'Zone *'),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
-                    value: state.zone,
+                    initialValue: state.zone,
                     decoration: InputDecoration(
                       hintText: 'Select zone',
                       prefixIcon: const Icon(Icons.location_city_outlined),
@@ -227,101 +235,37 @@ class _NewReportDetailsScreenState
                   ),
                   const SizedBox(height: 24),
 
-                  // ===== SEVERITY SECTION =====
-                  Text(
-                    'Severity & Impact',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Severity Level
-                  _buildSectionLabel(theme, 'Severity Level'),
-                  const SizedBox(height: 8),
-                  SegmentedButton<SeverityLevel>(
-                    segments: SeverityLevel.values.map((level) {
-                      return ButtonSegment(
-                        value: level,
-                        label: Text(level.displayName),
-                        icon: Icon(_getSeverityIcon(level)),
-                      );
-                    }).toList(),
-                    selected: {state.severity},
-                    onSelectionChanged: (selected) {
-                      controller.setSeverity(selected.first);
-                    },
-                    style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.resolveWith((states) {
-                        if (states.contains(WidgetState.selected)) {
-                          return _getSeverityColor(state.severity).withOpacity(0.2);
-                        }
-                        return null;
-                      }),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // People Affected
-                  _buildSectionLabel(theme, 'Estimated People Affected'),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _peopleAffectedController,
-                    keyboardType: TextInputType.number,
-                    textInputAction: TextInputAction.done,
-                    onChanged: (value) {
-                      final count = int.tryParse(value);
-                      controller.setPeopleAffected(count);
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Enter number (optional)',
-                      prefixIcon: const Icon(Icons.people_outline),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  // ===== AI PRIORITIZATION INFO =====
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.3),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Is Emergency
-                  SwitchListTile(
-                    title: const Text('Is this an emergency?'),
-                    subtitle: Text(
-                      'Requires immediate attention',
-                      style: TextStyle(
-                        color: isDark
-                            ? AppColors.darkTextSecondary
-                            : AppColors.lightTextSecondary,
-                      ),
-                    ),
-                    value: state.isEmergency,
-                    onChanged: controller.setIsEmergency,
-                    activeColor: AppColors.alertHigh,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  
-                  if (state.isEmergency)
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.only(top: 8),
-                      decoration: BoxDecoration(
-                        color: AppColors.alertHigh.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.alertHigh.withOpacity(0.3)),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.warning_amber_rounded, color: AppColors.alertHigh),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Emergency reports are prioritized and flagged for immediate review.',
-                              style: TextStyle(fontSize: 13),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'AI will automatically detect severity and urgency from your description',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : AppColors.lightTextPrimary,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                  ),
                 ],
               ),
             ),
@@ -331,7 +275,7 @@ class _NewReportDetailsScreenState
           Padding(
             padding: const EdgeInsets.all(16),
             child: ElevatedButton(
-              onPressed: state.hasDetails && state.hasCategory ? _navigateToReview : null,
+              onPressed: state.hasDetails ? _navigateToReview : null,
               child: const Text('Continue to Review'),
             ),
           ),
@@ -347,23 +291,5 @@ class _NewReportDetailsScreenState
         fontWeight: FontWeight.w600,
       ),
     );
-  }
-
-  IconData _getSeverityIcon(SeverityLevel level) {
-    return switch (level) {
-      SeverityLevel.low => Icons.info_outline,
-      SeverityLevel.medium => Icons.warning_amber_outlined,
-      SeverityLevel.high => Icons.error_outline,
-      SeverityLevel.critical => Icons.dangerous_outlined,
-    };
-  }
-
-  Color _getSeverityColor(SeverityLevel level) {
-    return switch (level) {
-      SeverityLevel.low => AppColors.success,
-      SeverityLevel.medium => AppColors.alertMedium,
-      SeverityLevel.high => AppColors.alertHigh,
-      SeverityLevel.critical => Colors.red.shade900,
-    };
   }
 }

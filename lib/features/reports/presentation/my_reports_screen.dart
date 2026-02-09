@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
-import '../data/report_models.dart';
+import '../domain/entities/paginated_reports.dart';
+import '../domain/entities/report.dart';
+import '../domain/entities/report_enums.dart';
 import 'report_detail_screen.dart';
 import 'reports_controller.dart';
 
@@ -151,9 +153,9 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     if (_selectedFilter == 0) return reports;
 
     final targetStatus = switch (_selectedFilter) {
-      1 => 'submitted',
-      2 => 'in_progress',
-      3 => 'resolved',
+      1 => ReportStatus.submitted,
+      2 => ReportStatus.inProgress,
+      3 => ReportStatus.resolved,
       _ => null,
     };
 

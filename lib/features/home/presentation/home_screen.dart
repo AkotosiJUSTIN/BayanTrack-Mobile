@@ -4,7 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/verification_widgets.dart';
 import '../../kyc/presentation/kyc_controller.dart';
-import '../../reports/data/report_models.dart';
+import '../../reports/domain/entities/paginated_reports.dart';
 import '../../reports/presentation/report_detail_screen.dart';
 import '../../reports/presentation/reports_controller.dart';
 import 'widgets/home_report_card.dart';

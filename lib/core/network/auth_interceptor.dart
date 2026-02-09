@@ -1,24 +1,24 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/api_constants.dart';
+import '../../features/auth/domain/auth_session_repository.dart';
 
 /// Interceptor that handles JWT authentication:
 /// - Injects Authorization header on all requests
 /// - Catches 401 errors and attempts token refresh
 /// - Clears tokens on refresh failure
+///
+/// Uses AuthSessionRepository interface for token management,
+/// following Clean Architecture principles.
 class AuthInterceptor extends Interceptor {
   final Dio _dio;
-  final FlutterSecureStorage _storage;
+  final AuthSessionRepository _sessionRepository;
   bool _isRefreshing = false;
   final _pendingRequests =
       <({RequestOptions options, ErrorInterceptorHandler handler})>[];
 
-  AuthInterceptor(this._dio)
-      : _storage = const FlutterSecureStorage(
-          aOptions: AndroidOptions(encryptedSharedPreferences: true),
-        );
+  AuthInterceptor(this._dio, this._sessionRepository);
 
   @override
   Future<void> onRequest(
@@ -39,7 +39,7 @@ class AuthInterceptor extends Interceptor {
     }
 
     // Inject access token
-    final accessToken = await _storage.read(key: ApiConstants.accessTokenKey);
+    final accessToken = await _sessionRepository.getAccessToken();
 
     if (accessToken != null) {
       options.headers['Authorization'] = 'Bearer $accessToken';
@@ -73,7 +73,7 @@ class AuthInterceptor extends Interceptor {
     _isRefreshing = true;
 
     try {
-      final refreshToken = await _storage.read(key: ApiConstants.refreshTokenKey);
+      final refreshToken = await _sessionRepository.getRefreshToken();
 
       if (refreshToken == null) {
         await _clearTokensAndReject(err, handler);
@@ -88,10 +88,14 @@ class AuthInterceptor extends Interceptor {
 
       final newAccessToken = response.data['access_token'] as String;
       // Backend may not return a new refresh token - keep the existing one
-      final newRefreshToken = response.data['refresh_token'] as String? ?? refreshToken;
+      final newRefreshToken =
+          response.data['refresh_token'] as String? ?? refreshToken;
 
-      await _storage.write(key: ApiConstants.accessTokenKey, value: newAccessToken);
-      await _storage.write(key: ApiConstants.refreshTokenKey, value: newRefreshToken);
+      // Save new tokens through the repository
+      await _sessionRepository.saveTokens(
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      );
 
       // Retry original request with new token
       err.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
@@ -125,8 +129,7 @@ class AuthInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
-    await _storage.delete(key: ApiConstants.accessTokenKey);
-    await _storage.delete(key: ApiConstants.refreshTokenKey);
+    await _sessionRepository.clearSession();
     handler.reject(err);
   }
 }

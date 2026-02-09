@@ -46,6 +46,7 @@ dependencies:
   image_picker: ^1.2.1
   geolocator: ^14.0.2
   shared_preferences: ^2.5.4
+  equatable: ^2.0.8
 
 dev_dependencies:
   flutter_test:

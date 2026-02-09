@@ -4,11 +4,9 @@ import '../constants/api_constants.dart';
 
 part 'secure_storage_provider.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 FlutterSecureStorage secureStorage(Ref ref) {
-  return const FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-  );
+  return const FlutterSecureStorage();
 }
 
 @riverpod

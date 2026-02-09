@@ -4,10 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_colors.dart';
 import '../data/kyc_models.dart';
+import '../domain/entities/kyc_status.dart';
 import 'kyc_controller.dart';
 
 /// KYC Form Screen - Comprehensive user verification form
-/// 
+///
 /// Sections:
 /// A. Basic Identity Information
 /// B. Contact Information
@@ -18,7 +19,7 @@ import 'kyc_controller.dart';
 /// G. User Declaration
 class KycFormScreen extends ConsumerStatefulWidget {
   final bool isResubmission;
-  final KycStatusResponse? existingKyc;
+  final KycStatusEntity? existingKyc;
 
   const KycFormScreen({
     super.key,
@@ -33,7 +34,7 @@ class KycFormScreen extends ConsumerStatefulWidget {
 class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _imagePicker = ImagePicker();
-  
+
   // Text controllers for all fields
   final _firstNameController = TextEditingController();
   final _middleNameController = TextEditingController();
@@ -57,7 +58,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     }
   }
 
-  void _populateFromExisting(KycStatusResponse existing) {
+  void _populateFromExisting(KycStatusEntity existing) {
     _firstNameController.text = existing.firstName ?? '';
     _middleNameController.text = existing.middleName ?? '';
     _lastNameController.text = existing.lastName ?? '';
@@ -120,9 +121,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
       }
     }
   }
@@ -136,7 +137,13 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt),
@@ -168,38 +175,41 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         _nationalityController.text.trim().isEmpty) {
       return 0;
     }
-    
+
     // Check Contact (Step 1)
     final email = _emailController.text.trim();
     final mobile = _mobileNumberController.text.trim();
-    if (email.isEmpty || !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+    if (email.isEmpty ||
+        !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
       return 1;
     }
     final cleanedMobile = mobile.replaceAll(RegExp(r'[\s\-]'), '');
-    if (mobile.isEmpty || !RegExp(r'^\+?[0-9]{10,15}$').hasMatch(cleanedMobile)) {
+    if (mobile.isEmpty ||
+        !RegExp(r'^\+?[0-9]{10,15}$').hasMatch(cleanedMobile)) {
       return 1;
     }
-    
+
     // Check Address (Step 2)
     if (_streetBarangayController.text.trim().isEmpty ||
         _cityMunicipalityController.text.trim().isEmpty ||
         _provinceController.text.trim().isEmpty) {
       return 2;
     }
-    
+
     // Check ID Details (Step 3)
     final state = ref.read(kycFormControllerProvider);
-    if (state.selectedIdType == null || _idNumberController.text.trim().isEmpty) {
+    if (state.selectedIdType == null ||
+        _idNumberController.text.trim().isEmpty) {
       return 3;
     }
-    
+
     // Check Images (Steps 4-5)
     if (state.idFrontImagePath == null) return 4;
     if (state.selfieImagePath == null) return 5;
-    
+
     // Check Declaration (Step 6)
     if (!state.declarationAccepted) return 6;
-    
+
     return null;
   }
 
@@ -233,15 +243,15 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   Future<void> _submitForm() async {
     // First check which step has errors
     final errorStep = _findStepWithErrors();
-    
+
     if (errorStep != null) {
       final errorMessage = _getStepErrorMessage(errorStep);
-      
+
       // Navigate to the step with errors
       if (_currentStep != errorStep) {
         setState(() => _currentStep = errorStep);
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage),
@@ -267,7 +277,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     if (!state.canSubmit) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please complete all required fields and upload images'),
+          content: Text(
+            'Please complete all required fields and upload images',
+          ),
           backgroundColor: AppColors.alertHigh,
         ),
       );
@@ -276,7 +288,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
     try {
       final controller = ref.read(kycFormControllerProvider.notifier);
-      
+
       if (widget.isResubmission) {
         await controller.resubmitKyc();
       } else {
@@ -355,9 +367,13 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
-                            : Text(widget.isResubmission ? 'Resubmit' : 'Submit'),
+                            : Text(
+                                widget.isResubmission ? 'Resubmit' : 'Submit',
+                              ),
                       ),
                     ),
                   const SizedBox(width: 12),
@@ -378,7 +394,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
               title: const Text('Basic Identity'),
               subtitle: const Text('Personal information'),
               isActive: _currentStep >= 0,
-              state: state.isBasicIdentityComplete ? StepState.complete : StepState.indexed,
+              state: state.isBasicIdentityComplete
+                  ? StepState.complete
+                  : StepState.indexed,
               content: _buildBasicIdentitySection(state),
             ),
             // ===== STEP 1: Contact Information =====
@@ -386,7 +404,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
               title: const Text('Contact Info'),
               subtitle: const Text('Email & phone'),
               isActive: _currentStep >= 1,
-              state: state.isContactComplete ? StepState.complete : StepState.indexed,
+              state: state.isContactComplete
+                  ? StepState.complete
+                  : StepState.indexed,
               content: _buildContactSection(state),
             ),
             // ===== STEP 2: Address =====
@@ -394,7 +414,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
               title: const Text('Address'),
               subtitle: const Text('Current residence'),
               isActive: _currentStep >= 2,
-              state: state.isAddressComplete ? StepState.complete : StepState.indexed,
+              state: state.isAddressComplete
+                  ? StepState.complete
+                  : StepState.indexed,
               content: _buildAddressSection(state),
             ),
             // ===== STEP 3: Government ID =====
@@ -402,7 +424,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
               title: const Text('Government ID'),
               subtitle: const Text('ID type & number'),
               isActive: _currentStep >= 3,
-              state: state.isIdDetailsComplete ? StepState.complete : StepState.indexed,
+              state: state.isIdDetailsComplete
+                  ? StepState.complete
+                  : StepState.indexed,
               content: _buildIdDetailsSection(state),
             ),
             // ===== STEP 4: ID Images =====
@@ -410,7 +434,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
               title: const Text('ID Photos'),
               subtitle: const Text('Upload ID images'),
               isActive: _currentStep >= 4,
-              state: (state.hasIdFront) ? StepState.complete : StepState.indexed,
+              state: (state.hasIdFront)
+                  ? StepState.complete
+                  : StepState.indexed,
               content: _buildIdImagesSection(state),
             ),
             // ===== STEP 5: Selfie =====
@@ -426,7 +452,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
               title: const Text('Declaration'),
               subtitle: const Text('Confirm & submit'),
               isActive: _currentStep >= 6,
-              state: state.isDeclarationComplete ? StepState.complete : StepState.indexed,
+              state: state.isDeclarationComplete
+                  ? StepState.complete
+                  : StepState.indexed,
               content: _buildDeclarationSection(state),
             ),
           ],
@@ -439,16 +467,17 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
   Widget _buildBasicIdentitySection(KycFormState state) {
     final controller = ref.read(kycFormControllerProvider.notifier);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Rejection reason banner
-        if (widget.isResubmission && widget.existingKyc?.rejectionReason != null)
+        if (widget.isResubmission &&
+            widget.existingKyc?.rejectionReason != null)
           _buildRejectionBanner(widget.existingKyc!.rejectionReason!),
-        
+
         const SizedBox(height: 8),
-        
+
         // First Name *
         TextFormField(
           controller: _firstNameController,
@@ -459,10 +488,11 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           ),
           textCapitalization: TextCapitalization.words,
           onChanged: controller.setFirstName,
-          validator: (v) => v == null || v.trim().isEmpty ? 'First name is required' : null,
+          validator: (v) =>
+              v == null || v.trim().isEmpty ? 'First name is required' : null,
         ),
         const SizedBox(height: 16),
-        
+
         // Middle Name
         TextFormField(
           controller: _middleNameController,
@@ -475,7 +505,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           onChanged: controller.setMiddleName,
         ),
         const SizedBox(height: 16),
-        
+
         // Last Name *
         TextFormField(
           controller: _lastNameController,
@@ -486,10 +516,11 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           ),
           textCapitalization: TextCapitalization.words,
           onChanged: controller.setLastName,
-          validator: (v) => v == null || v.trim().isEmpty ? 'Last name is required' : null,
+          validator: (v) =>
+              v == null || v.trim().isEmpty ? 'Last name is required' : null,
         ),
         const SizedBox(height: 16),
-        
+
         // Date of Birth
         InkWell(
           onTap: () async {
@@ -517,7 +548,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Sex
         DropdownButtonFormField<Sex>(
           decoration: const InputDecoration(
@@ -525,15 +556,16 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.wc),
           ),
-          value: state.sex,
-          items: Sex.values.map((s) => DropdownMenuItem(
-            value: s,
-            child: Text(s.displayName),
-          )).toList(),
+          initialValue: state.sex,
+          items: Sex.values
+              .map(
+                (s) => DropdownMenuItem(value: s, child: Text(s.displayName)),
+              )
+              .toList(),
           onChanged: (v) => controller.setSex(v),
         ),
         const SizedBox(height: 16),
-        
+
         // Nationality *
         TextFormField(
           controller: _nationalityController,
@@ -545,10 +577,11 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           ),
           textCapitalization: TextCapitalization.words,
           onChanged: controller.setNationality,
-          validator: (v) => v == null || v.trim().isEmpty ? 'Nationality is required' : null,
+          validator: (v) =>
+              v == null || v.trim().isEmpty ? 'Nationality is required' : null,
         ),
         const SizedBox(height: 16),
-        
+
         // Civil Status
         DropdownButtonFormField<CivilStatus>(
           decoration: const InputDecoration(
@@ -556,11 +589,12 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.favorite),
           ),
-          value: state.civilStatus,
-          items: CivilStatus.values.map((c) => DropdownMenuItem(
-            value: c,
-            child: Text(c.displayName),
-          )).toList(),
+          initialValue: state.civilStatus,
+          items: CivilStatus.values
+              .map(
+                (c) => DropdownMenuItem(value: c, child: Text(c.displayName)),
+              )
+              .toList(),
           onChanged: (v) => controller.setCivilStatus(v),
         ),
       ],
@@ -569,7 +603,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
   Widget _buildContactSection(KycFormState state) {
     final controller = ref.read(kycFormControllerProvider.notifier);
-    
+
     return Column(
       children: [
         // Email *
@@ -591,7 +625,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           },
         ),
         const SizedBox(height: 16),
-        
+
         // Mobile Number *
         TextFormField(
           controller: _mobileNumberController,
@@ -604,7 +638,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           keyboardType: TextInputType.phone,
           onChanged: controller.setMobileNumber,
           validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Mobile number is required';
+            if (v == null || v.trim().isEmpty){
+              return 'Mobile number is required';
+            }
             final cleaned = v.replaceAll(RegExp(r'[\s\-]'), '');
             if (!RegExp(r'^\+?[0-9]{10,15}$').hasMatch(cleaned)) {
               return 'Enter a valid mobile number (10-15 digits)';
@@ -618,7 +654,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
   Widget _buildAddressSection(KycFormState state) {
     final controller = ref.read(kycFormControllerProvider.notifier);
-    
+
     return Column(
       children: [
         // Street / Barangay *
@@ -632,10 +668,12 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           ),
           textCapitalization: TextCapitalization.words,
           onChanged: controller.setStreetBarangay,
-          validator: (v) => v == null || v.trim().isEmpty ? 'Street/Barangay is required' : null,
+          validator: (v) => v == null || v.trim().isEmpty
+              ? 'Street/Barangay is required'
+              : null,
         ),
         const SizedBox(height: 16),
-        
+
         // City / Municipality *
         TextFormField(
           controller: _cityMunicipalityController,
@@ -646,10 +684,12 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           ),
           textCapitalization: TextCapitalization.words,
           onChanged: controller.setCityMunicipality,
-          validator: (v) => v == null || v.trim().isEmpty ? 'City/Municipality is required' : null,
+          validator: (v) => v == null || v.trim().isEmpty
+              ? 'City/Municipality is required'
+              : null,
         ),
         const SizedBox(height: 16),
-        
+
         // Province *
         TextFormField(
           controller: _provinceController,
@@ -660,10 +700,11 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           ),
           textCapitalization: TextCapitalization.words,
           onChanged: controller.setProvince,
-          validator: (v) => v == null || v.trim().isEmpty ? 'Province is required' : null,
+          validator: (v) =>
+              v == null || v.trim().isEmpty ? 'Province is required' : null,
         ),
         const SizedBox(height: 16),
-        
+
         // ZIP Code
         TextFormField(
           controller: _zipCodeController,
@@ -681,7 +722,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
   Widget _buildIdDetailsSection(KycFormState state) {
     final controller = ref.read(kycFormControllerProvider.notifier);
-    
+
     return Column(
       children: [
         // ID Type *
@@ -691,18 +732,22 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.badge),
           ),
-          value: state.selectedIdType,
-          items: IdType.values.map((type) => DropdownMenuItem(
-            value: type,
-            child: Text(type.displayName),
-          )).toList(),
+          initialValue: state.selectedIdType,
+          items: IdType.values
+              .map(
+                (type) => DropdownMenuItem(
+                  value: type,
+                  child: Text(type.displayName),
+                ),
+              )
+              .toList(),
           onChanged: (v) {
             if (v != null) controller.setIdType(v);
           },
           validator: (v) => v == null ? 'Please select an ID type' : null,
         ),
         const SizedBox(height: 16),
-        
+
         // ID Number *
         TextFormField(
           controller: _idNumberController,
@@ -712,16 +757,19 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             prefixIcon: Icon(Icons.numbers),
           ),
           onChanged: controller.setIdNumber,
-          validator: (v) => v == null || v.trim().isEmpty ? 'ID number is required' : null,
+          validator: (v) =>
+              v == null || v.trim().isEmpty ? 'ID number is required' : null,
         ),
         const SizedBox(height: 16),
-        
+
         // ID Expiry Date
         InkWell(
           onTap: () async {
             final date = await showDatePicker(
               context: context,
-              initialDate: state.idExpiryDate ?? DateTime.now().add(const Duration(days: 365)),
+              initialDate:
+                  state.idExpiryDate ??
+                  DateTime.now().add(const Duration(days: 365)),
               firstDate: DateTime.now(),
               lastDate: DateTime.now().add(const Duration(days: 3650)),
             );
@@ -749,7 +797,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   Widget _buildIdImagesSection(KycFormState state) {
     final controller = ref.read(kycFormControllerProvider.notifier);
     final requiresBack = state.selectedIdType?.requiresBackImage ?? false;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -760,10 +808,13 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         const SizedBox(height: 8),
         Text(
           'Max 10MB each • JPG, PNG formats',
-          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outline),
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.outline,
+          ),
         ),
         const SizedBox(height: 16),
-        
+
         // ID Front *
         _buildImagePicker(
           title: 'ID Front Photo *',
@@ -772,7 +823,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           onRemove: () => controller.setIdFrontImage(null),
         ),
         const SizedBox(height: 16),
-        
+
         // ID Back (conditional)
         if (requiresBack) ...[
           _buildImagePicker(
@@ -784,7 +835,10 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           const SizedBox(height: 8),
           Text(
             'Back photo recommended for ${state.selectedIdType?.displayName}',
-            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outline),
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.outline,
+            ),
           ),
         ],
       ],
@@ -793,7 +847,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
   Widget _buildSelfieSection(KycFormState state) {
     final controller = ref.read(kycFormControllerProvider.notifier);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -802,7 +856,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           style: TextStyle(fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 16),
-        
+
         // Selfie *
         _buildImagePicker(
           title: 'Selfie Photo *',
@@ -811,18 +865,22 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           onRemove: () => controller.setSelfieImage(null),
         ),
         const SizedBox(height: 16),
-        
+
         // Selfie with ID (optional but recommended)
         _buildImagePicker(
           title: 'Selfie Holding ID (Recommended)',
           imagePath: state.selfieWithIdImagePath,
-          onTap: () => _showImageSourceDialog('selfie_with_id', 'Selfie Holding ID'),
+          onTap: () =>
+              _showImageSourceDialog('selfie_with_id', 'Selfie Holding ID'),
           onRemove: () => controller.setSelfieWithIdImage(null),
         ),
         const SizedBox(height: 8),
         Text(
           'Hold your ID next to your face for stronger verification',
-          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outline),
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).colorScheme.outline,
+          ),
         ),
       ],
     );
@@ -830,7 +888,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
   Widget _buildDeclarationSection(KycFormState state) {
     final controller = ref.read(kycFormControllerProvider.notifier);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -841,18 +899,29 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Submission Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const Text(
+                  'Submission Summary',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
                 const SizedBox(height: 12),
                 _buildSummaryRow('Name', state.fullName),
                 _buildSummaryRow('Email', state.email),
                 _buildSummaryRow('Mobile', state.mobileNumber),
-                _buildSummaryRow('ID Type', state.selectedIdType?.displayName ?? '-'),
+                _buildSummaryRow(
+                  'ID Type',
+                  state.selectedIdType?.displayName ?? '-',
+                ),
                 _buildSummaryRow('ID Number', state.idNumber),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Icon(state.hasIdFront ? Icons.check_circle : Icons.cancel, 
-                         color: state.hasIdFront ? AppColors.success : AppColors.alertHigh, size: 20),
+                    Icon(
+                      state.hasIdFront ? Icons.check_circle : Icons.cancel,
+                      color: state.hasIdFront
+                          ? AppColors.success
+                          : AppColors.alertHigh,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     const Text('ID Front Photo'),
                   ],
@@ -860,8 +929,13 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(state.hasSelfie ? Icons.check_circle : Icons.cancel, 
-                         color: state.hasSelfie ? AppColors.success : AppColors.alertHigh, size: 20),
+                    Icon(
+                      state.hasSelfie ? Icons.check_circle : Icons.cancel,
+                      color: state.hasSelfie
+                          ? AppColors.success
+                          : AppColors.alertHigh,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     const Text('Selfie Photo'),
                   ],
@@ -871,7 +945,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Declaration checkbox
         CheckboxListTile(
           value: state.declarationAccepted,
@@ -883,7 +957,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           controlAffinity: ListTileControlAffinity.leading,
           contentPadding: EdgeInsets.zero,
         ),
-        
+
         if (!state.declarationAccepted)
           const Padding(
             padding: EdgeInsets.only(top: 8),
@@ -900,7 +974,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
   Widget _buildRejectionBanner(String reason) {
     return Card(
-      color: AppColors.alertHigh.withOpacity(0.1),
+      color: AppColors.alertHigh.withValues(alpha: 0.1),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
@@ -911,8 +985,10 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Previous Rejection Reason:', 
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  const Text(
+                    'Previous Rejection Reason:',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
                   Text(reason, style: const TextStyle(fontSize: 13)),
                 ],
               ),
@@ -929,7 +1005,10 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 80, child: Text('$label:', style: const TextStyle(color: Colors.grey))),
+          SizedBox(
+            width: 80,
+            child: Text('$label:', style: const TextStyle(color: Colors.grey)),
+          ),
           Expanded(child: Text(value.isEmpty ? '-' : value)),
         ],
       ),
@@ -953,14 +1032,20 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             child: Container(
               height: 150,
               decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).colorScheme.outline),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.add_a_photo, size: 40, color: Theme.of(context).colorScheme.outline),
+                    Icon(
+                      Icons.add_a_photo,
+                      size: 40,
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                     const SizedBox(height: 8),
                     const Text('Tap to add photo'),
                   ],
@@ -987,7 +1072,11 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
                   radius: 18,
                   backgroundColor: Colors.red,
                   child: IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white, size: 18),
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                     onPressed: onRemove,
                     padding: EdgeInsets.zero,
                   ),

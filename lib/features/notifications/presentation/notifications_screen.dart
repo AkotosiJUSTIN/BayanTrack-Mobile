@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../core/theme/app_colors.dart';
 import '../../reports/presentation/report_detail_screen.dart';
-import '../data/notification_models.dart';
+import '../domain/entities/notification.dart';
+import '../domain/entities/notification_type.dart';
+import '../domain/entities/paginated_notifications.dart';
 import 'notifications_controller.dart';
 import '../../../core/presentation/widgets/empty_content_placeholder.dart';
 
@@ -132,7 +134,7 @@ class NotificationsScreen extends ConsumerWidget {
   void _handleNotificationTap(
     BuildContext context,
     WidgetRef ref,
-    AppNotification notification,
+    NotificationEntity notification,
   ) async {
     // Mark as read if unread
     if (!notification.isRead) {
@@ -154,7 +156,7 @@ class NotificationsScreen extends ConsumerWidget {
 
 /// Single notification tile with read/unread styling
 class _NotificationTile extends StatelessWidget {
-  final AppNotification notification;
+  final NotificationEntity notification;
   final VoidCallback onTap;
 
   const _NotificationTile({required this.notification, required this.onTap});
@@ -191,18 +193,18 @@ class _NotificationTile extends StatelessWidget {
                   : AppColors.lightTextSecondary,
             ),
           ),
-          if (notification.createdAt != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              timeago.format(DateTime.parse(notification.createdAt!)),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
-                fontSize: 11,
-              ),
+          const SizedBox(height: 4),
+          Text(
+            notification.createdAt != null
+                ? timeago.format(notification.createdAt!)
+                : '',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+              fontSize: 11,
             ),
-          ],
+          ),
         ],
       ),
       trailing: notification.isRead

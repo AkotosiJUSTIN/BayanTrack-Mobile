@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../kyc/data/kyc_models.dart';
+import '../../kyc/domain/entities/kyc_enums.dart';
 import '../../kyc/presentation/kyc_form_screen.dart';
 import '../../kyc/presentation/kyc_status_screen.dart';
 import '../data/user_permissions.dart';
@@ -13,10 +13,8 @@ Future<void> showVerificationRequiredDialog(
 ) async {
   return showDialog(
     context: context,
-    builder: (context) => VerificationRequiredDialog(
-      permissions: permissions,
-      action: action,
-    ),
+    builder: (context) =>
+        VerificationRequiredDialog(permissions: permissions, action: action),
   );
 }
 
@@ -53,7 +51,7 @@ class VerificationRequiredDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.alertMedium.withOpacity(0.1),
+              color: AppColors.alertMedium.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
@@ -92,9 +90,7 @@ class VerificationRequiredDialog extends StatelessWidget {
       // Navigate to KYC form
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const KycFormScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const KycFormScreen()),
       );
     } else if (permissions.canResubmitKyc) {
       // Navigate to resubmit
@@ -111,9 +107,7 @@ class VerificationRequiredDialog extends StatelessWidget {
       // Navigate to status screen
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const KycStatusScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const KycStatusScreen()),
       );
     }
   }
@@ -123,10 +117,7 @@ class VerificationRequiredDialog extends StatelessWidget {
 class VerificationBanner extends StatelessWidget {
   final UserPermissions permissions;
 
-  const VerificationBanner({
-    super.key,
-    required this.permissions,
-  });
+  const VerificationBanner({super.key, required this.permissions});
 
   @override
   Widget build(BuildContext context) {
@@ -141,10 +132,8 @@ class VerificationBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.1),
-        border: Border(
-          bottom: BorderSide(color: statusColor.withOpacity(0.3)),
-        ),
+        color: statusColor.withValues(alpha: 0.1),
+        border: Border(bottom: BorderSide(color: statusColor.withValues(alpha: 0.3))),
       ),
       child: Row(
         children: [
@@ -178,18 +167,18 @@ class VerificationBanner extends StatelessWidget {
     );
   }
 
-  Color _getStatusColor(KycStatus? status) {
+  Color _getStatusColor(KycVerificationStatus? status) {
     if (status == null) return AppColors.alertMedium;
 
     switch (status) {
-      case KycStatus.unverified:
-      case KycStatus.pending:
+      case KycVerificationStatus.unverified:
+      case KycVerificationStatus.pending:
         return AppColors.alertMedium;
-      case KycStatus.rejected:
-      case KycStatus.resubmitRequested:
-      case KycStatus.suspended:
+      case KycVerificationStatus.rejected:
+      case KycVerificationStatus.resubmitRequested:
+      case KycVerificationStatus.suspended:
         return AppColors.alertHigh;
-      case KycStatus.verified:
+      case KycVerificationStatus.verified:
         return AppColors.success;
     }
   }
@@ -198,9 +187,7 @@ class VerificationBanner extends StatelessWidget {
     if (permissions.canSubmitKyc) {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const KycFormScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const KycFormScreen()),
       );
     } else if (permissions.canResubmitKyc) {
       Navigator.push(
@@ -215,9 +202,7 @@ class VerificationBanner extends StatelessWidget {
     } else {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const KycStatusScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const KycStatusScreen()),
       );
     }
   }
@@ -239,11 +224,9 @@ class InlineVerificationPrompt extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.alertMedium.withOpacity(0.1),
+        color: AppColors.alertMedium.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppColors.alertMedium.withOpacity(0.3),
-        ),
+        border: Border.all(color: AppColors.alertMedium.withValues(alpha: 0.3)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -257,10 +240,7 @@ class InlineVerificationPrompt extends StatelessWidget {
           Text(
             'Verify your identity to $feature',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
           Text(
@@ -286,9 +266,7 @@ class InlineVerificationPrompt extends StatelessWidget {
     if (permissions.canSubmitKyc) {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const KycFormScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const KycFormScreen()),
       );
     } else if (permissions.canResubmitKyc) {
       Navigator.push(
@@ -303,9 +281,7 @@ class InlineVerificationPrompt extends StatelessWidget {
     } else {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const KycStatusScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const KycStatusScreen()),
       );
     }
   }

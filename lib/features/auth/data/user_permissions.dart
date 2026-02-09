@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../kyc/data/kyc_models.dart';
+import '../../kyc/domain/entities/kyc_enums.dart';
+import '../../kyc/domain/entities/kyc_status.dart';
 import '../../kyc/presentation/kyc_controller.dart';
 
 /// KYC-based permissions service
@@ -20,12 +21,12 @@ enum UserPermission {
   viewReports,
   viewReportDetails,
   searchReports,
-  
+
   // KYC related
   submitKyc,
   resubmitKyc,
   viewKycStatus,
-  
+
   // Verified user only
   createReports,
   updateOwnReports,
@@ -39,7 +40,7 @@ enum UserPermission {
 
 final userPermissionsProvider = Provider<UserPermissions>((ref) {
   final kycStatusAsync = ref.watch(kycStatusControllerProvider);
-  
+
   return kycStatusAsync.when(
     data: (kycStatus) => UserPermissions(kycStatus),
     loading: () => UserPermissions(null),
@@ -50,35 +51,37 @@ final userPermissionsProvider = Provider<UserPermissions>((ref) {
 // ==================== USER PERMISSIONS CLASS ====================
 
 class UserPermissions {
-  final KycStatusResponse? kycStatus;
+  final KycStatusEntity? kycStatus;
 
   UserPermissions(this.kycStatus);
 
   /// Check if user is verified
-  bool get isVerified => kycStatus?.kycStatus == KycStatus.verified;
+  bool get isVerified => kycStatus?.status == KycVerificationStatus.verified;
 
   /// Check if user is unverified, pending, rejected, or suspended
   /// Note: All these statuses have the same limited permissions (read-only)
   /// Suspended users should be prevented from logging in at the auth level
-  bool get isUnverified => kycStatus == null || 
-      kycStatus!.kycStatus == KycStatus.unverified ||
-      kycStatus!.kycStatus == KycStatus.pending ||
-      kycStatus!.kycStatus == KycStatus.rejected ||
-      kycStatus!.kycStatus == KycStatus.resubmitRequested ||
-      kycStatus!.kycStatus == KycStatus.suspended;
+  bool get isUnverified =>
+      kycStatus == null ||
+      kycStatus!.status == KycVerificationStatus.unverified ||
+      kycStatus!.status == KycVerificationStatus.pending ||
+      kycStatus!.status == KycVerificationStatus.rejected ||
+      kycStatus!.status == KycVerificationStatus.resubmitRequested ||
+      kycStatus!.status == KycVerificationStatus.suspended;
 
   /// Check if user is suspended (should not be logged in)
-  bool get isSuspended => kycStatus?.kycStatus == KycStatus.suspended;
+  bool get isSuspended => kycStatus?.status == KycVerificationStatus.suspended;
 
   /// Check if user can resubmit KYC
-  bool get canResubmitKyc => kycStatus?.kycStatus.canResubmit ?? false;
+  bool get canResubmitKyc => kycStatus?.status.canResubmit ?? false;
 
   /// Check if user can submit KYC for the first time
-  bool get canSubmitKyc => kycStatus == null || 
-      kycStatus!.kycStatus == KycStatus.unverified;
+  bool get canSubmitKyc =>
+      kycStatus == null ||
+      kycStatus!.status == KycVerificationStatus.unverified;
 
   /// Get user's KYC status
-  KycStatus? get currentStatus => kycStatus?.kycStatus;
+  KycVerificationStatus? get currentStatus => kycStatus?.status;
 
   // ==================== PERMISSION CHECKS ====================
 
@@ -143,39 +146,40 @@ class UserPermissions {
       return 'Complete identity verification to unlock all features';
     }
 
-    switch (kycStatus!.kycStatus) {
-      case KycStatus.unverified:
+    switch (kycStatus!.status) {
+      case KycVerificationStatus.unverified:
         return 'Complete identity verification to unlock all features';
-      case KycStatus.pending:
+      case KycVerificationStatus.pending:
         return 'Your verification is pending review. You\'ll have full access once approved.';
-      case KycStatus.verified:
+      case KycVerificationStatus.verified:
         return 'Your identity is verified. You have full access!';
-      case KycStatus.rejected:
+      case KycVerificationStatus.rejected:
         return 'Your verification was rejected. Please resubmit your documents.';
-      case KycStatus.resubmitRequested:
+      case KycVerificationStatus.resubmitRequested:
         return 'Additional information is required. Please resubmit your documents.';
-      case KycStatus.suspended:
+      case KycVerificationStatus.suspended:
         return 'Your account verification is suspended. Please contact support.';
     }
   }
 
   /// Get action button text for KYC status
   String getActionButtonText() {
-    if (kycStatus == null || kycStatus!.kycStatus == KycStatus.unverified) {
+    if (kycStatus == null ||
+        kycStatus!.status == KycVerificationStatus.unverified) {
       return 'Verify Identity';
     }
 
-    switch (kycStatus!.kycStatus) {
-      case KycStatus.pending:
+    switch (kycStatus!.status) {
+      case KycVerificationStatus.pending:
         return 'View Status';
-      case KycStatus.verified:
+      case KycVerificationStatus.verified:
         return 'View Verification';
-      case KycStatus.rejected:
-      case KycStatus.resubmitRequested:
+      case KycVerificationStatus.rejected:
+      case KycVerificationStatus.resubmitRequested:
         return 'Resubmit Documents';
-      case KycStatus.suspended:
+      case KycVerificationStatus.suspended:
         return 'Contact Support';
-      case KycStatus.unverified:
+      case KycVerificationStatus.unverified:
         return 'Verify Identity';
     }
   }
@@ -204,7 +208,7 @@ class PermissionCheckResult {
   final String? denialReason;
 
   const PermissionCheckResult.allowed() : allowed = true, denialReason = null;
-  
+
   const PermissionCheckResult.denied(this.denialReason) : allowed = false;
 
   bool get isDenied => !allowed;

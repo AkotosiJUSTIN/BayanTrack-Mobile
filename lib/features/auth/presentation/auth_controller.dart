@@ -1,11 +1,8 @@
-import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../../core/constants/api_constants.dart';
-import '../../../core/storage/secure_storage_provider.dart';
+import '../auth_di.dart';
+import '../domain/entities/user.dart';
+import '../../../core/domain/failures.dart';
 import '../../kyc/presentation/kyc_controller.dart';
-import '../data/auth_models.dart';
-import '../data/auth_repository.dart';
 
 part 'auth_controller.g.dart';
 
@@ -24,7 +21,8 @@ class AuthLoading extends AuthState {
 
 class AuthSuccess extends AuthState {
   final String? message;
-  const AuthSuccess([this.message]);
+  final User? user;
+  const AuthSuccess([this.message, this.user]);
 }
 
 class AuthError extends AuthState {
@@ -32,57 +30,64 @@ class AuthError extends AuthState {
   const AuthError(this.message);
 }
 
+/// AuthController - ViewModel for authentication flows.
+///
+/// Uses Clean Architecture use cases for all operations.
+/// Does NOT directly access repositories or storage.
 @riverpod
 class AuthController extends _$AuthController {
   @override
   AuthState build() => const AuthIdle();
 
-  /// Check for existing session
+  /// Check for existing session on app startup
   Future<void> checkAuth() async {
     state = const AuthLoading();
     try {
-      final accessToken = await ref
-          .read(tokenStorageProvider.notifier)
-          .getAccessToken();
-      if (accessToken != null) {
-        state = const AuthSuccess();
-      } else {
-        state = const AuthIdle();
-      }
+      final loadSession = ref.read(loadSessionUseCaseProvider);
+      final result = await loadSession();
+
+      result.when(
+        success: (user) {
+          if (user != null) {
+            state = AuthSuccess('Session restored', user);
+          } else {
+            state = const AuthIdle();
+          }
+        },
+        failure: (failure) {
+          // On failure, just go to idle state (not logged in)
+          state = const AuthIdle();
+        },
+      );
     } catch (e) {
       state = const AuthIdle();
     }
   }
 
-  /// Login user and save tokens
+  /// Login user
   Future<bool> login(String email, String password) async {
     state = const AuthLoading();
-    try {
-      final repository = ref.read(authRepositoryProvider);
-      final request = LoginRequest(email: email, password: password);
-      final response = await repository.login(request);
 
-      // Save tokens directly to secure storage (bypass provider to avoid disposal issues)
-      final storage = ref.read(secureStorageProvider);
-      await storage.write(key: ApiConstants.accessTokenKey, value: response.accessToken);
-      await storage.write(key: ApiConstants.refreshTokenKey, value: response.refreshToken);
+    final loginUseCase = ref.read(loginUseCaseProvider);
+    final result = await loginUseCase(email: email, password: password);
 
-      // Fetch KYC status after successful login
-      try {
-        ref.invalidate(kycStatusControllerProvider);
-      } catch (_) {
-        // Ignore KYC fetch errors, don't fail login
-      }
+    return result.when(
+      success: (user) {
+        // Fetch KYC status after successful login
+        try {
+          ref.invalidate(kycStatusControllerProvider);
+        } catch (_) {
+          // Ignore KYC fetch errors, don't fail login
+        }
 
-      state = const AuthSuccess('Login successful');
-      return true;
-    } on DioException catch (e) {
-      state = AuthError(_extractErrorMessage(e));
-      return false;
-    } catch (e) {
-      state = AuthError(e.toString());
-      return false;
-    }
+        state = AuthSuccess('Login successful', user);
+        return true;
+      },
+      failure: (failure) {
+        state = AuthError(_failureToMessage(failure));
+        return false;
+      },
+    );
   }
 
   /// Register new user
@@ -94,76 +99,61 @@ class AuthController extends _$AuthController {
     required String lastName,
   }) async {
     state = const AuthLoading();
-    try {
-      final repository = ref.read(authRepositoryProvider);
-      final request = RegisterRequest(
-        email: email,
-        password: password,
-        passwordConfirm: passwordConfirm,
-        firstName: firstName,
-        lastName: lastName,
-      );
-      await repository.register(request);
-      state = const AuthSuccess('Registration successful. Please login.');
-      return true;
-    } on DioException catch (e) {
-      state = AuthError(_extractErrorMessage(e));
-      return false;
-    } catch (e) {
-      state = AuthError(e.toString());
-      return false;
-    }
+
+    final registerUseCase = ref.read(registerUseCaseProvider);
+    final result = await registerUseCase(
+      email: email,
+      password: password,
+      passwordConfirm: passwordConfirm,
+      firstName: firstName,
+      lastName: lastName,
+    );
+
+    return result.when(
+      success: (_) {
+        state = const AuthSuccess('Registration successful. Please login.');
+        return true;
+      },
+      failure: (failure) {
+        state = AuthError(_failureToMessage(failure));
+        return false;
+      },
+    );
   }
 
   /// Request password reset email
   Future<bool> forgotPassword(String email) async {
     state = const AuthLoading();
-    try {
-      final repository = ref.read(authRepositoryProvider);
-      await repository.forgotPassword(email);
-      state = const AuthSuccess('Password reset email sent');
-      return true;
-    } on DioException catch (e) {
-      state = AuthError(_extractErrorMessage(e));
-      return false;
-    } catch (e) {
-      state = AuthError(e.toString());
-      return false;
-    }
+
+    final authRepository = ref.read(authRepositoryProvider);
+    final result = await authRepository.forgotPassword(email);
+
+    return result.when(
+      success: (_) {
+        state = const AuthSuccess('Password reset email sent');
+        return true;
+      },
+      failure: (failure) {
+        state = AuthError(_failureToMessage(failure));
+        return false;
+      },
+    );
   }
 
-  /// Logout and clear tokens - INSTANT UI response
+  /// Logout - INSTANT UI response
   void logout() {
-    // Capture what we need BEFORE changing state (providers may get disposed after)
-    final storage = ref.read(secureStorageProvider);
-    final repository = ref.read(authRepositoryProvider);
-    
     // Set state to AuthIdle IMMEDIATELY (synchronous) for instant UI
     state = const AuthIdle();
-    
+
     // Do all cleanup in background - don't block UI
-    _performLogoutCleanup(storage, repository);
+    _performLogoutAsync();
   }
-  
+
   /// Background cleanup after logout
-  Future<void> _performLogoutCleanup(
-    FlutterSecureStorage storage,
-    AuthRepository repository,
-  ) async {
+  Future<void> _performLogoutAsync() async {
     try {
-      // Read refresh token BEFORE clearing
-      final refreshToken = await storage.read(key: ApiConstants.refreshTokenKey);
-      
-      // Notify backend FIRST (while token still exists for auth header)
-      if (refreshToken != null) {
-        try {
-          await repository.logout(refreshToken).catchError((_) {});
-        } catch (_) {}
-      }
-      
-      // THEN clear local tokens
-      await storage.delete(key: ApiConstants.accessTokenKey);
-      await storage.delete(key: ApiConstants.refreshTokenKey);
+      final logoutUseCase = ref.read(logoutUseCaseProvider);
+      await logoutUseCase();
     } catch (_) {
       // Ignore all errors - logout UI already succeeded
     }
@@ -174,43 +164,19 @@ class AuthController extends _$AuthController {
     state = const AuthIdle();
   }
 
-  /// Extract user-friendly error message from DioException
-  String _extractErrorMessage(DioException e) {
-    if (e.response?.data != null) {
-      final data = e.response!.data;
-      if (data is Map<String, dynamic>) {
-        // Check common error field names
-        if (data.containsKey('detail')) return data['detail'].toString();
-        if (data.containsKey('message')) return data['message'].toString();
-        if (data.containsKey('error')) return data['error'].toString();
-        // Check for field-specific errors
-        if (data.containsKey('email')) return 'Email: ${data['email']}';
-        if (data.containsKey('password')) {
-          return 'Password: ${data['password']}';
-        }
-      }
-    }
-
-    // Network-level errors
-    switch (e.type) {
-      case DioExceptionType.connectionTimeout:
-      case DioExceptionType.sendTimeout:
-      case DioExceptionType.receiveTimeout:
-        return 'Connection timeout. Please check your internet.';
-      case DioExceptionType.connectionError:
-        return 'Unable to connect. Check your internet connection.';
-      case DioExceptionType.badResponse:
-        final statusCode = e.response?.statusCode;
-        if (statusCode == 401) return 'Invalid email or password';
-        if (statusCode == 403) return 'Access denied';
-        if (statusCode == 404) return 'Service not found';
-        if (statusCode == 422) return 'Invalid input data';
-        if (statusCode != null && statusCode >= 500) {
-          return 'Server error. Please try again later.';
-        }
-        return 'Request failed';
-      default:
-        return 'An error occurred. Please try again.';
-    }
+  /// Convert domain Failure to user-friendly message
+  String _failureToMessage(Failure failure) {
+    return switch (failure) {
+      AuthFailure(:final message) => message,
+      ValidationFailure(:final message, :final fieldErrors) =>
+        fieldErrors != null && fieldErrors.isNotEmpty
+            ? fieldErrors.entries.map((e) => '${e.key}: ${e.value}').join('\n')
+            : message,
+      NetworkFailure(:final message) => message,
+      ServerFailure(:final message) => message,
+      NotFoundFailure(:final message) => message,
+      CacheFailure(:final message) => message,
+      UnknownFailure(:final message) => message,
+    };
   }
 }

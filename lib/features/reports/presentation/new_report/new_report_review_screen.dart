@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../images/data/images_repository.dart';
+import '../../data/report_models.dart';
 import '../../data/reports_repository.dart';
 import '../reports_controller.dart';
 import 'new_report_controller.dart';
@@ -41,6 +42,9 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
 
       final createdReport = await reportsRepo.createReport(request);
       
+      // Check if report was detected as a potential duplicate
+      final isDuplicate = createdReport.duplicateState == 'potential_duplicate';
+      
       // Step 2: Upload images (if any) - upload one at a time for reliability
       if (state.selectedImages.isNotEmpty) {
         setState(() => _statusMessage = 'Uploading images...');
@@ -79,12 +83,17 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
         // Pop all the way back to the main navigation
         Navigator.of(context).popUntil((route) => route.isFirst);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Report submitted successfully!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        // Show duplicate warning if detected
+        if (isDuplicate) {
+          await _showDuplicateWarning(context, createdReport);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Report submitted successfully!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
       }
     } catch (e) {
       setState(() {
@@ -109,13 +118,155 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('$errorMessage'),
+            content: Text(errorMessage),
             backgroundColor: AppColors.alertHigh,
             duration: const Duration(seconds: 5),
           ),
         );
       }
     }
+  }
+
+  Future<void> _showDuplicateWarning(BuildContext context, Report report) async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          Icons.warning_amber_rounded,
+          color: AppColors.alertMedium,
+          size: 48,
+        ),
+        title: const Text(
+          'Possible Duplicate Report',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Your report was submitted successfully, but it appears similar to an existing report.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.grey[300] : Colors.grey[700],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.alertMedium.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.alertMedium.withOpacity(0.3),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: AppColors.alertMedium,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            report.duplicateExplanation ??
+                                'Similar content and location detected',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (report.duplicateScore != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Text(
+                            'Similarity: ',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            '${(report.duplicateScore! * 100).toStringAsFixed(0)}%',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.alertMedium,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Confidence: ',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            report.duplicateConfidence?.toUpperCase() ?? 'MEDIUM',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.alertMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Your report will be reviewed by administrators who may consolidate it with the existing report.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+          if (report.relatedReportId != null)
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                // Navigate to original report detail
+                Navigator.pushNamed(
+                  context,
+                  '/report-detail',
+                  arguments: report.relatedReportId,
+                );
+              },
+              icon: const Icon(Icons.visibility, size: 18),
+              label: const Text('View Original'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -200,23 +351,18 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // ===== CATEGORY =====
-                  _buildSection(
-                    theme: theme,
-                    isDark: isDark,
-                    icon: Icons.category,
-                    title: 'Category',
-                    trailing: null,
-                    content: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildInfoRow('Category', state.category?.displayName ?? 'Not set'),
-                        if (state.title != null && state.title!.isNotEmpty)
-                          _buildInfoRow('Title', state.title!),
-                      ],
+                  // ===== TITLE (IF PROVIDED) =====
+                  if (state.title != null && state.title!.isNotEmpty)
+                    _buildSection(
+                      theme: theme,
+                      isDark: isDark,
+                      icon: Icons.title,
+                      title: 'Title',
+                      trailing: null,
+                      content: _buildInfoRow('Title', state.title!),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                  if (state.title != null && state.title!.isNotEmpty)
+                    const SizedBox(height: 16),
 
                   // ===== LOCATION PREVIEW =====
                   _buildSection(
@@ -241,42 +387,50 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // ===== SEVERITY & IMPACT =====
+                  // ===== REPORT TIMING =====
                   _buildSection(
                     theme: theme,
                     isDark: isDark,
-                    icon: Icons.warning_amber,
-                    title: 'Severity & Impact',
+                    icon: Icons.schedule,
+                    title: 'Report Timing',
                     trailing: null,
                     content: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildInfoRow('Severity', state.severity.displayName),
-                        if (state.peopleAffected != null)
-                          _buildInfoRow('People Affected', '~${state.peopleAffected}'),
                         _buildInfoRow('Is Happening Now', state.isHappeningNow ? 'Yes' : 'No'),
-                        if (state.isEmergency)
-                          Container(
-                            margin: const EdgeInsets.only(top: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: AppColors.alertHigh.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: AppColors.alertHigh.withOpacity(0.3)),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.warning, color: AppColors.alertHigh, size: 16),
-                                SizedBox(width: 6),
-                                Text('EMERGENCY', style: TextStyle(
-                                  color: AppColors.alertHigh,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                )),
-                              ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ===== AI INFO =====
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'AI will automatically detect category, severity, and urgency',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: isDark
+                                  ? AppColors.darkTextPrimary
+                                  : AppColors.lightTextPrimary,
                             ),
                           ),
+                        ),
                       ],
                     ),
                   ),

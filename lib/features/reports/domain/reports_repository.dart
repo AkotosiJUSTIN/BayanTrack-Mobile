@@ -1,0 +1,77 @@
+import '../../../core/domain/result.dart';
+import 'entities/paginated_reports.dart';
+import 'entities/report.dart';
+import 'entities/report_stats.dart';
+
+/// Repository interface for report operations.
+///
+/// Implemented by [ReportsRepositoryImpl] in the data layer.
+/// All methods return [Result<T>] for explicit error handling.
+abstract interface class ReportsRepository {
+  /// Get all reports (paginated, filtered by user's role on backend)
+  Future<Result<PaginatedReports>> getReports({
+    int page = 1,
+    int pageSize = 20,
+    String? status,
+    String? zone,
+    String? category,
+  });
+
+  /// Get current user's reports
+  Future<Result<PaginatedReports>> getMyReports({
+    int page = 1,
+    int pageSize = 20,
+    String? status,
+  });
+
+  /// Get a single report by ID
+  Future<Result<Report>> getReport(String id);
+
+  /// Create a new report
+  Future<Result<Report>> createReport({
+    String? category,
+    String? incidentType,
+    String? title,
+    required String description,
+    String? incidentDatetime,
+    bool isHappeningNow = false,
+    String? zone,
+    String? streetLandmark,
+    String? cityMunicipality,
+    String? province,
+    String? latitude,
+    String? longitude,
+    String locationAccuracy = 'approximate',
+    String? location,
+    bool declarationConfirmed = true,
+    bool dataProcessingConsent = true,
+  });
+
+  /// Update a report
+  Future<Result<Report>> updateReport({
+    required String id,
+    String? title,
+    String? description,
+    String? category,
+    String? incidentType,
+    String? zone,
+    String? streetLandmark,
+    String? cityMunicipality,
+    String? province,
+    String? barangay,
+  });
+
+  /// Update report status (admin only)
+  Future<Result<Report>> updateReportStatus({
+    required String id,
+    required String status,
+    String? adminRemarks,
+    String? assignedDepartment,
+  });
+
+  /// Delete a report
+  Future<Result<void>> deleteReport(String id);
+
+  /// Get report statistics
+  Future<Result<ReportStats>> getStats();
+}

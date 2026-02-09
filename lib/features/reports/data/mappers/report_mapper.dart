@@ -1,0 +1,118 @@
+import '../../domain/entities/paginated_reports.dart';
+import '../../domain/entities/report.dart';
+import '../../domain/entities/report_enums.dart';
+import '../../domain/entities/report_image.dart';
+import '../../domain/entities/report_stats.dart';
+import '../report_models.dart' as dto;
+
+/// Mapper for converting between DTOs and domain entities.
+class ReportMapper {
+  ReportMapper._(); // Prevent instantiation
+
+  /// Convert DTO Report to domain Report entity
+  static Report fromDto(dto.Report dtoReport) {
+    return Report(
+      id: dtoReport.id,
+      reportId: dtoReport.reportId,
+      userId: dtoReport.userId,
+      category: ReportCategory.fromString(dtoReport.category),
+      incidentType: dtoReport.incidentType,
+      title: dtoReport.title,
+      description: dtoReport.description,
+      incidentDatetime: dtoReport.incidentDatetime != null
+          ? DateTime.tryParse(dtoReport.incidentDatetime!)
+          : null,
+      isHappeningNow: dtoReport.isHappeningNow,
+      zone: dtoReport.zone,
+      streetLandmark: dtoReport.streetLandmark,
+      cityMunicipality: dtoReport.cityMunicipality,
+      province: dtoReport.province,
+      latitude: double.tryParse(dtoReport.latitude ?? ''),
+      longitude: double.tryParse(dtoReport.longitude ?? ''),
+      locationAccuracy: LocationAccuracy.fromString(dtoReport.locationAccuracy),
+      location: dtoReport.location,
+      barangay: dtoReport.barangay,
+      severity: SeverityLevel.fromString(dtoReport.severity),
+      peopleAffected: dtoReport.peopleAffected,
+      isEmergency: dtoReport.isEmergency,
+      status: ReportStatus.fromString(dtoReport.status),
+      assignedDepartment: dtoReport.assignedDepartment,
+      adminRemarks: dtoReport.adminRemarks,
+      categoryConfidence: dtoReport.categoryConfidence,
+      priority: dtoReport.priority,
+      priorityScore: dtoReport.priorityScore,
+      priorityLevel: PriorityLevel.fromString(dtoReport.priorityLevel),
+      priorityReasons: dtoReport.priorityReasons ?? [],
+      baseScore: dtoReport.baseScore,
+      hotspotScore: dtoReport.hotspotScore,
+      urgencyScore: dtoReport.urgencyScore,
+      duplicateState: DuplicateState.fromString(dtoReport.duplicateState),
+      relatedReportId: dtoReport.relatedReportId,
+      relatedIssueId: dtoReport.relatedIssueId,
+      sentimentScore: dtoReport.sentimentScore,
+      autoCategorySuggestion: dtoReport.autoCategorySuggestion,
+      images: dtoReport.images.map(imageFromDto).toList(),
+      createdAt: dtoReport.createdAt != null
+          ? DateTime.tryParse(dtoReport.createdAt!)
+          : null,
+      updatedAt: dtoReport.updatedAt != null
+          ? DateTime.tryParse(dtoReport.updatedAt!)
+          : null,
+      submittedAt: dtoReport.submittedAt != null
+          ? DateTime.tryParse(dtoReport.submittedAt!)
+          : null,
+      verifiedAt: dtoReport.verifiedAt != null
+          ? DateTime.tryParse(dtoReport.verifiedAt!)
+          : null,
+      resolvedAt: dtoReport.resolvedAt != null
+          ? DateTime.tryParse(dtoReport.resolvedAt!)
+          : null,
+    );
+  }
+
+  /// Convert DTO ReportImage to domain ReportImage entity
+  static ReportImage imageFromDto(dto.ReportImage dtoImage) {
+    return ReportImage(
+      id: dtoImage.id,
+      url: dtoImage.url,
+      reportId: dtoImage.reportId,
+      userId: dtoImage.userId,
+      isPrimary: dtoImage.isPrimary,
+      width: dtoImage.width,
+      height: dtoImage.height,
+      createdAt: dtoImage.createdAt != null
+          ? DateTime.tryParse(dtoImage.createdAt!)
+          : null,
+    );
+  }
+
+  /// Convert DTO PaginatedReports to domain entity
+  static PaginatedReports paginatedFromDto(dto.PaginatedReports dtoPaginated) {
+    return PaginatedReports(
+      results: dtoPaginated.results.map(fromDto).toList(),
+      count: dtoPaginated.count,
+      total: dtoPaginated.total,
+      page: dtoPaginated.page,
+      pageSize: dtoPaginated.pageSize,
+      totalPages: dtoPaginated.totalPages,
+    );
+  }
+
+  /// Convert DTO ReportStats to domain entity
+  static ReportStats statsFromDto(dto.ReportStats dtoStats) {
+    return ReportStats(
+      total: dtoStats.total,
+      byStatus: dtoStats.byStatus ?? {},
+      byCategory: dtoStats.byCategory ?? {},
+      bySeverity: dtoStats.bySeverity ?? {},
+      emergencies: dtoStats.emergencies,
+      submitted: dtoStats.submitted,
+      underReview: dtoStats.underReview,
+      verified: dtoStats.verified,
+      assigned: dtoStats.assigned,
+      inProgress: dtoStats.inProgress,
+      resolved: dtoStats.resolved,
+      rejected: dtoStats.rejected,
+    );
+  }
+}

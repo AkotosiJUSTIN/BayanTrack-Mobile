@@ -1,6 +1,10 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../data/kyc_models.dart';
-import '../data/kyc_repository.dart';
+import '../domain/entities/kyc_form_options.dart' as domain;
+import '../domain/entities/kyc_status.dart';
+import '../domain/usecases/submit_kyc_usecase.dart';
+import '../kyc_di.dart';
 
 part 'kyc_controller.g.dart';
 
@@ -9,18 +13,17 @@ part 'kyc_controller.g.dart';
 @riverpod
 class KycStatusController extends _$KycStatusController {
   @override
-  Future<KycStatusResponse?> build() async {
+  Future<KycStatusEntity?> build() async {
     return _fetchStatus();
   }
 
-  Future<KycStatusResponse?> _fetchStatus() async {
-    try {
-      final repo = ref.read(kycRepositoryProvider);
-      return await repo.getKycStatus();
-    } catch (e) {
-      // User might not have submitted KYC yet
-      return null;
-    }
+  Future<KycStatusEntity?> _fetchStatus() async {
+    final getKycStatus = ref.read(getKycStatusUseCaseProvider);
+    final result = await getKycStatus();
+    return result.when(
+      success: (entity) => entity,
+      failure: (_) => null, // User might not have submitted KYC yet
+    );
   }
 
   /// Refresh KYC status
@@ -34,16 +37,25 @@ class KycStatusController extends _$KycStatusController {
 
 @riverpod
 Future<List<String>> idTypes(Ref ref) async {
-  final repo = ref.read(kycRepositoryProvider);
-  return await repo.getIdTypes();
+  // Use domain layer - extract idTypes from form options
+  final getFormOptions = ref.read(getFormOptionsUseCaseProvider);
+  final result = await getFormOptions();
+  return result.when(
+    success: (options) => options.idTypes.map((item) => item.value).toList(),
+    failure: (failure) => throw Exception(failure.message),
+  );
 }
 
 // ==================== FORM OPTIONS PROVIDER ====================
 
 @riverpod
-Future<KycFormOptionsResponse> kycFormOptions(Ref ref) async {
-  final repo = ref.read(kycRepositoryProvider);
-  return await repo.getFormOptions();
+Future<domain.KycFormOptions> kycFormOptions(Ref ref) async {
+  final getFormOptions = ref.read(getFormOptionsUseCaseProvider);
+  final result = await getFormOptions();
+  return result.when(
+    success: (options) => options,
+    failure: (failure) => throw Exception(failure.message),
+  );
 }
 
 // ==================== KYC FORM STATE ====================
@@ -57,33 +69,33 @@ class KycFormState {
   final Sex? sex;
   final String nationality;
   final CivilStatus? civilStatus;
-  
+
   // B. Contact Information
   final String email;
   final String mobileNumber;
-  
+
   // C. Address Information
   final String streetBarangay;
   final String cityMunicipality;
   final String province;
   final String? zipCode;
-  
+
   // D. Government ID Details
   final IdType? selectedIdType;
   final String idNumber;
   final DateTime? idExpiryDate;
-  
+
   // E. ID Upload Images
   final String? idFrontImagePath;
   final String? idBackImagePath;
-  
+
   // F. Selfie Verification
   final String? selfieImagePath;
   final String? selfieWithIdImagePath;
-  
+
   // G. Declaration
   final bool declarationAccepted;
-  
+
   // Form state
   final bool isSubmitting;
   final String? error;
@@ -169,7 +181,8 @@ class KycFormState {
       idFrontImagePath: idFrontImagePath ?? this.idFrontImagePath,
       idBackImagePath: idBackImagePath ?? this.idBackImagePath,
       selfieImagePath: selfieImagePath ?? this.selfieImagePath,
-      selfieWithIdImagePath: selfieWithIdImagePath ?? this.selfieWithIdImagePath,
+      selfieWithIdImagePath:
+          selfieWithIdImagePath ?? this.selfieWithIdImagePath,
       declarationAccepted: declarationAccepted ?? this.declarationAccepted,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       error: error,
@@ -179,9 +192,11 @@ class KycFormState {
 
   /// Computed full name
   String get fullName {
-    final parts = [firstName, middleName, lastName]
-        .where((p) => p != null && p.isNotEmpty)
-        .toList();
+    final parts = [
+      firstName,
+      middleName,
+      lastName,
+    ].where((p) => p != null && p.isNotEmpty).toList();
     return parts.join(' ');
   }
 
@@ -193,8 +208,7 @@ class KycFormState {
 
   /// Check if contact section is complete
   bool get isContactComplete =>
-      email.trim().isNotEmpty &&
-      mobileNumber.trim().isNotEmpty;
+      email.trim().isNotEmpty && mobileNumber.trim().isNotEmpty;
 
   /// Check if address section is complete
   bool get isAddressComplete =>
@@ -204,13 +218,11 @@ class KycFormState {
 
   /// Check if ID details section is complete
   bool get isIdDetailsComplete =>
-      selectedIdType != null &&
-      idNumber.trim().isNotEmpty;
+      selectedIdType != null && idNumber.trim().isNotEmpty;
 
   /// Check if required images are uploaded
   bool get isImagesComplete =>
-      idFrontImagePath != null &&
-      selfieImagePath != null;
+      idFrontImagePath != null && selfieImagePath != null;
 
   /// Check if declaration is accepted
   bool get isDeclarationComplete => declarationAccepted;
@@ -241,36 +253,49 @@ class KycFormController extends _$KycFormController {
 
   // ===== A. Basic Identity Setters =====
   void setFirstName(String value) => state = state.copyWith(firstName: value);
-  void setMiddleName(String? value) => state = state.copyWith(middleName: value);
+  void setMiddleName(String? value) =>
+      state = state.copyWith(middleName: value);
   void setLastName(String value) => state = state.copyWith(lastName: value);
-  void setDateOfBirth(DateTime? value) => state = state.copyWith(dateOfBirth: value);
+  void setDateOfBirth(DateTime? value) =>
+      state = state.copyWith(dateOfBirth: value);
   void setSex(Sex? value) => state = state.copyWith(sex: value);
-  void setNationality(String value) => state = state.copyWith(nationality: value);
-  void setCivilStatus(CivilStatus? value) => state = state.copyWith(civilStatus: value);
+  void setNationality(String value) =>
+      state = state.copyWith(nationality: value);
+  void setCivilStatus(CivilStatus? value) =>
+      state = state.copyWith(civilStatus: value);
 
   // ===== B. Contact Setters =====
   void setEmail(String value) => state = state.copyWith(email: value);
-  void setMobileNumber(String value) => state = state.copyWith(mobileNumber: value);
+  void setMobileNumber(String value) =>
+      state = state.copyWith(mobileNumber: value);
 
   // ===== C. Address Setters =====
-  void setStreetBarangay(String value) => state = state.copyWith(streetBarangay: value);
-  void setCityMunicipality(String value) => state = state.copyWith(cityMunicipality: value);
+  void setStreetBarangay(String value) =>
+      state = state.copyWith(streetBarangay: value);
+  void setCityMunicipality(String value) =>
+      state = state.copyWith(cityMunicipality: value);
   void setProvince(String value) => state = state.copyWith(province: value);
   void setZipCode(String? value) => state = state.copyWith(zipCode: value);
 
   // ===== D. ID Details Setters =====
   void setIdType(IdType value) => state = state.copyWith(selectedIdType: value);
   void setIdNumber(String value) => state = state.copyWith(idNumber: value);
-  void setIdExpiryDate(DateTime? value) => state = state.copyWith(idExpiryDate: value);
+  void setIdExpiryDate(DateTime? value) =>
+      state = state.copyWith(idExpiryDate: value);
 
   // ===== E. Image Setters =====
-  void setIdFrontImage(String? path) => state = state.copyWith(idFrontImagePath: path);
-  void setIdBackImage(String? path) => state = state.copyWith(idBackImagePath: path);
-  void setSelfieImage(String? path) => state = state.copyWith(selfieImagePath: path);
-  void setSelfieWithIdImage(String? path) => state = state.copyWith(selfieWithIdImagePath: path);
+  void setIdFrontImage(String? path) =>
+      state = state.copyWith(idFrontImagePath: path);
+  void setIdBackImage(String? path) =>
+      state = state.copyWith(idBackImagePath: path);
+  void setSelfieImage(String? path) =>
+      state = state.copyWith(selfieImagePath: path);
+  void setSelfieWithIdImage(String? path) =>
+      state = state.copyWith(selfieWithIdImagePath: path);
 
   // ===== G. Declaration Setter =====
-  void setDeclarationAccepted(bool value) => state = state.copyWith(declarationAccepted: value);
+  void setDeclarationAccepted(bool value) =>
+      state = state.copyWith(declarationAccepted: value);
 
   // ===== Form State =====
   void setCurrentStep(int step) => state = state.copyWith(currentStep: step);
@@ -280,33 +305,54 @@ class KycFormController extends _$KycFormController {
   void reset() => state = const KycFormState();
 
   /// Populate form from existing KYC data (for resubmission)
-  void populateFromExisting(KycStatusResponse existing) {
+  void populateFromExisting(KycStatusEntity existing) {
+    // Map domain enums to DTO enums (they have the same values, different types)
+    Sex? sex;
+    if (existing.sex != null) {
+      sex = Sex.values.firstWhere(
+        (e) => e.name == existing.sex!.name,
+        orElse: () => Sex.male,
+      );
+    }
+
+    CivilStatus? civilStatus;
+    if (existing.civilStatus != null) {
+      civilStatus = CivilStatus.values.firstWhere(
+        (e) => e.name == existing.civilStatus!.name,
+        orElse: () => CivilStatus.single,
+      );
+    }
+
+    IdType? idType;
+    if (existing.idType != null) {
+      idType = IdType.values.firstWhere(
+        (e) => e.name == existing.idType!.name,
+        orElse: () => IdType.nationalId,
+      );
+    }
+
     state = KycFormState(
       firstName: existing.firstName ?? '',
       middleName: existing.middleName,
       lastName: existing.lastName ?? '',
-      dateOfBirth: existing.dateOfBirth != null 
-          ? DateTime.tryParse(existing.dateOfBirth!) 
-          : null,
-      sex: existing.sex,
+      dateOfBirth: existing.dateOfBirth,
+      sex: sex,
       nationality: existing.nationality ?? '',
-      civilStatus: existing.civilStatus,
+      civilStatus: civilStatus,
       email: existing.email ?? '',
       mobileNumber: existing.mobileNumber ?? '',
       streetBarangay: existing.streetBarangay ?? '',
       cityMunicipality: existing.cityMunicipality ?? '',
       province: existing.province ?? '',
       zipCode: existing.zipCode,
-      selectedIdType: existing.idType,
+      selectedIdType: idType,
       idNumber: existing.idNumber ?? '',
-      idExpiryDate: existing.idExpiryDate != null 
-          ? DateTime.tryParse(existing.idExpiryDate!) 
-          : null,
+      idExpiryDate: existing.idExpiryDate,
     );
   }
 
   /// Submit KYC for the first time
-  Future<KycStatusResponse> submitKyc() async {
+  Future<KycStatusEntity> submitKyc() async {
     if (!state.canSubmit) {
       throw Exception('Please complete all required fields');
     }
@@ -314,17 +360,30 @@ class KycFormController extends _$KycFormController {
     state = state.copyWith(isSubmitting: true, error: null);
 
     try {
-      final repo = ref.read(kycRepositoryProvider);
+      final domainRepo = ref.read(kycDomainRepositoryProvider);
+      final submitKycUseCase = ref.read(submitKycUseCaseProvider);
 
-      final request = KycSubmitRequest(
+      // Validate image sizes using domain repository
+      final validationErrors = domainRepo.validateImages(
+        idFrontImagePath: state.idFrontImagePath!,
+        idBackImagePath: state.idBackImagePath,
+        selfieImagePath: state.selfieImagePath!,
+        selfieWithIdImagePath: state.selfieWithIdImagePath,
+      );
+      if (validationErrors.isNotEmpty) {
+        throw Exception(validationErrors.join('\n'));
+      }
+
+      // Create domain params
+      final params = SubmitKycParams(
         // Basic Identity
         firstName: state.firstName,
         middleName: state.middleName,
         lastName: state.lastName,
         dateOfBirth: state.dateOfBirth?.toIso8601String().split('T')[0],
-        sex: state.sex,
+        sex: state.sex?.apiValue,
         nationality: state.nationality,
-        civilStatus: state.civilStatus,
+        civilStatus: state.civilStatus?.apiValue,
         // Contact
         email: state.email,
         mobileNumber: state.mobileNumber,
@@ -334,7 +393,7 @@ class KycFormController extends _$KycFormController {
         province: state.province,
         zipCode: state.zipCode,
         // ID Details
-        idType: state.selectedIdType!,
+        idType: state.selectedIdType!.apiValue,
         idNumber: state.idNumber,
         idExpiryDate: state.idExpiryDate?.toIso8601String().split('T')[0],
         // Images
@@ -346,30 +405,25 @@ class KycFormController extends _$KycFormController {
         declarationAccepted: state.declarationAccepted,
       );
 
-      // Validate image sizes
-      final validationErrors = repo.validateImages(request);
-      if (validationErrors.isNotEmpty) {
-        throw Exception(validationErrors.join('\n'));
-      }
-
-      final response = await repo.submitKyc(request);
+      final result = await submitKycUseCase(params);
 
       // Refresh the status controller
       ref.invalidate(kycStatusControllerProvider);
 
       state = state.copyWith(isSubmitting: false);
-      return response;
-    } catch (e) {
-      state = state.copyWith(
-        isSubmitting: false,
-        error: e.toString(),
+
+      return result.when(
+        success: (entity) => entity,
+        failure: (failure) => throw Exception(failure.message),
       );
+    } catch (e) {
+      state = state.copyWith(isSubmitting: false, error: e.toString());
       rethrow;
     }
   }
 
   /// Resubmit KYC after rejection
-  Future<KycStatusResponse> resubmitKyc() async {
+  Future<KycStatusEntity> resubmitKyc() async {
     if (!state.canSubmit) {
       throw Exception('Please complete all required fields');
     }
@@ -377,17 +431,30 @@ class KycFormController extends _$KycFormController {
     state = state.copyWith(isSubmitting: true, error: null);
 
     try {
-      final repo = ref.read(kycRepositoryProvider);
+      final domainRepo = ref.read(kycDomainRepositoryProvider);
+      final resubmitKycUseCase = ref.read(resubmitKycUseCaseProvider);
 
-      final request = KycSubmitRequest(
+      // Validate image sizes using domain repository
+      final validationErrors = domainRepo.validateImages(
+        idFrontImagePath: state.idFrontImagePath!,
+        idBackImagePath: state.idBackImagePath,
+        selfieImagePath: state.selfieImagePath!,
+        selfieWithIdImagePath: state.selfieWithIdImagePath,
+      );
+      if (validationErrors.isNotEmpty) {
+        throw Exception(validationErrors.join('\n'));
+      }
+
+      // Create domain params
+      final params = SubmitKycParams(
         // Basic Identity
         firstName: state.firstName,
         middleName: state.middleName,
         lastName: state.lastName,
         dateOfBirth: state.dateOfBirth?.toIso8601String().split('T')[0],
-        sex: state.sex,
+        sex: state.sex?.apiValue,
         nationality: state.nationality,
-        civilStatus: state.civilStatus,
+        civilStatus: state.civilStatus?.apiValue,
         // Contact
         email: state.email,
         mobileNumber: state.mobileNumber,
@@ -397,7 +464,7 @@ class KycFormController extends _$KycFormController {
         province: state.province,
         zipCode: state.zipCode,
         // ID Details
-        idType: state.selectedIdType!,
+        idType: state.selectedIdType!.apiValue,
         idNumber: state.idNumber,
         idExpiryDate: state.idExpiryDate?.toIso8601String().split('T')[0],
         // Images
@@ -409,24 +476,19 @@ class KycFormController extends _$KycFormController {
         declarationAccepted: state.declarationAccepted,
       );
 
-      // Validate image sizes
-      final validationErrors = repo.validateImages(request);
-      if (validationErrors.isNotEmpty) {
-        throw Exception(validationErrors.join('\n'));
-      }
-
-      final response = await repo.resubmitKyc(request);
+      final result = await resubmitKycUseCase(params);
 
       // Refresh the status controller
       ref.invalidate(kycStatusControllerProvider);
 
       state = state.copyWith(isSubmitting: false);
-      return response;
-    } catch (e) {
-      state = state.copyWith(
-        isSubmitting: false,
-        error: e.toString(),
+
+      return result.when(
+        success: (entity) => entity,
+        failure: (failure) => throw Exception(failure.message),
       );
+    } catch (e) {
+      state = state.copyWith(isSubmitting: false, error: e.toString());
       rethrow;
     }
   }

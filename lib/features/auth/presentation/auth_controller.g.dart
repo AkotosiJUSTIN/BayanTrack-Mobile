@@ -8,12 +8,24 @@ part of 'auth_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// AuthController - ViewModel for authentication flows.
+///
+/// Uses Clean Architecture use cases for all operations.
+/// Does NOT directly access repositories or storage.
 
 @ProviderFor(AuthController)
 final authControllerProvider = AuthControllerProvider._();
 
+/// AuthController - ViewModel for authentication flows.
+///
+/// Uses Clean Architecture use cases for all operations.
+/// Does NOT directly access repositories or storage.
 final class AuthControllerProvider
     extends $NotifierProvider<AuthController, AuthState> {
+  /// AuthController - ViewModel for authentication flows.
+  ///
+  /// Uses Clean Architecture use cases for all operations.
+  /// Does NOT directly access repositories or storage.
   AuthControllerProvider._()
     : super(
         from: null,
@@ -41,7 +53,12 @@ final class AuthControllerProvider
   }
 }
 
-String _$authControllerHash() => r'3b65810524c2ba8cfa6a4ee62edd803885c9d787';
+String _$authControllerHash() => r'2ce0c94ed333d4bdb09b7263831f5a41ed60e169';
+
+/// AuthController - ViewModel for authentication flows.
+///
+/// Uses Clean Architecture use cases for all operations.
+/// Does NOT directly access repositories or storage.
 
 abstract class _$AuthController extends $Notifier<AuthState> {
   AuthState build();

@@ -1,50 +1,68 @@
 # BayanTrack Mobile Specification
 
 ## 1. Architectural Overview
-**Style**: Layered Architecture + MVVM-style Presentation.
+**Style**: Clean Architecture (Domain-Driven Design) + MVVM.
 **Framework**: Flutter.
 
 ### Layers
-1.  **Presentation (UI)**: Screens and Widgets. Reacts to state changes provided by ViewModels/Providers.
-2.  **Application (State/ViewModel)**: Riverpod Providers managing UI state and business logic orchestration.
-3.  **Domain (Model)**: Pure Dart classes representing entities (Reports, Users).
-4.  **Infrastructure (Data)**: Repositories implementing API calls, local database (caching), and device services (Camera, GPS).
+1.  **Presentation (UI)**: 
+    *   **Screens/Widgets**: Pure UI components, no business logic.
+    *   **Controllers** (`AsyncNotifier`): Manage UI state, handle user input, call Use Cases.
+2.  **Domain (Business Logic)**: 
+    *   **Entities**: Pure Dart classes (e.g., `User`, `Report`).
+    *   **Use Cases**: Single-responsibility classes encapsulating business rules (e.g., `LoginUseCase`, `SubmitReportUseCase`).
+    *   **Repository Interfaces**: Abstract definitions of data operations.
+    *   **Failures**: Domain-specific error handling.
+3.  **Data (Infrastructure)**: 
+    *   **Repository Implementations**: Implement domain interfaces.
+    *   **Mappers**: Convert between DTOs and Domain Entities.
+    *   **Data Sources**: API Clients (Dio), Local Storage (SecureStorage).
+    *   **DTOs**: Data Transfer Objects with JSON serialization.
+4.  **Core**: Shared utilities, constants, and dependency injection setup.
 
 ## 2. Technology Stack
-*   **Core**: Flutter (Dart).
-*   **State Management**: Riverpod.
-    *   *Pattern*: `NotifierProvider` / `AsyncNotifierProvider` for MVVM-style logic.
-*   **Networking**: Dio (HTTP Client) + Retrofit (Optional).
-*   **Local Storage**: Hive or Isar (Offline-first caching).
-*   **Maps**: Google Maps Flutter or Flutter Map (OSM).
+*   **Core**: Flutter 3.x (Dart 3.x).
+*   **State Management**: Riverpod (`riverpod_annotation` + `flutter_riverpod`).
+*   **Code Generation**: `build_runner`, `freezed` (immutable state), `json_serializable`.
+*   **Networking**: Dio (HTTP Client) with centralized `AuthInterceptor` and `ErrorMapper`.
+*   **Error Handling**: Functional `Result<T>` pattern (`Success` or `Failure`).
+*   **Local Storage**: `flutter_secure_storage` (Auth tokens).
 
 ## 3. Feature Specifications
 
 ### 3.1 Authentication
-*   **Flow**: Login Screen -> Provider Authentication -> Token Storage (Flutter Secure Storage).
-*   **Biometrics**: Optional Local Auth (FaceID/TouchID) for quick re-entry.
+*   **Architecture**: Domain-driven with strict Use Case separation (`LoginUseCase`, `RegisterUseCase`).
+*   **Flow**: Controller -> Use Case -> Repository -> Dio.
+*   **Security**: Token-based auth (Access/Refresh), auto-refresh via Interceptor.
+*   **Storage**: Secure storage for tokens, `keepAlive` providers for session persistence.
 
-### 3.2 Reporting Workflow (The Core Loop)
-1.  **Capture**: Camera Stream -> Capture Image -> Compress.
-2.  **Locate**: Geolocator -> Get Lat/Lng -> Reverse Geocode (Address).
-3.  **Compose**: Form input (Description, Type).
-4.  **Submit**:
-    *   *Online*: Upload Media -> POST Data -> Success.
-    *   *Offline*: Save to Hive `DraftsBox` -> Background Sync when online.
+### 3.2 KYC (Know Your Customer)
+*   **Status Management**: Tracks `unverified`, `pending`, `verified`, `rejected`.
+*   **Form Logic**: Multi-step form with validation for ID types, images, and personal info.
+*   **Data Models**: Separate Domain Enums (pure Dart) vs API Strings.
+*   **Validation**: Client-side validation for image sizes and required fields before API call.
 
-### 3.3 Dashboard & Maps
-*   **Map View**: Pins for nearby incidents. Filter by status/category.
-*   **List View**: Infinite scroll list of reports.
-*   **Detail View**: Hero animation for images, status timeline.
+### 3.3 Notifications
+*   **Structure**: Paginated list of notifications (`PaginatedNotifications`).
+*   **Types**: Strongly typed `NotificationType` enum (system, report_update, account).
+*   **Preferences**: Toggleable settings for push/email/sms notifications.
+*   **Clean Architecture**: Mapper converts raw JSON API response to Domain Entities.
+
+### 3.4 Reports (Incident Tracking)
+*   **Entities**: `Report` entity with rich metadata (severity, location, images).
+*   **Flow**: Create Report -> Upload Images -> Submit Metadata.
+*   **State**: `ReportsController` manages fetching, filtering, and pagination.
 
 ## 4. State Management Strategy (Riverpod)
-*   **Services**: `authServiceProvider`, `reportRepositoryProvider`.
-*   **View Logic**:
-    *   `authControllerProvider`: Handles login/register logic and loading states.
-    *   `reportListProvider`: Manages the list of fetched reports (pagination, filtering).
-    *   `reportFormNotifier`: Manages the state of a report currently being written (draft).
+*   **Dependency Injection**: All repositories and use cases are provided via Riverpod.
+*   **Controller Pattern**: 
+    *   Extend `_$MyController` (Riverpod Generator).
+    *   Expose immutable state (using `freezed`).
+    *   Methods mutate state via `state = AsyncValue...`.
+*   **Lifecycle**: `keepAlive: true` used for singleton-like services (AuthSession).
 
 ## 5. Security & Performance
-*   **Secure Storage**: Never store JWTs in plain SharedPreferences. Use `flutter_secure_storage`.
-*   **Permissions**: Request GPS/Camera permissions strictly when needed.
-*   **Image Optimization**: Compress images on-device using `flutter_image_compress` before upload to save bandwidth.
+*   **Secure Storage**: Tokens stored in EncryptedSharedPreferences (Android) / Keychain (iOS).
+*   **Null Safety**: Strict null safety across all layers.
+*   **Immutability**: Freezed classes prevent accidental mutations.
+*   **DTO/Entity Separation**: API changes don't break UI code; only Mappers need updates.
