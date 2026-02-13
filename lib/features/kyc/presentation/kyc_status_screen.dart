@@ -264,7 +264,11 @@ class KycStatusScreen extends ConsumerWidget {
                   }
                 },
                 icon: const Icon(Icons.refresh),
-                label: const Text('Resubmit KYC'),
+                label: Text(
+                  kycStatus.resubmissionCount > 0
+                      ? 'Resubmit KYC (Attempt ${kycStatus.resubmissionCount + 1})'
+                      : 'Resubmit KYC',
+                ),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
