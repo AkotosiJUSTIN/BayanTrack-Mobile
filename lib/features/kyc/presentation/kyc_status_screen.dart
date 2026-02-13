@@ -30,7 +30,7 @@ class KycStatusScreen extends ConsumerWidget {
         data: (kycStatus) {
           if (kycStatus == null) {
             // No KYC submitted yet
-            return _buildNoKycView(context);
+            return _buildNoKycView(context, ref);
           }
 
           return _buildStatusView(context, ref, kycStatus);
@@ -57,7 +57,7 @@ class KycStatusScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildNoKycView(BuildContext context) {
+  Widget _buildNoKycView(BuildContext context, WidgetRef ref) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -85,13 +85,17 @@ class KycStatusScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 32),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const KycFormScreen(),
                   ),
                 );
+                // Refresh status if form was submitted
+                if (result == true) {
+                  ref.read(kycStatusControllerProvider.notifier).refresh();
+                }
               },
               icon: const Icon(Icons.assignment),
               label: const Text('Start Verification'),
@@ -244,8 +248,8 @@ class KycStatusScreen extends ConsumerWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
+                onPressed: () async {
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => KycFormScreen(
@@ -254,6 +258,10 @@ class KycStatusScreen extends ConsumerWidget {
                       ),
                     ),
                   );
+                  // Refresh status if form was resubmitted
+                  if (result == true) {
+                    ref.read(kycStatusControllerProvider.notifier).refresh();
+                  }
                 },
                 icon: const Icon(Icons.refresh),
                 label: const Text('Resubmit KYC'),

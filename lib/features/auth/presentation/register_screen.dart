@@ -57,11 +57,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Registration successful! Please login.'),
+            content: Text('Registration successful! Welcome to BayanTrack.'),
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pop(); // Go back to login
+        // AuthWrapper will navigate to MainNavigationShell automatically
+        // since AuthController now sets AuthSuccess with user data
       }
     }
   }

@@ -34,7 +34,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<void>> register({
+  Future<Result<AuthTokens>> register({
     required String email,
     required String password,
     required String passwordConfirm,
@@ -42,7 +42,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String lastName,
   }) async {
     try {
-      await _dio.post(
+      final response = await _dio.post(
         ApiConstants.register,
         data: RegisterRequest(
           email: email,
@@ -52,7 +52,9 @@ class AuthRepositoryImpl implements AuthRepository {
           lastName: lastName,
         ).toJson(),
       );
-      return const Success(null);
+      // Backend returns tokens on registration (same shape as login)
+      final loginResponse = LoginResponse.fromJson(response.data);
+      return Success(AuthMapper.tokensFromLoginResponse(loginResponse));
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));
     }

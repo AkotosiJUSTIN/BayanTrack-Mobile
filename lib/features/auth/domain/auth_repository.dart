@@ -13,8 +13,8 @@ abstract interface class AuthRepository {
     required String password,
   });
 
-  /// Register new user
-  Future<Result<void>> register({
+  /// Register new user and return auth tokens
+  Future<Result<AuthTokens>> register({
     required String email,
     required String password,
     required String passwordConfirm,

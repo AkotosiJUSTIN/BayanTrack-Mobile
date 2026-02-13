@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../kyc/domain/entities/kyc_enums.dart';
+import '../../kyc/presentation/kyc_controller.dart';
 import '../../kyc/presentation/kyc_form_screen.dart';
 import '../../kyc/presentation/kyc_status_screen.dart';
 import '../data/user_permissions.dart';
@@ -19,7 +21,7 @@ Future<void> showVerificationRequiredDialog(
 }
 
 /// Dialog shown when user tries to perform action requiring verification
-class VerificationRequiredDialog extends StatelessWidget {
+class VerificationRequiredDialog extends ConsumerWidget {
   final UserPermissions permissions;
   final String action;
 
@@ -30,7 +32,7 @@ class VerificationRequiredDialog extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return AlertDialog(
       title: const Row(
         children: [
@@ -77,7 +79,7 @@ class VerificationRequiredDialog extends StatelessWidget {
         ElevatedButton(
           onPressed: () {
             Navigator.pop(context);
-            _navigateToKycAction(context, permissions);
+            _navigateToKycAction(context, permissions, ref);
           },
           child: Text(permissions.getActionButtonText()),
         ),
@@ -85,16 +87,19 @@ class VerificationRequiredDialog extends StatelessWidget {
     );
   }
 
-  void _navigateToKycAction(BuildContext context, UserPermissions permissions) {
+  void _navigateToKycAction(BuildContext context, UserPermissions permissions, WidgetRef ref) async {
     if (permissions.canSubmitKyc) {
       // Navigate to KYC form
-      Navigator.push(
+      final result = await Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const KycFormScreen()),
       );
+      if (result == true) {
+        ref.read(kycStatusControllerProvider.notifier).refresh();
+      }
     } else if (permissions.canResubmitKyc) {
       // Navigate to resubmit
-      Navigator.push(
+      final result = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => KycFormScreen(
@@ -103,6 +108,9 @@ class VerificationRequiredDialog extends StatelessWidget {
           ),
         ),
       );
+      if (result == true) {
+        ref.read(kycStatusControllerProvider.notifier).refresh();
+      }
     } else {
       // Navigate to status screen
       Navigator.push(
@@ -114,13 +122,13 @@ class VerificationRequiredDialog extends StatelessWidget {
 }
 
 /// Banner widget to show at top of screens for unverified users
-class VerificationBanner extends StatelessWidget {
+class VerificationBanner extends ConsumerWidget {
   final UserPermissions permissions;
 
   const VerificationBanner({super.key, required this.permissions});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Don't show banner if verified
     if (permissions.isVerified) {
       return const SizedBox.shrink();
@@ -155,7 +163,7 @@ class VerificationBanner extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () => _navigateToKyc(context, permissions),
+            onPressed: () => _navigateToKyc(context, permissions, ref),
             style: TextButton.styleFrom(
               backgroundColor: statusColor,
               foregroundColor: Colors.white,
@@ -183,14 +191,17 @@ class VerificationBanner extends StatelessWidget {
     }
   }
 
-  void _navigateToKyc(BuildContext context, UserPermissions permissions) {
+  void _navigateToKyc(BuildContext context, UserPermissions permissions, WidgetRef ref) async {
     if (permissions.canSubmitKyc) {
-      Navigator.push(
+      final result = await Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const KycFormScreen()),
       );
+      if (result == true) {
+        ref.read(kycStatusControllerProvider.notifier).refresh();
+      }
     } else if (permissions.canResubmitKyc) {
-      Navigator.push(
+      final result = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => KycFormScreen(
@@ -199,6 +210,9 @@ class VerificationBanner extends StatelessWidget {
           ),
         ),
       );
+      if (result == true) {
+        ref.read(kycStatusControllerProvider.notifier).refresh();
+      }
     } else {
       Navigator.push(
         context,
@@ -209,7 +223,7 @@ class VerificationBanner extends StatelessWidget {
 }
 
 /// Compact inline verification prompt
-class InlineVerificationPrompt extends StatelessWidget {
+class InlineVerificationPrompt extends ConsumerWidget {
   final UserPermissions permissions;
   final String feature;
 
@@ -220,7 +234,7 @@ class InlineVerificationPrompt extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -253,7 +267,7 @@ class InlineVerificationPrompt extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
-            onPressed: () => _navigateToKyc(context, permissions),
+            onPressed: () => _navigateToKyc(context, permissions, ref),
             icon: const Icon(Icons.verified_user),
             label: Text(permissions.getActionButtonText()),
           ),
@@ -262,14 +276,17 @@ class InlineVerificationPrompt extends StatelessWidget {
     );
   }
 
-  void _navigateToKyc(BuildContext context, UserPermissions permissions) {
+  void _navigateToKyc(BuildContext context, UserPermissions permissions, WidgetRef ref) async {
     if (permissions.canSubmitKyc) {
-      Navigator.push(
+      final result = await Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const KycFormScreen()),
       );
+      if (result == true) {
+        ref.read(kycStatusControllerProvider.notifier).refresh();
+      }
     } else if (permissions.canResubmitKyc) {
-      Navigator.push(
+      final result = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => KycFormScreen(
@@ -278,6 +295,9 @@ class InlineVerificationPrompt extends StatelessWidget {
           ),
         ),
       );
+      if (result == true) {
+        ref.read(kycStatusControllerProvider.notifier).refresh();
+      }
     } else {
       Navigator.push(
         context,

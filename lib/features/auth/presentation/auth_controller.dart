@@ -110,8 +110,14 @@ class AuthController extends _$AuthController {
     );
 
     return result.when(
-      success: (_) {
-        state = const AuthSuccess('Registration successful. Please login.');
+      success: (user) {
+        // Auto-login: tokens are saved by RegisterUseCase
+        try {
+          ref.invalidate(kycStatusControllerProvider);
+        } catch (_) {
+          // Ignore KYC fetch errors, don't fail registration
+        }
+        state = AuthSuccess('Registration successful', user);
         return true;
       },
       failure: (failure) {

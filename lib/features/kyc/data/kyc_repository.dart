@@ -98,7 +98,9 @@ class KycRepository {
       ),
     );
 
-    return KycStatusResponse.fromJson(response.data);
+    final data = response.data as Map<String, dynamic>;
+    // Backend returns {'message': '...', 'kyc': {...}, ...}
+    return KycStatusResponse.fromJson(data['kyc'] as Map<String, dynamic>);
   }
 
   // ==================== RESUBMIT KYC ====================
@@ -149,7 +151,9 @@ class KycRepository {
       ),
     );
 
-    return KycStatusResponse.fromJson(response.data);
+    final data = response.data as Map<String, dynamic>;
+    // Backend returns {'message': '...', 'kyc': {...}, ...}
+    return KycStatusResponse.fromJson(data['kyc'] as Map<String, dynamic>);
   }
 
   // ==================== VALIDATE IMAGE SIZE ====================
