@@ -47,6 +47,8 @@ dependencies:
   geolocator: ^14.0.2
   shared_preferences: ^2.5.4
   equatable: ^2.0.8
+  connectivity_plus: ^7.0.0
+  package_info_plus: ^8.1.2
 
 dev_dependencies:
   flutter_test:
@@ -63,6 +65,7 @@ dev_dependencies:
   json_serializable: ^6.11.2
   mocktail: ^1.0.4
   freezed: 3.2.3
+  flutter_native_splash: ^2.4.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -104,3 +107,10 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  color_dark: "#0F172A"
+  image: assets/images/logo.png
+  android: true
+  ios: true

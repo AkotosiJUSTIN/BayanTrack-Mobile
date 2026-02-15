@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/validators.dart';
 
 import 'auth_controller.dart';
 import 'register_screen.dart';
@@ -34,13 +35,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           .read(authControllerProvider.notifier)
           .login(_emailController.text.trim(), _passwordController.text);
     }
-  }
-
-  void _handleBiometricLogin() {
-    // TODO: Implement biometric authentication later
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Biometric login coming soon')),
-    );
   }
 
   void _navigateToRegister() {
@@ -129,15 +123,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     hintText: 'Enter your email',
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
+                  validator: Validators.email,
                 ),
                 const SizedBox(height: 20),
 
@@ -196,30 +182,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onPressed: _handleLogin,
                     child: const Text('Login'),
                   ),
-                const SizedBox(height: 32),
-
-                // Divider with text
-                Row(
-                  children: [
-                    const Expanded(child: Divider()),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'or continue with',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ),
-                    const Expanded(child: Divider()),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Biometric login button
-                OutlinedButton.icon(
-                  onPressed: isLoading ? null : _handleBiometricLogin,
-                  icon: const Icon(Icons.fingerprint),
-                  label: const Text('Biometric Login'),
-                ),
                 const SizedBox(height: 40),
 
                 // Register link

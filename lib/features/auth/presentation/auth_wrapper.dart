@@ -19,13 +19,14 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     // Check for existing session after first frame
-    // Only check if we're not already in a determined state (e.g., after logout)
+    // Validate auth state on init - ensures no stale sessions
     Future.microtask(() {
       final currentState = ref.read(authControllerProvider);
       if (currentState is AuthIdle) {
         // Already idle (logged out), no need to check
         return;
       }
+      // Always validate the session on startup, even if state appears authenticated
       ref.read(authControllerProvider.notifier).checkAuth();
     });
   }

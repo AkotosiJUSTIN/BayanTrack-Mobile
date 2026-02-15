@@ -145,7 +145,7 @@ class VerificationBanner extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline, color: statusColor, size: 24),
+          Icon(_getStatusIcon(permissions.currentStatus), color: statusColor, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -188,6 +188,25 @@ class VerificationBanner extends ConsumerWidget {
         return AppColors.alertHigh;
       case KycVerificationStatus.verified:
         return AppColors.success;
+    }
+  }
+
+  IconData _getStatusIcon(KycVerificationStatus? status) {
+    if (status == null) return Icons.shield_outlined;
+
+    switch (status) {
+      case KycVerificationStatus.unverified:
+        return Icons.shield_outlined;
+      case KycVerificationStatus.pending:
+        return Icons.hourglass_empty;
+      case KycVerificationStatus.rejected:
+        return Icons.cancel_outlined;
+      case KycVerificationStatus.resubmitRequested:
+        return Icons.refresh;
+      case KycVerificationStatus.suspended:
+        return Icons.block;
+      case KycVerificationStatus.verified:
+        return Icons.verified_user;
     }
   }
 

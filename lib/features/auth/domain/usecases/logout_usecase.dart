@@ -19,17 +19,14 @@ class LogoutUseCase {
     // Get refresh token for backend logout
     final refreshToken = await _sessionRepository.getRefreshToken();
 
-    // Clear local session first (even if backend call fails)
-    await _sessionRepository.clearSession();
-
-    // Notify backend (best effort - don't fail if this errors)
+    // Notify backend FIRST (while access token still exists for auth header)
     if (refreshToken != null) {
-      final result = await _authRepository.logout(refreshToken);
-      // Log but don't fail on backend error
-      if (result.isFailure) {
-        // Silent fail - user is already logged out locally
-      }
+      await _authRepository.logout(refreshToken);
+      // Ignore result - user is logged out locally either way
     }
+
+    // Clear local session after backend call
+    await _sessionRepository.clearSession();
 
     return const Success(null);
   }

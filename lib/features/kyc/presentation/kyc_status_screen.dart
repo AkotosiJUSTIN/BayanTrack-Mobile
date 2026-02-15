@@ -172,33 +172,193 @@ class KycStatusScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Rejection Reason (if rejected)
+          // Rejection Reason (if rejected) - Modern Design
           if (kycStatus.rejectionReason != null &&
               kycStatus.rejectionReason!.isNotEmpty)
-            Card(
-              color: AppColors.alertHigh.withValues(alpha: 0.1),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.alertHigh.withValues(alpha: 0.15),
+                    AppColors.alertHigh.withValues(alpha: 0.05),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppColors.alertHigh.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Header with icon and status
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.alertHigh.withValues(alpha: 0.1),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                    ),
+                    child: Row(
                       children: [
-                        Icon(Icons.info_outline, color: AppColors.alertHigh),
-                        SizedBox(width: 8),
-                        Text(
-                          'Rejection Reason',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.alertHigh.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.cancel_outlined,
+                            color: AppColors.alertHigh,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Application Rejected',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.alertHigh,
+                                ),
+                              ),
+                              if (kycStatus.resubmissionCount > 0)
+                                Text(
+                                  'Attempt ${kycStatus.resubmissionCount + 1} • Please review feedback',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.darkTextSecondary,
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(kycStatus.rejectionReason!),
-                  ],
+                  ),
+
+                  // Rejection reason with better formatting
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Admin Feedback',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.7),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            kycStatus.rejectionReason!,
+                            style: const TextStyle(fontSize: 15, height: 1.5),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Actionable steps
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.lightbulb_outline,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Review the feedback and resubmit with corrected documents',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // Precheck Notes (only show for non-approved statuses)
+          if (kycStatus.status != KycVerificationStatus.verified &&
+              kycStatus.precheckNotes != null &&
+              kycStatus.precheckNotes!.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.alertMedium.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: AppColors.alertMedium.withValues(alpha: 0.3),
                 ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: AppColors.alertMedium,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Quality Check Notes',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: AppColors.alertMedium,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          kycStatus.precheckNotes!,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -243,9 +403,10 @@ class KycStatusScreen extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-          // Action Buttons
+          // Action Buttons - Enhanced Resubmit Button
           if (kycStatus.status.canResubmit)
-            SizedBox(
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () async {
@@ -263,14 +424,20 @@ class KycStatusScreen extends ConsumerWidget {
                     ref.read(kycStatusControllerProvider.notifier).refresh();
                   }
                 },
-                icon: const Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh_rounded),
                 label: Text(
                   kycStatus.resubmissionCount > 0
-                      ? 'Resubmit KYC (Attempt ${kycStatus.resubmissionCount + 1})'
-                      : 'Resubmit KYC',
+                      ? 'Resubmit Documents (Attempt ${kycStatus.resubmissionCount + 1})'
+                      : 'Resubmit Documents',
                 ),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
