@@ -4,6 +4,7 @@ import '../../../../core/constants/api_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../reports/domain/entities/report.dart';
 import '../../../reports/domain/entities/report_enums.dart';
+import '../../../reports/presentation/widgets/priority_badge.dart';
 
 /// Report card widget for home screen matching the design mockup.
 /// Shows thumbnail, category, title, location, time, and status badge.
@@ -59,12 +60,16 @@ class HomeReportCard extends StatelessWidget {
                     // Category and status
                     Row(
                       children: [
-                        Text(
-                          (report.category?.displayName ?? 'UNCATEGORIZED').toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: _getCategoryColor(report.category),
+                        Flexible(
+                          child: Text(
+                            (report.category?.displayName ?? 'UNCATEGORIZED').toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: _getCategoryColor(report.category),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const Spacer(),
@@ -72,6 +77,16 @@ class HomeReportCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 4),
+                    
+                    // Priority badge (if available)
+                    if (report.priorityLevel != null) ...[
+                      PriorityBadge(
+                        priorityLevel: report.priorityLevel,
+                        fontSize: 10,
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
 
                     // Title/Description
                     Text(

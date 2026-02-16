@@ -152,3 +152,35 @@ enum DuplicateState {
     };
   }
 }
+
+/// Priority level from AI prioritization
+enum PriorityLevel {
+  low,
+  medium,
+  high,
+  critical;
+
+  String get displayName => switch (this) {
+    low => 'Low',
+    medium => 'Medium',
+    high => 'High',
+    critical => 'Critical',
+  };
+
+  String get apiValue => switch (this) {
+    low => 'LOW',
+    medium => 'MEDIUM',
+    high => 'HIGH',
+    critical => 'CRITICAL',
+  };
+
+  static PriorityLevel fromString(String? value) {
+    return switch (value?.toUpperCase()) {
+      'LOW' => PriorityLevel.low,
+      'MEDIUM' => PriorityLevel.medium,
+      'HIGH' => PriorityLevel.high,
+      'CRITICAL' => PriorityLevel.critical,
+      _ => PriorityLevel.medium,
+    };
+  }
+}

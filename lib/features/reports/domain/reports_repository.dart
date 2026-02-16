@@ -15,8 +15,6 @@ abstract interface class ReportsRepository {
     String? status,
     String? zone,
     String? category,
-    String? severity,
-    bool? isEmergency,
   });
 
   /// Get current user's reports
@@ -45,9 +43,6 @@ abstract interface class ReportsRepository {
     String? longitude,
     String locationAccuracy = 'approximate',
     String? location,
-    String severity = 'medium',
-    int? peopleAffected,
-    bool isEmergency = false,
     bool declarationConfirmed = true,
     bool dataProcessingConsent = true,
   });
@@ -59,9 +54,6 @@ abstract interface class ReportsRepository {
     String? description,
     String? category,
     String? incidentType,
-    String? severity,
-    int? peopleAffected,
-    bool? isEmergency,
     String? zone,
     String? streetLandmark,
     String? cityMunicipality,

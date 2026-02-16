@@ -128,6 +128,33 @@ enum DuplicateState {
   unique;
 }
 
+// ==================== PRIORITY LEVEL ====================
+
+enum PriorityLevel {
+  @JsonValue('LOW')
+  low,
+  @JsonValue('MEDIUM')
+  medium,
+  @JsonValue('HIGH')
+  high,
+  @JsonValue('CRITICAL')
+  critical;
+
+  String get displayName => switch (this) {
+    low => 'Low',
+    medium => 'Medium',
+    high => 'High',
+    critical => 'Critical',
+  };
+  
+  String get value => switch (this) {
+    low => 'LOW',
+    medium => 'MEDIUM',
+    high => 'HIGH',
+    critical => 'CRITICAL',
+  };
+}
+
 // ==================== REPORT IMAGE ====================
 
 @freezed
@@ -195,9 +222,18 @@ sealed class Report with _$Report {
     @JsonKey(name: 'category_confidence') double? categoryConfidence,
     String? priority,
     @JsonKey(name: 'priority_score') int? priorityScore,
+    @JsonKey(name: 'priority_level') String? priorityLevel,
+    @JsonKey(name: 'priority_reasons') List<String>? priorityReasons,
+    @JsonKey(name: 'base_score') int? baseScore,
+    @JsonKey(name: 'hotspot_score') int? hotspotScore,
     @JsonKey(name: 'urgency_score') double? urgencyScore,
     @JsonKey(name: 'duplicate_state') String? duplicateState,
     @JsonKey(name: 'related_report_id') String? relatedReportId,
+    @JsonKey(name: 'duplicate_score') double? duplicateScore,
+    @JsonKey(name: 'duplicate_confidence') String? duplicateConfidence,
+    @JsonKey(name: 'duplicate_text_similarity') double? duplicateTextSimilarity,
+    @JsonKey(name: 'duplicate_location_similarity') double? duplicateLocationSimilarity,
+    @JsonKey(name: 'duplicate_explanation') String? duplicateExplanation,
     @JsonKey(name: 'related_issue_id') String? relatedIssueId,
     @JsonKey(name: 'sentiment_score') double? sentimentScore,
     @JsonKey(name: 'auto_category_suggestion') String? autoCategorySuggestion,
@@ -241,12 +277,7 @@ sealed class CreateReportRequest with _$CreateReportRequest {
     String? location,
     String? barangay,
     
-    // Severity & Impact (Section C)
-    @Default('medium') String severity,
-    @JsonKey(name: 'people_affected') int? peopleAffected,
-    @JsonKey(name: 'is_emergency') @Default(false) bool isEmergency,
-    
-    // Consent & Declaration (Section D)
+    // Consent & Declaration
     @JsonKey(name: 'declaration_confirmed') @Default(true) bool declarationConfirmed,
     @JsonKey(name: 'data_processing_consent') @Default(true) bool dataProcessingConsent,
   }) = _CreateReportRequest;
@@ -264,9 +295,6 @@ sealed class UpdateReportRequest with _$UpdateReportRequest {
     String? description,
     String? category,
     @JsonKey(name: 'incident_type') String? incidentType,
-    String? severity,
-    @JsonKey(name: 'people_affected') int? peopleAffected,
-    @JsonKey(name: 'is_emergency') bool? isEmergency,
     String? zone,
     @JsonKey(name: 'street_landmark') String? streetLandmark,
     @JsonKey(name: 'city_municipality') String? cityMunicipality,

@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../domain/entities/report.dart';
 import '../domain/entities/report_enums.dart';
 import 'report_detail_controller.dart';
+import 'widgets/priority_badge.dart';
 
 /// Report Detail Screen showing full report with images and details
 class ReportDetailScreen extends ConsumerStatefulWidget {
@@ -215,7 +216,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Status and category row
+          // Status and category badges
           Row(
             children: [
               _buildStatusBadge(report.status),
@@ -237,18 +238,26 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                     style: theme.textTheme.labelSmall,
                   ),
                 ),
-              const Spacer(),
-              if (report.createdAt != null)
-                Text(
-                  timeago.format(report.createdAt!),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary,
-                  ),
+              const SizedBox(width: 8),
+              if (report.priorityLevel != null)
+                PriorityBadge(
+                  priorityLevel: report.priorityLevel,
+                  showScores: false, // Simplified view for citizens
                 ),
             ],
           ),
+          const SizedBox(height: 8),
+          
+          // Time
+          if (report.createdAt != null)
+            Text(
+              timeago.format(report.createdAt!),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+              ),
+            ),
           const SizedBox(height: 16),
 
           // Description
@@ -354,12 +363,6 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   const SizedBox(height: 12),
                   if (report.category != null)
                     _buildInfoRow('Category', report.category!.displayName, theme),
-                  if (report.priority != null)
-                    _buildInfoRow(
-                      'Priority',
-                      report.priority!,
-                      theme,
-                    ),
                   if (report.categoryConfidence != null)
                     _buildInfoRow(
                       'Confidence',

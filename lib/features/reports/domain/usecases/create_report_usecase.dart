@@ -24,9 +24,6 @@ class CreateReportUseCase {
     String? longitude,
     String locationAccuracy = 'approximate',
     String? location,
-    String severity = 'medium',
-    int? peopleAffected,
-    bool isEmergency = false,
     bool declarationConfirmed = true,
     bool dataProcessingConsent = true,
   }) {
@@ -45,9 +42,6 @@ class CreateReportUseCase {
       longitude: longitude,
       locationAccuracy: locationAccuracy,
       location: location,
-      severity: severity,
-      peopleAffected: peopleAffected,
-      isEmergency: isEmergency,
       declarationConfirmed: declarationConfirmed,
       dataProcessingConsent: dataProcessingConsent,
     );
