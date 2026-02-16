@@ -47,9 +47,15 @@ abstract interface class AuthRepository {
   /// Request password reset email
   Future<Result<void>> forgotPassword(String email);
 
-  /// Reset password with token
+  /// Verify OTP sent to email and return reset token
+  Future<Result<String>> verifyResetOtp({
+    required String email,
+    required String otp,
+  });
+
+  /// Reset password with verified reset token
   Future<Result<void>> resetPassword({
-    required String token,
+    required String resetToken,
     required String newPassword,
     required String newPasswordConfirm,
   });

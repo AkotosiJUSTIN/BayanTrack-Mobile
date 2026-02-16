@@ -136,7 +136,56 @@ class AuthController extends _$AuthController {
 
     return result.when(
       success: (_) {
-        state = const AuthSuccess('Password reset email sent');
+        state = const AuthSuccess('Password reset OTP sent');
+        return true;
+      },
+      failure: (failure) {
+        state = AuthError(_failureToMessage(failure));
+        return false;
+      },
+    );
+  }
+
+  /// Verify password reset OTP and return reset token
+  Future<String?> verifyResetOtp({
+    required String email,
+    required String otp,
+  }) async {
+    state = const AuthLoading();
+
+    final authRepository = ref.read(authRepositoryProvider);
+    final result = await authRepository.verifyResetOtp(email: email, otp: otp);
+
+    return result.when(
+      success: (resetToken) {
+        state = const AuthSuccess('OTP verified');
+        return resetToken;
+      },
+      failure: (failure) {
+        state = AuthError(_failureToMessage(failure));
+        return null;
+      },
+    );
+  }
+
+  /// Reset password after OTP verification
+  Future<bool> resetPassword({
+    required String resetToken,
+    required String newPassword,
+    required String newPasswordConfirm,
+  }) async {
+    state = const AuthLoading();
+
+    final authRepository = ref.read(authRepositoryProvider);
+    final result = await authRepository.resetPassword(
+      resetToken: resetToken,
+      newPassword: newPassword,
+      newPasswordConfirm: newPasswordConfirm,
+    );
+
+    return result.when(
+      success: (_) {
+        state = const AuthSuccess('Password reset successful');
         return true;
       },
       failure: (failure) {
