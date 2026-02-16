@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/providers/connectivity_provider.dart';
+import '../../../core/providers/theme_provider.dart';
 import '../../kyc/domain/entities/kyc_enums.dart';
 import '../../kyc/presentation/kyc_controller.dart';
 import '../../kyc/presentation/kyc_status_screen.dart';
@@ -33,51 +36,79 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(profileControllerProvider);
-          ref.invalidate(profileStatsControllerProvider);
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              // User Info
-              profileAsync.when(
-                data: (profile) => _buildProfileHeader(context, profile, theme),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Center(child: Text('Error: $err')),
-              ),
-              const SizedBox(height: 24),
+      body: Column(
+        children: [
+          // Offline banner
+          const OfflineBanner(),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(profileControllerProvider);
+                ref.invalidate(profileStatsControllerProvider);
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    // User Info
+                    profileAsync.when(
+                      data: (profile) => _buildProfileHeader(context, profile, theme),
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (err, _) => Center(child: Text('Error: $err')),
+                    ),
+                    const SizedBox(height: 24),
 
-              // KYC Status Card
-              Consumer(
-                builder: (context, ref, _) {
-                  final kycStatusAsync = ref.watch(kycStatusControllerProvider);
-                  return kycStatusAsync.when(
-                    data: (kycStatus) =>
-                        _buildKycStatusCard(context, ref, kycStatus),
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
+                    // KYC Status Card
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final kycStatusAsync = ref.watch(kycStatusControllerProvider);
+                        return kycStatusAsync.when(
+                          data: (kycStatus) =>
+                              _buildKycStatusCard(context, ref, kycStatus),
+                          loading: () => const SizedBox.shrink(),
+                          error: (_, __) => const SizedBox.shrink(),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
 
-              // Stats
-              statsAsync.when(
-                data: (stats) => _buildStatsRow(context, stats, theme),
-                loading: () => const SizedBox(height: 80),
-                error: (_, __) => const SizedBox.shrink(),
-              ),
-              const SizedBox(height: 24),
+                    // Stats
+                    statsAsync.when(
+                      data: (stats) => _buildStatsRow(context, stats, theme),
+                      loading: () => const SizedBox(height: 80),
+                      error: (_, __) => const SizedBox.shrink(),
+                    ),
+                    const SizedBox(height: 24),
 
-              // Menu
-              _buildMenu(context),
-            ],
+                    // Menu
+                    _buildMenu(context),
+                    const SizedBox(height: 16),
+
+                    // App version
+                    FutureBuilder<PackageInfo>(
+                      future: PackageInfo.fromPlatform(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            'Version ${snapshot.data!.version} (${snapshot.data!.buildNumber})',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -195,45 +226,74 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Widget _buildMenu(BuildContext context) {
-    return Card(
-      child: Column(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.person_outline),
-            title: const Text('Edit Profile'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-              );
-            },
-          ),
-          const Divider(height: 1),
-          ListTile(
-            leading: const Icon(Icons.lock_outline),
-            title: const Text('Change Password'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
-              );
-            },
-          ),
-          const Divider(height: 1),
-          ListTile(
-            leading: const Icon(Icons.notifications_outlined),
-            title: const Text('Notification Settings'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const NotificationSettingsScreen(),
+    return Consumer(
+      builder: (context, ref, _) {
+        final themeMode = ref.watch(themeModeProvider);
+        return Card(
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.person_outline),
+                title: const Text('Edit Profile'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                  );
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.lock_outline),
+                title: const Text('Change Password'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+                  );
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.notifications_outlined),
+                title: const Text('Notification Settings'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationSettingsScreen(),
+                    ),
+                  );
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: Icon(
+                  themeMode == ThemeMode.dark
+                      ? Icons.dark_mode
+                      : themeMode == ThemeMode.light
+                          ? Icons.light_mode
+                          : Icons.brightness_auto,
                 ),
-              );
-            },
+                title: const Text('Theme'),
+                subtitle: Text(
+                  themeMode == ThemeMode.dark
+                      ? 'Dark Mode'
+                      : themeMode == ThemeMode.light
+                          ? 'Light Mode'
+                          : 'System Default',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => ref.read(themeModeProvider.notifier).toggleTheme(),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

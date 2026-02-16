@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/validators.dart';
 import 'auth_controller.dart';
 
 /// Register screen matching the BayanTrack design mockup.
@@ -57,11 +58,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Registration successful! Please login.'),
+            content: Text('Registration successful! Welcome to BayanTrack.'),
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pop(); // Go back to login
+        // Pop register screen so AuthWrapper (now showing MainNavigationShell
+        // due to AuthSuccess state) becomes visible immediately
+        Navigator.of(context).pop();
       }
     }
   }
@@ -200,17 +203,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     hintText: 'Enter your email',
                     prefixIcon: Icon(Icons.email_outlined),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(value)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
+                  validator: Validators.email,
                 ),
                 const SizedBox(height: 20),
 

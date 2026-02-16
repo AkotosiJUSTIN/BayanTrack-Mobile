@@ -1,10 +1,10 @@
 class ApiConstants {
   // Use 10.0.2.2 for Android Emulator, localhost for iOS Simulator
   static const String baseUrl = 'http://10.0.2.2:8000/api';
-  
+
   // Media base URL (without /api suffix)
   static const String mediaBaseUrl = 'http://10.0.2.2:8000';
-  
+
   /// Build full URL for an image path
   /// Handles both relative (/media/...) and absolute URLs
   static String getImageUrl(String url) {
@@ -21,6 +21,7 @@ class ApiConstants {
   static const String logout = '/auth/logout/';
   static const String logoutAll = '/auth/logout-all/';
   static const String forgotPassword = '/auth/forgot-password/';
+  static const String verifyResetOtp = '/auth/verify-reset-otp/';
   static const String resetPassword = '/auth/reset-password/';
   static const String profile = '/auth/profile/';
   static const String profileUpdate = '/auth/profile/update/';

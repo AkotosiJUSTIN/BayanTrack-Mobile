@@ -226,7 +226,7 @@ final class RegisterUseCaseProvider
   }
 }
 
-String _$registerUseCaseHash() => r'899f5ef90bbd277e5f9c5405899af58076da6736';
+String _$registerUseCaseHash() => r'bfba15472b33b7de04f97052045bc6e2b53aaa59';
 
 @ProviderFor(logoutUseCase)
 final logoutUseCaseProvider = LogoutUseCaseProvider._();

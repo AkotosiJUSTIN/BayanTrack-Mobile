@@ -154,8 +154,16 @@ class UserPermissions {
       case KycVerificationStatus.verified:
         return 'Your identity is verified. You have full access!';
       case KycVerificationStatus.rejected:
+        final count = kycStatus!.resubmissionCount;
+        if (count > 0) {
+          return 'Your verification was rejected. Please resubmit your documents. (Attempt ${count + 1})';
+        }
         return 'Your verification was rejected. Please resubmit your documents.';
       case KycVerificationStatus.resubmitRequested:
+        final count = kycStatus!.resubmissionCount;
+        if (count > 0) {
+          return 'Additional information is required. Please resubmit your documents. (Attempt ${count + 1})';
+        }
         return 'Additional information is required. Please resubmit your documents.';
       case KycVerificationStatus.suspended:
         return 'Your account verification is suspended. Please contact support.';

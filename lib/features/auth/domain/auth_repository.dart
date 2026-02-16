@@ -13,8 +13,8 @@ abstract interface class AuthRepository {
     required String password,
   });
 
-  /// Register new user
-  Future<Result<void>> register({
+  /// Register new user and return auth tokens
+  Future<Result<AuthTokens>> register({
     required String email,
     required String password,
     required String passwordConfirm,
@@ -47,9 +47,15 @@ abstract interface class AuthRepository {
   /// Request password reset email
   Future<Result<void>> forgotPassword(String email);
 
-  /// Reset password with token
+  /// Verify OTP sent to email and return reset token
+  Future<Result<String>> verifyResetOtp({
+    required String email,
+    required String otp,
+  });
+
+  /// Reset password with verified reset token
   Future<Result<void>> resetPassword({
-    required String token,
+    required String resetToken,
     required String newPassword,
     required String newPasswordConfirm,
   });

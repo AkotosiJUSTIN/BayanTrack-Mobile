@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/domain/failures.dart';
 import '../../../../core/domain/result.dart';
 import '../../../../core/network/error_mapper.dart';
 import '../../domain/auth_repository.dart';
@@ -34,7 +35,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<void>> register({
+  Future<Result<AuthTokens>> register({
     required String email,
     required String password,
     required String passwordConfirm,
@@ -42,7 +43,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String lastName,
   }) async {
     try {
-      await _dio.post(
+      final response = await _dio.post(
         ApiConstants.register,
         data: RegisterRequest(
           email: email,
@@ -52,7 +53,9 @@ class AuthRepositoryImpl implements AuthRepository {
           lastName: lastName,
         ).toJson(),
       );
-      return const Success(null);
+      // Backend returns tokens on registration (same shape as login)
+      final loginResponse = LoginResponse.fromJson(response.data);
+      return Success(AuthMapper.tokensFromLoginResponse(loginResponse));
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));
     }
@@ -163,19 +166,41 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Result<String>> verifyResetOtp({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.verifyResetOtp,
+        data: {'email': email, 'otp': otp},
+      );
+      final resetToken = response.data['reset_token'] as String?;
+      if (resetToken == null || resetToken.isEmpty) {
+        return const Err(
+          ServerFailure('Invalid response from server. Please try again.'),
+        );
+      }
+      return Success(resetToken);
+    } catch (e, stack) {
+      return Err(ErrorMapper.mapException(e, stack));
+    }
+  }
+
+  @override
   Future<Result<void>> resetPassword({
-    required String token,
+    required String resetToken,
     required String newPassword,
     required String newPasswordConfirm,
   }) async {
     try {
       await _dio.post(
         ApiConstants.resetPassword,
-        data: ResetPasswordRequest(
-          token: token,
-          newPassword: newPassword,
-          newPasswordConfirm: newPasswordConfirm,
-        ).toJson(),
+        data: {
+          'reset_token': resetToken,
+          'new_password': newPassword,
+          'new_password_confirm': newPasswordConfirm,
+        },
       );
       return const Success(null);
     } catch (e, stack) {

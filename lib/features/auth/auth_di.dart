@@ -46,7 +46,10 @@ LoginUseCase loginUseCase(Ref ref) {
 
 @riverpod
 RegisterUseCase registerUseCase(Ref ref) {
-  return RegisterUseCase(authRepository: ref.watch(authRepositoryProvider));
+  return RegisterUseCase(
+    authRepository: ref.watch(authRepositoryProvider),
+    sessionRepository: ref.watch(authSessionRepositoryProvider),
+  );
 }
 
 @riverpod
