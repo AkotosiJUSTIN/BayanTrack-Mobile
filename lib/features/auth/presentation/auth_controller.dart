@@ -195,13 +195,13 @@ class AuthController extends _$AuthController {
     );
   }
 
-  /// Logout - INSTANT UI response
-  void logout() {
+  /// Logout - sets UI to logged out, then performs cleanup.
+  Future<void> logout() async {
     // Set state to AuthIdle IMMEDIATELY (synchronous) for instant UI
     state = const AuthIdle();
 
-    // Do all cleanup in background - don't block UI
-    _performLogoutAsync();
+    // Complete cleanup before caller proceeds with navigation.
+    await _performLogoutAsync();
   }
 
   /// Background cleanup after logout

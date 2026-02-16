@@ -413,9 +413,10 @@ class ProfileScreen extends ConsumerWidget {
     );
 
     if (confirmed == true && context.mounted) {
-      // Logout immediately (synchronous state change)
-      ref.read(authControllerProvider.notifier).logout();
+      // Logout and wait for session cleanup before remounting auth flow.
+      await ref.read(authControllerProvider.notifier).logout();
       // Navigate to AuthWrapper which will show LoginScreen based on auth state
+      if (!context.mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const AuthWrapper()),
         (route) => false,
