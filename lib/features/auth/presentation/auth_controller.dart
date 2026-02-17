@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../auth_di.dart';
 import '../domain/entities/user.dart';
@@ -9,6 +10,10 @@ part 'auth_controller.g.dart';
 /// Sealed state for authentication UI
 sealed class AuthState {
   const AuthState();
+}
+
+class AuthInitial extends AuthState {
+  const AuthInitial();
 }
 
 class AuthIdle extends AuthState {
@@ -37,10 +42,18 @@ class AuthError extends AuthState {
 @riverpod
 class AuthController extends _$AuthController {
   @override
-  AuthState build() => const AuthIdle();
+  AuthState build() => const AuthInitial();
 
   /// Check for existing session on app startup
   Future<void> checkAuth() async {
+    // Only allow checkAuth if we are in the initial state
+    if (state is! AuthInitial) {
+      debugPrint(
+        '[AuthController] Skipping checkAuth - already initialized (current state: ${state.runtimeType})',
+      );
+      return;
+    }
+    debugPrint('[AuthController] checkAuth() starting');
     state = const AuthLoading();
     try {
       final loadSession = ref.read(loadSessionUseCaseProvider);
@@ -48,6 +61,9 @@ class AuthController extends _$AuthController {
 
       result.when(
         success: (user) {
+          debugPrint(
+            '[AuthController] checkAuth success. User: ${user?.email}',
+          );
           if (user != null) {
             state = AuthSuccess('Session restored', user);
           } else {
@@ -55,17 +71,22 @@ class AuthController extends _$AuthController {
           }
         },
         failure: (failure) {
+          debugPrint(
+            '[AuthController] checkAuth failure: ${failure.runtimeType}',
+          );
           // On failure, just go to idle state (not logged in)
           state = const AuthIdle();
         },
       );
     } catch (e) {
+      debugPrint('[AuthController] checkAuth error: $e');
       state = const AuthIdle();
     }
   }
 
   /// Login user
   Future<bool> login(String email, String password) async {
+    debugPrint('[AuthController] login() starting for: $email');
     state = const AuthLoading();
 
     final loginUseCase = ref.read(loginUseCaseProvider);
@@ -73,6 +94,7 @@ class AuthController extends _$AuthController {
 
     return result.when(
       success: (user) {
+        debugPrint('[AuthController] login success: ${user.email}');
         // Fetch KYC status after successful login
         try {
           ref.invalidate(kycStatusControllerProvider);
@@ -84,6 +106,7 @@ class AuthController extends _$AuthController {
         return true;
       },
       failure: (failure) {
+        debugPrint('[AuthController] login failure: ${failure.runtimeType}');
         state = AuthError(_failureToMessage(failure));
         return false;
       },
@@ -136,7 +159,9 @@ class AuthController extends _$AuthController {
 
     return result.when(
       success: (_) {
-        state = const AuthSuccess('Password reset OTP sent');
+        // Return to idle - user is NOT authenticated
+        // Forgot password screen handles its own navigation
+        state = const AuthIdle();
         return true;
       },
       failure: (failure) {
@@ -158,7 +183,9 @@ class AuthController extends _$AuthController {
 
     return result.when(
       success: (resetToken) {
-        state = const AuthSuccess('OTP verified');
+        // Return to idle - user is NOT authenticated
+        // Forgot password screen handles its own navigation
+        state = const AuthIdle();
         return resetToken;
       },
       failure: (failure) {
@@ -185,7 +212,9 @@ class AuthController extends _$AuthController {
 
     return result.when(
       success: (_) {
-        state = const AuthSuccess('Password reset successful');
+        // Return to idle - user must log in with new password
+        // This prevents AuthWrapper from incorrectly navigating to home
+        state = const AuthIdle();
         return true;
       },
       failure: (failure) {
@@ -195,8 +224,9 @@ class AuthController extends _$AuthController {
     );
   }
 
-  /// Logout - sets UI to logged out, then performs cleanup.
-  Future<void> logout() async {
+  /// Logout - INSTANT UI response
+  void logout() {
+    debugPrint('[AuthController] logout() triggered');
     // Set state to AuthIdle IMMEDIATELY (synchronous) for instant UI
     state = const AuthIdle();
 

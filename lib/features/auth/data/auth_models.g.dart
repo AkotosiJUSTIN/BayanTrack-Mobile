@@ -125,11 +125,14 @@ Map<String, dynamic> _$ChangePasswordRequestToJson(
 
 _ForgotPasswordRequest _$ForgotPasswordRequestFromJson(
   Map<String, dynamic> json,
-) => _ForgotPasswordRequest(email: json['email'] as String);
+) => _ForgotPasswordRequest(
+  email: json['email'] as String,
+  platform: json['platform'] as String? ?? 'mobile',
+);
 
 Map<String, dynamic> _$ForgotPasswordRequestToJson(
   _ForgotPasswordRequest instance,
-) => <String, dynamic>{'email': instance.email};
+) => <String, dynamic>{'email': instance.email, 'platform': instance.platform};
 
 _ResetPasswordRequest _$ResetPasswordRequestFromJson(
   Map<String, dynamic> json,

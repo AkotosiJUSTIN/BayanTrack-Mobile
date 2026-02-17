@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../domain/auth_session_repository.dart';
@@ -59,6 +60,15 @@ class AuthSessionRepositoryImpl implements AuthSessionRepository {
     await _storage.delete(key: ApiConstants.accessTokenKey);
     await _storage.delete(key: ApiConstants.refreshTokenKey);
     _authStateController.add(false);
+  }
+
+  @override
+  Future<String?> refreshToken() async {
+    final token = await getRefreshToken();
+    debugPrint(
+      '[AuthSessionRepository] Token refresh requested. Has refresh token: ${token != null}',
+    );
+    return token;
   }
 
   /// Dispose the stream controller when no longer needed
