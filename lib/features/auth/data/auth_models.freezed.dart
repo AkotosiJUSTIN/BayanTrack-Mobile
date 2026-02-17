@@ -2136,7 +2136,7 @@ as String,
 /// @nodoc
 mixin _$ForgotPasswordRequest {
 
- String get email;
+ String get email; String get platform;
 /// Create a copy of ForgotPasswordRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2149,16 +2149,16 @@ $ForgotPasswordRequestCopyWith<ForgotPasswordRequest> get copyWith => _$ForgotPa
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ForgotPasswordRequest&&(identical(other.email, email) || other.email == email));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ForgotPasswordRequest&&(identical(other.email, email) || other.email == email)&&(identical(other.platform, platform) || other.platform == platform));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,email);
+int get hashCode => Object.hash(runtimeType,email,platform);
 
 @override
 String toString() {
-  return 'ForgotPasswordRequest(email: $email)';
+  return 'ForgotPasswordRequest(email: $email, platform: $platform)';
 }
 
 
@@ -2169,7 +2169,7 @@ abstract mixin class $ForgotPasswordRequestCopyWith<$Res>  {
   factory $ForgotPasswordRequestCopyWith(ForgotPasswordRequest value, $Res Function(ForgotPasswordRequest) _then) = _$ForgotPasswordRequestCopyWithImpl;
 @useResult
 $Res call({
- String email
+ String email, String platform
 });
 
 
@@ -2186,9 +2186,10 @@ class _$ForgotPasswordRequestCopyWithImpl<$Res>
 
 /// Create a copy of ForgotPasswordRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? email = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? email = null,Object? platform = null,}) {
   return _then(_self.copyWith(
 email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String,platform: null == platform ? _self.platform : platform // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
@@ -2271,10 +2272,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String email)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String email,  String platform)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ForgotPasswordRequest() when $default != null:
-return $default(_that.email);case _:
+return $default(_that.email,_that.platform);case _:
   return orElse();
 
 }
@@ -2292,10 +2293,10 @@ return $default(_that.email);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String email)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String email,  String platform)  $default,) {final _that = this;
 switch (_that) {
 case _ForgotPasswordRequest():
-return $default(_that.email);}
+return $default(_that.email,_that.platform);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -2309,10 +2310,10 @@ return $default(_that.email);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String email)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String email,  String platform)?  $default,) {final _that = this;
 switch (_that) {
 case _ForgotPasswordRequest() when $default != null:
-return $default(_that.email);case _:
+return $default(_that.email,_that.platform);case _:
   return null;
 
 }
@@ -2324,10 +2325,11 @@ return $default(_that.email);case _:
 @JsonSerializable()
 
 class _ForgotPasswordRequest implements ForgotPasswordRequest {
-  const _ForgotPasswordRequest({required this.email});
+  const _ForgotPasswordRequest({required this.email, this.platform = 'mobile'});
   factory _ForgotPasswordRequest.fromJson(Map<String, dynamic> json) => _$ForgotPasswordRequestFromJson(json);
 
 @override final  String email;
+@override@JsonKey() final  String platform;
 
 /// Create a copy of ForgotPasswordRequest
 /// with the given fields replaced by the non-null parameter values.
@@ -2342,16 +2344,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ForgotPasswordRequest&&(identical(other.email, email) || other.email == email));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ForgotPasswordRequest&&(identical(other.email, email) || other.email == email)&&(identical(other.platform, platform) || other.platform == platform));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,email);
+int get hashCode => Object.hash(runtimeType,email,platform);
 
 @override
 String toString() {
-  return 'ForgotPasswordRequest(email: $email)';
+  return 'ForgotPasswordRequest(email: $email, platform: $platform)';
 }
 
 
@@ -2362,7 +2364,7 @@ abstract mixin class _$ForgotPasswordRequestCopyWith<$Res> implements $ForgotPas
   factory _$ForgotPasswordRequestCopyWith(_ForgotPasswordRequest value, $Res Function(_ForgotPasswordRequest) _then) = __$ForgotPasswordRequestCopyWithImpl;
 @override @useResult
 $Res call({
- String email
+ String email, String platform
 });
 
 
@@ -2379,9 +2381,10 @@ class __$ForgotPasswordRequestCopyWithImpl<$Res>
 
 /// Create a copy of ForgotPasswordRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? email = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? email = null,Object? platform = null,}) {
   return _then(_ForgotPasswordRequest(
 email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String,platform: null == platform ? _self.platform : platform // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

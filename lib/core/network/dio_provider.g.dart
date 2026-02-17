@@ -54,7 +54,7 @@ final class DioRawProvider extends $FunctionalProvider<Dio, Dio, Dio>
   }
 }
 
-String _$dioRawHash() => r'3f0b687081b7fcff3d56389b7fb43c315b0de8bb';
+String _$dioRawHash() => r'1fa421e6d0c9eda9d84f8fc6c72a6e0a3af44c17';
 
 /// Main Dio instance with auth interceptor for authenticated requests.
 
@@ -99,4 +99,4 @@ final class DioProvider extends $FunctionalProvider<Dio, Dio, Dio>
   }
 }
 
-String _$dioHash() => r'1c94f6df92424b906dac3b7d38b1bfede6df6e60';
+String _$dioHash() => r'c3698c4b9f166c3bde8dc27df8a998c77af8b824';

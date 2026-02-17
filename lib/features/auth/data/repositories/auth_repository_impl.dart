@@ -157,7 +157,10 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await _dio.post(
         ApiConstants.forgotPassword,
-        data: ForgotPasswordRequest(email: email).toJson(),
+        data: ForgotPasswordRequest(
+          email: email,
+          platform: 'mobile',
+        ).toJson(),
       );
       return const Success(null);
     } catch (e, stack) {
