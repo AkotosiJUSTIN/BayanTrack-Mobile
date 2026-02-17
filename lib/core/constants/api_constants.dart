@@ -21,7 +21,7 @@ class ApiConstants {
   static const String logout = '/auth/logout/';
   static const String logoutAll = '/auth/logout-all/';
   static const String forgotPassword = '/auth/forgot-password/';
-  static const String verifyResetOtp = '/auth/verify-reset-otp/';
+  static const String verifyResetOtp = '/auth/verify-otp/';
   static const String resetPassword = '/auth/reset-password/';
   static const String profile = '/auth/profile/';
   static const String profileUpdate = '/auth/profile/update/';
