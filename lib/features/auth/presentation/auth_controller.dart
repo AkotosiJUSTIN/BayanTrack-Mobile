@@ -225,7 +225,7 @@ class AuthController extends _$AuthController {
   }
 
   /// Logout - INSTANT UI response
-  void logout() {
+  Future<void> logout() async {
     debugPrint('[AuthController] logout() triggered');
     // Set state to AuthIdle IMMEDIATELY (synchronous) for instant UI
     state = const AuthIdle();

@@ -12,6 +12,7 @@ import '../../kyc/domain/entities/kyc_status.dart';
 import '../data/auth_models.dart';
 import '../data/user_permissions.dart';
 import 'auth_controller.dart';
+import 'auth_wrapper.dart';
 import 'profile_controller.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
