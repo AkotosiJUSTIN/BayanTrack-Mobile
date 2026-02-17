@@ -16,16 +16,15 @@ class LogoutUseCase {
        _sessionRepository = sessionRepository;
 
   Future<Result<void>> call() async {
-    // Get refresh token for backend logout
+    // Get refresh token for backend logout.
     final refreshToken = await _sessionRepository.getRefreshToken();
 
-    // Notify backend FIRST (while access token still exists for auth header)
+    // Notify backend first while access token is still available for auth header.
     if (refreshToken != null) {
       await _authRepository.logout(refreshToken);
-      // Ignore result - user is logged out locally either way
     }
 
-    // Clear local session after backend call
+    // Always clear local session regardless of backend result.
     await _sessionRepository.clearSession();
 
     return const Success(null);

@@ -18,6 +18,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   final _newController = TextEditingController();
   final _confirmController = TextEditingController();
   bool _isLoading = false;
+  bool _obscureCurrentPassword = true;
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -82,27 +85,65 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             children: [
               TextFormField(
                 controller: _currentController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Current Password',
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _obscureCurrentPassword = !_obscureCurrentPassword;
+                      });
+                    },
+                    icon: Icon(
+                      _obscureCurrentPassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                  ),
                 ),
-                obscureText: true,
+                obscureText: _obscureCurrentPassword,
                 validator: (v) => v?.isNotEmpty == true ? null : 'Required',
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _newController,
-                decoration: const InputDecoration(labelText: 'New Password'),
-                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'New Password',
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _obscureNewPassword = !_obscureNewPassword;
+                      });
+                    },
+                    icon: Icon(
+                      _obscureNewPassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                  ),
+                ),
+                obscureText: _obscureNewPassword,
                 validator: (v) =>
                     (v?.length ?? 0) >= 8 ? null : 'Min 8 characters',
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _confirmController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Confirm New Password',
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _obscureConfirmPassword = !_obscureConfirmPassword;
+                      });
+                    },
+                    icon: Icon(
+                      _obscureConfirmPassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                  ),
                 ),
-                obscureText: true,
+                obscureText: _obscureConfirmPassword,
                 validator: (v) => v?.isNotEmpty == true ? null : 'Required',
               ),
               const SizedBox(height: 24),

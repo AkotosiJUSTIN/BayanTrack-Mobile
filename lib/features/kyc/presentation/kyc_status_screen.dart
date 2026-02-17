@@ -165,7 +165,14 @@ class KycStatusScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text(_getStatusMessage(kycStatus.status)),
+                  Text(
+                    _getStatusMessage(kycStatus.status),
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.4,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -233,7 +240,7 @@ class KycStatusScreen extends ConsumerWidget {
                               ),
                               if (kycStatus.resubmissionCount > 0)
                                 Text(
-                                  'Attempt ${kycStatus.resubmissionCount + 1} • Please review feedback',
+                                  'Attempt ${kycStatus.resubmissionCount + 1} - Please review feedback',
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: AppColors.darkTextSecondary,
@@ -453,19 +460,26 @@ class KycStatusScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 120,
+            width: 110,
             child: Text(
               label,
               style: TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.outline,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 17,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ),
         ],

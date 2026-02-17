@@ -143,32 +143,46 @@ class VerificationBanner extends ConsumerWidget {
         color: statusColor.withValues(alpha: 0.1),
         border: Border(bottom: BorderSide(color: statusColor.withValues(alpha: 0.3))),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(_getStatusIcon(permissions.currentStatus), color: statusColor, size: 24),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Icon(
+                  _getStatusIcon(permissions.currentStatus),
+                  color: statusColor,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
                   permissions.getStatusMessage(),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: statusColor,
+                    height: 1.35,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => _navigateToKyc(context, permissions, ref),
-            style: TextButton.styleFrom(
-              backgroundColor: statusColor,
-              foregroundColor: Colors.white,
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () => _navigateToKyc(context, permissions, ref),
+              style: TextButton.styleFrom(
+                backgroundColor: statusColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
+              child: Text(permissions.getActionButtonText()),
             ),
-            child: Text(permissions.getActionButtonText()),
           ),
         ],
       ),

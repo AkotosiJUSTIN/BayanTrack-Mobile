@@ -12,6 +12,7 @@ import '../../kyc/domain/entities/kyc_status.dart';
 import '../data/auth_models.dart';
 import '../data/user_permissions.dart';
 import 'auth_controller.dart';
+import 'auth_wrapper.dart';
 import 'profile_controller.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
@@ -420,9 +421,14 @@ class ProfileScreen extends ConsumerWidget {
     );
 
     if (confirmed == true && context.mounted) {
-      // Logout immediately (synchronous state change)
-      // AuthWrapper will automatically show LoginScreen
-      ref.read(authControllerProvider.notifier).logout();
+      // Logout and wait for session cleanup before remounting auth flow.
+      await ref.read(authControllerProvider.notifier).logout();
+      // Navigate to AuthWrapper which will show LoginScreen based on auth state
+      if (!context.mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const AuthWrapper()),
+        (route) => false,
+      );
     }
   }
 }
