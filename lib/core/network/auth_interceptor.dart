@@ -25,6 +25,7 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    debugPrint('[AuthInterceptor] Request: ${options.method} ${options.path}');
     // Skip auth header for public endpoints
     final publicEndpoints = [
       ApiConstants.login,
@@ -35,6 +36,7 @@ class AuthInterceptor extends Interceptor {
     ];
 
     if (publicEndpoints.any((endpoint) => options.path.contains(endpoint))) {
+      debugPrint('[AuthInterceptor] Skipping auth header for public endpoint');
       return handler.next(options);
     }
 
@@ -42,7 +44,10 @@ class AuthInterceptor extends Interceptor {
     final accessToken = await _sessionRepository.getAccessToken();
 
     if (accessToken != null) {
+      debugPrint('[AuthInterceptor] Injecting access token');
       options.headers['Authorization'] = 'Bearer $accessToken';
+    } else {
+      debugPrint('[AuthInterceptor] No access token found');
     }
 
     return handler.next(options);
@@ -53,6 +58,9 @@ class AuthInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
+    debugPrint(
+      '[AuthInterceptor] Error: ${err.response?.statusCode} ${err.requestOptions.path}',
+    );
     // Only handle 401 Unauthorized
     if (err.response?.statusCode != 401) {
       return handler.next(err);

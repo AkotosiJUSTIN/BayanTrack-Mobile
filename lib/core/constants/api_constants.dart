@@ -1,9 +1,23 @@
+import 'dart:io';
+
 class ApiConstants {
   // Use 10.0.2.2 for Android Emulator, localhost for iOS Simulator
-  static const String baseUrl = 'http://10.0.2.2:8000/api';
+  static String get baseUrl {
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:8000/api';
+    } else {
+      return 'http://localhost:8000/api';
+    }
+  }
 
   // Media base URL (without /api suffix)
-  static const String mediaBaseUrl = 'http://10.0.2.2:8000';
+  static String get mediaBaseUrl {
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:8000';
+    } else {
+      return 'http://localhost:8000';
+    }
+  }
 
   /// Build full URL for an image path
   /// Handles both relative (/media/...) and absolute URLs

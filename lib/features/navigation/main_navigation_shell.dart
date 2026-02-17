@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
@@ -15,11 +16,18 @@ class MainNavigationShell extends ConsumerStatefulWidget {
   const MainNavigationShell({super.key});
 
   @override
-  ConsumerState<MainNavigationShell> createState() => _MainNavigationShellState();
+  ConsumerState<MainNavigationShell> createState() =>
+      _MainNavigationShellState();
 }
 
 class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    debugPrint('[MainNavigationShell] Initializing...');
+  }
 
   final List<Widget> _screens = [
     const HomeScreen(),
@@ -37,13 +45,9 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   void _onFabPressed() {
     // Check if user has permission to create reports
     final permissions = ref.read(userPermissionsProvider);
-    
+
     if (!permissions.hasPermission(UserPermission.createReports)) {
-      showVerificationRequiredDialog(
-        context,
-        permissions,
-        'create reports',
-      );
+      showVerificationRequiredDialog(context, permissions, 'create reports');
       return;
     }
 
@@ -55,6 +59,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('[MainNavigationShell] Building with index: $_currentIndex');
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
