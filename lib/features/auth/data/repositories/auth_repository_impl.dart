@@ -157,7 +157,10 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await _dio.post(
         ApiConstants.forgotPassword,
-        data: ForgotPasswordRequest(email: email).toJson(),
+        data: ForgotPasswordRequest(
+          email: email,
+          platform: 'mobile',
+        ).toJson(),
       );
       return const Success(null);
     } catch (e, stack) {
@@ -197,7 +200,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _dio.post(
         ApiConstants.resetPassword,
         data: {
-          'reset_token': resetToken,
+          'token': resetToken,
           'new_password': newPassword,
           'new_password_confirm': newPasswordConfirm,
         },

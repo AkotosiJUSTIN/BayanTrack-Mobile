@@ -8,6 +8,9 @@ abstract interface class AuthSessionRepository {
   /// Check if user is currently authenticated (has valid tokens)
   Future<bool> get isAuthenticated;
 
+  /// Triggers a token refresh using the existing refresh token
+  Future<String?> refreshToken();
+
   /// Stream of authentication state changes
   /// Emits `false` when session is cleared (e.g., after failed refresh)
   Stream<bool> get authStateChanges;

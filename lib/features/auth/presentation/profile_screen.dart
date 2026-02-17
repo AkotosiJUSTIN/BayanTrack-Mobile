@@ -12,7 +12,6 @@ import '../../kyc/domain/entities/kyc_status.dart';
 import '../data/auth_models.dart';
 import '../data/user_permissions.dart';
 import 'auth_controller.dart';
-import 'auth_wrapper.dart';
 import 'profile_controller.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
@@ -53,8 +52,10 @@ class ProfileScreen extends ConsumerWidget {
                   children: [
                     // User Info
                     profileAsync.when(
-                      data: (profile) => _buildProfileHeader(context, profile, theme),
-                      loading: () => const Center(child: CircularProgressIndicator()),
+                      data: (profile) =>
+                          _buildProfileHeader(context, profile, theme),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
                       error: (err, _) => Center(child: Text('Error: $err')),
                     ),
                     const SizedBox(height: 24),
@@ -62,7 +63,9 @@ class ProfileScreen extends ConsumerWidget {
                     // KYC Status Card
                     Consumer(
                       builder: (context, ref, _) {
-                        final kycStatusAsync = ref.watch(kycStatusControllerProvider);
+                        final kycStatusAsync = ref.watch(
+                          kycStatusControllerProvider,
+                        );
                         return kycStatusAsync.when(
                           data: (kycStatus) =>
                               _buildKycStatusCard(context, ref, kycStatus),
@@ -238,7 +241,9 @@ class ProfileScreen extends ConsumerWidget {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => const EditProfileScreen(),
+                    ),
                   );
                 },
               ),
@@ -249,7 +254,9 @@ class ProfileScreen extends ConsumerWidget {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => const ChangePasswordScreen(),
+                    ),
                   );
                 },
               ),
@@ -272,16 +279,16 @@ class ProfileScreen extends ConsumerWidget {
                   themeMode == ThemeMode.dark
                       ? Icons.dark_mode
                       : themeMode == ThemeMode.light
-                          ? Icons.light_mode
-                          : Icons.brightness_auto,
+                      ? Icons.light_mode
+                      : Icons.brightness_auto,
                 ),
                 title: const Text('Theme'),
                 subtitle: Text(
                   themeMode == ThemeMode.dark
                       ? 'Dark Mode'
                       : themeMode == ThemeMode.light
-                          ? 'Light Mode'
-                          : 'System Default',
+                      ? 'Light Mode'
+                      : 'System Default',
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.outline,
@@ -414,12 +421,8 @@ class ProfileScreen extends ConsumerWidget {
 
     if (confirmed == true && context.mounted) {
       // Logout immediately (synchronous state change)
+      // AuthWrapper will automatically show LoginScreen
       ref.read(authControllerProvider.notifier).logout();
-      // Navigate to AuthWrapper which will show LoginScreen based on auth state
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const AuthWrapper()),
-        (route) => false,
-      );
     }
   }
 }

@@ -18,16 +18,19 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Check for existing session after first frame
-    // Validate auth state on init - ensures no stale sessions
+    debugPrint('[AuthWrapper] Initializing...');
+
+    // Only validate the session on initial startup
     Future.microtask(() {
       final currentState = ref.read(authControllerProvider);
-      if (currentState is AuthIdle) {
-        // Already idle (logged out), no need to check
-        return;
+      if (currentState is AuthInitial) {
+        debugPrint('[AuthWrapper] Running initial checkAuth()');
+        ref.read(authControllerProvider.notifier).checkAuth();
+      } else {
+        debugPrint(
+          '[AuthWrapper] Skipping checkAuth() - state is ${currentState.runtimeType}',
+        );
       }
-      // Always validate the session on startup, even if state appears authenticated
-      ref.read(authControllerProvider.notifier).checkAuth();
     });
   }
 
@@ -52,11 +55,12 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(authControllerProvider);
+    debugPrint('[AuthWrapper] AuthState changed: ${state.runtimeType}');
 
     return switch (state) {
       AuthSuccess() => const MainNavigationShell(),
       AuthIdle() || AuthError() => const LoginScreen(),
-      AuthLoading() => const Scaffold(
+      AuthInitial() || AuthLoading() => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       ),
     };
