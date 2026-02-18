@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import 'auth_controller.dart';
@@ -119,10 +120,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                 // Logo
                 Center(
-                  child: Image.asset(
-                    'assets/images/logo.png',
+                  child: SvgPicture.asset(
+                    'assets/images/BayanTrack-Logo.svg',
                     height: 60,
-                    errorBuilder: (_, __, ___) => Icon(
+                    placeholderBuilder: (_) => Icon(
                       Icons.location_on,
                       size: 60,
                       color: AppColors.accent,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 
@@ -81,10 +82,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Logo
                 Center(
-                  child: Image.asset(
-                    'assets/images/logo.png',
+                  child: SvgPicture.asset(
+                    'assets/images/BayanTrack-Logo.svg',
                     height: 220,
-                    errorBuilder: (_, __, ___) => Icon(
+                    placeholderBuilder: (_) => Icon(
                       Icons.location_on,
                       size: 220,
                       color: AppColors.accent,
