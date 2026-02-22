@@ -33,6 +33,8 @@ class VerificationRequiredDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final actionLabel = permissions.getActionButtonText();
+
     return AlertDialog(
       title: const Row(
         children: [
@@ -69,25 +71,40 @@ class VerificationRequiredDialog extends ConsumerWidget {
               ],
             ),
           ),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _navigateToKycAction(context, permissions, ref);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.alertMedium,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(actionLabel),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-            _navigateToKycAction(context, permissions, ref);
-          },
-          child: Text(permissions.getActionButtonText()),
-        ),
-      ],
+      actions: const [],
     );
   }
 
-  void _navigateToKycAction(BuildContext context, UserPermissions permissions, WidgetRef ref) async {
+  void _navigateToKycAction(
+    BuildContext context,
+    UserPermissions permissions,
+    WidgetRef ref,
+  ) async {
     if (permissions.canSubmitKyc) {
       // Navigate to KYC form
       final result = await Navigator.push(
@@ -136,55 +153,104 @@ class VerificationBanner extends ConsumerWidget {
 
     final statusColor = _getStatusColor(permissions.currentStatus);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: statusColor.withValues(alpha: 0.1),
-        border: Border(bottom: BorderSide(color: statusColor.withValues(alpha: 0.3))),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Icon(
-                  _getStatusIcon(permissions.currentStatus),
-                  color: statusColor,
-                  size: 22,
+    final theme = Theme.of(context);
+    final actionLabel = permissions.getActionButtonText();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: statusColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: statusColor.withValues(alpha: 0.28)),
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 360;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        _getStatusIcon(permissions.currentStatus),
+                        color: statusColor,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'User Verification',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            permissions.getStatusMessage(),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.78,
+                              ),
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  permissions.getStatusMessage(),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: statusColor,
-                    height: 1.35,
+                const SizedBox(height: 12),
+                if (compact)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () =>
+                          _navigateToKyc(context, permissions, ref),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.alertMedium,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                      ),
+                      child: Text(actionLabel),
+                    ),
+                  )
+                else
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: () =>
+                          _navigateToKyc(context, permissions, ref),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.alertMedium,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 11,
+                        ),
+                      ),
+                      child: Text(actionLabel),
+                    ),
                   ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () => _navigateToKyc(context, permissions, ref),
-              style: TextButton.styleFrom(
-                backgroundColor: statusColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              ),
-              child: Text(permissions.getActionButtonText()),
-            ),
-          ),
-        ],
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -224,7 +290,11 @@ class VerificationBanner extends ConsumerWidget {
     }
   }
 
-  void _navigateToKyc(BuildContext context, UserPermissions permissions, WidgetRef ref) async {
+  void _navigateToKyc(
+    BuildContext context,
+    UserPermissions permissions,
+    WidgetRef ref,
+  ) async {
     if (permissions.canSubmitKyc) {
       final result = await Navigator.push(
         context,
@@ -301,6 +371,10 @@ class InlineVerificationPrompt extends ConsumerWidget {
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: () => _navigateToKyc(context, permissions, ref),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.alertMedium,
+              foregroundColor: Colors.white,
+            ),
             icon: const Icon(Icons.verified_user),
             label: Text(permissions.getActionButtonText()),
           ),
@@ -309,7 +383,11 @@ class InlineVerificationPrompt extends ConsumerWidget {
     );
   }
 
-  void _navigateToKyc(BuildContext context, UserPermissions permissions, WidgetRef ref) async {
+  void _navigateToKyc(
+    BuildContext context,
+    UserPermissions permissions,
+    WidgetRef ref,
+  ) async {
     if (permissions.canSubmitKyc) {
       final result = await Navigator.push(
         context,

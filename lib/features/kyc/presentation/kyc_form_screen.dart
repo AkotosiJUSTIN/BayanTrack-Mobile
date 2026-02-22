@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/validators.dart';
 import '../data/kyc_models.dart';
 import '../domain/entities/kyc_status.dart';
 import 'kyc_controller.dart';
@@ -34,6 +37,9 @@ class KycFormScreen extends ConsumerStatefulWidget {
 class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _imagePicker = ImagePicker();
+  static final _nameInputRegex = RegExp(r"[A-Za-z\s\-'`]");
+  static final _addressInputRegex = RegExp(r"[A-Za-z0-9\s,.'#/()-]");
+  static final _idNumberRegex = RegExp(r"[A-Za-z0-9\-/]");
 
   // Text controllers for all fields
   final _firstNameController = TextEditingController();
@@ -121,12 +127,15 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
+        AppToast.error(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+          'Could not access the image. Please try again.',
+        );
       }
     }
   }
+
+  void _validateLive() => _formKey.currentState?.validate();
 
   void _showImageSourceDialog(String imageType, String title) {
     showModalBottomSheet(
@@ -169,9 +178,12 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
   /// Find which step has validation errors
   int? _findStepWithErrors() {
+    final state = ref.read(kycFormControllerProvider);
+
     // Check Basic Identity (Step 0)
     if (_firstNameController.text.trim().isEmpty ||
         _lastNameController.text.trim().isEmpty ||
+        state.dateOfBirth == null ||
         _nationalityController.text.trim().isEmpty) {
       return 0;
     }
@@ -179,8 +191,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     // Check Contact (Step 1)
     final email = _emailController.text.trim();
     final mobile = _mobileNumberController.text.trim();
-    if (email.isEmpty ||
-        !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+    if (Validators.email(email) != null) {
       return 1;
     }
     final cleanedMobile = mobile.replaceAll(RegExp(r'[\s\-]'), '');
@@ -197,7 +208,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     }
 
     // Check ID Details (Step 3)
-    final state = ref.read(kycFormControllerProvider);
     if (state.selectedIdType == null ||
         _idNumberController.text.trim().isEmpty) {
       return 3;
@@ -217,11 +227,11 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   String _getStepErrorMessage(int step) {
     switch (step) {
       case 0:
-        return 'Please complete Basic Identity: First Name, Last Name, and Nationality are required';
+        return 'Please complete Basic Identity: First Name, Last Name, Date of Birth, and Nationality are required';
       case 1:
         final email = _emailController.text.trim();
         if (email.isEmpty) return 'Email address is required';
-        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+        if (Validators.email(email) != null) {
           return 'Please enter a valid email address (e.g., name@example.com)';
         }
         return 'Please enter a valid mobile number';
@@ -252,36 +262,21 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         setState(() => _currentStep = errorStep);
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: AppColors.alertHigh,
-          duration: const Duration(seconds: 4),
-        ),
-      );
+      AppToast.error(context, errorMessage);
       return;
     }
 
     // Run form validation to trigger field-level error display
     if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fix the highlighted errors in the form'),
-          backgroundColor: AppColors.alertHigh,
-        ),
-      );
+      AppToast.error(context, 'Please fix the highlighted errors in the form');
       return;
     }
 
     final state = ref.read(kycFormControllerProvider);
     if (!state.canSubmit) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please complete all required fields and upload images',
-          ),
-          backgroundColor: AppColors.alertHigh,
-        ),
+      AppToast.error(
+        context,
+        'Please complete all required fields and upload images',
       );
       return;
     }
@@ -298,25 +293,19 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       ref.invalidate(kycStatusControllerProvider);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.isResubmission
-                  ? 'KYC resubmitted successfully!'
-                  : 'KYC submitted successfully!',
-            ),
-            backgroundColor: AppColors.success,
-          ),
+        AppToast.success(
+          context,
+          widget.isResubmission
+              ? 'User verification resubmitted successfully!'
+              : 'User verification submitted successfully!',
         );
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: AppColors.alertHigh,
-          ),
+        AppToast.error(
+          context,
+          'Unable to submit user verification. Please try again.',
         );
       }
     }
@@ -328,10 +317,15 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isResubmission ? 'Resubmit KYC' : 'Submit KYC'),
+        title: Text(
+          widget.isResubmission
+              ? 'Resubmit User Verification'
+              : 'Submit User Verification',
+        ),
       ),
       body: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Stepper(
           currentStep: _currentStep,
           onStepContinue: () {
@@ -379,8 +373,17 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
                   const SizedBox(width: 12),
                   if (_currentStep > 0)
                     Expanded(
-                      child: TextButton(
+                      child: OutlinedButton(
                         onPressed: details.onStepCancel,
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          side: BorderSide(
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                         child: const Text('Back'),
                       ),
                     ),
@@ -487,7 +490,14 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             prefixIcon: Icon(Icons.person),
           ),
           textCapitalization: TextCapitalization.words,
-          onChanged: controller.setFirstName,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(_nameInputRegex),
+            LengthLimitingTextInputFormatter(50),
+          ],
+          onChanged: (v) {
+            controller.setFirstName(v);
+            _validateLive();
+          },
           validator: (v) =>
               v == null || v.trim().isEmpty ? 'First name is required' : null,
         ),
@@ -502,7 +512,14 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             prefixIcon: Icon(Icons.person_outline),
           ),
           textCapitalization: TextCapitalization.words,
-          onChanged: controller.setMiddleName,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(_nameInputRegex),
+            LengthLimitingTextInputFormatter(50),
+          ],
+          onChanged: (v) {
+            controller.setMiddleName(v);
+            _validateLive();
+          },
         ),
         const SizedBox(height: 16),
 
@@ -515,13 +532,20 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             prefixIcon: Icon(Icons.person),
           ),
           textCapitalization: TextCapitalization.words,
-          onChanged: controller.setLastName,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(_nameInputRegex),
+            LengthLimitingTextInputFormatter(50),
+          ],
+          onChanged: (v) {
+            controller.setLastName(v);
+            _validateLive();
+          },
           validator: (v) =>
               v == null || v.trim().isEmpty ? 'Last name is required' : null,
         ),
         const SizedBox(height: 16),
 
-        // Date of Birth
+        // Date of Birth *
         InkWell(
           onTap: () async {
             final date = await showDatePicker(
@@ -532,11 +556,12 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             );
             if (date != null) {
               controller.setDateOfBirth(date);
+              _validateLive();
             }
           },
           child: InputDecorator(
             decoration: const InputDecoration(
-              labelText: 'Date of Birth',
+              labelText: 'Date of Birth *',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.calendar_today),
             ),
@@ -576,7 +601,14 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             hintText: 'e.g., Filipino',
           ),
           textCapitalization: TextCapitalization.words,
-          onChanged: controller.setNationality,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(_nameInputRegex),
+            LengthLimitingTextInputFormatter(50),
+          ],
+          onChanged: (v) {
+            controller.setNationality(v);
+            _validateLive();
+          },
           validator: (v) =>
               v == null || v.trim().isEmpty ? 'Nationality is required' : null,
         ),
@@ -615,14 +647,11 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             prefixIcon: Icon(Icons.email),
           ),
           keyboardType: TextInputType.emailAddress,
-          onChanged: controller.setEmail,
-          validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Email is required';
-            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(v)) {
-              return 'Enter a valid email';
-            }
-            return null;
+          onChanged: (v) {
+            controller.setEmail(v);
+            _validateLive();
           },
+          validator: Validators.email,
         ),
         const SizedBox(height: 16),
 
@@ -636,9 +665,16 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             hintText: '+63 9XX XXX XXXX',
           ),
           keyboardType: TextInputType.phone,
-          onChanged: controller.setMobileNumber,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[\d+\s-]')),
+            LengthLimitingTextInputFormatter(20),
+          ],
+          onChanged: (v) {
+            controller.setMobileNumber(v);
+            _validateLive();
+          },
           validator: (v) {
-            if (v == null || v.trim().isEmpty){
+            if (v == null || v.trim().isEmpty) {
               return 'Mobile number is required';
             }
             final cleaned = v.replaceAll(RegExp(r'[\s\-]'), '');
@@ -667,7 +703,14 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             hintText: 'House No., Street, Barangay',
           ),
           textCapitalization: TextCapitalization.words,
-          onChanged: controller.setStreetBarangay,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(_addressInputRegex),
+            LengthLimitingTextInputFormatter(255),
+          ],
+          onChanged: (v) {
+            controller.setStreetBarangay(v);
+            _validateLive();
+          },
           validator: (v) => v == null || v.trim().isEmpty
               ? 'Street/Barangay is required'
               : null,
@@ -683,7 +726,14 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             prefixIcon: Icon(Icons.location_city),
           ),
           textCapitalization: TextCapitalization.words,
-          onChanged: controller.setCityMunicipality,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(_addressInputRegex),
+            LengthLimitingTextInputFormatter(100),
+          ],
+          onChanged: (v) {
+            controller.setCityMunicipality(v);
+            _validateLive();
+          },
           validator: (v) => v == null || v.trim().isEmpty
               ? 'City/Municipality is required'
               : null,
@@ -699,7 +749,14 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             prefixIcon: Icon(Icons.map),
           ),
           textCapitalization: TextCapitalization.words,
-          onChanged: controller.setProvince,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(_addressInputRegex),
+            LengthLimitingTextInputFormatter(100),
+          ],
+          onChanged: (v) {
+            controller.setProvince(v);
+            _validateLive();
+          },
           validator: (v) =>
               v == null || v.trim().isEmpty ? 'Province is required' : null,
         ),
@@ -714,7 +771,14 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             prefixIcon: Icon(Icons.markunread_mailbox),
           ),
           keyboardType: TextInputType.number,
-          onChanged: controller.setZipCode,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(10),
+          ],
+          onChanged: (v) {
+            controller.setZipCode(v);
+            _validateLive();
+          },
         ),
       ],
     );
@@ -756,7 +820,14 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.numbers),
           ),
-          onChanged: controller.setIdNumber,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(_idNumberRegex),
+            LengthLimitingTextInputFormatter(50),
+          ],
+          onChanged: (v) {
+            controller.setIdNumber(v);
+            _validateLive();
+          },
           validator: (v) =>
               v == null || v.trim().isEmpty ? 'ID number is required' : null,
         ),

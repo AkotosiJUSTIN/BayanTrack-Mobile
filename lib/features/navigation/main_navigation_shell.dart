@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_colors.dart';
@@ -22,6 +21,7 @@ class MainNavigationShell extends ConsumerStatefulWidget {
 
 class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   int _currentIndex = 0;
+  bool _isNavigatingToNewReport = false;
 
   @override
   void initState() {
@@ -43,6 +43,8 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   }
 
   void _onFabPressed() {
+    if (_isNavigatingToNewReport || !mounted) return;
+
     // Check if user has permission to create reports
     final permissions = ref.read(userPermissionsProvider);
 
@@ -51,10 +53,15 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
       return;
     }
 
-    // Navigate to new report flow
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const NewReportPhotosScreen()));
+    // Navigate to new report flow, guarded to prevent duplicate pushes.
+    setState(() => _isNavigatingToNewReport = true);
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const NewReportPhotosScreen()))
+        .whenComplete(() {
+          if (mounted) {
+            setState(() => _isNavigatingToNewReport = false);
+          }
+        });
   }
 
   @override

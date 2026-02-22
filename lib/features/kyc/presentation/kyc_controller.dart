@@ -204,6 +204,7 @@ class KycFormState {
   bool get isBasicIdentityComplete =>
       firstName.trim().isNotEmpty &&
       lastName.trim().isNotEmpty &&
+      dateOfBirth != null &&
       nationality.trim().isNotEmpty;
 
   /// Check if contact section is complete

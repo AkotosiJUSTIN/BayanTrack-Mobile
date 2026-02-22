@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/presentation/widgets/app_toast.dart';
+import '../../../core/utils/validators.dart';
 import '../data/auth_models.dart';
 import 'profile_controller.dart';
 
@@ -34,12 +35,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     if (_newController.text != _confirmController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Passwords do not match'),
-          backgroundColor: AppColors.alertHigh,
-        ),
-      );
+      AppToast.error(context, 'New password and confirmation do not match.');
       return;
     }
 
@@ -54,18 +50,14 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           .read(profileControllerProvider.notifier)
           .changePassword(request);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password changed successfully')),
-        );
+        AppToast.success(context, 'Your password has been changed.');
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error changing password: $e'),
-            backgroundColor: AppColors.alertHigh,
-          ),
+        AppToast.error(
+          context,
+          'Unable to change your password right now. Please try again.',
         );
       }
     } finally {
@@ -122,8 +114,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   ),
                 ),
                 obscureText: _obscureNewPassword,
-                validator: (v) =>
-                    (v?.length ?? 0) >= 8 ? null : 'Min 8 characters',
+                validator: Validators.password,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -144,7 +135,11 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   ),
                 ),
                 obscureText: _obscureConfirmPassword,
-                validator: (v) => v?.isNotEmpty == true ? null : 'Required',
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Required';
+                  if (v != _newController.text) return 'Passwords do not match';
+                  return null;
+                },
               ),
               const SizedBox(height: 24),
               SizedBox(

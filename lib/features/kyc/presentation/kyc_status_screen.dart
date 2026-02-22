@@ -16,7 +16,7 @@ class KycStatusScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('KYC Verification'),
+        title: const Text('User Verification'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -98,12 +98,14 @@ class KycStatusScreen extends ConsumerWidget {
                 }
               },
               icon: const Icon(Icons.assignment),
-              label: const Text('Start Verification'),
+              label: const Text('Verify Identity'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,
                   vertical: 16,
                 ),
+                backgroundColor: AppColors.alertMedium,
+                foregroundColor: Colors.white,
               ),
             ),
           ],
@@ -439,7 +441,36 @@ class KycStatusScreen extends ConsumerWidget {
                 ),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.alertMedium,
+                  foregroundColor: Colors.white,
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          if (kycStatus.status == KycVerificationStatus.unverified)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const KycFormScreen(),
+                    ),
+                  );
+                  if (result == true) {
+                    ref.read(kycStatusControllerProvider.notifier).refresh();
+                  }
+                },
+                icon: const Icon(Icons.verified_user),
+                label: const Text('Verify Identity'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: AppColors.alertMedium,
                   foregroundColor: Colors.white,
                   elevation: 2,
                   shape: RoundedRectangleBorder(

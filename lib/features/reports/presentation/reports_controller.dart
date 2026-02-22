@@ -15,13 +15,10 @@ class ReportsController extends _$ReportsController {
     return _fetchReports(page: page, status: status);
   }
 
-  Future<PaginatedReports> _fetchReports({
-    int page = 1,
-    String? status,
-  }) async {
+  Future<PaginatedReports> _fetchReports({int page = 1, String? status}) async {
     final getReports = ref.read(getReportsUseCaseProvider);
     final result = await getReports(page: page, status: status);
-    
+
     return result.when(
       success: (data) => data,
       failure: (failure) => throw Exception(failure.message),
@@ -42,14 +39,17 @@ class ReportsController extends _$ReportsController {
 @riverpod
 class MyReportsController extends _$MyReportsController {
   @override
-  Future<PaginatedReports> build({int page = 1}) async {
-    return _fetchMyReports(page: page);
+  Future<PaginatedReports> build({int page = 1, String? status}) async {
+    return _fetchMyReports(page: page, status: status);
   }
 
-  Future<PaginatedReports> _fetchMyReports({int page = 1}) async {
+  Future<PaginatedReports> _fetchMyReports({
+    int page = 1,
+    String? status,
+  }) async {
     final getMyReports = ref.read(getMyReportsUseCaseProvider);
-    final result = await getMyReports(page: page);
-    
+    final result = await getMyReports(page: page, status: status);
+
     return result.when(
       success: (data) => data,
       failure: (failure) => throw Exception(failure.message),
