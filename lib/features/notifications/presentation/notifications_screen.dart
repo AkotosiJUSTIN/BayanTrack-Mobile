@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/data/user_permissions.dart';
+import '../../auth/presentation/verification_widgets.dart';
 import '../../reports/presentation/report_detail_screen.dart';
 import '../domain/entities/notification.dart';
 import '../domain/entities/notification_type.dart';
@@ -16,6 +19,7 @@ class NotificationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notificationsAsync = ref.watch(notificationsControllerProvider);
+    final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -32,10 +36,9 @@ class NotificationsScreen extends ConsumerWidget {
                           .read(notificationsControllerProvider.notifier)
                           .markAllAsRead();
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('All notifications marked as read'),
-                          ),
+                        AppToast.success(
+                          context,
+                          'All notifications marked as read',
                         );
                       }
                     },
@@ -46,15 +49,24 @@ class NotificationsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(notificationsControllerProvider);
-        },
-        child: notificationsAsync.when(
-          data: (data) => _buildContent(context, ref, data, theme, isDark),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => _buildErrorState(context, ref, theme, error),
-        ),
+      body: Column(
+        children: [
+          VerificationBanner(permissions: permissions),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(notificationsControllerProvider);
+              },
+              child: notificationsAsync.when(
+                data: (data) =>
+                    _buildContent(context, ref, data, theme, isDark),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, _) =>
+                    _buildErrorState(context, ref, theme, error),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -73,7 +85,7 @@ class NotificationsScreen extends ConsumerWidget {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: data.results.length,
-      separatorBuilder: (_, __) => Divider(
+      separatorBuilder: (_, _) => Divider(
         height: 1,
         color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
       ),

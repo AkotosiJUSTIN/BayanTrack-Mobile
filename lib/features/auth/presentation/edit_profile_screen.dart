@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/presentation/widgets/app_toast.dart';
+import '../../../core/utils/validators.dart';
 import '../data/auth_models.dart';
 import 'profile_controller.dart';
 
@@ -46,18 +48,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       );
       await ref.read(profileControllerProvider.notifier).updateProfile(request);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully')),
-        );
+        AppToast.success(context, 'Your profile has been updated.');
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error updating profile: $e'),
-            backgroundColor: AppColors.alertHigh,
-          ),
+        AppToast.error(
+          context,
+          'Unable to update your profile right now. Please try again.',
         );
       }
     } finally {
@@ -73,18 +71,31 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             children: [
               TextFormField(
                 controller: _firstNameController,
                 decoration: const InputDecoration(labelText: 'First Name'),
-                validator: (v) => v?.isNotEmpty == true ? null : 'Required',
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r"[A-Za-z\s\-'`]")),
+                  LengthLimitingTextInputFormatter(100),
+                ],
+                onChanged: (_) => _formKey.currentState?.validate(),
+                validator: (v) =>
+                    Validators.lettersOnly(v, fieldName: 'First name'),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _lastNameController,
                 decoration: const InputDecoration(labelText: 'Last Name'),
-                validator: (v) => v?.isNotEmpty == true ? null : 'Required',
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r"[A-Za-z\s\-'`]")),
+                  LengthLimitingTextInputFormatter(100),
+                ],
+                onChanged: (_) => _formKey.currentState?.validate(),
+                validator: (v) =>
+                    Validators.lettersOnly(v, fieldName: 'Last name'),
               ),
               const SizedBox(height: 24),
               SizedBox(

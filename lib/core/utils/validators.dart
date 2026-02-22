@@ -14,6 +14,8 @@ class Validators {
   static final _emailRegex = RegExp(
     r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
   );
+  static final _lettersOnlyRegex = RegExp(r'^[A-Za-z]+$');
+  static final _specialCharRegex = RegExp(r'[!@#$%^&*(),.?":{}|<>]');
 
   /// Validates email address using RFC 5322 compliant regex.
   static String? email(String? value) {
@@ -43,6 +45,9 @@ class Validators {
     if (!value.contains(RegExp(r'[0-9]'))) {
       return 'Password must contain at least one number';
     }
+    if (!_specialCharRegex.hasMatch(value)) {
+      return 'Password must contain at least one special character';
+    }
     return null;
   }
 
@@ -63,6 +68,28 @@ class Validators {
     if (value == null || value.trim().isEmpty) {
       return '$fieldName is required';
     }
+    return null;
+  }
+
+  /// Validates a field contains letters only.
+  static String? lettersOnly(
+    String? value, {
+    String fieldName = 'This field',
+    int maxLength = 100,
+  }) {
+    if (value == null || value.trim().isEmpty) {
+      return '$fieldName is required';
+    }
+
+    final trimmed = value.trim();
+    if (trimmed.length > maxLength) {
+      return '$fieldName must be at most $maxLength characters';
+    }
+
+    if (!_lettersOnlyRegex.hasMatch(trimmed)) {
+      return '$fieldName must contain letters only';
+    }
+
     return null;
   }
 

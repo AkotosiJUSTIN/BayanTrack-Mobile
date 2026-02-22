@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/presentation/widgets/app_toast.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../images/data/images_repository.dart';
 import '../../data/report_models.dart';
@@ -24,8 +25,9 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     final state = ref.read(newReportControllerProvider);
 
     if (!state.canSubmit) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please complete all required fields and accept the declaration')),
+      AppToast.warning(
+        context,
+        'Please complete all required fields and accept the declaration',
       );
       return;
     }
@@ -41,18 +43,21 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
       final request = state.toCreateRequest();
 
       final createdReport = await reportsRepo.createReport(request);
-      
+
       // Check if report was detected as a potential duplicate
       final isDuplicate = createdReport.duplicateState == 'potential_duplicate';
-      
+
       // Step 2: Upload images (if any) - upload one at a time for reliability
       if (state.selectedImages.isNotEmpty) {
         setState(() => _statusMessage = 'Uploading images...');
-        
+
         final imagesRepo = ref.read(imagesRepositoryProvider);
         try {
           for (int i = 0; i < state.selectedImages.length; i++) {
-            setState(() => _statusMessage = 'Uploading image ${i + 1}/${state.selectedImages.length}...');
+            setState(
+              () => _statusMessage =
+                  'Uploading image ${i + 1}/${state.selectedImages.length}...',
+            );
             await imagesRepo.uploadImage(
               imageFile: state.selectedImages[i],
               reportId: createdReport.id,
@@ -63,11 +68,9 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
           // Log but don't fail - report was already created
           debugPrint('Image upload failed: $e');
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Report created, but image upload failed'),
-                backgroundColor: AppColors.alertMedium,
-              ),
+            AppToast.warning(
+              context,
+              'Your report was submitted, but some photos could not be uploaded.',
             );
           }
         }
@@ -87,12 +90,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
         if (isDuplicate) {
           await _showDuplicateWarning(context, createdReport);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Report submitted successfully!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          AppToast.success(context, 'Your report has been submitted.');
         }
       }
     } catch (e) {
@@ -102,35 +100,32 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
       });
       if (mounted) {
         // Extract detailed error message
-        String errorMessage = 'Failed to submit';
+        String errorMessage =
+            'We could not submit your report. Please try again.';
         if (e.toString().contains('DioException')) {
           // Try to get more details from the response
           final errorStr = e.toString();
           debugPrint('Full error: $errorStr');
-          
+
           // Check if there's a response body with details
           if (errorStr.contains('details')) {
-            errorMessage = 'Validation error - check form fields';
+            errorMessage =
+                'Some report details are invalid. Please review and try again.';
           }
-        } else {
-          errorMessage = e.toString();
         }
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: AppColors.alertHigh,
-            duration: const Duration(seconds: 5),
-          ),
-        );
+
+        AppToast.error(context, errorMessage);
       }
     }
   }
 
-  Future<void> _showDuplicateWarning(BuildContext context, Report report) async {
+  Future<void> _showDuplicateWarning(
+    BuildContext context,
+    Report report,
+  ) async {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return showDialog(
       context: context,
       barrierDismissible: false,
@@ -197,7 +192,9 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                             'Similarity: ',
                             style: TextStyle(
                               fontSize: 12,
-                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              color: isDark
+                                  ? Colors.grey[400]
+                                  : Colors.grey[600],
                             ),
                           ),
                           Text(
@@ -213,11 +210,14 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                             'Confidence: ',
                             style: TextStyle(
                               fontSize: 12,
-                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              color: isDark
+                                  ? Colors.grey[400]
+                                  : Colors.grey[600],
                             ),
                           ),
                           Text(
-                            report.duplicateConfidence?.toUpperCase() ?? 'MEDIUM',
+                            report.duplicateConfidence?.toUpperCase() ??
+                                'MEDIUM',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -260,9 +260,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
               },
               icon: const Icon(Icons.visibility, size: 18),
               label: const Text('View Original'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-              ),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
             ),
         ],
       ),
@@ -334,7 +332,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: state.selectedImages.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        separatorBuilder: (_, _) => const SizedBox(width: 8),
                         itemBuilder: (context, index) {
                           return ClipRRect(
                             borderRadius: BorderRadius.circular(8),
@@ -376,12 +374,20 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                       children: [
                         if (state.zone != null && state.zone!.isNotEmpty)
                           _buildInfoRow('Zone', state.zone!),
-                        if (state.streetLandmark != null && state.streetLandmark!.isNotEmpty)
-                          _buildInfoRow('Street/Landmark', state.streetLandmark!),
-                        if (state.location != null && state.location!.isNotEmpty)
+                        if (state.streetLandmark != null &&
+                            state.streetLandmark!.isNotEmpty)
+                          _buildInfoRow(
+                            'Street/Landmark',
+                            state.streetLandmark!,
+                          ),
+                        if (state.location != null &&
+                            state.location!.isNotEmpty)
                           _buildInfoRow('Address', state.location!),
                         if (state.latitude != null && state.longitude != null)
-                          _buildInfoRow('GPS', '${state.latitude!.toStringAsFixed(6)}, ${state.longitude!.toStringAsFixed(6)}'),
+                          _buildInfoRow(
+                            'GPS',
+                            '${state.latitude!.toStringAsFixed(6)}, ${state.longitude!.toStringAsFixed(6)}',
+                          ),
                       ],
                     ),
                   ),
@@ -397,7 +403,10 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                     content: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildInfoRow('Is Happening Now', state.isHappeningNow ? 'Yes' : 'No'),
+                        _buildInfoRow(
+                          'Is Happening Now',
+                          state.isHappeningNow ? 'Yes' : 'No',
+                        ),
                       ],
                     ),
                   ),
@@ -464,13 +473,16 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                   // Declaration checkbox
                   CheckboxListTile(
                     value: state.declarationConfirmed,
-                    onChanged: (v) => controller.setDeclarationConfirmed(v ?? false),
+                    onChanged: (v) =>
+                        controller.setDeclarationConfirmed(v ?? false),
                     title: const Text('I confirm the information is accurate'),
                     subtitle: Text(
                       'I declare that all information provided is true and accurate to the best of my knowledge.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary,
                       ),
                     ),
                     controlAffinity: ListTileControlAffinity.leading,
@@ -481,20 +493,23 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                   // Data processing consent
                   CheckboxListTile(
                     value: state.dataProcessingConsent,
-                    onChanged: (v) => controller.setDataProcessingConsent(v ?? false),
+                    onChanged: (v) =>
+                        controller.setDataProcessingConsent(v ?? false),
                     title: const Text('I consent to data processing'),
                     subtitle: Text(
                       'I consent to the processing of my personal data for the purpose of handling this report.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary,
                       ),
                     ),
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: EdgeInsets.zero,
                     activeColor: AppColors.primary,
                   ),
-                  
+
                   if (!state.hasConsent)
                     Container(
                       margin: const EdgeInsets.only(top: 8),
@@ -505,7 +520,11 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.info_outline, color: AppColors.alertMedium, size: 20),
+                          Icon(
+                            Icons.info_outline,
+                            color: AppColors.alertMedium,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -614,18 +633,10 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
             width: 100,
             child: Text(
               '$label:',
-              style: const TextStyle(
-                color: Colors.grey,
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 13))),
         ],
       ),
     );
