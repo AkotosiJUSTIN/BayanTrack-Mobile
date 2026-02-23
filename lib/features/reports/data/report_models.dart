@@ -25,7 +25,7 @@ enum ReportCategory {
     publicSafetyUtilities => 'Public Safety & Utilities',
     communityConcerns => 'Community Concerns',
   };
-  
+
   String get value => switch (this) {
     roadTraffic => 'road_traffic',
     floodingDrainage => 'flooding_drainage',
@@ -62,7 +62,7 @@ enum ReportStatus {
     resolved => 'Resolved',
     rejected => 'Rejected',
   };
-  
+
   String get value => switch (this) {
     submitted => 'submitted',
     underReview => 'under_review',
@@ -92,7 +92,7 @@ enum SeverityLevel {
     high => 'High',
     critical => 'Critical',
   };
-  
+
   String get value => switch (this) {
     low => 'low',
     medium => 'medium',
@@ -125,7 +125,7 @@ enum DuplicateState {
   @JsonValue('confirmed_duplicate')
   confirmedDuplicate,
   @JsonValue('unique')
-  unique;
+  unique,
 }
 
 // ==================== PRIORITY LEVEL ====================
@@ -146,7 +146,7 @@ enum PriorityLevel {
     high => 'High',
     critical => 'Critical',
   };
-  
+
   String get value => switch (this) {
     low => 'LOW',
     medium => 'MEDIUM',
@@ -187,7 +187,7 @@ sealed class Report with _$Report {
     required String id,
     @JsonKey(name: 'report_id') String? reportId,
     @JsonKey(name: 'user_id') String? userId,
-    
+
     // Report Details
     String? category,
     @JsonKey(name: 'incident_type') String? incidentType,
@@ -195,7 +195,7 @@ sealed class Report with _$Report {
     required String description,
     @JsonKey(name: 'incident_datetime') String? incidentDatetime,
     @JsonKey(name: 'is_happening_now') @Default(false) bool isHappeningNow,
-    
+
     // Location Information
     String? zone,
     @JsonKey(name: 'street_landmark') String? streetLandmark,
@@ -203,21 +203,23 @@ sealed class Report with _$Report {
     String? province,
     String? latitude,
     String? longitude,
-    @JsonKey(name: 'location_accuracy') @Default('approximate') String locationAccuracy,
+    @JsonKey(name: 'location_accuracy')
+    @Default('approximate')
+    String locationAccuracy,
     // Legacy fields
     String? location,
     String? barangay,
-    
+
     // Severity & Impact
     @Default('medium') String severity,
     @JsonKey(name: 'people_affected') int? peopleAffected,
     @JsonKey(name: 'is_emergency') @Default(false) bool isEmergency,
-    
+
     // System Fields
     @Default('submitted') String status,
     @JsonKey(name: 'assigned_department') String? assignedDepartment,
     @JsonKey(name: 'admin_remarks') String? adminRemarks,
-    
+
     // AI Fields
     @JsonKey(name: 'category_confidence') double? categoryConfidence,
     String? priority,
@@ -232,21 +234,28 @@ sealed class Report with _$Report {
     @JsonKey(name: 'duplicate_score') double? duplicateScore,
     @JsonKey(name: 'duplicate_confidence') String? duplicateConfidence,
     @JsonKey(name: 'duplicate_text_similarity') double? duplicateTextSimilarity,
-    @JsonKey(name: 'duplicate_location_similarity') double? duplicateLocationSimilarity,
+    @JsonKey(name: 'duplicate_location_similarity')
+    double? duplicateLocationSimilarity,
     @JsonKey(name: 'duplicate_explanation') String? duplicateExplanation,
     @JsonKey(name: 'related_issue_id') String? relatedIssueId,
     @JsonKey(name: 'sentiment_score') double? sentimentScore,
     @JsonKey(name: 'auto_category_suggestion') String? autoCategorySuggestion,
-    
+
     // Images
     @Default([]) List<ReportImage> images,
-    
+
     // Timestamps
     @JsonKey(name: 'created_at') String? createdAt,
     @JsonKey(name: 'updated_at') String? updatedAt,
     @JsonKey(name: 'submitted_at') String? submittedAt,
     @JsonKey(name: 'verified_at') String? verifiedAt,
     @JsonKey(name: 'resolved_at') String? resolvedAt,
+
+    // Blockchain Integration
+    @JsonKey(name: 'on_chain_id') int? onChainId,
+    @JsonKey(name: 'on_chain_hash') String? onChainHash,
+    @JsonKey(name: 'blockchain_txn_hash') String? blockchainTxnHash,
+    @JsonKey(name: 'blockchain_synced') @Default(false) bool blockchainSynced,
   }) = _Report;
 
   factory Report.fromJson(Map<String, dynamic> json) => _$ReportFromJson(json);
@@ -264,7 +273,7 @@ sealed class CreateReportRequest with _$CreateReportRequest {
     required String description,
     @JsonKey(name: 'incident_datetime') String? incidentDatetime,
     @JsonKey(name: 'is_happening_now') @Default(false) bool isHappeningNow,
-    
+
     // Location Information (Section B)
     String? zone,
     @JsonKey(name: 'street_landmark') String? streetLandmark,
@@ -272,14 +281,20 @@ sealed class CreateReportRequest with _$CreateReportRequest {
     String? province,
     String? latitude,
     String? longitude,
-    @JsonKey(name: 'location_accuracy') @Default('approximate') String locationAccuracy,
+    @JsonKey(name: 'location_accuracy')
+    @Default('approximate')
+    String locationAccuracy,
     // Legacy fields for backwards compatibility
     String? location,
     String? barangay,
-    
+
     // Consent & Declaration
-    @JsonKey(name: 'declaration_confirmed') @Default(true) bool declarationConfirmed,
-    @JsonKey(name: 'data_processing_consent') @Default(true) bool dataProcessingConsent,
+    @JsonKey(name: 'declaration_confirmed')
+    @Default(true)
+    bool declarationConfirmed,
+    @JsonKey(name: 'data_processing_consent')
+    @Default(true)
+    bool dataProcessingConsent,
   }) = _CreateReportRequest;
 
   factory CreateReportRequest.fromJson(Map<String, dynamic> json) =>
@@ -369,7 +384,8 @@ sealed class ReportFormOptions with _$ReportFormOptions {
   const factory ReportFormOptions({
     required List<Map<String, dynamic>> categories,
     required List<Map<String, dynamic>> statuses,
-    @JsonKey(name: 'severity_levels') required List<Map<String, dynamic>> severityLevels,
+    @JsonKey(name: 'severity_levels')
+    required List<Map<String, dynamic>> severityLevels,
   }) = _ReportFormOptions;
 
   factory ReportFormOptions.fromJson(Map<String, dynamic> json) =>

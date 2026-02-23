@@ -47,6 +47,7 @@ class ApiConstants {
   static const String reportStats = '/reports/stats/';
   static const String reportFormOptions = '/reports/form-options/';
   static String reportById(String id) => '/reports/$id/';
+  static String reportVerify(String id) => '/reports/$id/verify/';
 
   // Images Endpoints
   static const String images = '/images/';

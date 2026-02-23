@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../domain/entities/blockchain_verification.dart';
 import '../domain/entities/report.dart';
 import '../reports_di.dart';
 
@@ -18,7 +19,7 @@ class ReportDetailController extends _$ReportDetailController {
   Future<Report> _fetchReport(String reportId) async {
     final getReport = ref.read(getReportUseCaseProvider);
     final result = await getReport(reportId);
-    
+
     return result.when(
       success: (data) => data,
       failure: (failure) => throw Exception(failure.message),
@@ -27,10 +28,18 @@ class ReportDetailController extends _$ReportDetailController {
 
   /// Refresh the report
   Future<void> refresh() async {
-    final reportId = state.value?.id;
-    if (reportId == null) return;
-    
+    final id = reportId;
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _fetchReport(reportId));
+    state = await AsyncValue.guard(() => _fetchReport(id));
+  }
+
+  /// Verify the report against blockchain
+  Future<BlockchainVerificationResult?> verifyReport() async {
+    final id = reportId;
+    final verifyUseCase = ref.read(verifyReportUseCaseProvider);
+
+    final result = await verifyUseCase(id);
+
+    return result.when(success: (data) => data, failure: (failure) => null);
   }
 }

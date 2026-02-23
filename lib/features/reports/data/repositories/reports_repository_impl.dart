@@ -8,6 +8,8 @@ import '../../domain/entities/report_stats.dart';
 import '../../domain/reports_repository.dart';
 import '../mappers/report_mapper.dart';
 import '../report_models.dart' as dto;
+import '../blockchain_models.dart' as blockchain_dto;
+import '../../domain/entities/blockchain_verification.dart';
 
 /// Implementation of [ReportsRepository] using Dio.
 ///
@@ -218,6 +220,19 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final response = await _dio.get(ApiConstants.reportStats);
       final dtoStats = dto.ReportStats.fromJson(response.data);
       return Success(ReportMapper.statsFromDto(dtoStats));
+    } catch (e, stack) {
+      return Err(ErrorMapper.mapException(e, stack));
+    }
+  }
+
+  @override
+  Future<Result<BlockchainVerificationResult>> verifyReport(String id) async {
+    try {
+      final response = await _dio.get(ApiConstants.reportVerify(id));
+      final dtoResult = blockchain_dto.BlockchainVerificationResultDto.fromJson(
+        response.data,
+      );
+      return Success(ReportMapper.blockchainVerificationFromDto(dtoResult));
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));
     }

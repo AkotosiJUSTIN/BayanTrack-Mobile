@@ -1,3 +1,5 @@
+import '../blockchain_models.dart' as blockchain_dto;
+import '../../domain/entities/blockchain_verification.dart';
 import '../../domain/entities/paginated_reports.dart';
 import '../../domain/entities/report.dart';
 import '../../domain/entities/report_enums.dart';
@@ -67,6 +69,10 @@ class ReportMapper {
       resolvedAt: dtoReport.resolvedAt != null
           ? DateTime.tryParse(dtoReport.resolvedAt!)
           : null,
+      onChainId: dtoReport.onChainId,
+      onChainHash: dtoReport.onChainHash,
+      blockchainTxnHash: dtoReport.blockchainTxnHash,
+      blockchainSynced: dtoReport.blockchainSynced,
     );
   }
 
@@ -98,7 +104,6 @@ class ReportMapper {
     );
   }
 
-  /// Convert DTO ReportStats to domain entity
   static ReportStats statsFromDto(dto.ReportStats dtoStats) {
     return ReportStats(
       total: dtoStats.total,
@@ -113,6 +118,32 @@ class ReportMapper {
       inProgress: dtoStats.inProgress,
       resolved: dtoStats.resolved,
       rejected: dtoStats.rejected,
+    );
+  }
+
+  static BlockchainVerificationResult blockchainVerificationFromDto(
+    blockchain_dto.BlockchainVerificationResultDto result,
+  ) {
+    return BlockchainVerificationResult(
+      reportId: result.reportId,
+      onChainId: result.onChainId,
+      verified: result.verified,
+      statusVerified: result.statusVerified,
+      blockchainData: result.blockchainData,
+      auditHistory: result.auditHistory
+          .map(
+            (e) => BlockchainAuditEntry(
+              reportId: e.reportId,
+              actionType: e.actionType,
+              actor: e.actor,
+              timestamp: e.timestamp,
+              detailsHash: e.detailsHash,
+              oldStatus: e.oldStatus,
+              newStatus: e.newStatus,
+            ),
+          )
+          .toList(),
+      message: result.message,
     );
   }
 }

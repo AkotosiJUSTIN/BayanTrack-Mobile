@@ -2,6 +2,7 @@ import '../../../core/domain/result.dart';
 import 'entities/paginated_reports.dart';
 import 'entities/report.dart';
 import 'entities/report_stats.dart';
+import 'entities/blockchain_verification.dart';
 
 /// Repository interface for report operations.
 ///
@@ -74,4 +75,7 @@ abstract interface class ReportsRepository {
 
   /// Get report statistics
   Future<Result<ReportStats>> getStats();
+
+  /// Verify report on blockchain
+  Future<Result<BlockchainVerificationResult>> verifyReport(String id);
 }
