@@ -46,6 +46,8 @@ dependencies:
   intl: ^0.19.0
   image_picker: ^1.2.1
   geolocator: ^14.0.2
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
   shared_preferences: ^2.5.4
   equatable: ^2.0.8
   connectivity_plus: ^7.0.0

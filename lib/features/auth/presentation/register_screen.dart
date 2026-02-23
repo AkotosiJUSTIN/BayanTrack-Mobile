@@ -1,7 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import 'auth_controller.dart';
@@ -25,7 +27,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _agreeToTerms = false;
+  bool _termsAccepted = false;
+  bool _privacyAccepted = false;
+
+  bool get _agreeToTerms => _termsAccepted && _privacyAccepted;
 
   @override
   void dispose() {
@@ -39,8 +44,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _handleRegister() async {
     if (!_agreeToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please agree to the Terms & Conditions')),
+      AppToast.warning(
+        context,
+        'Please read and accept Terms & Conditions and Privacy Policy',
       );
       return;
     }
@@ -57,11 +63,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           );
 
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registration successful! Welcome to BayanTrack.'),
-            backgroundColor: Colors.green,
-          ),
+        AppToast.success(
+          context,
+          'Registration successful! Welcome to BayanTrack.',
         );
         // Pop register screen so AuthWrapper (now showing MainNavigationShell
         // due to AuthSuccess state) becomes visible immediately
@@ -75,17 +79,38 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   void _showTermsAndConditions() {
-    // TODO: Navigate to Terms & Conditions
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Terms & Conditions')));
+    _showPolicyDialog(
+      'Terms & Conditions',
+      onAccepted: () {
+        _termsAccepted = true;
+      },
+    );
   }
 
   void _showPrivacyPolicy() {
-    // TODO: Navigate to Privacy Policy
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Privacy Policy')));
+    _showPolicyDialog(
+      'Privacy Policy',
+      onAccepted: () {
+        _privacyAccepted = true;
+      },
+    );
+  }
+
+  Future<void> _showPolicyDialog(
+    String title, {
+    required VoidCallback onAccepted,
+  }) async {
+    final accepted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _PolicyDialog(title: title),
+    );
+
+    if (accepted == true && mounted) {
+      setState(() {
+        onAccepted();
+      });
+    }
   }
 
   @override
@@ -98,12 +123,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     // Show error snackbar when auth fails
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
       if (next is AuthError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.message),
-            backgroundColor: AppColors.alertHigh,
-          ),
-        );
+        AppToast.error(context, next.message);
       }
     });
 
@@ -113,6 +133,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -124,6 +145,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     'assets/images/BayanTrack-Logo.svg',
                     height: 60,
                     placeholderBuilder: (_) => Icon(
+                      Icons.location_on,
+                      size: 60,
+                      color: AppColors.accent,
+                    ),
+                    errorBuilder: (_, _, _) => Icon(
                       Icons.location_on,
                       size: 60,
                       color: AppColors.accent,
@@ -158,16 +184,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   textInputAction: TextInputAction.next,
                   textCapitalization: TextCapitalization.words,
                   enabled: !isLoading,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
+                    LengthLimitingTextInputFormatter(100),
+                  ],
+                  onChanged: (_) => _formKey.currentState?.validate(),
                   decoration: const InputDecoration(
                     hintText: 'Enter your first name',
                     prefixIcon: Icon(Icons.person_outline),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your first name';
-                    }
-                    return null;
-                  },
+                  validator: (value) =>
+                      Validators.lettersOnly(value, fieldName: 'First name'),
                 ),
                 const SizedBox(height: 20),
 
@@ -179,16 +206,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   textInputAction: TextInputAction.next,
                   textCapitalization: TextCapitalization.words,
                   enabled: !isLoading,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
+                    LengthLimitingTextInputFormatter(100),
+                  ],
+                  onChanged: (_) => _formKey.currentState?.validate(),
                   decoration: const InputDecoration(
                     hintText: 'Enter your last name',
                     prefixIcon: Icon(Icons.person_outline),
                   ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter your last name';
-                    }
-                    return null;
-                  },
+                  validator: (value) =>
+                      Validators.lettersOnly(value, fieldName: 'Last name'),
                 ),
                 const SizedBox(height: 20),
 
@@ -200,6 +228,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   enabled: !isLoading,
+                  onChanged: (_) => _formKey.currentState?.validate(),
                   decoration: const InputDecoration(
                     hintText: 'Enter your email',
                     prefixIcon: Icon(Icons.email_outlined),
@@ -216,6 +245,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   obscureText: _obscurePassword,
                   textInputAction: TextInputAction.next,
                   enabled: !isLoading,
+                  onChanged: (_) => _formKey.currentState?.validate(),
                   decoration: InputDecoration(
                     hintText: 'Create a password',
                     prefixIcon: const Icon(Icons.lock_outline),
@@ -232,15 +262,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       },
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a password';
-                    }
-                    if (value.length < 8) {
-                      return 'Password must be at least 8 characters';
-                    }
-                    return null;
-                  },
+                  validator: Validators.password,
                 ),
                 const SizedBox(height: 20),
 
@@ -252,6 +274,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   obscureText: _obscureConfirmPassword,
                   textInputAction: TextInputAction.done,
                   enabled: !isLoading,
+                  onChanged: (_) => _formKey.currentState?.validate(),
                   onFieldSubmitted: (_) => _handleRegister(),
                   decoration: InputDecoration(
                     hintText: 'Confirm your password',
@@ -285,16 +308,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Checkbox(
-                      value: _agreeToTerms,
-                      onChanged: isLoading
-                          ? null
-                          : (value) {
-                              setState(() {
-                                _agreeToTerms = value ?? false;
-                              });
-                            },
-                    ),
+                    Checkbox(value: _agreeToTerms, onChanged: null),
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.only(top: 12),
@@ -367,6 +381,105 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PolicyDialog extends StatefulWidget {
+  const _PolicyDialog({required this.title});
+
+  final String title;
+
+  @override
+  State<_PolicyDialog> createState() => _PolicyDialogState();
+}
+
+class _PolicyDialogState extends State<_PolicyDialog> {
+  late final ScrollController _scrollController;
+  bool _canAccept = false;
+
+  static const String _dummyContent = '''
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer in massa id massa finibus ullamcorper. Sed volutpat ullamcorper eros, et dictum augue laoreet non. Curabitur bibendum tincidunt ante, at tristique ex dignissim non.
+
+Vivamus nec justo vitae eros feugiat efficitur. Fusce interdum, justo in elementum feugiat, nisl nunc posuere mi, a hendrerit elit orci at nibh. Suspendisse potenti. Quisque lobortis mi id ipsum dignissim, non ullamcorper nisl eleifend.
+
+Mauris porttitor neque id justo egestas, et varius mi porttitor. Nunc euismod, mi in viverra viverra, augue leo convallis neque, in blandit risus justo vitae orci. Proin ultrices sapien eu sem fermentum, ac laoreet lectus pellentesque.
+
+Nulla facilisi. Pellentesque in gravida urna. Donec pretium arcu vitae leo ultricies, in euismod nibh laoreet. In in aliquam odio, in sollicitudin lectus. Cras cursus egestas sapien, sed imperdiet eros elementum ac.
+
+Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Integer tristique libero ac lacus placerat, vel ultricies est volutpat. Nunc posuere, turpis in fermentum viverra, ipsum lectus tristique justo, id convallis metus justo nec mauris.
+
+Aliquam erat volutpat. Etiam aliquam sapien ac odio volutpat, eu scelerisque erat bibendum. Morbi in malesuada elit. Integer tincidunt vulputate dui, in gravida purus tincidunt non. Sed sagittis commodo est, ut bibendum lorem blandit vel.
+
+By tapping Accept, you acknowledge you have read and understood this policy text.
+''';
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController()..addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _onScroll();
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients || _canAccept) return;
+    final position = _scrollController.position;
+    final reachedBottom = position.pixels >= position.maxScrollExtent - 12;
+    if (reachedBottom) {
+      setState(() {
+        _canAccept = true;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: SizedBox(
+        width: 360,
+        height: 320,
+        child: Column(
+          children: [
+            Expanded(
+              child: Scrollbar(
+                controller: _scrollController,
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  child: const Text(_dummyContent),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _canAccept
+                  ? 'You can now accept.'
+                  : 'Scroll to the bottom to enable Accept.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Close'),
+        ),
+        ElevatedButton(
+          onPressed: _canAccept ? () => Navigator.of(context).pop(true) : null,
+          child: const Text('Accept'),
+        ),
+      ],
     );
   }
 }

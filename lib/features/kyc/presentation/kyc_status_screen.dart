@@ -16,7 +16,7 @@ class KycStatusScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('KYC Verification'),
+        title: const Text('User Verification'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -98,12 +98,14 @@ class KycStatusScreen extends ConsumerWidget {
                 }
               },
               icon: const Icon(Icons.assignment),
-              label: const Text('Start Verification'),
+              label: const Text('Verify Identity'),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,
                   vertical: 16,
                 ),
+                backgroundColor: AppColors.alertMedium,
+                foregroundColor: Colors.white,
               ),
             ),
           ],
@@ -165,7 +167,14 @@ class KycStatusScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text(_getStatusMessage(kycStatus.status)),
+                  Text(
+                    _getStatusMessage(kycStatus.status),
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.4,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -233,7 +242,7 @@ class KycStatusScreen extends ConsumerWidget {
                               ),
                               if (kycStatus.resubmissionCount > 0)
                                 Text(
-                                  'Attempt ${kycStatus.resubmissionCount + 1} • Please review feedback',
+                                  'Attempt ${kycStatus.resubmissionCount + 1} - Please review feedback',
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: AppColors.darkTextSecondary,
@@ -432,7 +441,36 @@ class KycStatusScreen extends ConsumerWidget {
                 ),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.alertMedium,
+                  foregroundColor: Colors.white,
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          if (kycStatus.status == KycVerificationStatus.unverified)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const KycFormScreen(),
+                    ),
+                  );
+                  if (result == true) {
+                    ref.read(kycStatusControllerProvider.notifier).refresh();
+                  }
+                },
+                icon: const Icon(Icons.verified_user),
+                label: const Text('Verify Identity'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: AppColors.alertMedium,
                   foregroundColor: Colors.white,
                   elevation: 2,
                   shape: RoundedRectangleBorder(
@@ -453,19 +491,26 @@ class KycStatusScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 120,
+            width: 110,
             child: Text(
               label,
               style: TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.outline,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 17,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ),
         ],

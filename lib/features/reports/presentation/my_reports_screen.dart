@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_colors.dart';
-import '../domain/entities/paginated_reports.dart';
-import '../domain/entities/report.dart';
-import '../domain/entities/report_enums.dart';
-import 'report_detail_screen.dart';
-import 'reports_controller.dart';
-
-import '../../home/presentation/widgets/home_report_card.dart';
 import '../../../core/presentation/widgets/empty_content_placeholder.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../auth/data/user_permissions.dart';
+import '../../auth/presentation/verification_widgets.dart';
+import '../domain/entities/report.dart';
+import '../presentation/report_detail_screen.dart';
+import '../reports_di.dart';
+import '../../home/presentation/widgets/home_report_card.dart';
 
 /// My Reports screen showing user's submitted reports.
-/// Features filter tabs: All, Pending, In Progress, Resolved.
 class MyReportsScreen extends ConsumerStatefulWidget {
   const MyReportsScreen({super.key});
 
@@ -22,15 +20,139 @@ class MyReportsScreen extends ConsumerStatefulWidget {
 class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   int _selectedFilter = 0;
 
-  final List<String> _filters = ['All', 'Pending', 'In Progress', 'Resolved'];
+  bool _isInitialLoading = true;
+  bool _isLoadingMore = false;
+  bool _isNavigatingToReportDetail = false;
+  String? _loadError;
+
+  int _currentPage = 0;
+  int _totalPages = 1;
+
+  final _scrollController = ScrollController();
+  final List<Report> _reports = [];
+
+  final List<({String label, String? status})> _filters = const [
+    (label: 'All', status: null),
+    (label: 'Submitted', status: 'submitted'),
+    (label: 'Under Review', status: 'under_review'),
+    (label: 'In Progress', status: 'in_progress'),
+    (label: 'Resolved', status: 'resolved'),
+    (label: 'Rejected', status: 'rejected'),
+  ];
+
+  String? get _selectedStatus => _filters[_selectedFilter].status;
+  bool get _hasNextPage => _currentPage < _totalPages;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+    _loadInitialReports();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   Future<void> _onRefresh() async {
-    ref.invalidate(myReportsControllerProvider());
+    await _loadInitialReports();
+  }
+
+  Future<void> _loadInitialReports() async {
+    setState(() {
+      _isInitialLoading = true;
+      _isLoadingMore = false;
+      _loadError = null;
+      _currentPage = 0;
+      _totalPages = 1;
+      _reports.clear();
+    });
+
+    final getMyReports = ref.read(getMyReportsUseCaseProvider);
+    final result = await getMyReports(page: 1, status: _selectedStatus);
+
+    if (!mounted) return;
+
+    result.when(
+      success: (data) {
+        setState(() {
+          _reports.addAll(data.results);
+          _currentPage = data.page;
+          _totalPages = data.totalPages;
+          _isInitialLoading = false;
+        });
+      },
+      failure: (failure) {
+        setState(() {
+          _loadError = failure.message;
+          _isInitialLoading = false;
+        });
+      },
+    );
+  }
+
+  Future<void> _loadNextPage() async {
+    if (_isInitialLoading || _isLoadingMore || !_hasNextPage) return;
+
+    setState(() => _isLoadingMore = true);
+
+    final nextPage = _currentPage + 1;
+    final getMyReports = ref.read(getMyReportsUseCaseProvider);
+    final result = await getMyReports(page: nextPage, status: _selectedStatus);
+
+    if (!mounted) return;
+
+    result.when(
+      success: (data) {
+        final existingIds = _reports.map((r) => r.id).toSet();
+        final newReports = data.results
+            .where((report) => !existingIds.contains(report.id))
+            .toList();
+
+        setState(() {
+          _reports.addAll(newReports);
+          _currentPage = data.page;
+          _totalPages = data.totalPages;
+          _isLoadingMore = false;
+        });
+      },
+      failure: (_) {
+        setState(() => _isLoadingMore = false);
+      },
+    );
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final threshold = _scrollController.position.maxScrollExtent - 320;
+    if (_scrollController.position.pixels >= threshold) {
+      _loadNextPage();
+    }
+  }
+
+  Future<void> _openReportDetail(String reportId) async {
+    if (_isNavigatingToReportDetail || !mounted) return;
+
+    setState(() => _isNavigatingToReportDetail = true);
+    try {
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ReportDetailScreen(reportId: reportId),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isNavigatingToReportDetail = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final reportsAsync = ref.watch(myReportsControllerProvider());
+    final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -39,9 +161,12 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         child: CustomScrollView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // Filter tabs
+            SliverToBoxAdapter(
+              child: VerificationBanner(permissions: permissions),
+            ),
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 48,
@@ -56,7 +181,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
                       padding: const EdgeInsets.only(right: 8),
                       child: FilterChip(
                         selected: isSelected,
-                        label: Text(_filters[index]),
+                        label: Text(_filters[index].label),
                         selectedColor: AppColors.primary,
                         backgroundColor: isDark
                             ? AppColors.darkSurface
@@ -78,10 +203,11 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
                                     ? AppColors.darkBorder
                                     : AppColors.lightBorder),
                         ),
-                        onSelected: (selected) {
+                        onSelected: (_) {
                           setState(() {
                             _selectedFilter = index;
                           });
+                          _loadInitialReports();
                         },
                       ),
                     );
@@ -89,85 +215,132 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
                 ),
               ),
             ),
-
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-            // Reports list
-            _buildSliverContent(reportsAsync, theme),
+            _buildSliverContent(theme),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSliverContent(
-    AsyncValue<PaginatedReports> reportsAsync,
-    ThemeData theme,
-  ) {
-    return reportsAsync.when(
-      data: (data) {
-        final filteredResults = _filterReports(data.results);
-
-        if (filteredResults.isEmpty) {
-          return SliverFillRemaining(
-            hasScrollBody: false,
-            child: _buildEmptyState(theme),
-          );
-        }
-
-        return SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                return HomeReportCard(
-                  report: filteredResults[index],
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ReportDetailScreen(
-                          reportId: filteredResults[index].id,
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-              childCount: filteredResults.length,
-            ),
-          ),
-        );
-      },
-      loading: () => const SliverFillRemaining(
+  Widget _buildSliverContent(ThemeData theme) {
+    if (_isInitialLoading) {
+      return const SliverFillRemaining(
         hasScrollBody: false,
         child: Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, _) => SliverFillRemaining(
+      );
+    }
+
+    if (_loadError != null && _reports.isEmpty) {
+      return SliverFillRemaining(
         hasScrollBody: false,
-        child: _buildErrorState(theme, error.toString()),
+        child: _buildErrorState(theme, _loadError!),
+      );
+    }
+
+    if (_reports.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: _buildEmptyState(theme),
+      );
+    }
+
+    final sectionItems = _buildSectionItems(_reports);
+
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate((context, index) {
+          if (index == sectionItems.length) {
+            return _buildListFooter(theme);
+          }
+
+          final item = sectionItems[index];
+          if (item.isHeader) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(4, 10, 4, 8),
+              child: Text(
+                item.header!,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            );
+          }
+
+          final report = item.report!;
+          return HomeReportCard(
+            report: report,
+            onTap: () => _openReportDetail(report.id),
+          );
+        }, childCount: sectionItems.length + 1),
       ),
     );
   }
 
-  List<Report> _filterReports(List<Report> reports) {
-    if (_selectedFilter == 0) return reports;
+  Widget _buildListFooter(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
+      child: Center(
+        child: _isLoadingMore
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              )
+            : Text(
+                _hasNextPage ? 'Scroll to load more' : 'No more reports',
+                style: theme.textTheme.bodySmall,
+              ),
+      ),
+    );
+  }
 
-    final targetStatus = switch (_selectedFilter) {
-      1 => ReportStatus.submitted,
-      2 => ReportStatus.inProgress,
-      3 => ReportStatus.resolved,
-      _ => null,
-    };
+  List<_ReportSectionItem> _buildSectionItems(List<Report> reports) {
+    final sortedReports = [...reports]
+      ..sort((a, b) {
+        final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bDate.compareTo(aDate);
+      });
 
-    if (targetStatus == null) return reports;
-    return reports.where((r) => r.status == targetStatus).toList();
+    final items = <_ReportSectionItem>[];
+    DateTime? previousDate;
+
+    for (final report in sortedReports) {
+      final createdAt = report.createdAt;
+      final reportDate = createdAt == null
+          ? null
+          : DateTime(createdAt.year, createdAt.month, createdAt.day);
+
+      if (reportDate != previousDate) {
+        items.add(_ReportSectionItem.header(_sectionLabelForDate(reportDate)));
+        previousDate = reportDate;
+      }
+      items.add(_ReportSectionItem.report(report));
+    }
+
+    return items;
+  }
+
+  String _sectionLabelForDate(DateTime? date) {
+    if (date == null) return 'Unknown Date';
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    if (date == today) return 'Today';
+    if (date == yesterday) return 'Yesterday';
+
+    return MaterialLocalizations.of(context).formatMediumDate(date);
   }
 
   Widget _buildEmptyState(ThemeData theme) {
     return EmptyContentPlaceholder(
       icon: Icons.assignment_outlined,
       title: 'No reports found',
-      message: 'You haven\'t submitted any reports with this status yet.',
+      message: 'You have no reports for the selected filter.',
       onRetry: _onRefresh,
     );
   }
@@ -193,4 +366,18 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
       ),
     );
   }
+}
+
+class _ReportSectionItem {
+  final String? header;
+  final Report? report;
+
+  const _ReportSectionItem._({this.header, this.report});
+
+  factory _ReportSectionItem.header(String text) =>
+      _ReportSectionItem._(header: text);
+  factory _ReportSectionItem.report(Report report) =>
+      _ReportSectionItem._(report: report);
+
+  bool get isHeader => header != null;
 }

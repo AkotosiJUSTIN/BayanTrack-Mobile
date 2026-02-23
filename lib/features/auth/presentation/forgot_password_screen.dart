@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import 'auth_controller.dart';
-import 'login_screen.dart';
+import 'auth_wrapper.dart';
 
 enum _ResetStep { email, otp, password }
 
@@ -55,9 +57,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       _otpController.clear();
     });
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('OTP sent to your email.')));
+    AppToast.success(context, 'OTP sent. Please check your email.');
   }
 
   Future<void> _handleVerifyOtp() async {
@@ -88,11 +88,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       setState(() {
         _step = _ResetStep.otp;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Session expired. Please verify OTP again.'),
-          backgroundColor: AppColors.alertHigh,
-        ),
+      AppToast.error(
+        context,
+        'Your session expired. Please verify the OTP again.',
       );
       return;
     }
@@ -107,13 +105,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
     if (!mounted || !success) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Password reset successful. Please login.')),
-    );
+    AppToast.success(context, 'Password reset successful. Please log in.');
 
     Navigator.of(
       context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const AuthWrapper()));
   }
 
   Future<void> _handleResendOtp() async {
@@ -123,16 +119,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
     if (!mounted || !success) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('OTP resent. Check your email.')),
-    );
+    AppToast.info(context, 'OTP resent. Please check your email.');
   }
 
   void _handleBack() {
     switch (_step) {
       case _ResetStep.email:
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          MaterialPageRoute(builder: (_) => const AuthWrapper()),
         );
         return;
       case _ResetStep.otp:
@@ -175,12 +169,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
       if (next is AuthError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.message),
-            backgroundColor: AppColors.alertHigh,
-          ),
-        );
+        AppToast.error(context, next.message);
       }
     });
 
@@ -239,11 +228,13 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               if (_step == _ResetStep.email) ...[
                 Form(
                   key: _emailFormKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   child: TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.done,
                     enabled: !isLoading,
+                    onChanged: (_) => _emailFormKey.currentState?.validate(),
                     onFieldSubmitted: (_) => _handleSendOtp(),
                     decoration: const InputDecoration(
                       hintText: 'Enter your email',
@@ -264,11 +255,17 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               if (_step == _ResetStep.otp) ...[
                 Form(
                   key: _otpFormKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   child: TextFormField(
                     controller: _otpController,
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.done,
                     enabled: !isLoading,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(6),
+                    ],
+                    onChanged: (_) => _otpFormKey.currentState?.validate(),
                     onFieldSubmitted: (_) => _handleVerifyOtp(),
                     decoration: const InputDecoration(
                       hintText: 'Enter 6-digit OTP',
@@ -302,6 +299,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               if (_step == _ResetStep.password) ...[
                 Form(
                   key: _passwordFormKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -310,6 +308,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         obscureText: _obscureNewPassword,
                         textInputAction: TextInputAction.next,
                         enabled: !isLoading,
+                        onChanged: (_) =>
+                            _passwordFormKey.currentState?.validate(),
                         decoration: InputDecoration(
                           hintText: 'New password',
                           prefixIcon: const Icon(Icons.lock_outline),
@@ -334,6 +334,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         obscureText: _obscureConfirmPassword,
                         textInputAction: TextInputAction.done,
                         enabled: !isLoading,
+                        onChanged: (_) =>
+                            _passwordFormKey.currentState?.validate(),
                         onFieldSubmitted: (_) => _handleResetPassword(),
                         decoration: InputDecoration(
                           hintText: 'Confirm new password',
@@ -379,7 +381,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   GestureDetector(
                     onTap: () {
                       Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        MaterialPageRoute(builder: (_) => const AuthWrapper()),
                       );
                     },
                     child: Text(

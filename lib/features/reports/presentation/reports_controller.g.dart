@@ -153,7 +153,7 @@ final class MyReportsControllerProvider
   /// Returns domain [PaginatedReports] entity.
   MyReportsControllerProvider._({
     required MyReportsControllerFamily super.from,
-    required int super.argument,
+    required ({int page, String? status}) super.argument,
   }) : super(
          retry: null,
          name: r'myReportsControllerProvider',
@@ -169,7 +169,7 @@ final class MyReportsControllerProvider
   String toString() {
     return r'myReportsControllerProvider'
         ''
-        '($argument)';
+        '$argument';
   }
 
   @$internal
@@ -188,7 +188,7 @@ final class MyReportsControllerProvider
 }
 
 String _$myReportsControllerHash() =>
-    r'7c680009810b1ffae3c18c11c9802e7ce79f1532';
+    r'2caf6cd63418e56af4e114052d688283e05e260c';
 
 /// Controller for fetching user's own reports.
 ///
@@ -202,7 +202,7 @@ final class MyReportsControllerFamily extends $Family
           AsyncValue<PaginatedReports>,
           PaginatedReports,
           FutureOr<PaginatedReports>,
-          int
+          ({int page, String? status})
         > {
   MyReportsControllerFamily._()
     : super(
@@ -218,8 +218,11 @@ final class MyReportsControllerFamily extends $Family
   /// Uses [GetMyReportsUseCase] for proper clean architecture layering.
   /// Returns domain [PaginatedReports] entity.
 
-  MyReportsControllerProvider call({int page = 1}) =>
-      MyReportsControllerProvider._(argument: page, from: this);
+  MyReportsControllerProvider call({int page = 1, String? status}) =>
+      MyReportsControllerProvider._(
+        argument: (page: page, status: status),
+        from: this,
+      );
 
   @override
   String toString() => r'myReportsControllerProvider';
@@ -231,10 +234,11 @@ final class MyReportsControllerFamily extends $Family
 /// Returns domain [PaginatedReports] entity.
 
 abstract class _$MyReportsController extends $AsyncNotifier<PaginatedReports> {
-  late final _$args = ref.$arg as int;
-  int get page => _$args;
+  late final _$args = ref.$arg as ({int page, String? status});
+  int get page => _$args.page;
+  String? get status => _$args.status;
 
-  FutureOr<PaginatedReports> build({int page = 1});
+  FutureOr<PaginatedReports> build({int page = 1, String? status});
   @$mustCallSuper
   @override
   void runBuild() {
@@ -248,6 +252,9 @@ abstract class _$MyReportsController extends $AsyncNotifier<PaginatedReports> {
               Object?,
               Object?
             >;
-    element.handleCreate(ref, () => build(page: _$args));
+    element.handleCreate(
+      ref,
+      () => build(page: _$args.page, status: _$args.status),
+    );
   }
 }

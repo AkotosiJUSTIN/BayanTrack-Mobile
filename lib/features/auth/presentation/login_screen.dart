@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 
@@ -60,12 +61,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Show error snackbar when auth fails
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
       if (next is AuthError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.message),
-            backgroundColor: AppColors.alertHigh,
-          ),
-        );
+        AppToast.error(context, next.message);
       }
     });
 
@@ -75,6 +71,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -86,6 +83,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     'assets/images/BayanTrack-Logo.svg',
                     height: 220,
                     placeholderBuilder: (_) => Icon(
+                      Icons.location_on,
+                      size: 220,
+                      color: AppColors.accent,
+                    ),
+                    errorBuilder: (_, _, _) => Icon(
                       Icons.location_on,
                       size: 220,
                       color: AppColors.accent,
@@ -120,6 +122,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   enabled: !isLoading,
+                  onChanged: (_) => _formKey.currentState?.validate(),
                   decoration: const InputDecoration(
                     hintText: 'Enter your email',
                     prefixIcon: Icon(Icons.email_outlined),
@@ -136,6 +139,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   obscureText: _obscurePassword,
                   textInputAction: TextInputAction.done,
                   enabled: !isLoading,
+                  onChanged: (_) => _formKey.currentState?.validate(),
                   onFieldSubmitted: (_) => _handleLogin(),
                   decoration: InputDecoration(
                     hintText: 'Enter your password',
@@ -153,15 +157,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       },
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
+                  validator: (value) => Validators.required(value, 'Password'),
                 ),
                 const SizedBox(height: 12),
 

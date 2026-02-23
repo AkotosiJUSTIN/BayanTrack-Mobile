@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'new_report_controller.dart';
@@ -15,9 +16,11 @@ class NewReportDetailsScreen extends ConsumerStatefulWidget {
 
 class _NewReportDetailsScreenState
     extends ConsumerState<NewReportDetailsScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _streetLandmarkController = TextEditingController();
+  static final _addressInputRegex = RegExp(r"[A-Za-z0-9\s,.'#/()-]");
 
   @override
   void initState() {
@@ -67,206 +70,229 @@ class _NewReportDetailsScreenState
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Step title
-                  Text(
-                    'Step 3 of 4',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Report Details',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Describe the issue you\'re reporting',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // ===== AI AUTO-CATEGORIZATION INFO =====
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColors.primary.withOpacity(0.3),
+              child: Form(
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Step title
+                    Text(
+                      'Step 3 of 4',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.auto_awesome,
-                          color: AppColors.primary,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'AI will automatically categorize your report',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: isDark
-                                  ? AppColors.darkTextPrimary
-                                  : AppColors.lightTextPrimary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ===== TITLE (OPTIONAL) =====
-                  _buildSectionLabel(theme, 'Title (Optional)'),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _titleController,
-                    maxLength: 200,
-                    textInputAction: TextInputAction.next,
-                    onChanged: controller.setTitle,
-                    decoration: InputDecoration(
-                      hintText: 'Brief title for your report',
-                      prefixIcon: const Icon(Icons.title),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Report Details',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ===== DESCRIPTION =====
-                  _buildSectionLabel(theme, 'Description *'),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _descriptionController,
-                    maxLines: 5,
-                    maxLength: 5000,
-                    textInputAction: TextInputAction.newline,
-                    onChanged: controller.setDescription,
-                    decoration: InputDecoration(
-                      hintText:
-                          'Describe the issue in detail...\n\nInclude any relevant information that might help resolve it.',
-                      alignLabelWithHint: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ===== IS HAPPENING NOW =====
-                  SwitchListTile(
-                    title: const Text('Is this happening right now?'),
-                    subtitle: Text(
-                      'Mark if this incident is ongoing',
-                      style: TextStyle(
+                    const SizedBox(height: 4),
+                    Text(
+                      'Describe the issue you\'re reporting',
+                      style: theme.textTheme.bodyMedium?.copyWith(
                         color: isDark
                             ? AppColors.darkTextSecondary
                             : AppColors.lightTextSecondary,
                       ),
                     ),
-                    value: state.isHappeningNow,
-                    onChanged: controller.setIsHappeningNow,
-                    activeThumbColor: AppColors.primary,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 24),
 
-                  // ===== LOCATION SECTION =====
-                  Text(
-                    'Location Details',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Zone Dropdown
-                  _buildSectionLabel(theme, 'Zone *'),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    initialValue: state.zone,
-                    decoration: InputDecoration(
-                      hintText: 'Select zone',
-                      prefixIcon: const Icon(Icons.location_city_outlined),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    items: List.generate(10, (index) {
-                      final zoneNumber = index + 1;
-                      return DropdownMenuItem(
-                        value: 'Zone $zoneNumber',
-                        child: Text('Zone $zoneNumber'),
-                      );
-                    }),
-                    onChanged: (value) => controller.setZone(value),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Street / Landmark
-                  _buildSectionLabel(theme, 'Street / Landmark'),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _streetLandmarkController,
-                    textInputAction: TextInputAction.next,
-                    textCapitalization: TextCapitalization.sentences,
-                    onChanged: controller.setStreetLandmark,
-                    decoration: InputDecoration(
-                      hintText: 'Street address or nearby landmark',
-                      prefixIcon: const Icon(Icons.place_outlined),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // ===== AI PRIORITIZATION INFO =====
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColors.primary.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.auto_awesome,
-                          color: AppColors.primary,
-                          size: 20,
+                    // ===== AI AUTO-CATEGORIZATION INFO =====
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.3),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'AI will automatically detect severity and urgency from your description',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: isDark
-                                  ? AppColors.darkTextPrimary
-                                  : AppColors.lightTextPrimary,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.auto_awesome,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'AI will automatically categorize your report',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.lightTextPrimary,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+
+                    // ===== TITLE (OPTIONAL) =====
+                    _buildSectionLabel(theme, 'Title (Optional)'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _titleController,
+                      maxLength: 200,
+                      textInputAction: TextInputAction.next,
+                      onChanged: (v) {
+                        controller.setTitle(v);
+                        _formKey.currentState?.validate();
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Brief title for your report',
+                        prefixIcon: const Icon(Icons.title),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ===== DESCRIPTION =====
+                    _buildSectionLabel(theme, 'Description *'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _descriptionController,
+                      maxLines: 5,
+                      maxLength: 5000,
+                      textInputAction: TextInputAction.newline,
+                      onChanged: (v) {
+                        controller.setDescription(v);
+                        _formKey.currentState?.validate();
+                      },
+                      decoration: InputDecoration(
+                        hintText:
+                            'Describe the issue in detail...\n\nInclude any relevant information that might help resolve it.',
+                        alignLabelWithHint: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) {
+                          return 'Description is required';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ===== IS HAPPENING NOW =====
+                    SwitchListTile(
+                      title: const Text('Is this happening right now?'),
+                      subtitle: Text(
+                        'Mark if this incident is ongoing',
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
+                        ),
+                      ),
+                      value: state.isHappeningNow,
+                      onChanged: controller.setIsHappeningNow,
+                      activeThumbColor: AppColors.primary,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ===== LOCATION SECTION =====
+                    Text(
+                      'Location Details',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Zone Dropdown
+                    _buildSectionLabel(theme, 'Zone *'),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      initialValue: state.zone,
+                      decoration: InputDecoration(
+                        hintText: 'Select zone',
+                        prefixIcon: const Icon(Icons.location_city_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      items: List.generate(10, (index) {
+                        final zoneNumber = index + 1;
+                        return DropdownMenuItem(
+                          value: 'Zone $zoneNumber',
+                          child: Text('Zone $zoneNumber'),
+                        );
+                      }),
+                      onChanged: (value) => controller.setZone(value),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Street / Landmark
+                    _buildSectionLabel(theme, 'Street / Landmark'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _streetLandmarkController,
+                      textInputAction: TextInputAction.next,
+                      textCapitalization: TextCapitalization.sentences,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(_addressInputRegex),
+                        LengthLimitingTextInputFormatter(255),
+                      ],
+                      onChanged: (v) {
+                        controller.setStreetLandmark(v);
+                        _formKey.currentState?.validate();
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Street address or nearby landmark',
+                        prefixIcon: const Icon(Icons.place_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // ===== AI PRIORITIZATION INFO =====
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.auto_awesome,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'AI will automatically detect severity and urgency from your description',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.lightTextPrimary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -275,7 +301,13 @@ class _NewReportDetailsScreenState
           Padding(
             padding: const EdgeInsets.all(16),
             child: ElevatedButton(
-              onPressed: state.hasDetails ? _navigateToReview : null,
+              onPressed: state.hasDetails
+                  ? () {
+                      if (_formKey.currentState?.validate() ?? false) {
+                        _navigateToReview();
+                      }
+                    }
+                  : null,
               child: const Text('Continue to Review'),
             ),
           ),
@@ -287,9 +319,7 @@ class _NewReportDetailsScreenState
   Widget _buildSectionLabel(ThemeData theme, String label) {
     return Text(
       label,
-      style: theme.textTheme.titleSmall?.copyWith(
-        fontWeight: FontWeight.w600,
-      ),
+      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
     );
   }
 }

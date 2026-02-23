@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/presentation/widgets/empty_content_placeholder.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/verification_widgets.dart';
 import '../../kyc/presentation/kyc_controller.dart';
-import '../../reports/domain/entities/paginated_reports.dart';
+import '../../reports/domain/entities/report.dart';
 import '../../reports/presentation/report_detail_screen.dart';
-import '../../reports/presentation/reports_controller.dart';
+import '../../reports/reports_di.dart';
 import 'widgets/home_report_card.dart';
-
 import 'widgets/map_placeholder.dart';
-import '../../../core/presentation/widgets/empty_content_placeholder.dart';
 
 /// Home screen with map/list toggle and report list.
-/// Shows nearby reports in either map or list view.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -23,118 +21,283 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isMapView = true;
+  bool _isNavigatingToReportDetail = false;
+  bool _isInitialLoading = true;
+  bool _isLoadingMore = false;
+  String? _loadError;
+
+  int _currentPage = 0;
+  int _totalPages = 1;
+  int _totalReports = 0;
+  int _selectedStatusFilterIndex = 0;
+
   final _searchController = TextEditingController();
+  final _listScrollController = ScrollController();
+  final List<Report> _reports = [];
+
+  final List<({String label, String? status})> _statusFilters = const [
+    (label: 'All', status: null),
+    (label: 'Submitted', status: 'submitted'),
+    (label: 'Under Review', status: 'under_review'),
+    (label: 'In Progress', status: 'in_progress'),
+    (label: 'Resolved', status: 'resolved'),
+  ];
+
+  String? get _selectedStatus =>
+      _statusFilters[_selectedStatusFilterIndex].status;
+  bool get _hasNextPage => _currentPage < _totalPages;
+
+  @override
+  void initState() {
+    super.initState();
+    _listScrollController.addListener(_onListScroll);
+    _loadInitialReports();
+  }
 
   @override
   void dispose() {
+    _listScrollController.removeListener(_onListScroll);
+    _listScrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
   Future<void> _onRefresh() async {
-    ref.invalidate(reportsControllerProvider());
+    await _loadInitialReports();
     ref.invalidate(kycStatusControllerProvider);
+  }
+
+  Future<void> _loadInitialReports() async {
+    setState(() {
+      _isInitialLoading = true;
+      _isLoadingMore = false;
+      _loadError = null;
+      _currentPage = 0;
+      _totalPages = 1;
+      _totalReports = 0;
+      _reports.clear();
+    });
+
+    final getReports = ref.read(getReportsUseCaseProvider);
+    final result = await getReports(page: 1, status: _selectedStatus);
+
+    if (!mounted) return;
+
+    result.when(
+      success: (data) {
+        setState(() {
+          _reports.addAll(data.results);
+          _currentPage = data.page;
+          _totalPages = data.totalPages;
+          _totalReports = data.total;
+          _isInitialLoading = false;
+        });
+      },
+      failure: (failure) {
+        setState(() {
+          _loadError = failure.message;
+          _isInitialLoading = false;
+        });
+      },
+    );
+  }
+
+  Future<void> _loadNextPage() async {
+    if (_isInitialLoading || _isLoadingMore || !_hasNextPage) return;
+
+    setState(() => _isLoadingMore = true);
+
+    final nextPage = _currentPage + 1;
+    final getReports = ref.read(getReportsUseCaseProvider);
+    final result = await getReports(page: nextPage, status: _selectedStatus);
+
+    if (!mounted) return;
+
+    result.when(
+      success: (data) {
+        final existingIds = _reports.map((r) => r.id).toSet();
+        final newReports = data.results
+            .where((report) => !existingIds.contains(report.id))
+            .toList();
+
+        setState(() {
+          _reports.addAll(newReports);
+          _currentPage = data.page;
+          _totalPages = data.totalPages;
+          _totalReports = data.total;
+          _isLoadingMore = false;
+        });
+      },
+      failure: (_) {
+        setState(() => _isLoadingMore = false);
+      },
+    );
+  }
+
+  void _onListScroll() {
+    if (!_listScrollController.hasClients) return;
+    final threshold = _listScrollController.position.maxScrollExtent - 320;
+    if (_listScrollController.position.pixels >= threshold) {
+      _loadNextPage();
+    }
+  }
+
+  Future<void> _openReportDetail(String reportId, Report? initialReport) async {
+    if (_isNavigatingToReportDetail || !mounted) return;
+
+    setState(() => _isNavigatingToReportDetail = true);
+    try {
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ReportDetailScreen(
+            reportId: reportId,
+            initialReport: initialReport,
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isNavigatingToReportDetail = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final reportsAsync = ref.watch(reportsControllerProvider());
     final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(title: const Text('Home')),
       body: Column(
         children: [
-          // Verification banner for unverified users
           VerificationBanner(permissions: permissions),
-
-          // Main content with refresh
           Expanded(
             child: RefreshIndicator(
               onRefresh: _onRefresh,
               child: CustomScrollView(
-          slivers: [
-            // Search bar
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search reports...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.tune),
-                      onPressed: () {},
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
-            ),
-
-            // View toggle and count
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    // Map/List toggle
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.darkSurface
-                            : AppColors.lightSurface,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isDark
-                              ? AppColors.darkBorder
-                              : AppColors.lightBorder,
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search reports...',
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.tune),
+                            onPressed: () {},
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                          ),
                         ),
                       ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          _buildToggleButton(
-                            label: 'Map',
-                            icon: Icons.map_outlined,
-                            isSelected: _isMapView,
-                            onTap: () => setState(() => _isMapView = true),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? AppColors.darkSurface
+                                  : AppColors.lightSurface,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isDark
+                                    ? AppColors.darkBorder
+                                    : AppColors.lightBorder,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _buildToggleButton(
+                                  label: 'Map',
+                                  icon: Icons.map_outlined,
+                                  isSelected: _isMapView,
+                                  onTap: () =>
+                                      setState(() => _isMapView = true),
+                                ),
+                                _buildToggleButton(
+                                  label: 'List',
+                                  icon: Icons.list,
+                                  isSelected: !_isMapView,
+                                  onTap: () =>
+                                      setState(() => _isMapView = false),
+                                ),
+                              ],
+                            ),
                           ),
-                          _buildToggleButton(
-                            label: 'List',
-                            icon: Icons.list,
-                            isSelected: !_isMapView,
-                            onTap: () => setState(() => _isMapView = false),
+                          const Spacer(),
+                          Text(
+                            '$_totalReports reports',
+                            style: theme.textTheme.bodySmall,
                           ),
                         ],
                       ),
                     ),
-                    const Spacer(),
-                    reportsAsync.when(
-                      data: (data) => Text(
-                        '${data.count} reports nearby',
-                        style: theme.textTheme.bodySmall,
+                  ),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 48,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: _statusFilters.length,
+                        itemBuilder: (context, index) {
+                          final isSelected =
+                              _selectedStatusFilterIndex == index;
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: FilterChip(
+                              selected: isSelected,
+                              label: Text(_statusFilters[index].label),
+                              selectedColor: AppColors.primary,
+                              backgroundColor: isDark
+                                  ? AppColors.darkSurface
+                                  : AppColors.lightSurface,
+                              labelStyle: TextStyle(
+                                color: isSelected
+                                    ? Colors.white
+                                    : (isDark
+                                          ? AppColors.darkTextPrimary
+                                          : AppColors.lightTextPrimary),
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
+                              side: BorderSide(
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : (isDark
+                                          ? AppColors.darkBorder
+                                          : AppColors.lightBorder),
+                              ),
+                              onSelected: (_) {
+                                setState(() {
+                                  _selectedStatusFilterIndex = index;
+                                });
+                                _loadInitialReports();
+                              },
+                            ),
+                          );
+                        },
                       ),
-                      loading: () => const SizedBox.shrink(),
-                      error: (_, __) => const SizedBox.shrink(),
                     ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-            // Content area
-            SliverFillRemaining(
-              child: _isMapView
-                  ? _buildMapView(reportsAsync, theme)
-                  : _buildListView(reportsAsync, theme),
-            ),
-          ],
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                  SliverFillRemaining(
+                    child: _isMapView
+                        ? _buildMapView(theme)
+                        : _buildListView(theme),
+                  ),
+                ],
               ),
             ),
           ),
@@ -199,50 +362,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildMapView(
-    AsyncValue<PaginatedReports> reportsAsync,
-    ThemeData theme,
-  ) {
-    return reportsAsync.when(
-      data: (data) {
-        if (data.results.isEmpty) {
-          return _buildEmptyState(theme);
-        }
-        return Stack(
-          children: [
-            const MapPlaceholder(),
-            // Legend at bottom
-            Positioned(
-              left: 16,
-              bottom: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).scaffoldBackgroundColor.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildLegendItem('Low', AppColors.alertLow),
-                    const SizedBox(width: 16),
-                    _buildLegendItem('Medium', AppColors.alertMedium),
-                    const SizedBox(width: 16),
-                    _buildLegendItem('High', AppColors.alertHigh),
-                  ],
-                ),
-              ),
+  Widget _buildMapView(ThemeData theme) {
+    if (_isInitialLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_loadError != null && _reports.isEmpty) {
+      return _buildErrorState(theme, _loadError!);
+    }
+
+    if (_reports.isEmpty) {
+      return _buildEmptyState(theme);
+    }
+
+    return Stack(
+      children: [
+        MapPlaceholder(
+          reports: _reports,
+          onMarkerTap: (report) => _openReportDetail(report.id, report),
+        ),
+        Positioned(
+          left: 16,
+          bottom: 16,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).scaffoldBackgroundColor.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(8),
             ),
-          ],
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _buildErrorState(theme, error.toString()),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildLegendItem('Low', AppColors.alertLow),
+                const SizedBox(width: 16),
+                _buildLegendItem('Medium', AppColors.alertMedium),
+                const SizedBox(width: 16),
+                _buildLegendItem('High', AppColors.alertHigh),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -261,48 +423,115 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildListView(
-    AsyncValue<PaginatedReports> reportsAsync,
-    ThemeData theme,
-  ) {
-    return reportsAsync.when(
-      data: (data) {
-        if (data.results.isEmpty) {
-          return _buildEmptyState(theme);
+  Widget _buildListView(ThemeData theme) {
+    if (_isInitialLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_loadError != null && _reports.isEmpty) {
+      return _buildErrorState(theme, _loadError!);
+    }
+
+    if (_reports.isEmpty) {
+      return _buildEmptyState(theme);
+    }
+
+    final sectionItems = _buildSectionItems(_reports);
+
+    return ListView.builder(
+      controller: _listScrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: sectionItems.length + 1,
+      itemBuilder: (context, index) {
+        if (index == sectionItems.length) {
+          return _buildListFooter(theme);
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: data.results.length,
-          itemBuilder: (context, index) {
-            final report = data.results[index];
-            return HomeReportCard(
-              report: report,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ReportDetailScreen(
-                      reportId: report.id,
-                      initialReport: report,
-                    ),
-                  ),
-                );
-              },
-            );
-          },
+        final item = sectionItems[index];
+        if (item.isHeader) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(4, 10, 4, 8),
+            child: Text(
+              item.header!,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          );
+        }
+
+        final report = item.report!;
+        return HomeReportCard(
+          report: report,
+          onTap: () => _openReportDetail(report.id, report),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _buildErrorState(theme, error.toString()),
     );
+  }
+
+  Widget _buildListFooter(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
+      child: Center(
+        child: _isLoadingMore
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              )
+            : Text(
+                _hasNextPage ? 'Scroll to load more' : 'No more reports',
+                style: theme.textTheme.bodySmall,
+              ),
+      ),
+    );
+  }
+
+  List<_ReportSectionItem> _buildSectionItems(List<Report> reports) {
+    final sortedReports = [...reports]
+      ..sort((a, b) {
+        final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return bDate.compareTo(aDate);
+      });
+
+    final items = <_ReportSectionItem>[];
+    DateTime? previousDate;
+
+    for (final report in sortedReports) {
+      final createdAt = report.createdAt;
+      final reportDate = createdAt == null
+          ? null
+          : DateTime(createdAt.year, createdAt.month, createdAt.day);
+
+      if (reportDate != previousDate) {
+        items.add(_ReportSectionItem.header(_sectionLabelForDate(reportDate)));
+        previousDate = reportDate;
+      }
+      items.add(_ReportSectionItem.report(report));
+    }
+
+    return items;
+  }
+
+  String _sectionLabelForDate(DateTime? date) {
+    if (date == null) return 'Unknown Date';
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    if (date == today) return 'Today';
+    if (date == yesterday) return 'Yesterday';
+
+    return MaterialLocalizations.of(context).formatMediumDate(date);
   }
 
   Widget _buildEmptyState(ThemeData theme) {
     return EmptyContentPlaceholder(
       icon: Icons.location_off_outlined,
-      title: 'No reports nearby',
-      message:
-          'There are no reports in your area yet.\nBe the first to submit one!',
+      title: 'No reports found',
+      message: 'No reports match the selected filters.',
       onRetry: _onRefresh,
     );
   }
@@ -328,4 +557,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
+}
+
+class _ReportSectionItem {
+  final String? header;
+  final Report? report;
+
+  const _ReportSectionItem._({this.header, this.report});
+
+  factory _ReportSectionItem.header(String text) =>
+      _ReportSectionItem._(header: text);
+  factory _ReportSectionItem.report(Report report) =>
+      _ReportSectionItem._(report: report);
+
+  bool get isHeader => header != null;
 }

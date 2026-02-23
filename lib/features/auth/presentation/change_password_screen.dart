@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../core/presentation/widgets/app_toast.dart';
+import '../../../core/utils/validators.dart';
 import '../data/auth_models.dart';
 import 'profile_controller.dart';
 
@@ -18,6 +19,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   final _newController = TextEditingController();
   final _confirmController = TextEditingController();
   bool _isLoading = false;
+  bool _obscureCurrentPassword = true;
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -31,12 +35,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     if (_newController.text != _confirmController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Passwords do not match'),
-          backgroundColor: AppColors.alertHigh,
-        ),
-      );
+      AppToast.error(context, 'New password and confirmation do not match.');
       return;
     }
 
@@ -51,18 +50,14 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           .read(profileControllerProvider.notifier)
           .changePassword(request);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password changed successfully')),
-        );
+        AppToast.success(context, 'Your password has been changed.');
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error changing password: $e'),
-            backgroundColor: AppColors.alertHigh,
-          ),
+        AppToast.error(
+          context,
+          'Unable to change your password right now. Please try again.',
         );
       }
     } finally {
@@ -82,28 +77,69 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             children: [
               TextFormField(
                 controller: _currentController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Current Password',
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _obscureCurrentPassword = !_obscureCurrentPassword;
+                      });
+                    },
+                    icon: Icon(
+                      _obscureCurrentPassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                  ),
                 ),
-                obscureText: true,
+                obscureText: _obscureCurrentPassword,
                 validator: (v) => v?.isNotEmpty == true ? null : 'Required',
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _newController,
-                decoration: const InputDecoration(labelText: 'New Password'),
-                obscureText: true,
-                validator: (v) =>
-                    (v?.length ?? 0) >= 8 ? null : 'Min 8 characters',
+                decoration: InputDecoration(
+                  labelText: 'New Password',
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _obscureNewPassword = !_obscureNewPassword;
+                      });
+                    },
+                    icon: Icon(
+                      _obscureNewPassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                  ),
+                ),
+                obscureText: _obscureNewPassword,
+                validator: Validators.password,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _confirmController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Confirm New Password',
+                  suffixIcon: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _obscureConfirmPassword = !_obscureConfirmPassword;
+                      });
+                    },
+                    icon: Icon(
+                      _obscureConfirmPassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
+                  ),
                 ),
-                obscureText: true,
-                validator: (v) => v?.isNotEmpty == true ? null : 'Required',
+                obscureText: _obscureConfirmPassword,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Required';
+                  if (v != _newController.text) return 'Passwords do not match';
+                  return null;
+                },
               ),
               const SizedBox(height: 24),
               SizedBox(

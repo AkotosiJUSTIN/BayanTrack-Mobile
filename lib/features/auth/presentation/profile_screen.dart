@@ -6,12 +6,14 @@ import '../../../core/providers/connectivity_provider.dart';
 import '../../../core/providers/theme_provider.dart';
 import '../../kyc/domain/entities/kyc_enums.dart';
 import '../../kyc/presentation/kyc_controller.dart';
+import '../../kyc/presentation/kyc_form_screen.dart';
 import '../../kyc/presentation/kyc_status_screen.dart';
 import '../../notifications/presentation/notification_settings_screen.dart';
 import '../../kyc/domain/entities/kyc_status.dart';
 import '../data/auth_models.dart';
 import '../data/user_permissions.dart';
 import 'auth_controller.dart';
+import 'auth_wrapper.dart';
 import 'profile_controller.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
@@ -70,7 +72,7 @@ class ProfileScreen extends ConsumerWidget {
                           data: (kycStatus) =>
                               _buildKycStatusCard(context, ref, kycStatus),
                           loading: () => const SizedBox.shrink(),
-                          error: (_, __) => const SizedBox.shrink(),
+                          error: (_, _) => const SizedBox.shrink(),
                         );
                       },
                     ),
@@ -80,7 +82,7 @@ class ProfileScreen extends ConsumerWidget {
                     statsAsync.when(
                       data: (stats) => _buildStatsRow(context, stats, theme),
                       loading: () => const SizedBox(height: 80),
-                      error: (_, __) => const SizedBox.shrink(),
+                      error: (_, _) => const SizedBox.shrink(),
                     ),
                     const SizedBox(height: 24),
 
@@ -156,7 +158,12 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Text(getDisplayName(), style: theme.textTheme.headlineSmall),
+        Text(
+          getDisplayName(),
+          style: theme.textTheme.headlineSmall?.copyWith(
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
         Text(
           profile.email,
           style: theme.textTheme.bodyMedium?.copyWith(
@@ -342,7 +349,7 @@ class ProfileScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Identity Verification',
+                      'User Verification',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -353,6 +360,21 @@ class ProfileScreen extends ConsumerWidget {
                       permissions.getStatusMessage(),
                       style: TextStyle(fontSize: 14, color: statusColor),
                     ),
+                    if (!permissions.isVerified) ...[
+                      const SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: () => _navigateToVerificationAction(
+                          context,
+                          ref,
+                          permissions,
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.alertMedium,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Verify Identity'),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -400,6 +422,44 @@ class ProfileScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _navigateToVerificationAction(
+    BuildContext context,
+    WidgetRef ref,
+    UserPermissions permissions,
+  ) async {
+    if (permissions.canSubmitKyc) {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const KycFormScreen()),
+      );
+      if (result == true) {
+        ref.read(kycStatusControllerProvider.notifier).refresh();
+      }
+      return;
+    }
+
+    if (permissions.canResubmitKyc) {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => KycFormScreen(
+            isResubmission: true,
+            existingKyc: permissions.kycStatus,
+          ),
+        ),
+      );
+      if (result == true) {
+        ref.read(kycStatusControllerProvider.notifier).refresh();
+      }
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const KycStatusScreen()),
+    );
+  }
+
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -420,9 +480,14 @@ class ProfileScreen extends ConsumerWidget {
     );
 
     if (confirmed == true && context.mounted) {
-      // Logout immediately (synchronous state change)
-      // AuthWrapper will automatically show LoginScreen
-      ref.read(authControllerProvider.notifier).logout();
+      // Logout and wait for session cleanup before remounting auth flow.
+      await ref.read(authControllerProvider.notifier).logout();
+      // Navigate to AuthWrapper which will show LoginScreen based on auth state
+      if (!context.mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const AuthWrapper()),
+        (route) => false,
+      );
     }
   }
 }
