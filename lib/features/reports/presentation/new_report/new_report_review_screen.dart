@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/mangaldan_geo.dart';
 import '../../../../core/presentation/widgets/app_toast.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../images/data/images_repository.dart';
@@ -23,6 +24,16 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
 
   Future<void> _submitReport() async {
     final state = ref.read(newReportControllerProvider);
+
+    if (state.latitude != null &&
+        state.longitude != null &&
+        !MangaldanGeo.contains(state.latitude!, state.longitude!)) {
+      AppToast.warning(
+        context,
+        'Report creation is only available within Mangaldan, Pangasinan.',
+      );
+      return;
+    }
 
     if (!state.canSubmit) {
       AppToast.warning(

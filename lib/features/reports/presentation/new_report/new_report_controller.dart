@@ -130,13 +130,19 @@ class NewReportState {
       streetLandmark: streetLandmark,
       cityMunicipality: cityMunicipality,
       province: province,
-      latitude: latitude?.toString(),
-      longitude: longitude?.toString(),
+      latitude: _formatCoordinate(latitude),
+      longitude: _formatCoordinate(longitude),
       locationAccuracy: locationAccuracy.name,
       location: streetLandmark ?? location,
       declarationConfirmed: declarationConfirmed,
       dataProcessingConsent: dataProcessingConsent,
     );
+  }
+
+  String? _formatCoordinate(double? value) {
+    if (value == null) return null;
+    // Backend expects up to 10 decimal places for coordinates.
+    return value.toStringAsFixed(10);
   }
 }
 
