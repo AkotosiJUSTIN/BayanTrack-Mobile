@@ -75,6 +75,7 @@ _UserProfile _$UserProfileFromJson(Map<String, dynamic> json) => _UserProfile(
   email: json['email'] as String,
   firstName: json['first_name'] as String? ?? '',
   lastName: json['last_name'] as String? ?? '',
+  avatarUrl: json['avatar_url'] as String?,
   role: json['role'] as String? ?? 'citizen',
   isActive: json['is_active'] as bool? ?? true,
   createdAt: json['created_at'] as String?,
@@ -87,6 +88,7 @@ Map<String, dynamic> _$UserProfileToJson(_UserProfile instance) =>
       'email': instance.email,
       'first_name': instance.firstName,
       'last_name': instance.lastName,
+      'avatar_url': instance.avatarUrl,
       'role': instance.role,
       'is_active': instance.isActive,
       'created_at': instance.createdAt,
@@ -98,6 +100,7 @@ _ProfileUpdateRequest _$ProfileUpdateRequestFromJson(
 ) => _ProfileUpdateRequest(
   firstName: json['first_name'] as String?,
   lastName: json['last_name'] as String?,
+  avatarUrl: json['avatar_url'] as String?,
 );
 
 Map<String, dynamic> _$ProfileUpdateRequestToJson(
@@ -105,6 +108,7 @@ Map<String, dynamic> _$ProfileUpdateRequestToJson(
 ) => <String, dynamic>{
   'first_name': instance.firstName,
   'last_name': instance.lastName,
+  'avatar_url': ?instance.avatarUrl,
 };
 
 _ChangePasswordRequest _$ChangePasswordRequestFromJson(

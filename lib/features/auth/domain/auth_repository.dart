@@ -35,7 +35,11 @@ abstract interface class AuthRepository {
   Future<Result<User>> getProfile();
 
   /// Update user profile
-  Future<Result<User>> updateProfile({String? firstName, String? lastName});
+  Future<Result<User>> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? avatarUrl,
+  });
 
   /// Change password
   Future<Result<void>> changePassword({

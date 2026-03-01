@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/presentation/widgets/app_toast.dart';
+import '../../../core/presentation/widgets/password_strength_indicator.dart';
 import '../../../core/utils/validators.dart';
 import '../data/auth_models.dart';
 import 'profile_controller.dart';
@@ -115,6 +116,18 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 ),
                 obscureText: _obscureNewPassword,
                 validator: Validators.password,
+              ),
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _newController,
+                builder: (context, value, child) {
+                  if (value.text.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 12.0),
+                    child: PasswordStrengthIndicator(password: value.text),
+                  );
+                },
               ),
               const SizedBox(height: 16),
               TextFormField(

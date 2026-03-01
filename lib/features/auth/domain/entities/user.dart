@@ -9,6 +9,7 @@ class User extends Equatable {
   final String email;
   final String firstName;
   final String lastName;
+  final String? avatarUrl;
   final UserRole role;
   final bool isActive;
   final DateTime? createdAt;
@@ -19,6 +20,7 @@ class User extends Equatable {
     required this.email,
     required this.firstName,
     required this.lastName,
+    this.avatarUrl,
     required this.role,
     this.isActive = true,
     this.createdAt,
@@ -37,6 +39,7 @@ class User extends Equatable {
     email,
     firstName,
     lastName,
+    avatarUrl,
     role,
     isActive,
     createdAt,

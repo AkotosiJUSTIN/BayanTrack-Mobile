@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/providers/connectivity_provider.dart';
 import '../../../core/providers/theme_provider.dart';
 import '../../kyc/domain/entities/kyc_enums.dart';
@@ -148,14 +149,20 @@ class ProfileScreen extends ConsumerWidget {
         CircleAvatar(
           radius: 50,
           backgroundColor: AppColors.primary,
-          child: Text(
-            getInitials(),
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
+          backgroundImage:
+              profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty
+              ? NetworkImage(ApiConstants.getImageUrl(profile.avatarUrl!))
+              : null,
+          child: profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty
+              ? null
+              : Text(
+                  getInitials(),
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
         ),
         const SizedBox(height: 16),
         Text(
@@ -246,12 +253,15 @@ class ProfileScreen extends ConsumerWidget {
                 leading: const Icon(Icons.person_outline),
                 title: const Text('Edit Profile'),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.of(context).push(
+                onTap: () async {
+                  await Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const EditProfileScreen(),
                     ),
                   );
+                  // Refresh profile data when returning from edit screen
+                  // so avatar and name changes appear immediately.
+                  ref.invalidate(profileControllerProvider);
                 },
               ),
               const Divider(height: 1),
