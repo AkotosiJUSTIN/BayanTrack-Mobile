@@ -523,38 +523,65 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     final result = _verificationResult!;
     final isHealthy = result.verified && result.statusVerified;
 
+    // Determine the display state
+    final isNotFound = result.notFoundOnChain;
+    final isConnectionError = result.connectionError;
+    final isNotAnchored = !result.isAnchored;
+    final isNeutral = isNotFound || isConnectionError || isNotAnchored;
+
+    final Color statusColor;
+    final IconData statusIcon;
+    final String title;
+
+    if (isHealthy) {
+      statusColor = AppColors.success;
+      statusIcon = Icons.check_circle;
+      title = 'Integrity Verified';
+    } else if (isNotAnchored) {
+      statusColor = AppColors.alertMedium;
+      statusIcon = Icons.hourglass_empty;
+      title = 'Not Yet Anchored';
+    } else if (isNotFound) {
+      statusColor = AppColors.alertMedium;
+      statusIcon = Icons.search_off;
+      title = 'Record Not Found';
+    } else if (isConnectionError) {
+      statusColor = AppColors.alertMedium;
+      statusIcon = Icons.cloud_off;
+      title = 'Blockchain Unavailable';
+    } else {
+      statusColor = AppColors.alertHigh;
+      statusIcon = Icons.warning;
+      title = 'Integrity Breach Detected';
+    }
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: (isHealthy ? AppColors.success : AppColors.alertHigh).withValues(
+        color: (isNeutral ? AppColors.alertMedium : statusColor).withValues(
           alpha: 0.1,
         ),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          Icon(
-            isHealthy ? Icons.check_circle : Icons.warning,
-            color: isHealthy ? AppColors.success : AppColors.alertHigh,
-          ),
+          Icon(statusIcon, color: statusColor),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isHealthy
-                      ? 'Integrity Verified'
-                      : 'Integrity Breach Detected',
+                  title,
                   style: theme.textTheme.labelLarge?.copyWith(
-                    color: isHealthy ? AppColors.success : AppColors.alertHigh,
+                    color: statusColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
                   result.message,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: isHealthy ? AppColors.success : AppColors.alertHigh,
+                    color: statusColor,
                   ),
                 ),
               ],

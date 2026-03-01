@@ -32,6 +32,9 @@ abstract class BlockchainVerificationResultDto
     @JsonKey(name: 'audit_history')
     required List<BlockchainAuditEntryDto> auditHistory,
     required String message,
+    @JsonKey(name: 'not_found_on_chain') @Default(false) bool notFoundOnChain,
+    @JsonKey(name: 'connection_error') @Default(false) bool connectionError,
+    @JsonKey(name: 'is_anchored') @Default(true) bool isAnchored,
   }) = _BlockchainVerificationResultDto;
 
   factory BlockchainVerificationResultDto.fromJson(Map<String, dynamic> json) =>

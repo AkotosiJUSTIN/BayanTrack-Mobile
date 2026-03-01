@@ -144,6 +144,9 @@ class ReportMapper {
           )
           .toList(),
       message: result.message,
+      notFoundOnChain: result.notFoundOnChain,
+      connectionError: result.connectionError,
+      isAnchored: result.isAnchored,
     );
   }
 }

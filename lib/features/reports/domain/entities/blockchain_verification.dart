@@ -45,6 +45,16 @@ class BlockchainVerificationResult extends Equatable {
   final List<BlockchainAuditEntry> auditHistory;
   final String message;
 
+  /// True if the on-chain record was not found (contract reset/redeployed).
+  /// This is NOT an integrity breach — it is a blockchain reset event.
+  final bool notFoundOnChain;
+
+  /// True if the blockchain RPC endpoint could not be reached.
+  final bool connectionError;
+
+  /// False if the report has never been anchored to the blockchain.
+  final bool isAnchored;
+
   const BlockchainVerificationResult({
     required this.reportId,
     this.onChainId,
@@ -53,6 +63,9 @@ class BlockchainVerificationResult extends Equatable {
     required this.blockchainData,
     required this.auditHistory,
     required this.message,
+    this.notFoundOnChain = false,
+    this.connectionError = false,
+    this.isAnchored = true,
   });
 
   @override
@@ -64,5 +77,8 @@ class BlockchainVerificationResult extends Equatable {
     blockchainData,
     auditHistory,
     message,
+    notFoundOnChain,
+    connectionError,
+    isAnchored,
   ];
 }

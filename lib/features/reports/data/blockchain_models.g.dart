@@ -42,6 +42,9 @@ _BlockchainVerificationResultDto _$BlockchainVerificationResultDtoFromJson(
       .map((e) => BlockchainAuditEntryDto.fromJson(e as Map<String, dynamic>))
       .toList(),
   message: json['message'] as String,
+  notFoundOnChain: json['not_found_on_chain'] as bool? ?? false,
+  connectionError: json['connection_error'] as bool? ?? false,
+  isAnchored: json['is_anchored'] as bool? ?? true,
 );
 
 Map<String, dynamic> _$BlockchainVerificationResultDtoToJson(
@@ -54,4 +57,7 @@ Map<String, dynamic> _$BlockchainVerificationResultDtoToJson(
   'blockchain_data': instance.blockchainData,
   'audit_history': instance.auditHistory,
   'message': instance.message,
+  'not_found_on_chain': instance.notFoundOnChain,
+  'connection_error': instance.connectionError,
+  'is_anchored': instance.isAnchored,
 };
