@@ -1,22 +1,32 @@
 import 'dart:io';
 
 class ApiConstants {
-  // Use 10.0.2.2 for Android Emulator, localhost for iOS Simulator
+  // ─── DEPLOYMENT CONFIG ─────────────────────────────────────────────────────
+  //
+  // LOCAL DEV  → use the emulator aliases below (already set up)
+  // REAL DEVICE (same WiFi as PC) → set _devServerIp to your PC's LAN IP
+  //   e.g. '192.168.1.10' — run `ipconfig` (Windows) or `ifconfig` (Mac/Linux)
+  // PRODUCTION → set _prodUrl to your hosted domain (HTTPS recommended)
+  //
+  static const bool _isProduction = false; // ← flip to true for prod build
+  static const String _prodUrl = 'https://your-production-domain.com'; // ← set this
+  static const String _devServerIp = '192.168.1.23'; // LAN IP — phone must be on same WiFi as PC
+  // ───────────────────────────────────────────────────────────────────────────
+
   static String get baseUrl {
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8000/api';
-    } else {
-      return 'http://localhost:8000/api';
-    }
+    if (_isProduction) return '$_prodUrl/api';
+    if (_devServerIp.isNotEmpty) return 'http://$_devServerIp:8000/api';
+    // Emulator fallbacks
+    if (Platform.isAndroid) return 'http://10.0.2.2:8000/api';
+    return 'http://localhost:8000/api';
   }
 
   // Media base URL (without /api suffix)
   static String get mediaBaseUrl {
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8000';
-    } else {
-      return 'http://localhost:8000';
-    }
+    if (_isProduction) return _prodUrl;
+    if (_devServerIp.isNotEmpty) return 'http://$_devServerIp:8000';
+    if (Platform.isAndroid) return 'http://10.0.2.2:8000';
+    return 'http://localhost:8000';
   }
 
   /// Build full URL for an image path

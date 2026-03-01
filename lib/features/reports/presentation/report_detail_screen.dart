@@ -223,10 +223,12 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Status and category badges
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               _buildStatusBadge(report.status),
-              const SizedBox(width: 8),
               if (report.category != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -244,12 +246,10 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                     style: theme.textTheme.labelSmall,
                   ),
                 ),
-              const SizedBox(width: 8),
               PriorityBadge(
                 priorityLevel: report.priorityLevel,
                 showScores: false, // Simplified view for citizens
               ),
-              const SizedBox(width: 8),
               if (report.blockchainSynced)
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -458,13 +458,15 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                     : AppColors.lightTextSecondary,
               ),
               const SizedBox(width: 8),
-              Text(
-                'Blockchain Verification',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  'Blockchain Verification',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Spacer(),
               if (_isVerifying)
                 const SizedBox(
                   width: 16,
