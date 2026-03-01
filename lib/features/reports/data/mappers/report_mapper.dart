@@ -138,8 +138,14 @@ class ReportMapper {
               actor: e.actor,
               timestamp: e.timestamp,
               detailsHash: e.detailsHash,
-              oldStatus: e.oldStatus,
-              newStatus: e.newStatus,
+              oldStatus:
+                  e.oldStatus >= 0 && e.oldStatus < ReportStatus.values.length
+                  ? ReportStatus.values[e.oldStatus].displayName
+                  : e.oldStatus.toString(),
+              newStatus:
+                  e.newStatus >= 0 && e.newStatus < ReportStatus.values.length
+                  ? ReportStatus.values[e.newStatus].displayName
+                  : e.newStatus.toString(),
             ),
           )
           .toList(),

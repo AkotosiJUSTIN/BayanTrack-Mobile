@@ -14,8 +14,8 @@ _BlockchainAuditEntryDto _$BlockchainAuditEntryDtoFromJson(
   actor: json['actor'] as String,
   timestamp: (json['timestamp'] as num).toInt(),
   detailsHash: json['detailsHash'] as String,
-  oldStatus: json['oldStatus'] as String,
-  newStatus: json['newStatus'] as String,
+  oldStatus: (json['oldStatus'] as num).toInt(),
+  newStatus: (json['newStatus'] as num).toInt(),
 );
 
 Map<String, dynamic> _$BlockchainAuditEntryDtoToJson(

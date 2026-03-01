@@ -11,8 +11,8 @@ abstract class BlockchainAuditEntryDto with _$BlockchainAuditEntryDto {
     @JsonKey(name: 'actor') required String actor,
     @JsonKey(name: 'timestamp') required int timestamp,
     @JsonKey(name: 'detailsHash') required String detailsHash,
-    @JsonKey(name: 'oldStatus') required String oldStatus,
-    @JsonKey(name: 'newStatus') required String newStatus,
+    @JsonKey(name: 'oldStatus') required int oldStatus,
+    @JsonKey(name: 'newStatus') required int newStatus,
   }) = _BlockchainAuditEntryDto;
 
   factory BlockchainAuditEntryDto.fromJson(Map<String, dynamic> json) =>

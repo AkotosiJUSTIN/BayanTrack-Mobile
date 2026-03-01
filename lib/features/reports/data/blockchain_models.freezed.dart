@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BlockchainAuditEntryDto {
 
-@JsonKey(name: 'reportId') int get reportId;@JsonKey(name: 'actionType') int get actionType;@JsonKey(name: 'actor') String get actor;@JsonKey(name: 'timestamp') int get timestamp;@JsonKey(name: 'detailsHash') String get detailsHash;@JsonKey(name: 'oldStatus') String get oldStatus;@JsonKey(name: 'newStatus') String get newStatus;
+@JsonKey(name: 'reportId') int get reportId;@JsonKey(name: 'actionType') int get actionType;@JsonKey(name: 'actor') String get actor;@JsonKey(name: 'timestamp') int get timestamp;@JsonKey(name: 'detailsHash') String get detailsHash;@JsonKey(name: 'oldStatus') int get oldStatus;@JsonKey(name: 'newStatus') int get newStatus;
 /// Create a copy of BlockchainAuditEntryDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $BlockchainAuditEntryDtoCopyWith<$Res>  {
   factory $BlockchainAuditEntryDtoCopyWith(BlockchainAuditEntryDto value, $Res Function(BlockchainAuditEntryDto) _then) = _$BlockchainAuditEntryDtoCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'reportId') int reportId,@JsonKey(name: 'actionType') int actionType,@JsonKey(name: 'actor') String actor,@JsonKey(name: 'timestamp') int timestamp,@JsonKey(name: 'detailsHash') String detailsHash,@JsonKey(name: 'oldStatus') String oldStatus,@JsonKey(name: 'newStatus') String newStatus
+@JsonKey(name: 'reportId') int reportId,@JsonKey(name: 'actionType') int actionType,@JsonKey(name: 'actor') String actor,@JsonKey(name: 'timestamp') int timestamp,@JsonKey(name: 'detailsHash') String detailsHash,@JsonKey(name: 'oldStatus') int oldStatus,@JsonKey(name: 'newStatus') int newStatus
 });
 
 
@@ -73,8 +73,8 @@ as int,actor: null == actor ? _self.actor : actor // ignore: cast_nullable_to_no
 as String,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
 as int,detailsHash: null == detailsHash ? _self.detailsHash : detailsHash // ignore: cast_nullable_to_non_nullable
 as String,oldStatus: null == oldStatus ? _self.oldStatus : oldStatus // ignore: cast_nullable_to_non_nullable
-as String,newStatus: null == newStatus ? _self.newStatus : newStatus // ignore: cast_nullable_to_non_nullable
-as String,
+as int,newStatus: null == newStatus ? _self.newStatus : newStatus // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -159,7 +159,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'reportId')  int reportId, @JsonKey(name: 'actionType')  int actionType, @JsonKey(name: 'actor')  String actor, @JsonKey(name: 'timestamp')  int timestamp, @JsonKey(name: 'detailsHash')  String detailsHash, @JsonKey(name: 'oldStatus')  String oldStatus, @JsonKey(name: 'newStatus')  String newStatus)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'reportId')  int reportId, @JsonKey(name: 'actionType')  int actionType, @JsonKey(name: 'actor')  String actor, @JsonKey(name: 'timestamp')  int timestamp, @JsonKey(name: 'detailsHash')  String detailsHash, @JsonKey(name: 'oldStatus')  int oldStatus, @JsonKey(name: 'newStatus')  int newStatus)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BlockchainAuditEntryDto() when $default != null:
 return $default(_that.reportId,_that.actionType,_that.actor,_that.timestamp,_that.detailsHash,_that.oldStatus,_that.newStatus);case _:
@@ -180,7 +180,7 @@ return $default(_that.reportId,_that.actionType,_that.actor,_that.timestamp,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'reportId')  int reportId, @JsonKey(name: 'actionType')  int actionType, @JsonKey(name: 'actor')  String actor, @JsonKey(name: 'timestamp')  int timestamp, @JsonKey(name: 'detailsHash')  String detailsHash, @JsonKey(name: 'oldStatus')  String oldStatus, @JsonKey(name: 'newStatus')  String newStatus)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'reportId')  int reportId, @JsonKey(name: 'actionType')  int actionType, @JsonKey(name: 'actor')  String actor, @JsonKey(name: 'timestamp')  int timestamp, @JsonKey(name: 'detailsHash')  String detailsHash, @JsonKey(name: 'oldStatus')  int oldStatus, @JsonKey(name: 'newStatus')  int newStatus)  $default,) {final _that = this;
 switch (_that) {
 case _BlockchainAuditEntryDto():
 return $default(_that.reportId,_that.actionType,_that.actor,_that.timestamp,_that.detailsHash,_that.oldStatus,_that.newStatus);case _:
@@ -200,7 +200,7 @@ return $default(_that.reportId,_that.actionType,_that.actor,_that.timestamp,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'reportId')  int reportId, @JsonKey(name: 'actionType')  int actionType, @JsonKey(name: 'actor')  String actor, @JsonKey(name: 'timestamp')  int timestamp, @JsonKey(name: 'detailsHash')  String detailsHash, @JsonKey(name: 'oldStatus')  String oldStatus, @JsonKey(name: 'newStatus')  String newStatus)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'reportId')  int reportId, @JsonKey(name: 'actionType')  int actionType, @JsonKey(name: 'actor')  String actor, @JsonKey(name: 'timestamp')  int timestamp, @JsonKey(name: 'detailsHash')  String detailsHash, @JsonKey(name: 'oldStatus')  int oldStatus, @JsonKey(name: 'newStatus')  int newStatus)?  $default,) {final _that = this;
 switch (_that) {
 case _BlockchainAuditEntryDto() when $default != null:
 return $default(_that.reportId,_that.actionType,_that.actor,_that.timestamp,_that.detailsHash,_that.oldStatus,_that.newStatus);case _:
@@ -223,8 +223,8 @@ class _BlockchainAuditEntryDto implements BlockchainAuditEntryDto {
 @override@JsonKey(name: 'actor') final  String actor;
 @override@JsonKey(name: 'timestamp') final  int timestamp;
 @override@JsonKey(name: 'detailsHash') final  String detailsHash;
-@override@JsonKey(name: 'oldStatus') final  String oldStatus;
-@override@JsonKey(name: 'newStatus') final  String newStatus;
+@override@JsonKey(name: 'oldStatus') final  int oldStatus;
+@override@JsonKey(name: 'newStatus') final  int newStatus;
 
 /// Create a copy of BlockchainAuditEntryDto
 /// with the given fields replaced by the non-null parameter values.
@@ -259,7 +259,7 @@ abstract mixin class _$BlockchainAuditEntryDtoCopyWith<$Res> implements $Blockch
   factory _$BlockchainAuditEntryDtoCopyWith(_BlockchainAuditEntryDto value, $Res Function(_BlockchainAuditEntryDto) _then) = __$BlockchainAuditEntryDtoCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'reportId') int reportId,@JsonKey(name: 'actionType') int actionType,@JsonKey(name: 'actor') String actor,@JsonKey(name: 'timestamp') int timestamp,@JsonKey(name: 'detailsHash') String detailsHash,@JsonKey(name: 'oldStatus') String oldStatus,@JsonKey(name: 'newStatus') String newStatus
+@JsonKey(name: 'reportId') int reportId,@JsonKey(name: 'actionType') int actionType,@JsonKey(name: 'actor') String actor,@JsonKey(name: 'timestamp') int timestamp,@JsonKey(name: 'detailsHash') String detailsHash,@JsonKey(name: 'oldStatus') int oldStatus,@JsonKey(name: 'newStatus') int newStatus
 });
 
 
@@ -284,8 +284,8 @@ as int,actor: null == actor ? _self.actor : actor // ignore: cast_nullable_to_no
 as String,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
 as int,detailsHash: null == detailsHash ? _self.detailsHash : detailsHash // ignore: cast_nullable_to_non_nullable
 as String,oldStatus: null == oldStatus ? _self.oldStatus : oldStatus // ignore: cast_nullable_to_non_nullable
-as String,newStatus: null == newStatus ? _self.newStatus : newStatus // ignore: cast_nullable_to_non_nullable
-as String,
+as int,newStatus: null == newStatus ? _self.newStatus : newStatus // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
