@@ -5,33 +5,33 @@ part 'report_models.g.dart';
 
 // ==================== REPORT CATEGORIES ====================
 
-/// Report categories aligned with AI classifier
+/// Report categories aligned with Mangaldan Municipal Office routing
 enum ReportCategory {
-  @JsonValue('road_traffic')
-  roadTraffic,
-  @JsonValue('flooding_drainage')
-  floodingDrainage,
+  @JsonValue('engineering_infrastructure')
+  engineeringInfrastructure,
+  @JsonValue('flood_disaster')
+  floodDisaster,
   @JsonValue('waste_environment')
   wasteEnvironment,
-  @JsonValue('public_safety_utilities')
-  publicSafetyUtilities,
-  @JsonValue('community_concerns')
-  communityConcerns;
+  @JsonValue('public_safety')
+  publicSafety,
+  @JsonValue('public_utilities')
+  publicUtilities;
 
   String get displayName => switch (this) {
-    roadTraffic => 'Road & Traffic Issues',
-    floodingDrainage => 'Flooding & Drainage',
-    wasteEnvironment => 'Waste & Environment',
-    publicSafetyUtilities => 'Public Safety & Utilities',
-    communityConcerns => 'Community Concerns',
+    engineeringInfrastructure => 'Municipal Engineering & Infrastructure',
+    floodDisaster => 'Flood & Disaster Response',
+    wasteEnvironment => 'Solid Waste & Environmental Management',
+    publicSafety => 'Public Safety & Order',
+    publicUtilities => 'Public Utilities & Services',
   };
 
   String get value => switch (this) {
-    roadTraffic => 'road_traffic',
-    floodingDrainage => 'flooding_drainage',
+    engineeringInfrastructure => 'engineering_infrastructure',
+    floodDisaster => 'flood_disaster',
     wasteEnvironment => 'waste_environment',
-    publicSafetyUtilities => 'public_safety_utilities',
-    communityConcerns => 'community_concerns',
+    publicSafety => 'public_safety',
+    publicUtilities => 'public_utilities',
   };
 }
 

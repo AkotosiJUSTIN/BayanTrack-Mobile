@@ -2,38 +2,39 @@
 ///
 /// These are pure Dart enums with no JSON annotations.
 /// The data layer DTOs retain @JsonValue for serialization.
+library;
 
-/// Report category aligned with AI classifier
+/// Report category aligned with Mangaldan Municipal Office routing
 enum ReportCategory {
-  roadTraffic,
-  floodingDrainage,
+  engineeringInfrastructure,
+  floodDisaster,
   wasteEnvironment,
-  publicSafetyUtilities,
-  communityConcerns;
+  publicSafety,
+  publicUtilities;
 
   String get displayName => switch (this) {
-    roadTraffic => 'Road & Traffic Issues',
-    floodingDrainage => 'Flooding & Drainage',
-    wasteEnvironment => 'Waste & Environment',
-    publicSafetyUtilities => 'Public Safety & Utilities',
-    communityConcerns => 'Community Concerns',
+    engineeringInfrastructure => 'Municipal Engineering & Infrastructure',
+    floodDisaster => 'Flood & Disaster Response',
+    wasteEnvironment => 'Solid Waste & Environmental Management',
+    publicSafety => 'Public Safety & Order',
+    publicUtilities => 'Public Utilities & Services',
   };
 
   String get apiValue => switch (this) {
-    roadTraffic => 'road_traffic',
-    floodingDrainage => 'flooding_drainage',
+    engineeringInfrastructure => 'engineering_infrastructure',
+    floodDisaster => 'flood_disaster',
     wasteEnvironment => 'waste_environment',
-    publicSafetyUtilities => 'public_safety_utilities',
-    communityConcerns => 'community_concerns',
+    publicSafety => 'public_safety',
+    publicUtilities => 'public_utilities',
   };
 
   static ReportCategory? fromString(String? value) {
     return switch (value) {
-      'road_traffic' => ReportCategory.roadTraffic,
-      'flooding_drainage' => ReportCategory.floodingDrainage,
+      'engineering_infrastructure' => ReportCategory.engineeringInfrastructure,
+      'flood_disaster' => ReportCategory.floodDisaster,
       'waste_environment' => ReportCategory.wasteEnvironment,
-      'public_safety_utilities' => ReportCategory.publicSafetyUtilities,
-      'community_concerns' => ReportCategory.communityConcerns,
+      'public_safety' => ReportCategory.publicSafety,
+      'public_utilities' => ReportCategory.publicUtilities,
       _ => null,
     };
   }

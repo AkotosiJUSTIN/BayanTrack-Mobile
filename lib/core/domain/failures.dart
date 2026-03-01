@@ -15,26 +15,26 @@ sealed class Failure {
 
 /// Network-level failures (no connection, timeout)
 class NetworkFailure extends Failure {
-  const NetworkFailure([String message = 'Network error'])
-    : super(message, code: 'NETWORK_ERROR');
+  const NetworkFailure([super.message = 'Network error'])
+    : super(code: 'NETWORK_ERROR');
 }
 
 /// Server errors (5xx)
 class ServerFailure extends Failure {
-  const ServerFailure([String message = 'Server error'])
-    : super(message, code: 'SERVER_ERROR');
+  const ServerFailure([super.message = 'Server error'])
+    : super(code: 'SERVER_ERROR');
 }
 
 /// Authentication failures (401, 403)
 class AuthFailure extends Failure {
-  const AuthFailure([String message = 'Authentication error'])
-    : super(message, code: 'AUTH_ERROR');
+  const AuthFailure([super.message = 'Authentication error'])
+    : super(code: 'AUTH_ERROR');
 }
 
 /// Resource not found (404)
 class NotFoundFailure extends Failure {
-  const NotFoundFailure([String message = 'Not found'])
-    : super(message, code: 'NOT_FOUND');
+  const NotFoundFailure([super.message = 'Not found'])
+    : super(code: 'NOT_FOUND');
 }
 
 /// Validation failures (400, 422)
@@ -50,12 +50,12 @@ class ValidationFailure extends Failure {
 
 /// Cache/storage failures
 class CacheFailure extends Failure {
-  const CacheFailure([String message = 'Cache error'])
-    : super(message, code: 'CACHE_ERROR');
+  const CacheFailure([super.message = 'Cache error'])
+    : super(code: 'CACHE_ERROR');
 }
 
 /// Unknown/unhandled failures
 class UnknownFailure extends Failure {
-  const UnknownFailure([String message = 'An error occurred'])
-    : super(message, code: 'UNKNOWN_ERROR');
+  const UnknownFailure([super.message = 'An error occurred'])
+    : super(code: 'UNKNOWN_ERROR');
 }
