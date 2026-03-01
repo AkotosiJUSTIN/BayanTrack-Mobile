@@ -10,7 +10,7 @@ class ApiConstants {
   //
   static const bool _isProduction = false; // ← flip to true for prod build
   static const String _prodUrl = 'https://your-production-domain.com'; // ← set this
-  static const String _devServerIp = '192.168.1.23'; // LAN IP — phone must be on same WiFi as PC
+  static const String _devServerIp = '127.0.0.1'; // adb reverse tunnel — routes through USB to PC port 8000
   // ───────────────────────────────────────────────────────────────────────────
 
   static String get baseUrl {
