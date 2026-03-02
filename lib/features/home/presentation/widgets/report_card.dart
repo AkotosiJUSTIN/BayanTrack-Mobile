@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/theme/app_colors.dart';
-
-/// Status enum for report cards
-enum ReportStatus { pending, inProgress, resolved, rejected }
+import '../../../../features/reports/domain/entities/report_enums.dart';
 
 /// Data model for report card display
 class ReportData {
