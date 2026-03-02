@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../core/providers/app_preferences_provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -18,19 +19,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   final List<OnboardingContent> _contents = const [
     OnboardingContent(
-      image: 'assets/images/Onboarding-1.png',
+      image: 'assets/images/Onboarding-1.svg',
       title: 'Submit Reports',
       description:
           'Report issues quickly with location tagging and photo uploads',
     ),
     OnboardingContent(
-      image: 'assets/images/Onboarding-2.png',
+      image: 'assets/images/Onboarding-2.svg',
       title: 'Track Progress',
       description:
           'Check the status of your reports and receive updates as they are resolved',
     ),
     OnboardingContent(
-      image: 'assets/images/Onboarding-3.png',
+      image: 'assets/images/Onboarding-3.svg',
       title: 'Stay Informed',
       description:
           'Get notified about important updates and safety alerts in your community',
@@ -105,23 +106,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         // Image - fixed height relative to screen to ensure visibility
                         SizedBox(
                           height: size.height * 0.4,
-                          child: Image.asset(
+                          child: SvgPicture.asset(
                             content.image,
                             fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade200,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: const Icon(
-                                  Icons.image_not_supported_outlined,
-                                  size: 64,
-                                  color: Colors.grey,
-                                ),
-                              );
-                            },
+                            placeholderBuilder: (context) => Container(
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Icon(
+                                Icons.image_outlined,
+                                size: 64,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 32),
@@ -130,7 +129,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           content.title,
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                            color: AppColors.accent,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -139,7 +138,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         Text(
                           content.description,
                           style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
                             height: 1.5,
                           ),
                           textAlign: TextAlign.center,

@@ -354,3 +354,51 @@ final class GetReportStatsUseCaseProvider
 
 String _$getReportStatsUseCaseHash() =>
     r'b996e7ff989c2822ded2bc1dd5b3422746331ec3';
+
+@ProviderFor(verifyReportUseCase)
+final verifyReportUseCaseProvider = VerifyReportUseCaseProvider._();
+
+final class VerifyReportUseCaseProvider
+    extends
+        $FunctionalProvider<
+          VerifyReportUseCase,
+          VerifyReportUseCase,
+          VerifyReportUseCase
+        >
+    with $Provider<VerifyReportUseCase> {
+  VerifyReportUseCaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'verifyReportUseCaseProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$verifyReportUseCaseHash();
+
+  @$internal
+  @override
+  $ProviderElement<VerifyReportUseCase> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  VerifyReportUseCase create(Ref ref) {
+    return verifyReportUseCase(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(VerifyReportUseCase value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<VerifyReportUseCase>(value),
+    );
+  }
+}
+
+String _$verifyReportUseCaseHash() =>
+    r'cea77473a7640e05dc9bff9c193310a0c5c75cd4';

@@ -22,13 +22,13 @@ class AuthMapper {
     );
   }
 
-  /// Map [UserProfile] DTO to [User] entity
   static User userFromProfile(UserProfile profile) {
     return User(
       id: profile.id,
       email: profile.email,
       firstName: profile.firstName,
       lastName: profile.lastName,
+      avatarUrl: profile.avatarUrl,
       role: UserRole.fromString(profile.role),
       isActive: profile.isActive,
       createdAt: _parseDateTime(profile.createdAt),

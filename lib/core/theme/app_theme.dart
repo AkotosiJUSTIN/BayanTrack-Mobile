@@ -142,7 +142,7 @@ abstract final class AppTheme {
   // ─────────────────────────────────────────────────────────
 
   static TextTheme _textTheme(Color primary, Color secondary) {
-    return GoogleFonts.interTextTheme().copyWith(
+    return GoogleFonts.manropeTextTheme().copyWith(
       displayLarge: GoogleFonts.inter(
         fontSize: 32,
         fontWeight: FontWeight.bold,
@@ -155,11 +155,16 @@ abstract final class AppTheme {
       ),
       headlineLarge: GoogleFonts.inter(
         fontSize: 24,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         color: primary,
       ),
       headlineMedium: GoogleFonts.inter(
         fontSize: 20,
+        fontWeight: FontWeight.w600,
+        color: primary,
+      ),
+      headlineSmall: GoogleFonts.inter(
+        fontSize: 18,
         fontWeight: FontWeight.w600,
         color: primary,
       ),
@@ -168,32 +173,39 @@ abstract final class AppTheme {
         fontWeight: FontWeight.w600,
         color: primary,
       ),
-      titleMedium: GoogleFonts.inter(
+      titleMedium: GoogleFonts.manrope(
         fontSize: 16,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
         color: primary,
       ),
-      bodyLarge: GoogleFonts.inter(
+      titleSmall: GoogleFonts.manrope(
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        color: primary,
+      ),
+      bodyLarge: GoogleFonts.manrope(
         fontSize: 16,
         fontWeight: FontWeight.normal,
         color: primary,
+        height: 1.5,
       ),
-      bodyMedium: GoogleFonts.inter(
+      bodyMedium: GoogleFonts.manrope(
         fontSize: 14,
         fontWeight: FontWeight.normal,
         color: primary,
+        height: 1.5,
       ),
-      bodySmall: GoogleFonts.inter(
+      bodySmall: GoogleFonts.manrope(
         fontSize: 12,
         fontWeight: FontWeight.normal,
         color: secondary,
       ),
-      labelLarge: GoogleFonts.inter(
+      labelLarge: GoogleFonts.manrope(
         fontSize: 14,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
         color: primary,
       ),
-      labelSmall: GoogleFonts.inter(
+      labelSmall: GoogleFonts.manrope(
         fontSize: 11,
         fontWeight: FontWeight.w500,
         color: secondary,
@@ -218,7 +230,7 @@ abstract final class AppTheme {
           : AppColors.darkTextPrimary,
       titleTextStyle: GoogleFonts.inter(
         fontSize: 18,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         color: isLight ? AppColors.lightTextPrimary : AppColors.darkTextPrimary,
       ),
       iconTheme: IconThemeData(
@@ -244,7 +256,8 @@ abstract final class AppTheme {
     return InputDecorationTheme(
       filled: true,
       fillColor: fillColor,
-      hintStyle: GoogleFonts.inter(color: hintColor, fontSize: 14),
+      hintStyle: GoogleFonts.manrope(color: hintColor, fontSize: 14),
+      labelStyle: GoogleFonts.manrope(fontSize: 14),
       prefixIconColor: hintColor,
       suffixIconColor: hintColor,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -287,7 +300,10 @@ abstract final class AppTheme {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         minimumSize: const Size(double.infinity, 52),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+        textStyle: GoogleFonts.manrope(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -304,7 +320,10 @@ abstract final class AppTheme {
           color: isLight ? AppColors.lightBorder : AppColors.darkBorder,
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+        textStyle: GoogleFonts.manrope(
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -313,7 +332,10 @@ abstract final class AppTheme {
     return TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: AppColors.primary,
-        textStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
+        textStyle: GoogleFonts.manrope(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -351,13 +373,13 @@ abstract final class AppTheme {
       unselectedItemColor: isLight
           ? AppColors.lightTextSecondary
           : AppColors.darkTextSecondary,
-      selectedLabelStyle: GoogleFonts.inter(
+      selectedLabelStyle: GoogleFonts.manrope(
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+      ),
+      unselectedLabelStyle: GoogleFonts.manrope(
         fontSize: 12,
         fontWeight: FontWeight.w500,
-      ),
-      unselectedLabelStyle: GoogleFonts.inter(
-        fontSize: 12,
-        fontWeight: FontWeight.normal,
       ),
       elevation: 8,
     );

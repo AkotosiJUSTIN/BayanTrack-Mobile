@@ -1,95 +1,147 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import '../../../../core/constants/mangaldan_geo.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../reports/domain/entities/report.dart';
+import '../../../reports/domain/entities/report_enums.dart';
 
-/// Placeholder widget for map view.
-/// Shows a styled placeholder until real map integration in later phase.
+/// OpenStreetMap widget that renders report pins from fetched coordinates.
 class MapPlaceholder extends StatelessWidget {
-  const MapPlaceholder({super.key});
+  const MapPlaceholder({super.key, required this.reports, this.onMarkerTap});
+
+  final List<Report> reports;
+  final ValueChanged<Report>? onMarkerTap;
 
   @override
   Widget build(BuildContext context) {
+    final reportsWithCoordinates = _reportsWithCoordinates(reports);
+    final initialCenter = _initialCenterFor(reportsWithCoordinates);
+    final mangaldanPolygon = MangaldanGeo.boundary
+        .map((point) => LatLng(point.$1, point.$2))
+        .toList(growable: false);
+    final mangaldanBounds = LatLngBounds(
+      LatLng(MangaldanGeo.south, MangaldanGeo.west),
+      LatLng(MangaldanGeo.north, MangaldanGeo.east),
+    );
+    final markers = reportsWithCoordinates
+        .map(
+          (report) => Marker(
+            point: LatLng(report.latitude!, report.longitude!),
+            width: 40,
+            height: 40,
+            child: Tooltip(
+              message: _buildTooltipMessage(report),
+              waitDuration: const Duration(milliseconds: 150),
+              showDuration: const Duration(seconds: 3),
+              preferBelow: false,
+              verticalOffset: 18,
+              child: GestureDetector(
+                onTap: onMarkerTap == null ? null : () => onMarkerTap!(report),
+                child: _buildMarker(_colorForSeverity(report.severity)),
+              ),
+            ),
+          ),
+        )
+        .toList();
+
+    return Stack(
+      children: [
+        FlutterMap(
+          options: MapOptions(
+            initialCenter: initialCenter,
+            initialZoom: 13,
+            minZoom: 12,
+            maxZoom: 18,
+            cameraConstraint: CameraConstraint.contain(bounds: mangaldanBounds),
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.example.bayantrack_mobile',
+            ),
+            PolygonLayer(
+              polygons: [
+                Polygon(
+                  points: mangaldanPolygon,
+                  color: AppColors.primary.withValues(alpha: 0.08),
+                  borderColor: AppColors.alertHigh,
+                  borderStrokeWidth: 2,
+                  pattern: const StrokePattern.dotted(spacingFactor: 1.2),
+                ),
+              ],
+              invertedFill: Colors.black.withValues(alpha: 0.55),
+            ),
+            MarkerLayer(markers: markers),
+            const RichAttributionWidget(
+              attributions: [
+                TextSourceAttribution('OpenStreetMap contributors'),
+              ],
+            ),
+          ],
+        ),
+        if (markers.isEmpty)
+          Positioned(
+            top: 12,
+            right: 12,
+            left: 12,
+            child: _buildNoCoordinatesBanner(context),
+          ),
+      ],
+    );
+  }
+
+  List<Report> _reportsWithCoordinates(List<Report> input) {
+    return input.where((report) {
+      final lat = report.latitude;
+      final lng = report.longitude;
+      if (lat == null || lng == null) return false;
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return false;
+      return MangaldanGeo.contains(lat, lng);
+    }).toList();
+  }
+
+  LatLng _initialCenterFor(List<Report> reportsWithCoordinates) {
+    if (reportsWithCoordinates.isEmpty) {
+      return const LatLng(MangaldanGeo.defaultLat, MangaldanGeo.defaultLng);
+    }
+
+    final latitudeTotal = reportsWithCoordinates.fold<double>(
+      0,
+      (total, report) => total + report.latitude!,
+    );
+    final longitudeTotal = reportsWithCoordinates.fold<double>(
+      0,
+      (total, report) => total + report.longitude!,
+    );
+
+    return LatLng(
+      latitudeTotal / reportsWithCoordinates.length,
+      longitudeTotal / reportsWithCoordinates.length,
+    );
+  }
+
+  Widget _buildNoCoordinatesBanner(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        color: theme.scaffoldBackgroundColor.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+        ),
       ),
-      child: Stack(
+      child: Row(
         children: [
-          // Grid pattern to simulate map
-          GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 8,
-              childAspectRatio: 1,
-            ),
-            itemCount: 64,
-            itemBuilder: (context, index) {
-              return Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color:
-                        (isDark ? AppColors.darkBorder : AppColors.lightBorder)
-                            .withValues(alpha: 0.3),
-                    width: 0.5,
-                  ),
-                ),
-              );
-            },
-          ),
-
-          // Sample markers
-          Positioned(
-            top: 100,
-            left: 80,
-            child: _buildMarker(AppColors.alertHigh),
-          ),
-          Positioned(
-            top: 150,
-            left: 150,
-            child: _buildMarker(AppColors.alertMedium),
-          ),
-          Positioned(
-            top: 200,
-            left: 100,
-            child: _buildMarker(AppColors.alertLow),
-          ),
-          Positioned(
-            top: 180,
-            right: 100,
-            child: _buildMarker(AppColors.alertHigh),
-          ),
-          Positioned(
-            bottom: 150,
-            left: 120,
-            child: _buildMarker(AppColors.alertHigh),
-          ),
-
-          // Center overlay text
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              decoration: BoxDecoration(
-                color: theme.scaffoldBackgroundColor.withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.map_outlined, size: 48, color: AppColors.primary),
-                  const SizedBox(height: 12),
-                  Text('Map View', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Interactive map coming soon',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
-              ),
+          Icon(Icons.info_outline, color: AppColors.primary, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'No report coordinates available in Mangaldan yet.',
+              style: theme.textTheme.bodySmall,
             ),
           ),
         ],
@@ -97,10 +149,29 @@ class MapPlaceholder extends StatelessWidget {
     );
   }
 
+  Color _colorForSeverity(SeverityLevel severity) {
+    return switch (severity) {
+      SeverityLevel.low => AppColors.alertLow,
+      SeverityLevel.medium => AppColors.alertMedium,
+      SeverityLevel.high || SeverityLevel.critical => AppColors.alertHigh,
+    };
+  }
+
+  String _buildTooltipMessage(Report report) {
+    final title = (report.title?.trim().isNotEmpty ?? false)
+        ? report.title!.trim()
+        : 'Untitled report';
+    final location = report.displayLocation;
+
+    return '$title\n'
+        '${report.status.displayName} - ${report.severity.displayName}\n'
+        '$location';
+  }
+
   Widget _buildMarker(Color color) {
     return Container(
-      width: 24,
-      height: 24,
+      width: 26,
+      height: 26,
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,

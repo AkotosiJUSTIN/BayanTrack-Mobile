@@ -2,6 +2,7 @@
 ///
 /// Pure Dart enums for the KYC feature domain layer.
 /// No JSON annotations - those stay in data layer DTOs.
+library;
 
 // ==================== KYC STATUS ====================
 

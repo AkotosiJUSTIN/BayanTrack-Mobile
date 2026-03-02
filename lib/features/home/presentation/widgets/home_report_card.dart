@@ -213,22 +213,22 @@ class HomeReportCard extends StatelessWidget {
 
   Color _getCategoryColor(ReportCategory? category) {
     return switch (category) {
-      ReportCategory.roadTraffic => AppColors.alertHigh,
-      ReportCategory.publicSafetyUtilities => AppColors.alertMedium,
+      ReportCategory.engineeringInfrastructure => AppColors.alertHigh,
+      ReportCategory.floodDisaster => AppColors.alertHigh,
       ReportCategory.wasteEnvironment => AppColors.alertLow,
-      ReportCategory.floodingDrainage => AppColors.primary,
-      ReportCategory.communityConcerns => AppColors.primary,
+      ReportCategory.publicSafety => AppColors.alertMedium,
+      ReportCategory.publicUtilities => AppColors.alertMedium,
       null => AppColors.primary,
     };
   }
 
   IconData _getCategoryIcon(ReportCategory? category) {
     return switch (category) {
-      ReportCategory.roadTraffic => Icons.warning_amber_rounded,
-      ReportCategory.publicSafetyUtilities => Icons.electrical_services,
+      ReportCategory.engineeringInfrastructure => Icons.construction_outlined,
+      ReportCategory.floodDisaster => Icons.water_damage_outlined,
       ReportCategory.wasteEnvironment => Icons.delete_outline,
-      ReportCategory.floodingDrainage => Icons.water_damage_outlined,
-      ReportCategory.communityConcerns => Icons.people_outline,
+      ReportCategory.publicSafety => Icons.shield_outlined,
+      ReportCategory.publicUtilities => Icons.electrical_services,
       null => Icons.report_problem_outlined,
     };
   }

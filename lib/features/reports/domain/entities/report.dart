@@ -65,6 +65,12 @@ class Report extends Equatable {
   final DateTime? verifiedAt;
   final DateTime? resolvedAt;
 
+  // Blockchain Integration
+  final int? onChainId;
+  final String? onChainHash;
+  final String? blockchainTxnHash;
+  final bool blockchainSynced;
+
   const Report({
     required this.id,
     this.reportId,
@@ -109,6 +115,10 @@ class Report extends Equatable {
     this.submittedAt,
     this.verifiedAt,
     this.resolvedAt,
+    this.onChainId,
+    this.onChainHash,
+    this.blockchainTxnHash,
+    this.blockchainSynced = false,
   });
 
   /// Human-readable location string
@@ -140,6 +150,9 @@ class Report extends Equatable {
     severity,
     isEmergency,
     createdAt,
+    onChainId,
+    onChainHash,
+    blockchainSynced,
   ];
 
   @override

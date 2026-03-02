@@ -114,6 +114,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Result<User>> updateProfile({
     String? firstName,
     String? lastName,
+    String? avatarUrl,
   }) async {
     try {
       final response = await _dio.put(
@@ -121,6 +122,7 @@ class AuthRepositoryImpl implements AuthRepository {
         data: ProfileUpdateRequest(
           firstName: firstName,
           lastName: lastName,
+          avatarUrl: avatarUrl,
         ).toJson(),
       );
       final userData = response.data['user'] ?? response.data;
@@ -157,10 +159,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await _dio.post(
         ApiConstants.forgotPassword,
-        data: ForgotPasswordRequest(
-          email: email,
-          platform: 'mobile',
-        ).toJson(),
+        data: ForgotPasswordRequest(email: email, platform: 'mobile').toJson(),
       );
       return const Success(null);
     } catch (e, stack) {

@@ -14,7 +14,7 @@ class Validators {
   static final _emailRegex = RegExp(
     r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
   );
-  static final _lettersOnlyRegex = RegExp(r'^[A-Za-z]+$');
+  static final _lettersOnlyRegex = RegExp(r"^[A-Za-z\s\-'`]+$");
   static final _specialCharRegex = RegExp(r'[!@#$%^&*(),.?":{}|<>]');
 
   /// Validates email address using RFC 5322 compliant regex.

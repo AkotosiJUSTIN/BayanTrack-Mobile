@@ -8,6 +8,7 @@ import 'domain/usecases/get_my_reports_usecase.dart';
 import 'domain/usecases/get_report_stats_usecase.dart';
 import 'domain/usecases/get_report_usecase.dart';
 import 'domain/usecases/get_reports_usecase.dart';
+import 'domain/usecases/verify_report_usecase.dart';
 
 part 'reports_di.g.dart';
 
@@ -63,6 +64,13 @@ DeleteReportUseCase deleteReportUseCase(Ref ref) {
 @riverpod
 GetReportStatsUseCase getReportStatsUseCase(Ref ref) {
   return GetReportStatsUseCase(
+    repository: ref.watch(reportsRepositoryDomainProvider),
+  );
+}
+
+@riverpod
+VerifyReportUseCase verifyReportUseCase(Ref ref) {
+  return VerifyReportUseCase(
     repository: ref.watch(reportsRepositoryDomainProvider),
   );
 }

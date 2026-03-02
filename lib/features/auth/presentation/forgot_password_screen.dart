@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/presentation/widgets/app_toast.dart';
+import '../../../core/presentation/widgets/password_strength_indicator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import 'auth_controller.dart';
@@ -327,6 +328,20 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                           ),
                         ),
                         validator: Validators.password,
+                      ),
+                      ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _newPasswordController,
+                        builder: (context, value, child) {
+                          if (value.text.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 12.0),
+                            child: PasswordStrengthIndicator(
+                              password: value.text,
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 12),
                       TextFormField(

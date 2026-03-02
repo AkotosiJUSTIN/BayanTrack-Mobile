@@ -377,7 +377,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Stack(
       children: [
-        const MapPlaceholder(),
+        MapPlaceholder(
+          reports: _reports,
+          onMarkerTap: (report) => _openReportDetail(report.id, report),
+        ),
         Positioned(
           left: 16,
           bottom: 16,

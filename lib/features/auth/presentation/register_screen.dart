@@ -2,7 +2,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/presentation/widgets/app_toast.dart';
+import '../../../core/presentation/widgets/password_strength_indicator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import 'auth_controller.dart';
@@ -78,15 +80,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   void _showTermsAndConditions() {
-    _showPolicyDialog('Terms & Conditions', onAccepted: () {
-      _termsAccepted = true;
-    });
+    _showPolicyDialog(
+      'Terms & Conditions',
+      onAccepted: () {
+        _termsAccepted = true;
+      },
+    );
   }
 
   void _showPrivacyPolicy() {
-    _showPolicyDialog('Privacy Policy', onAccepted: () {
-      _privacyAccepted = true;
-    });
+    _showPolicyDialog(
+      'Privacy Policy',
+      onAccepted: () {
+        _privacyAccepted = true;
+      },
+    );
   }
 
   Future<void> _showPolicyDialog(
@@ -134,9 +142,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                 // Logo
                 Center(
-                  child: Image.asset(
-                    'assets/images/logo.png',
+                  child: SvgPicture.asset(
+                    'assets/images/BayanTrack-Logo.svg',
                     height: 60,
+                    placeholderBuilder: (_) => Icon(
+                      Icons.location_on,
+                      size: 60,
+                      color: AppColors.accent,
+                    ),
                     errorBuilder: (_, _, _) => Icon(
                       Icons.location_on,
                       size: 60,
@@ -173,7 +186,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   textCapitalization: TextCapitalization.words,
                   enabled: !isLoading,
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r"[A-Za-z\s\-'`]"),
+                    ),
                     LengthLimitingTextInputFormatter(100),
                   ],
                   onChanged: (_) => _formKey.currentState?.validate(),
@@ -195,7 +210,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   textCapitalization: TextCapitalization.words,
                   enabled: !isLoading,
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r"[A-Za-z\s\-'`]"),
+                    ),
                     LengthLimitingTextInputFormatter(100),
                   ],
                   onChanged: (_) => _formKey.currentState?.validate(),
@@ -252,6 +269,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   validator: Validators.password,
                 ),
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _passwordController,
+                  builder: (context, value, child) {
+                    if (value.text.isEmpty) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 12.0),
+                      child: PasswordStrengthIndicator(password: value.text),
+                    );
+                  },
+                ),
                 const SizedBox(height: 20),
 
                 // Confirm Password field
@@ -296,10 +323,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Checkbox(
-                      value: _agreeToTerms,
-                      onChanged: null,
-                    ),
+                    Checkbox(value: _agreeToTerms, onChanged: null),
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.only(top: 12),

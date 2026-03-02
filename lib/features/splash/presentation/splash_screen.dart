@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../auth/presentation/auth_wrapper.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
 import '../../../core/providers/app_preferences_provider.dart';
@@ -93,11 +94,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                'assets/images/logo.png',
+              SvgPicture.asset(
+                'assets/images/BayanTrack-Logo.svg',
                 width: 280,
                 height: 280,
-                errorBuilder: (_, __, ___) => Icon(
+                placeholderBuilder: (_) => Icon(
                   Icons.location_on,
                   size: 280,
                   color: AppColors.primary,
@@ -114,7 +115,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               ),
               const SizedBox(height: 8),
               Text(
-                'Empowering Civic Reporting',
+                'Empowering communities to report, track, and resolve urban incidents efficiently.',
+                textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Theme.of(context).colorScheme.outline,
                 ),

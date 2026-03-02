@@ -96,6 +96,10 @@ _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
   submittedAt: json['submitted_at'] as String?,
   verifiedAt: json['verified_at'] as String?,
   resolvedAt: json['resolved_at'] as String?,
+  onChainId: (json['on_chain_id'] as num?)?.toInt(),
+  onChainHash: json['on_chain_hash'] as String?,
+  blockchainTxnHash: json['blockchain_txn_hash'] as String?,
+  blockchainSynced: json['blockchain_synced'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
@@ -147,6 +151,10 @@ Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
   'submitted_at': instance.submittedAt,
   'verified_at': instance.verifiedAt,
   'resolved_at': instance.resolvedAt,
+  'on_chain_id': instance.onChainId,
+  'on_chain_hash': instance.onChainHash,
+  'blockchain_txn_hash': instance.blockchainTxnHash,
+  'blockchain_synced': instance.blockchainSynced,
 };
 
 _CreateReportRequest _$CreateReportRequestFromJson(Map<String, dynamic> json) =>
