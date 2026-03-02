@@ -53,6 +53,8 @@ enum ReportStatus {
   verified,
   assigned,
   inProgress,
+  escalated,
+  endorsed,
   resolved,
   rejected;
 
@@ -62,6 +64,8 @@ enum ReportStatus {
     verified => 'Verified',
     assigned => 'Assigned',
     inProgress => 'In Progress',
+    escalated => 'Escalated',
+    endorsed => 'Endorsed',
     resolved => 'Resolved',
     rejected => 'Rejected',
   };
@@ -72,6 +76,8 @@ enum ReportStatus {
     verified => 'verified',
     assigned => 'assigned',
     inProgress => 'in_progress',
+    escalated => 'escalated',
+    endorsed => 'endorsed',
     resolved => 'resolved',
     rejected => 'rejected',
   };
@@ -83,6 +89,8 @@ enum ReportStatus {
       'verified' => ReportStatus.verified,
       'assigned' => ReportStatus.assigned,
       'in_progress' => ReportStatus.inProgress,
+      'escalated' => ReportStatus.escalated,
+      'endorsed' => ReportStatus.endorsed,
       'resolved' => ReportStatus.resolved,
       'rejected' => ReportStatus.rejected,
       _ => ReportStatus.submitted,

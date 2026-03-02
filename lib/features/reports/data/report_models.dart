@@ -48,6 +48,10 @@ enum ReportStatus {
   assigned,
   @JsonValue('in_progress')
   inProgress,
+  @JsonValue('escalated')
+  escalated,
+  @JsonValue('endorsed')
+  endorsed,
   @JsonValue('resolved')
   resolved,
   @JsonValue('rejected')
@@ -59,6 +63,8 @@ enum ReportStatus {
     verified => 'Verified',
     assigned => 'Assigned',
     inProgress => 'In Progress',
+    escalated => 'Escalated',
+    endorsed => 'Endorsed',
     resolved => 'Resolved',
     rejected => 'Rejected',
   };
@@ -69,6 +75,8 @@ enum ReportStatus {
     verified => 'verified',
     assigned => 'assigned',
     inProgress => 'in_progress',
+    escalated => 'escalated',
+    endorsed => 'endorsed',
     resolved => 'resolved',
     rejected => 'rejected',
   };

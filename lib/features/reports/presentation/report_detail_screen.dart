@@ -701,6 +701,8 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       ReportStatus.submitted => (AppColors.alertMedium, 'Submitted'),
       ReportStatus.underReview => (AppColors.alertMedium, 'Under Review'),
       ReportStatus.inProgress => (AppColors.primary, 'In Progress'),
+      ReportStatus.escalated => (AppColors.alertHigh, 'Escalated'),
+      ReportStatus.endorsed => (AppColors.primary, 'Endorsed'),
       ReportStatus.resolved => (AppColors.success, 'Resolved'),
       ReportStatus.rejected => (AppColors.alertHigh, 'Rejected'),
       ReportStatus.verified => (AppColors.alertMedium, 'Verified'),
