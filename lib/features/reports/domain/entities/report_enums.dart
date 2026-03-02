@@ -17,19 +17,25 @@ enum ReportCategory {
     floodDisaster => 'Flood & Disaster Response',
     wasteEnvironment => 'Solid Waste & Environmental Management',
     publicSafety => 'Public Safety & Order',
-    publicUtilities => 'Public Utilities & Services',
+    publicUtilities => 'Public Utilities & Service',
   };
 
   String get apiValue => switch (this) {
-    engineeringInfrastructure => 'engineering_infrastructure',
-    floodDisaster => 'flood_disaster',
-    wasteEnvironment => 'waste_environment',
-    publicSafety => 'public_safety',
-    publicUtilities => 'public_utilities',
+    engineeringInfrastructure => 'Municipal Engineering & Infrastructure',
+    floodDisaster => 'Flood & Disaster Response',
+    wasteEnvironment => 'Solid Waste & Environmental Management',
+    publicSafety => 'Public Safety & Order',
+    publicUtilities => 'Public Utilities & Service',
   };
 
   static ReportCategory? fromString(String? value) {
     return switch (value) {
+      'Municipal Engineering & Infrastructure' => ReportCategory.engineeringInfrastructure,
+      'Flood & Disaster Response' => ReportCategory.floodDisaster,
+      'Solid Waste & Environmental Management' => ReportCategory.wasteEnvironment,
+      'Public Safety & Order' => ReportCategory.publicSafety,
+      'Public Utilities & Service' => ReportCategory.publicUtilities,
+      // Backward compatibility with short names
       'engineering_infrastructure' => ReportCategory.engineeringInfrastructure,
       'flood_disaster' => ReportCategory.floodDisaster,
       'waste_environment' => ReportCategory.wasteEnvironment,

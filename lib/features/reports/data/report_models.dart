@@ -5,17 +5,17 @@ part 'report_models.g.dart';
 
 // ==================== REPORT CATEGORIES ====================
 
-/// Report categories aligned with Mangaldan Municipal Office routing
+/// Report categories aligned with Mangaldan Municipal Office routing (V23 XLM-RoBERTa)
 enum ReportCategory {
-  @JsonValue('engineering_infrastructure')
+  @JsonValue('Municipal Engineering & Infrastructure')
   engineeringInfrastructure,
-  @JsonValue('flood_disaster')
+  @JsonValue('Flood & Disaster Response')
   floodDisaster,
-  @JsonValue('waste_environment')
+  @JsonValue('Solid Waste & Environmental Management')
   wasteEnvironment,
-  @JsonValue('public_safety')
+  @JsonValue('Public Safety & Order')
   publicSafety,
-  @JsonValue('public_utilities')
+  @JsonValue('Public Utilities & Service')
   publicUtilities;
 
   String get displayName => switch (this) {
@@ -23,15 +23,15 @@ enum ReportCategory {
     floodDisaster => 'Flood & Disaster Response',
     wasteEnvironment => 'Solid Waste & Environmental Management',
     publicSafety => 'Public Safety & Order',
-    publicUtilities => 'Public Utilities & Services',
+    publicUtilities => 'Public Utilities & Service',
   };
 
   String get value => switch (this) {
-    engineeringInfrastructure => 'engineering_infrastructure',
-    floodDisaster => 'flood_disaster',
-    wasteEnvironment => 'waste_environment',
-    publicSafety => 'public_safety',
-    publicUtilities => 'public_utilities',
+    engineeringInfrastructure => 'Municipal Engineering & Infrastructure',
+    floodDisaster => 'Flood & Disaster Response',
+    wasteEnvironment => 'Solid Waste & Environmental Management',
+    publicSafety => 'Public Safety & Order',
+    publicUtilities => 'Public Utilities & Service',
   };
 }
 
