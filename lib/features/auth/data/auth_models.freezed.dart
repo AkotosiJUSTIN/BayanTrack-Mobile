@@ -2665,4 +2665,536 @@ as String,
 
 }
 
+
+/// @nodoc
+mixin _$BarangayModel {
+
+ String get id; String get name;@JsonKey(name: 'center_lat') double get centerLat;@JsonKey(name: 'center_lng') double get centerLng;
+/// Create a copy of BarangayModel
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$BarangayModelCopyWith<BarangayModel> get copyWith => _$BarangayModelCopyWithImpl<BarangayModel>(this as BarangayModel, _$identity);
+
+  /// Serializes this BarangayModel to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BarangayModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.centerLat, centerLat) || other.centerLat == centerLat)&&(identical(other.centerLng, centerLng) || other.centerLng == centerLng));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,name,centerLat,centerLng);
+
+@override
+String toString() {
+  return 'BarangayModel(id: $id, name: $name, centerLat: $centerLat, centerLng: $centerLng)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $BarangayModelCopyWith<$Res>  {
+  factory $BarangayModelCopyWith(BarangayModel value, $Res Function(BarangayModel) _then) = _$BarangayModelCopyWithImpl;
+@useResult
+$Res call({
+ String id, String name,@JsonKey(name: 'center_lat') double centerLat,@JsonKey(name: 'center_lng') double centerLng
+});
+
+
+
+
+}
+/// @nodoc
+class _$BarangayModelCopyWithImpl<$Res>
+    implements $BarangayModelCopyWith<$Res> {
+  _$BarangayModelCopyWithImpl(this._self, this._then);
+
+  final BarangayModel _self;
+  final $Res Function(BarangayModel) _then;
+
+/// Create a copy of BarangayModel
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? centerLat = null,Object? centerLng = null,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,centerLat: null == centerLat ? _self.centerLat : centerLat // ignore: cast_nullable_to_non_nullable
+as double,centerLng: null == centerLng ? _self.centerLng : centerLng // ignore: cast_nullable_to_non_nullable
+as double,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [BarangayModel].
+extension BarangayModelPatterns on BarangayModel {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _BarangayModel value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _BarangayModel() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _BarangayModel value)  $default,){
+final _that = this;
+switch (_that) {
+case _BarangayModel():
+return $default(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _BarangayModel value)?  $default,){
+final _that = this;
+switch (_that) {
+case _BarangayModel() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name, @JsonKey(name: 'center_lat')  double centerLat, @JsonKey(name: 'center_lng')  double centerLng)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _BarangayModel() when $default != null:
+return $default(_that.id,_that.name,_that.centerLat,_that.centerLng);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name, @JsonKey(name: 'center_lat')  double centerLat, @JsonKey(name: 'center_lng')  double centerLng)  $default,) {final _that = this;
+switch (_that) {
+case _BarangayModel():
+return $default(_that.id,_that.name,_that.centerLat,_that.centerLng);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name, @JsonKey(name: 'center_lat')  double centerLat, @JsonKey(name: 'center_lng')  double centerLng)?  $default,) {final _that = this;
+switch (_that) {
+case _BarangayModel() when $default != null:
+return $default(_that.id,_that.name,_that.centerLat,_that.centerLng);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _BarangayModel implements BarangayModel {
+  const _BarangayModel({required this.id, required this.name, @JsonKey(name: 'center_lat') required this.centerLat, @JsonKey(name: 'center_lng') required this.centerLng});
+  factory _BarangayModel.fromJson(Map<String, dynamic> json) => _$BarangayModelFromJson(json);
+
+@override final  String id;
+@override final  String name;
+@override@JsonKey(name: 'center_lat') final  double centerLat;
+@override@JsonKey(name: 'center_lng') final  double centerLng;
+
+/// Create a copy of BarangayModel
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$BarangayModelCopyWith<_BarangayModel> get copyWith => __$BarangayModelCopyWithImpl<_BarangayModel>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$BarangayModelToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BarangayModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.centerLat, centerLat) || other.centerLat == centerLat)&&(identical(other.centerLng, centerLng) || other.centerLng == centerLng));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,name,centerLat,centerLng);
+
+@override
+String toString() {
+  return 'BarangayModel(id: $id, name: $name, centerLat: $centerLat, centerLng: $centerLng)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$BarangayModelCopyWith<$Res> implements $BarangayModelCopyWith<$Res> {
+  factory _$BarangayModelCopyWith(_BarangayModel value, $Res Function(_BarangayModel) _then) = __$BarangayModelCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String name,@JsonKey(name: 'center_lat') double centerLat,@JsonKey(name: 'center_lng') double centerLng
+});
+
+
+
+
+}
+/// @nodoc
+class __$BarangayModelCopyWithImpl<$Res>
+    implements _$BarangayModelCopyWith<$Res> {
+  __$BarangayModelCopyWithImpl(this._self, this._then);
+
+  final _BarangayModel _self;
+  final $Res Function(_BarangayModel) _then;
+
+/// Create a copy of BarangayModel
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? centerLat = null,Object? centerLng = null,}) {
+  return _then(_BarangayModel(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,centerLat: null == centerLat ? _self.centerLat : centerLat // ignore: cast_nullable_to_non_nullable
+as double,centerLng: null == centerLng ? _self.centerLng : centerLng // ignore: cast_nullable_to_non_nullable
+as double,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$BarangaysResponse {
+
+ List<BarangayModel> get barangays; int get count;
+/// Create a copy of BarangaysResponse
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$BarangaysResponseCopyWith<BarangaysResponse> get copyWith => _$BarangaysResponseCopyWithImpl<BarangaysResponse>(this as BarangaysResponse, _$identity);
+
+  /// Serializes this BarangaysResponse to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BarangaysResponse&&const DeepCollectionEquality().equals(other.barangays, barangays)&&(identical(other.count, count) || other.count == count));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(barangays),count);
+
+@override
+String toString() {
+  return 'BarangaysResponse(barangays: $barangays, count: $count)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $BarangaysResponseCopyWith<$Res>  {
+  factory $BarangaysResponseCopyWith(BarangaysResponse value, $Res Function(BarangaysResponse) _then) = _$BarangaysResponseCopyWithImpl;
+@useResult
+$Res call({
+ List<BarangayModel> barangays, int count
+});
+
+
+
+
+}
+/// @nodoc
+class _$BarangaysResponseCopyWithImpl<$Res>
+    implements $BarangaysResponseCopyWith<$Res> {
+  _$BarangaysResponseCopyWithImpl(this._self, this._then);
+
+  final BarangaysResponse _self;
+  final $Res Function(BarangaysResponse) _then;
+
+/// Create a copy of BarangaysResponse
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? barangays = null,Object? count = null,}) {
+  return _then(_self.copyWith(
+barangays: null == barangays ? _self.barangays : barangays // ignore: cast_nullable_to_non_nullable
+as List<BarangayModel>,count: null == count ? _self.count : count // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [BarangaysResponse].
+extension BarangaysResponsePatterns on BarangaysResponse {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _BarangaysResponse value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _BarangaysResponse() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _BarangaysResponse value)  $default,){
+final _that = this;
+switch (_that) {
+case _BarangaysResponse():
+return $default(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _BarangaysResponse value)?  $default,){
+final _that = this;
+switch (_that) {
+case _BarangaysResponse() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<BarangayModel> barangays,  int count)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _BarangaysResponse() when $default != null:
+return $default(_that.barangays,_that.count);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<BarangayModel> barangays,  int count)  $default,) {final _that = this;
+switch (_that) {
+case _BarangaysResponse():
+return $default(_that.barangays,_that.count);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<BarangayModel> barangays,  int count)?  $default,) {final _that = this;
+switch (_that) {
+case _BarangaysResponse() when $default != null:
+return $default(_that.barangays,_that.count);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _BarangaysResponse implements BarangaysResponse {
+  const _BarangaysResponse({required final  List<BarangayModel> barangays, required this.count}): _barangays = barangays;
+  factory _BarangaysResponse.fromJson(Map<String, dynamic> json) => _$BarangaysResponseFromJson(json);
+
+ final  List<BarangayModel> _barangays;
+@override List<BarangayModel> get barangays {
+  if (_barangays is EqualUnmodifiableListView) return _barangays;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_barangays);
+}
+
+@override final  int count;
+
+/// Create a copy of BarangaysResponse
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$BarangaysResponseCopyWith<_BarangaysResponse> get copyWith => __$BarangaysResponseCopyWithImpl<_BarangaysResponse>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$BarangaysResponseToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BarangaysResponse&&const DeepCollectionEquality().equals(other._barangays, _barangays)&&(identical(other.count, count) || other.count == count));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_barangays),count);
+
+@override
+String toString() {
+  return 'BarangaysResponse(barangays: $barangays, count: $count)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$BarangaysResponseCopyWith<$Res> implements $BarangaysResponseCopyWith<$Res> {
+  factory _$BarangaysResponseCopyWith(_BarangaysResponse value, $Res Function(_BarangaysResponse) _then) = __$BarangaysResponseCopyWithImpl;
+@override @useResult
+$Res call({
+ List<BarangayModel> barangays, int count
+});
+
+
+
+
+}
+/// @nodoc
+class __$BarangaysResponseCopyWithImpl<$Res>
+    implements _$BarangaysResponseCopyWith<$Res> {
+  __$BarangaysResponseCopyWithImpl(this._self, this._then);
+
+  final _BarangaysResponse _self;
+  final $Res Function(_BarangaysResponse) _then;
+
+/// Create a copy of BarangaysResponse
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? barangays = null,Object? count = null,}) {
+  return _then(_BarangaysResponse(
+barangays: null == barangays ? _self._barangays : barangays // ignore: cast_nullable_to_non_nullable
+as List<BarangayModel>,count: null == count ? _self.count : count // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
 // dart format on

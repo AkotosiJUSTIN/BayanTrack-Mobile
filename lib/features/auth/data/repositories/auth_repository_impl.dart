@@ -209,4 +209,15 @@ class AuthRepositoryImpl implements AuthRepository {
       return Err(ErrorMapper.mapException(e, stack));
     }
   }
+
+  @override
+  Future<Result<List<BarangayModel>>> getBarangays() async {
+    try {
+      final response = await _dio.get(ApiConstants.barangays);
+      final barangaysResponse = BarangaysResponse.fromJson(response.data);
+      return Success(barangaysResponse.barangays);
+    } catch (e, stack) {
+      return Err(ErrorMapper.mapException(e, stack));
+    }
+  }
 }

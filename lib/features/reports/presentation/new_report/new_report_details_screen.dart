@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/presentation/barangays_provider.dart';
 import 'new_report_controller.dart';
 import 'new_report_review_screen.dart';
 
@@ -213,25 +214,55 @@ class _NewReportDetailsScreenState
                     const SizedBox(height: 12),
 
                     // Zone Dropdown
-                    _buildSectionLabel(theme, 'Zone *'),
+                    _buildSectionLabel(theme, 'Barangay *'),
                     const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      initialValue: state.zone,
-                      decoration: InputDecoration(
-                        hintText: 'Select zone',
-                        prefixIcon: const Icon(Icons.location_city_outlined),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      items: List.generate(10, (index) {
-                        final zoneNumber = index + 1;
-                        return DropdownMenuItem(
-                          value: 'Zone $zoneNumber',
-                          child: Text('Zone $zoneNumber'),
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final barangaysAsync = ref.watch(barangaysProvider);
+                        
+                        return barangaysAsync.when(
+                          data: (barangays) => DropdownButtonFormField<String>(
+                            initialValue: state.zone,
+                            decoration: InputDecoration(
+                              hintText: 'Select barangay',
+                              prefixIcon: const Icon(Icons.location_city_outlined),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            items: barangays.map((barangay) {
+                              return DropdownMenuItem(
+                                value: barangay.name,
+                                child: Text(barangay.name),
+                              );
+                            }).toList(),
+                            onChanged: (value) => controller.setZone(value),
+                          ),
+                          loading: () => DropdownButtonFormField<String>(
+                            decoration: InputDecoration(
+                              hintText: 'Loading barangays...',
+                              prefixIcon: const Icon(Icons.location_city_outlined),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            items: const [],
+                            onChanged: null,
+                          ),
+                          error: (error, stack) => DropdownButtonFormField<String>(
+                            decoration: InputDecoration(
+                              hintText: 'Error loading barangays',
+                              prefixIcon: const Icon(Icons.location_city_outlined),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: theme.colorScheme.error),
+                              ),
+                            ),
+                            items: const [],
+                            onChanged: null,
+                          ),
                         );
-                      }),
-                      onChanged: (value) => controller.setZone(value),
+                      },
                     ),
                     const SizedBox(height: 16),
 

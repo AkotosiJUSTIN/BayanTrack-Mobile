@@ -145,3 +145,29 @@ sealed class ResetPasswordRequest with _$ResetPasswordRequest {
   factory ResetPasswordRequest.fromJson(Map<String, dynamic> json) =>
       _$ResetPasswordRequestFromJson(json);
 }
+
+// ==================== BARANGAYS ====================
+
+@freezed
+sealed class BarangayModel with _$BarangayModel {
+  const factory BarangayModel({
+    required String id,
+    required String name,
+    @JsonKey(name: 'center_lat') required double centerLat,
+    @JsonKey(name: 'center_lng') required double centerLng,
+  }) = _BarangayModel;
+
+  factory BarangayModel.fromJson(Map<String, dynamic> json) =>
+      _$BarangayModelFromJson(json);
+}
+
+@freezed
+sealed class BarangaysResponse with _$BarangaysResponse {
+  const factory BarangaysResponse({
+    required List<BarangayModel> barangays,
+    required int count,
+  }) = _BarangaysResponse;
+
+  factory BarangaysResponse.fromJson(Map<String, dynamic> json) =>
+      _$BarangaysResponseFromJson(json);
+}

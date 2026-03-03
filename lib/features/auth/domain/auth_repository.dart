@@ -1,4 +1,5 @@
 import '../../../core/domain/result.dart';
+import '../data/auth_models.dart';
 import 'entities/user.dart';
 import 'entities/auth_tokens.dart';
 
@@ -63,4 +64,7 @@ abstract interface class AuthRepository {
     required String newPassword,
     required String newPasswordConfirm,
   });
+
+  /// Get list of barangays for location picker
+  Future<Result<List<BarangayModel>>> getBarangays();
 }

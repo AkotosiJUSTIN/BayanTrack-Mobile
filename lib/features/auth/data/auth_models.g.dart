@@ -153,3 +153,30 @@ Map<String, dynamic> _$ResetPasswordRequestToJson(
   'new_password': instance.newPassword,
   'new_password_confirm': instance.newPasswordConfirm,
 };
+
+_BarangayModel _$BarangayModelFromJson(Map<String, dynamic> json) =>
+    _BarangayModel(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      centerLat: (json['center_lat'] as num).toDouble(),
+      centerLng: (json['center_lng'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$BarangayModelToJson(_BarangayModel instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'center_lat': instance.centerLat,
+      'center_lng': instance.centerLng,
+    };
+
+_BarangaysResponse _$BarangaysResponseFromJson(Map<String, dynamic> json) =>
+    _BarangaysResponse(
+      barangays: (json['barangays'] as List<dynamic>)
+          .map((e) => BarangayModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      count: (json['count'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$BarangaysResponseToJson(_BarangaysResponse instance) =>
+    <String, dynamic>{'barangays': instance.barangays, 'count': instance.count};
