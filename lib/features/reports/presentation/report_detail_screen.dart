@@ -4,9 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/presentation/profile_controller.dart';
 import '../domain/entities/blockchain_verification.dart';
 import '../domain/entities/report.dart';
 import '../domain/entities/report_enums.dart';
+import 'citizen_review_screen.dart';
 import 'report_detail_controller.dart';
 import 'widgets/priority_badge.dart';
 
@@ -427,6 +429,10 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           _buildInfoRow('Report ID', report.id.substring(0, 8), theme),
           const SizedBox(height: 24),
 
+          // Citizen resolution review banner (shown only to the report owner
+          // when the report has been resolved by barangay staff)
+          _buildCitizenReviewBanner(theme, isDark, report),
+
           // Blockchain Verification Section
           _buildBlockchainSection(theme, isDark, report),
           const SizedBox(height: 32),
@@ -435,8 +441,97 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     );
   }
 
-  Widget _buildBlockchainSection(ThemeData theme, bool isDark, Report report) {
-    return Container(
+  /// Shows a prominent call-to-action banner to the report owner when the
+  /// barangay has marked the report as resolved and the citizen hasn't yet
+  /// submitted their review.
+  Widget _buildCitizenReviewBanner(
+    ThemeData theme,
+    bool isDark,
+    Report report,
+  ) {
+    if (report.status != ReportStatus.resolved) return const SizedBox.shrink();
+
+    // Only show to the report owner
+    final profileAsync = ref.watch(profileControllerProvider);
+    final currentUserId = profileAsync.asData?.value.id;
+    if (currentUserId == null || currentUserId != report.userId) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.success.withValues(alpha: 0.15),
+              AppColors.success.withValues(alpha: 0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.success.withValues(alpha: 0.4),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.task_alt_rounded, color: AppColors.success),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Your report has been resolved!',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'The barangay has addressed your report. '
+              'Please review their action and confirm whether the issue '
+              'was properly resolved.',
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () async {
+                  final acted = await Navigator.of(context).push<bool>(
+                    MaterialPageRoute(
+                      builder: (_) => CitizenReviewScreen(report: report),
+                    ),
+                  );
+                  // Refresh report after review is submitted
+                  if (acted == true && mounted) {
+                    ref.invalidate(
+                      reportDetailControllerProvider(report.id),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.rate_review_outlined),
+                label: const Text('Review & Sign Off'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.success,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBlockchainSection(ThemeData theme, bool isDark, Report report) {    return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : Colors.grey.shade50,

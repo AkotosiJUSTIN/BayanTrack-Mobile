@@ -237,4 +237,27 @@ class ReportsRepositoryImpl implements ReportsRepository {
       return Err(ErrorMapper.mapException(e, stack));
     }
   }
+
+  @override
+  Future<Result<Map<String, dynamic>>> citizenCloseReport({
+    required String id,
+    required bool satisfied,
+    int? rating,
+    String? note,
+  }) async {
+    try {
+      final body = <String, dynamic>{'satisfied': satisfied};
+      if (rating != null) body['rating'] = rating;
+      if (note != null && note.isNotEmpty) body['note'] = note;
+
+      final response = await _dio.patch(
+        ApiConstants.reportCitizenClose(id),
+        data: body,
+      );
+      // Backend returns { message, satisfied, report_status }
+      return Success(Map<String, dynamic>.from(response.data as Map));
+    } catch (e, stack) {
+      return Err(ErrorMapper.mapException(e, stack));
+    }
+  }
 }

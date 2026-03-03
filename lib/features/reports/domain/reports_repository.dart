@@ -78,4 +78,16 @@ abstract interface class ReportsRepository {
 
   /// Verify report on blockchain
   Future<Result<BlockchainVerificationResult>> verifyReport(String id);
+
+  /// Submit citizen closure review for a resolved report.
+  ///
+  /// [satisfied] — true if the citizen confirms resolution, false to reopen.
+  /// [rating]    — optional 1–5 star rating.
+  /// [note]      — optional free-text feedback.
+  Future<Result<Map<String, dynamic>>> citizenCloseReport({
+    required String id,
+    required bool satisfied,
+    int? rating,
+    String? note,
+  });
 }

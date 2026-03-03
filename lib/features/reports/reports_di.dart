@@ -9,6 +9,7 @@ import 'domain/usecases/get_report_stats_usecase.dart';
 import 'domain/usecases/get_report_usecase.dart';
 import 'domain/usecases/get_reports_usecase.dart';
 import 'domain/usecases/verify_report_usecase.dart';
+import 'domain/usecases/citizen_close_report_usecase.dart';
 
 part 'reports_di.g.dart';
 
@@ -71,6 +72,13 @@ GetReportStatsUseCase getReportStatsUseCase(Ref ref) {
 @riverpod
 VerifyReportUseCase verifyReportUseCase(Ref ref) {
   return VerifyReportUseCase(
+    repository: ref.watch(reportsRepositoryDomainProvider),
+  );
+}
+
+@riverpod
+CitizenCloseReportUseCase citizenCloseReportUseCase(Ref ref) {
+  return CitizenCloseReportUseCase(
     repository: ref.watch(reportsRepositoryDomainProvider),
   );
 }
