@@ -54,6 +54,8 @@ enum ReportStatus {
   endorsed,
   @JsonValue('resolved')
   resolved,
+  @JsonValue('closed')
+  closed,
   @JsonValue('rejected')
   rejected;
 
@@ -66,6 +68,7 @@ enum ReportStatus {
     escalated => 'Escalated',
     endorsed => 'Endorsed',
     resolved => 'Resolved',
+    closed => 'Closed',
     rejected => 'Rejected',
   };
 
@@ -78,6 +81,7 @@ enum ReportStatus {
     escalated => 'escalated',
     endorsed => 'endorsed',
     resolved => 'resolved',
+    closed => 'closed',
     rejected => 'rejected',
   };
 }

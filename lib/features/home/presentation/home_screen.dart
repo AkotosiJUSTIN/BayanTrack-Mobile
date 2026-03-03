@@ -6,6 +6,7 @@ import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/verification_widgets.dart';
 import '../../kyc/presentation/kyc_controller.dart';
 import '../../reports/domain/entities/report.dart';
+import '../../reports/domain/entities/report_enums.dart';
 import '../../reports/presentation/report_detail_screen.dart';
 import '../../reports/reports_di.dart';
 import 'widgets/home_report_card.dart';
@@ -378,7 +379,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Stack(
       children: [
         MapPlaceholder(
-          reports: _reports,
+          reports: _reports.where((r) => r.status != ReportStatus.closed).toList(),
           onMarkerTap: (report) => _openReportDetail(report.id, report),
         ),
         Positioned(
@@ -392,14 +393,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ).scaffoldBackgroundColor.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 8,
               children: [
-                _buildLegendItem('Low', AppColors.alertLow),
-                const SizedBox(width: 16),
-                _buildLegendItem('Medium', AppColors.alertMedium),
-                const SizedBox(width: 16),
-                _buildLegendItem('High', AppColors.alertHigh),
+                _buildLegendItem('Submitted', AppColors.alertMedium),
+                _buildLegendItem('In Progress', const Color(0xFF3B82F6)),
+                _buildLegendItem('Escalated', AppColors.alertHigh),
+                _buildLegendItem('Resolved', AppColors.success),
               ],
             ),
           ),

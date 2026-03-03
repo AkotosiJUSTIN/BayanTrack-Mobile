@@ -56,6 +56,7 @@ enum ReportStatus {
   escalated,
   endorsed,
   resolved,
+  closed,
   rejected;
 
   String get displayName => switch (this) {
@@ -67,6 +68,7 @@ enum ReportStatus {
     escalated => 'Escalated',
     endorsed => 'Endorsed',
     resolved => 'Resolved',
+    closed => 'Closed',
     rejected => 'Rejected',
   };
 
@@ -79,6 +81,7 @@ enum ReportStatus {
     escalated => 'escalated',
     endorsed => 'endorsed',
     resolved => 'resolved',
+    closed => 'closed',
     rejected => 'rejected',
   };
 
@@ -92,6 +95,7 @@ enum ReportStatus {
       'escalated' => ReportStatus.escalated,
       'endorsed' => ReportStatus.endorsed,
       'resolved' => ReportStatus.resolved,
+      'closed' => ReportStatus.closed,
       'rejected' => ReportStatus.rejected,
       _ => ReportStatus.submitted,
     };
