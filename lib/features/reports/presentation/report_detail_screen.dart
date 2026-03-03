@@ -650,22 +650,35 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
   Widget _buildVerificationStatus(ThemeData theme) {
     final result = _verificationResult!;
-    final isHealthy = result.verified && result.statusVerified;
+
+    // `verified` = content hash intact. `statusVerified` = on-chain status enum
+    // matches the local DB status. The contract only stores status=Submitted at
+    // anchoring time and never updates it, so statusVerified will always be false
+    // once staff take any action. This is expected and NOT a breach — surface it
+    // as a separate informational note, not as a red "Integrity Breach".
+    final isHealthy = result.verified; // content integrity only
 
     // Determine the display state
     final isNotFound = result.notFoundOnChain;
     final isConnectionError = result.connectionError;
     final isNotAnchored = !result.isAnchored;
     final isNeutral = isNotFound || isConnectionError || isNotAnchored;
+    // Status is out of sync with blockchain (expected after staff actions)
+    final isStatusPending = result.verified && !result.statusVerified;
 
     final Color statusColor;
     final IconData statusIcon;
     final String title;
 
-    if (isHealthy) {
+    if (isHealthy && !isStatusPending) {
       statusColor = AppColors.success;
       statusIcon = Icons.check_circle;
       title = 'Integrity Verified';
+    } else if (isStatusPending) {
+      // Content is intact; only the on-chain status enum lags behind
+      statusColor = AppColors.alertMedium;
+      statusIcon = Icons.sync_rounded;
+      title = 'Content Verified';
     } else if (isNotAnchored) {
       statusColor = AppColors.alertMedium;
       statusIcon = Icons.hourglass_empty;
