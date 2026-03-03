@@ -53,6 +53,7 @@ dependencies:
   connectivity_plus: ^7.0.0
   package_info_plus: ^8.1.2
   flutter_svg: ^2.2.3
+  signature: ^5.5.0
 
 dev_dependencies:
   flutter_test:

@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:signature/signature.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../domain/entities/report.dart';
 import 'report_detail_controller.dart';
@@ -21,12 +25,27 @@ class CitizenReviewScreen extends ConsumerStatefulWidget {
 class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
   int _rating = 0;
   final _noteController = TextEditingController();
-  final _signatureController = TextEditingController();
+  final _nameController = TextEditingController();
   bool _isSubmitting = false;
+
+  late final SignatureController _signatureController;
+
+  @override
+  void initState() {
+    super.initState();
+    _signatureController = SignatureController(
+      penStrokeWidth: 2.5,
+      penColor: Colors.black,
+      exportBackgroundColor: Colors.white,
+      onDrawStart: () => setState(() {}),
+      onDrawEnd: () => setState(() {}),
+    );
+  }
 
   @override
   void dispose() {
     _noteController.dispose();
+    _nameController.dispose();
     _signatureController.dispose();
     super.dispose();
   }
@@ -43,27 +62,41 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           ? widget.report.adminRemarks!
           : 'The barangay has marked this report as resolved.';
 
-  bool get _signatureValid =>
-      _signatureController.text.trim().split(' ').length >= 2;
+  bool get _nameValid =>
+      _nameController.text.trim().split(' ').length >= 2;
+
+  bool get _canvasValid => _signatureController.isNotEmpty;
+
+  bool get _signatureValid => _nameValid && _canvasValid;
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
   Future<void> _submit({required bool satisfied}) async {
-    if (!_signatureValid) {
-      _showSnackBar(
-        'Please enter your full name as your digital signature.',
-        error: true,
-      );
+    if (!_nameValid) {
+      _showSnackBar('Please enter your full name.', error: true);
       return;
     }
-
-    final note = _noteController.text.trim();
-    final confirmedNote =
-        '$note${note.isNotEmpty ? '\n' : ''}Digitally confirmed by: ${_signatureController.text.trim()}';
+    if (!_canvasValid) {
+      _showSnackBar('Please draw your signature on the canvas.', error: true);
+      return;
+    }
 
     setState(() => _isSubmitting = true);
 
     try {
+      // Export canvas as PNG bytes → base64 string appended to the note
+      final signatureBytes = await _signatureController.toPngBytes();
+      final signatureB64 =
+          signatureBytes != null ? base64Encode(signatureBytes) : '';
+
+      final note = _noteController.text.trim();
+      final fullName = _nameController.text.trim();
+      final confirmedNote = [
+        if (note.isNotEmpty) note,
+        'Digitally signed by: $fullName',
+        if (signatureB64.isNotEmpty) '[signature_png_b64]:$signatureB64',
+      ].join('\n');
+
       final controller = ref.read(
         reportDetailControllerProvider(widget.report.id).notifier,
       );
@@ -322,60 +355,131 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
   }
 
   Widget _buildSignatureSection(ThemeData theme, bool isDark) {
+    final canvasBorder = _canvasValid
+        ? AppColors.success
+        : (isDark ? AppColors.darkBorder : Colors.grey.shade300);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Heading
         Row(
           children: [
-            Icon(
-              Icons.draw_outlined,
-              size: 18,
-              color: AppColors.primary,
-            ),
+            Icon(Icons.draw_outlined, size: 18, color: AppColors.primary),
             const SizedBox(width: 6),
             Text(
               'Digital Signature',
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: theme.textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w600),
             ),
+            if (_signatureValid) ...[const SizedBox(width: 8), Icon(Icons.verified_rounded, size: 18, color: AppColors.success)],
           ],
         ),
         const SizedBox(height: 4),
         Text(
-          'Type your full name to digitally sign this review. '
-          'This confirms your identity and the authenticity of your response.',
+          'Draw your signature in the box below, then type your full name '
+          'to confirm your identity and authenticate this review.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: isDark
                 ? AppColors.darkTextSecondary
                 : AppColors.lightTextSecondary,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
+
+        // ── Canvas pad ──────────────────────────────────────────────────────
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: canvasBorder, width: 1.5),
+            ),
+            child: Stack(
+              children: [
+                Signature(
+                  controller: _signatureController,
+                  height: 160,
+                  backgroundColor:
+                      isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                ),
+                // Placeholder hint
+                if (!_canvasValid)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Center(
+                        child: Text(
+                          'Sign here',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey.shade400,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                // Clear / reset button
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () {
+                        _signatureController.clear();
+                        setState(() {});
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: Icon(Icons.refresh_rounded,
+                            size: 18, color: Colors.grey.shade500),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (!_canvasValid)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'Please draw your signature above.',
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: AppColors.alertHigh),
+            ),
+          ),
+
+        const SizedBox(height: 14),
+
+        // ── Full name field ─────────────────────────────────────────────────
         TextField(
-          controller: _signatureController,
+          controller: _nameController,
           onChanged: (_) => setState(() {}),
           textCapitalization: TextCapitalization.words,
           decoration: InputDecoration(
-            hintText: 'Full Name (e.g. Juan dela Cruz)',
+            labelText: 'Full Name',
+            hintText: 'e.g. Juan dela Cruz',
             prefixIcon: const Icon(Icons.person_outline),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             filled: true,
-            fillColor:
-                isDark ? AppColors.darkSurface : Colors.grey.shade50,
-            suffixIcon: _signatureValid
-                ? Icon(Icons.verified, color: AppColors.success)
+            fillColor: isDark ? AppColors.darkSurface : Colors.grey.shade50,
+            suffixIcon: _nameValid
+                ? Icon(Icons.check_circle, color: AppColors.success)
                 : null,
           ),
         ),
-        if (!_signatureValid && _signatureController.text.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text(
-            'Please enter your first and last name.',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: AppColors.alertHigh),
+        if (!_nameValid && _nameController.text.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'Please enter your first and last name.',
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: AppColors.alertHigh),
+            ),
           ),
-        ],
       ],
     );
   }
