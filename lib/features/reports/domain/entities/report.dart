@@ -65,6 +65,11 @@ class Report extends Equatable {
   final DateTime? verifiedAt;
   final DateTime? resolvedAt;
 
+  // Citizen Closure
+  final DateTime? citizenVerifiedAt;
+  final int? citizenSatisfaction;
+  final String? citizenClosureNote;
+
   // Blockchain Integration
   final int? onChainId;
   final String? onChainHash;
@@ -115,6 +120,9 @@ class Report extends Equatable {
     this.submittedAt,
     this.verifiedAt,
     this.resolvedAt,
+    this.citizenVerifiedAt,
+    this.citizenSatisfaction,
+    this.citizenClosureNote,
     this.onChainId,
     this.onChainHash,
     this.blockchainTxnHash,
@@ -150,6 +158,7 @@ class Report extends Equatable {
     severity,
     isEmergency,
     createdAt,
+    citizenVerifiedAt,
     onChainId,
     onChainHash,
     blockchainSynced,

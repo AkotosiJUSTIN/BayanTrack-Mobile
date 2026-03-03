@@ -69,6 +69,11 @@ class ReportMapper {
       resolvedAt: dtoReport.resolvedAt != null
           ? DateTime.tryParse(dtoReport.resolvedAt!)
           : null,
+      citizenVerifiedAt: dtoReport.citizenVerifiedAt != null
+          ? DateTime.tryParse(dtoReport.citizenVerifiedAt!)
+          : null,
+      citizenSatisfaction: dtoReport.citizenSatisfaction,
+      citizenClosureNote: dtoReport.citizenClosureNote,
       onChainId: dtoReport.onChainId,
       onChainHash: dtoReport.onChainHash,
       blockchainTxnHash: dtoReport.blockchainTxnHash,

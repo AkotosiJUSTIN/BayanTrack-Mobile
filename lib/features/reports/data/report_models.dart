@@ -259,6 +259,11 @@ sealed class Report with _$Report {
     @JsonKey(name: 'verified_at') String? verifiedAt,
     @JsonKey(name: 'resolved_at') String? resolvedAt,
 
+    // Citizen Closure
+    @JsonKey(name: 'citizen_verified_at') String? citizenVerifiedAt,
+    @JsonKey(name: 'citizen_satisfaction') int? citizenSatisfaction,
+    @JsonKey(name: 'citizen_closure_note') String? citizenClosureNote,
+
     // Blockchain Integration
     @JsonKey(name: 'on_chain_id') int? onChainId,
     @JsonKey(name: 'on_chain_hash') String? onChainHash,

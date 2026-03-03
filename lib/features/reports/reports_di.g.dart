@@ -402,6 +402,7 @@ final class VerifyReportUseCaseProvider
 
 String _$verifyReportUseCaseHash() =>
     r'cea77473a7640e05dc9bff9c193310a0c5c75cd4';
+
 @ProviderFor(citizenCloseReportUseCase)
 final citizenCloseReportUseCaseProvider = CitizenCloseReportUseCaseProvider._();
 
@@ -448,4 +449,4 @@ final class CitizenCloseReportUseCaseProvider
 }
 
 String _$citizenCloseReportUseCaseHash() =>
-    r'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0';
+    r'49a2a937a7d36df46fad6c963622b6e70a2cb7a5';

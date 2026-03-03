@@ -458,6 +458,40 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       return const SizedBox.shrink();
     }
 
+    // --- Already reviewed: show a compact confirmation chip ---
+    if (report.citizenVerifiedAt != null) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.success.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.success.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.verified_rounded, color: AppColors.success, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'You have already submitted your review. Thank you!',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.success,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // --- Pending review: show the CTA ---
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Container(
