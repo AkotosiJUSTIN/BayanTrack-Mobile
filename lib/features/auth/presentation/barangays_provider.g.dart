@@ -39,7 +39,7 @@ final class BarangaysProvider
   Barangays create() => Barangays();
 }
 
-String _$barangaysHash() => r'0e22f0cd8ca8f6a559b7cb4d7b7fe9c724842717';
+String _$barangaysHash() => r'be0ed567092c9216bffd5f149b4d5cf9a7c87704';
 
 /// Provider that fetches and caches the list of barangays from the API.
 /// Used by the new report screen for the location dropdown.

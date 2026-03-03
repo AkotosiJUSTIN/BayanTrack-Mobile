@@ -6,6 +6,7 @@ import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/verification_widgets.dart';
 import '../domain/entities/report.dart';
 import '../presentation/report_detail_screen.dart';
+import '../presentation/reports_controller.dart';
 import '../reports_di.dart';
 import '../../home/presentation/widgets/home_report_card.dart';
 
@@ -155,6 +156,14 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    // Auto-reload when a new report is submitted from the new-report flow.
+    // The review screen calls increment() on MyReportsRefreshNotifier on success.
+    ref.listen<int>(myReportsRefreshProvider, (previous, next) {
+      if (next > (previous ?? 0)) {
+        _loadInitialReports();
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(title: const Text('My Reports')),

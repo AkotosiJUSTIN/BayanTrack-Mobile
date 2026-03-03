@@ -90,8 +90,12 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
       // Reset the form and navigate back
       ref.read(newReportControllerProvider.notifier).reset();
 
-      // Invalidate reports to refresh the list
+      // Invalidate reports to refresh the Home screen list
       ref.invalidate(reportsControllerProvider);
+
+      // Increment the refresh trigger so MyReportsScreen auto-reloads
+      // its local list without requiring a manual pull-to-refresh.
+      ref.read(myReportsRefreshProvider.notifier).increment();
 
       if (mounted) {
         // Pop all the way back to the main navigation

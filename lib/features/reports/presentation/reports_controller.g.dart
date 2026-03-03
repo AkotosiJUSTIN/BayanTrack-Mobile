@@ -8,6 +8,81 @@ part of 'reports_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
+/// A simple counter-based refresh trigger for [MyReportsScreen].
+///
+/// Call [MyReportsRefreshNotifier.increment] after a successful report
+/// submission to signal [MyReportsScreen] to reload its local list without
+/// requiring a manual pull-to-refresh.
+
+@ProviderFor(MyReportsRefreshNotifier)
+final myReportsRefreshProvider = MyReportsRefreshNotifierProvider._();
+
+/// A simple counter-based refresh trigger for [MyReportsScreen].
+///
+/// Call [MyReportsRefreshNotifier.increment] after a successful report
+/// submission to signal [MyReportsScreen] to reload its local list without
+/// requiring a manual pull-to-refresh.
+final class MyReportsRefreshNotifierProvider
+    extends $NotifierProvider<MyReportsRefreshNotifier, int> {
+  /// A simple counter-based refresh trigger for [MyReportsScreen].
+  ///
+  /// Call [MyReportsRefreshNotifier.increment] after a successful report
+  /// submission to signal [MyReportsScreen] to reload its local list without
+  /// requiring a manual pull-to-refresh.
+  MyReportsRefreshNotifierProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'myReportsRefreshProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$myReportsRefreshNotifierHash();
+
+  @$internal
+  @override
+  MyReportsRefreshNotifier create() => MyReportsRefreshNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+}
+
+String _$myReportsRefreshNotifierHash() =>
+    r'e41a8ca4a4a1553ab8124b0975ae4bf12c399c10';
+
+/// A simple counter-based refresh trigger for [MyReportsScreen].
+///
+/// Call [MyReportsRefreshNotifier.increment] after a successful report
+/// submission to signal [MyReportsScreen] to reload its local list without
+/// requiring a manual pull-to-refresh.
+
+abstract class _$MyReportsRefreshNotifier extends $Notifier<int> {
+  int build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<int, int>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<int, int>,
+              int,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
 /// Controller for fetching reports from backend.
 ///
 /// Uses [GetReportsUseCase] for proper clean architecture layering.

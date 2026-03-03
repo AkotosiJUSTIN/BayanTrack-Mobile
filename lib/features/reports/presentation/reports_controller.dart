@@ -4,6 +4,20 @@ import '../reports_di.dart';
 
 part 'reports_controller.g.dart';
 
+/// A simple counter-based refresh trigger for [MyReportsScreen].
+///
+/// Call [MyReportsRefreshNotifier.increment] after a successful report
+/// submission to signal [MyReportsScreen] to reload its local list without
+/// requiring a manual pull-to-refresh.
+@riverpod
+class MyReportsRefreshNotifier extends _$MyReportsRefreshNotifier {
+  @override
+  int build() => 0;
+
+  /// Increment the counter to trigger a refresh in [MyReportsScreen].
+  void increment() => state = state + 1;
+}
+
 /// Controller for fetching reports from backend.
 ///
 /// Uses [GetReportsUseCase] for proper clean architecture layering.
