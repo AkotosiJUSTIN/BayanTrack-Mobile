@@ -1,23 +1,31 @@
-import 'dart:io';
-
 class ApiConstants {
   // ─── DEPLOYMENT CONFIG ─────────────────────────────────────────────────────
   //
-  // LOCAL DEV  → use the emulator aliases below (already set up)
-  // REAL DEVICE (same WiFi as PC) → set _devServerIp to your PC's LAN IP
-  //   e.g. '192.168.1.10' — run `ipconfig` (Windows) or `ifconfig` (Mac/Linux)
-  // PRODUCTION → set _prodUrl to your hosted domain (HTTPS recommended)
+  // MODE A — USB cable + adb reverse (no firewall issues):
+  //   1. Connect phone via USB
+  //   2. Run: adb reverse tcp:8000 tcp:8000
+  //   3. Django: python manage.py runserver   (127.0.0.1:8000 is fine)
+  //   4. Set _devServerIp = ''  →  app uses http://localhost:8000
   //
-  static const bool _isProduction = false; // ← flip to true for prod build
-  static const String _prodUrl = 'https://your-production-domain.com'; // ← set this
-  static const String _devServerIp = ''; // adb reverse tunnel — routes through USB to PC port 8000
+  // MODE B — WiFi / mobile hotspot (USB not required):
+  //   1. Django MUST bind to all interfaces: python manage.py runserver 0.0.0.0:8000
+  //   2. Allow port 8000 through Windows Firewall (if prompted, click "Allow")
+  //   3. Set _devServerIp = '<your PC WiFi IP>'  (run ipconfig → Wi-Fi IPv4)
+  //      Current PC Wi-Fi IP: 192.168.1.23
+  //
+  // PRODUCTION → flip _isProduction to true and fill _prodUrl
+  //
+  static const bool _isProduction = false;
+  static const String _prodUrl = 'https://your-production-domain.com';
+
+  // MODE A (USB+adb): leave empty. MODE B (WiFi): set to PC's WiFi IP.
+  static const String _devServerIp = '';
   // ───────────────────────────────────────────────────────────────────────────
 
   static String get baseUrl {
     if (_isProduction) return '$_prodUrl/api';
     if (_devServerIp.isNotEmpty) return 'http://$_devServerIp:8000/api';
-    // Emulator fallbacks
-    if (Platform.isAndroid) return 'http://10.0.2.2:8000/api';
+    // MODE A: adb reverse tunnels device localhost → PC localhost:8000
     return 'http://localhost:8000/api';
   }
 
@@ -25,7 +33,6 @@ class ApiConstants {
   static String get mediaBaseUrl {
     if (_isProduction) return _prodUrl;
     if (_devServerIp.isNotEmpty) return 'http://$_devServerIp:8000';
-    if (Platform.isAndroid) return 'http://10.0.2.2:8000';
     return 'http://localhost:8000';
   }
 
@@ -60,7 +67,8 @@ class ApiConstants {
   static String reportById(String id) => '/reports/$id/';
   static String reportVerify(String id) => '/reports/$id/verify/';
   static String reportCitizenClose(String id) => '/reports/$id/citizen-close/';
-  static String reportBarangayResolve(String id) => '/reports/$id/barangay-resolve/';
+  static String reportBarangayResolve(String id) =>
+      '/reports/$id/barangay-resolve/';
 
   // Images Endpoints
   static const String images = '/images/';

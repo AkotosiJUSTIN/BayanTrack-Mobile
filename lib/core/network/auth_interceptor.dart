@@ -59,7 +59,9 @@ class AuthInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     debugPrint(
-      '[AuthInterceptor] Error: ${err.response?.statusCode} ${err.requestOptions.path}',
+      '[AuthInterceptor] Error: status=${err.response?.statusCode} '
+      'type=${err.type} msg=${err.message} '
+      'path=${err.requestOptions.path}',
     );
     // Only handle 401 Unauthorized
     if (err.response?.statusCode != 401) {
