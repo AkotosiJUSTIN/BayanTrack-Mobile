@@ -182,6 +182,11 @@ class HomeReportCard extends StatelessWidget {
         isDark ? AppColors.resolvedTextDark : AppColors.resolvedText,
         'Resolved',
       ),
+      ReportStatus.closed => (
+        isDark ? AppColors.resolvedBgDark : AppColors.resolvedBg,
+        isDark ? AppColors.resolvedTextDark : AppColors.resolvedText,
+        'Closed',
+      ),
       ReportStatus.rejected => (
         isDark ? AppColors.rejectedBgDark : AppColors.rejectedBg,
         isDark ? AppColors.rejectedTextDark : AppColors.rejectedText,

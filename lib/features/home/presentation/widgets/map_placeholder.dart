@@ -38,7 +38,7 @@ class MapPlaceholder extends StatelessWidget {
               verticalOffset: 18,
               child: GestureDetector(
                 onTap: onMarkerTap == null ? null : () => onMarkerTap!(report),
-                child: _buildMarker(_colorForSeverity(report.severity)),
+                child: _buildMarker(_colorForStatus(report.status)),
               ),
             ),
           ),
@@ -149,11 +149,18 @@ class MapPlaceholder extends StatelessWidget {
     );
   }
 
-  Color _colorForSeverity(SeverityLevel severity) {
-    return switch (severity) {
-      SeverityLevel.low => AppColors.alertLow,
-      SeverityLevel.medium => AppColors.alertMedium,
-      SeverityLevel.high || SeverityLevel.critical => AppColors.alertHigh,
+  Color _colorForStatus(ReportStatus status) {
+    return switch (status) {
+      ReportStatus.submitted => AppColors.alertMedium,
+      ReportStatus.underReview => AppColors.alertMedium,
+      ReportStatus.verified => AppColors.primary,
+      ReportStatus.assigned => AppColors.primary,
+      ReportStatus.inProgress => const Color(0xFF3B82F6), // Blue
+      ReportStatus.escalated => AppColors.alertHigh,
+      ReportStatus.endorsed => const Color(0xFF8B5CF6), // Purple
+      ReportStatus.resolved => AppColors.success,
+      ReportStatus.closed => AppColors.success,
+      ReportStatus.rejected => AppColors.alertHigh,
     };
   }
 

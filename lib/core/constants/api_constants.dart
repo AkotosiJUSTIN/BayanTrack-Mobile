@@ -10,7 +10,7 @@ class ApiConstants {
   //
   static const bool _isProduction = false; // ← flip to true for prod build
   static const String _prodUrl = 'https://your-production-domain.com'; // ← set this
-  static const String _devServerIp = '127.0.0.1'; // adb reverse tunnel — routes through USB to PC port 8000
+  static const String _devServerIp = ''; // adb reverse tunnel — routes through USB to PC port 8000
   // ───────────────────────────────────────────────────────────────────────────
 
   static String get baseUrl {

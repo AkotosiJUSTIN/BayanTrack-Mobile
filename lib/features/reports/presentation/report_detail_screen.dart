@@ -846,6 +846,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       ReportStatus.escalated => (AppColors.alertHigh, 'Escalated'),
       ReportStatus.endorsed => (AppColors.primary, 'Endorsed'),
       ReportStatus.resolved => (AppColors.success, 'Resolved'),
+      ReportStatus.closed => (AppColors.success, 'Closed'),
       ReportStatus.rejected => (AppColors.alertHigh, 'Rejected'),
       ReportStatus.verified => (AppColors.alertMedium, 'Verified'),
       ReportStatus.assigned => (AppColors.primary, 'Assigned'),
