@@ -34,7 +34,7 @@ _BlockchainVerificationResultDto _$BlockchainVerificationResultDtoFromJson(
   Map<String, dynamic> json,
 ) => _BlockchainVerificationResultDto(
   reportId: json['report_id'] as String,
-  onChainId: (json['on_chain_id'] as num?)?.toInt(),
+  onChainId: const NullableIntConverter().fromJson(json['on_chain_id']),
   verified: json['verified'] as bool,
   statusVerified: json['status_verified'] as bool,
   blockchainData: json['blockchain_data'] as Map<String, dynamic>,
@@ -51,7 +51,7 @@ Map<String, dynamic> _$BlockchainVerificationResultDtoToJson(
   _BlockchainVerificationResultDto instance,
 ) => <String, dynamic>{
   'report_id': instance.reportId,
-  'on_chain_id': instance.onChainId,
+  'on_chain_id': const NullableIntConverter().toJson(instance.onChainId),
   'verified': instance.verified,
   'status_verified': instance.statusVerified,
   'blockchain_data': instance.blockchainData,

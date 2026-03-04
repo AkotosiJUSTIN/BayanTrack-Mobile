@@ -26,14 +26,14 @@ class ApiConstants {
     if (_isProduction) return '$_prodUrl/api';
     if (_devServerIp.isNotEmpty) return 'http://$_devServerIp:8000/api';
     // MODE A: adb reverse tunnels device localhost → PC localhost:8000
-    return 'http://localhost:8000/api';
+    return 'http://10.0.2.2:8000/api';
   }
 
   // Media base URL (without /api suffix)
   static String get mediaBaseUrl {
     if (_isProduction) return _prodUrl;
     if (_devServerIp.isNotEmpty) return 'http://$_devServerIp:8000';
-    return 'http://localhost:8000';
+    return 'http://10.0.2.2:8000';
   }
 
   /// Build full URL for an image path

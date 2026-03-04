@@ -114,22 +114,10 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
         _statusMessage = '';
       });
       if (mounted) {
-        // Extract detailed error message
-        String errorMessage =
-            'We could not submit your report. Please try again.';
-        if (e.toString().contains('DioException')) {
-          // Try to get more details from the response
-          final errorStr = e.toString();
-          debugPrint('Full error: $errorStr');
-
-          // Check if there's a response body with details
-          if (errorStr.contains('details')) {
-            errorMessage =
-                'Some report details are invalid. Please review and try again.';
-          }
-        }
-
-        AppToast.error(context, errorMessage);
+        AppToast.error(
+          context,
+          'We could not submit your report. Please try again.',
+        );
       }
     }
   }

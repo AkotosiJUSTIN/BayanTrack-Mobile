@@ -3,6 +3,27 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'report_models.freezed.dart';
 part 'report_models.g.dart';
 
+// ==================== JSON CONVERTERS ====================
+
+/// Converts a value that could be int, String, or null to int?
+class NullableIntConverter implements JsonConverter<int?, dynamic> {
+  const NullableIntConverter();
+
+  @override
+  int? fromJson(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is String) {
+      return int.tryParse(value);
+    }
+    if (value is num) return value.toInt();
+    return null;
+  }
+
+  @override
+  dynamic toJson(int? value) => value;
+}
+
 // ==================== REPORT CATEGORIES ====================
 
 /// Report categories aligned with Mangaldan Municipal Office routing (V23 XLM-RoBERTa)
@@ -224,7 +245,9 @@ sealed class Report with _$Report {
 
     // Severity & Impact
     @Default('medium') String severity,
-    @JsonKey(name: 'people_affected') int? peopleAffected,
+    @JsonKey(name: 'people_affected')
+    @NullableIntConverter()
+    int? peopleAffected,
     @JsonKey(name: 'is_emergency') @Default(false) bool isEmergency,
 
     // System Fields
@@ -235,11 +258,13 @@ sealed class Report with _$Report {
     // AI Fields
     @JsonKey(name: 'category_confidence') double? categoryConfidence,
     String? priority,
-    @JsonKey(name: 'priority_score') int? priorityScore,
+    @JsonKey(name: 'priority_score')
+    @NullableIntConverter()
+    int? priorityScore,
     @JsonKey(name: 'priority_level') String? priorityLevel,
     @JsonKey(name: 'priority_reasons') List<String>? priorityReasons,
-    @JsonKey(name: 'base_score') int? baseScore,
-    @JsonKey(name: 'hotspot_score') int? hotspotScore,
+    @JsonKey(name: 'base_score') @NullableIntConverter() int? baseScore,
+    @JsonKey(name: 'hotspot_score') @NullableIntConverter() int? hotspotScore,
     @JsonKey(name: 'urgency_score') double? urgencyScore,
     @JsonKey(name: 'duplicate_state') String? duplicateState,
     @JsonKey(name: 'related_report_id') String? relatedReportId,
@@ -265,11 +290,13 @@ sealed class Report with _$Report {
 
     // Citizen Closure
     @JsonKey(name: 'citizen_verified_at') String? citizenVerifiedAt,
-    @JsonKey(name: 'citizen_satisfaction') int? citizenSatisfaction,
+    @JsonKey(name: 'citizen_satisfaction')
+    @NullableIntConverter()
+    int? citizenSatisfaction,
     @JsonKey(name: 'citizen_closure_note') String? citizenClosureNote,
 
     // Blockchain Integration
-    @JsonKey(name: 'on_chain_id') int? onChainId,
+    @JsonKey(name: 'on_chain_id') @NullableIntConverter() int? onChainId,
     @JsonKey(name: 'on_chain_hash') String? onChainHash,
     @JsonKey(name: 'blockchain_txn_hash') String? blockchainTxnHash,
     @JsonKey(name: 'blockchain_synced') @Default(false) bool blockchainSynced,
