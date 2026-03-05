@@ -153,13 +153,13 @@ class HomeReportCard extends StatelessWidget {
   Widget _buildStatusBadge(bool isDark) {
     final (bgColor, textColor, label) = switch (report.status) {
       ReportStatus.submitted => (
-        isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
-        isDark ? AppColors.pendingTextDark : AppColors.pendingText,
+        isDark ? const Color(0xFF78350F) : const Color(0xFFFEF3C7), // Amber
+        isDark ? const Color(0xFFFCD34D) : const Color(0xFFB45309),
         'Submitted',
       ),
       ReportStatus.underReview => (
-        isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
-        isDark ? AppColors.pendingTextDark : AppColors.pendingText,
+        isDark ? const Color(0xFF581C87) : const Color(0xFFF3E8FF), // Violet
+        isDark ? const Color(0xFFD8B4FE) : const Color(0xFF7C3AED),
         'Under Review',
       ),
       ReportStatus.inProgress => (
@@ -168,13 +168,13 @@ class HomeReportCard extends StatelessWidget {
         'In Progress',
       ),
       ReportStatus.escalated => (
-        isDark ? AppColors.rejectedBgDark : AppColors.rejectedBg,
-        isDark ? AppColors.rejectedTextDark : AppColors.rejectedText,
+        isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFEE2E2), // Red
+        isDark ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626),
         'Escalated',
       ),
       ReportStatus.endorsed => (
-        isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
-        isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
+        isDark ? const Color(0xFF164E63) : const Color(0xFFCFFAFE), // Cyan
+        isDark ? const Color(0xFF67E8F9) : const Color(0xFF0891B2),
         'Endorsed',
       ),
       ReportStatus.resolved => (
@@ -183,8 +183,8 @@ class HomeReportCard extends StatelessWidget {
         'Resolved',
       ),
       ReportStatus.closed => (
-        isDark ? AppColors.resolvedBgDark : AppColors.resolvedBg,
-        isDark ? AppColors.resolvedTextDark : AppColors.resolvedText,
+        isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9), // Gray
+        isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
         'Closed',
       ),
       ReportStatus.rejected => (
@@ -193,13 +193,13 @@ class HomeReportCard extends StatelessWidget {
         'Rejected',
       ),
       ReportStatus.verified => (
-        isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
-        isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
+        isDark ? const Color(0xFF064E3B) : const Color(0xFFD1FAE5), // Emerald
+        isDark ? const Color(0xFF6EE7B7) : const Color(0xFF059669),
         'Verified',
       ),
       ReportStatus.assigned => (
-        isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
-        isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
+        isDark ? const Color(0xFF1E3A8A) : const Color(0xFFDBEAFE), // Light Blue
+        isDark ? const Color(0xFF93C5FD) : const Color(0xFF2563EB),
         'Assigned',
       ),
     };

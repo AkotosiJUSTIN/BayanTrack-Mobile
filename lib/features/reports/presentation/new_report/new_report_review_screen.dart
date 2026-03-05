@@ -45,7 +45,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
 
     setState(() {
       _isSubmitting = true;
-      _statusMessage = 'Creating report...';
+      _statusMessage = 'Submitting your report...';
     });
 
     try {
@@ -60,14 +60,14 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
 
       // Step 2: Upload images (if any) - upload one at a time for reliability
       if (state.selectedImages.isNotEmpty) {
-        setState(() => _statusMessage = 'Uploading images...');
+        setState(() => _statusMessage = 'Uploading your photos...');
 
         final imagesRepo = ref.read(imagesRepositoryProvider);
         try {
           for (int i = 0; i < state.selectedImages.length; i++) {
             setState(
               () => _statusMessage =
-                  'Uploading image ${i + 1}/${state.selectedImages.length}...',
+                  'Uploading photo ${i + 1} of ${state.selectedImages.length}...',
             );
             await imagesRepo.uploadImage(
               imageFile: state.selectedImages[i],
@@ -81,7 +81,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
           if (mounted) {
             AppToast.warning(
               context,
-              'Your report was submitted, but some photos could not be uploaded.',
+              'Your report was submitted successfully, but we had trouble uploading some photos. You can add them later.',
             );
           }
         }
@@ -116,7 +116,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
       if (mounted) {
         AppToast.error(
           context,
-          'We could not submit your report. Please try again.',
+          'Unable to submit your report. Please check your internet connection and try again.',
         );
       }
     }

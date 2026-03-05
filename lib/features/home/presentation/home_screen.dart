@@ -544,12 +544,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           Icon(Icons.error_outline, size: 64, color: AppColors.alertHigh),
           const SizedBox(height: 16),
-          Text('Failed to load reports', style: theme.textTheme.titleMedium),
+          Text('Unable to Load Reports', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              error,
+              'We\'re having trouble loading reports. Please check your internet connection and try again.',
               style: theme.textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),

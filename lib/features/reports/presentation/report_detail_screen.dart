@@ -204,9 +204,13 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
         children: [
           Icon(Icons.error_outline, size: 64, color: AppColors.alertHigh),
           const SizedBox(height: 16),
-          Text('Failed to load report', style: theme.textTheme.titleMedium),
+          Text('Unable to Load Report', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
-          Text(error, style: theme.textTheme.bodySmall),
+          Text(
+            'We\'re having trouble loading this report. Please check your internet connection and try again.',
+            style: theme.textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () =>
@@ -840,16 +844,16 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
   Widget _buildStatusBadge(ReportStatus status) {
     final (color, label) = switch (status) {
-      ReportStatus.submitted => (AppColors.alertMedium, 'Submitted'),
-      ReportStatus.underReview => (AppColors.alertMedium, 'Under Review'),
-      ReportStatus.inProgress => (AppColors.primary, 'In Progress'),
-      ReportStatus.escalated => (AppColors.alertHigh, 'Escalated'),
-      ReportStatus.endorsed => (AppColors.primary, 'Endorsed'),
-      ReportStatus.resolved => (AppColors.success, 'Resolved'),
-      ReportStatus.closed => (AppColors.success, 'Closed'),
-      ReportStatus.rejected => (AppColors.alertHigh, 'Rejected'),
-      ReportStatus.verified => (AppColors.alertMedium, 'Verified'),
-      ReportStatus.assigned => (AppColors.primary, 'Assigned'),
+      ReportStatus.submitted => (const Color(0xFFF59E0B), 'Submitted'), // Amber
+      ReportStatus.underReview => (const Color(0xFF8B5CF6), 'Under Review'), // Violet
+      ReportStatus.inProgress => (const Color(0xFF2563EB), 'In Progress'), // Blue
+      ReportStatus.escalated => (const Color(0xFFDC2626), 'Escalated'), // Red
+      ReportStatus.endorsed => (const Color(0xFF06B6D4), 'Endorsed'), // Cyan
+      ReportStatus.resolved => (const Color(0xFF22C55E), 'Resolved'), // Green
+      ReportStatus.closed => (const Color(0xFF64748B), 'Closed'), // Gray
+      ReportStatus.rejected => (const Color(0xFFEF4444), 'Rejected'), // Light Red
+      ReportStatus.verified => (const Color(0xFF10B981), 'Verified'), // Emerald
+      ReportStatus.assigned => (const Color(0xFF3B82F6), 'Assigned'), // Light Blue
     };
 
     return Container(

@@ -118,4 +118,159 @@ class Validators {
       return null;
     };
   }
+
+  /// Detects gibberish or nonsense text in report descriptions.
+  /// 
+  /// Checks for:
+  /// - Excessive character repetition
+  /// - Random keyboard mashing patterns
+  /// - Too many consecutive consonants/vowels
+  /// - Meaningless short text
+  /// - Excessive special characters
+  /// 
+  /// Returns null if text is valid, error message otherwise.
+  static String? reportText(String? value, {bool isRequired = true}) {
+    if (value == null || value.trim().isEmpty) {
+      return isRequired ? 'This field is required' : null;
+    }
+
+    final text = value.trim();
+
+    // Check minimum meaningful length (at least 10 characters)
+    if (text.length < 10) {
+      // Check for common placeholder text
+      final lowerText = text.toLowerCase();
+      if (lowerText == 'n/a' || 
+          lowerText == 'na' || 
+          lowerText == 'none' ||
+          lowerText == 'test' ||
+          lowerText == 'tbd' ||
+          lowerText == 'todo') {
+        return 'Please provide a meaningful description of the issue instead of "$text"';
+      }
+      return 'Please provide a more detailed description (at least 10 characters)';
+    }
+
+    // Check for excessive character repetition (e.g., "aaaaaaa", "hahahaha")
+    if (_hasExcessiveRepetition(text)) {
+      return 'Please enter a meaningful description without excessive repetition';
+    }
+
+    // Check for keyboard mashing patterns
+    if (_isKeyboardMashing(text)) {
+      return 'Please enter a valid description (keyboard mashing detected)';
+    }
+
+    // Check for excessive consecutive consonants or vowels
+    if (_hasExcessiveConsonantsOrVowels(text)) {
+      return 'Please enter a coherent description';
+    }
+
+    // Check if text has reasonable word structure
+    if (!_hasReasonableWordStructure(text)) {
+      return 'Please provide a meaningful description with proper words';
+    }
+
+    // Check for excessive special characters or numbers
+    if (_hasExcessiveNonAlphabetic(text)) {
+      return 'Please reduce the use of special characters and numbers';
+    }
+
+    return null;
+  }
+
+  /// Checks if text has excessive character repetition
+  static bool _hasExcessiveRepetition(String text) {
+    // Check for same character repeated more than 4 times
+    if (RegExp(r'(.)\1{4,}').hasMatch(text)) {
+      return true;
+    }
+
+    // Check for same pattern repeated (e.g., "hahaha", "lalala")
+    if (RegExp(r'(.{2,4})\1{3,}', caseSensitive: false).hasMatch(text)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /// Checks for common keyboard mashing patterns
+  static bool _isKeyboardMashing(String text) {
+    final lowerText = text.toLowerCase();
+    
+    // Common keyboard patterns
+    final keyboardPatterns = [
+      'qwertyuiop',
+      'asdfghjkl',
+      'zxcvbnm',
+      'qwerty',
+      'asdfgh',
+      'zxcvb',
+      '123456',
+      'abcdef',
+    ];
+
+    for (final pattern in keyboardPatterns) {
+      if (lowerText.contains(pattern)) {
+        return true;
+      }
+      // Also check reverse
+      if (lowerText.contains(pattern.split('').reversed.join())) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /// Checks for excessive consecutive consonants or vowels
+  static bool _hasExcessiveConsonantsOrVowels(String text) {
+    // More than 5 consecutive consonants (excluding common Filipino patterns)
+    if (RegExp(r'[bcdfghjklmnpqrstvwxyz]{6,}', caseSensitive: false)
+        .hasMatch(text)) {
+      return true;
+    }
+
+    // More than 4 consecutive vowels (unusual in most languages)
+    if (RegExp(r'[aeiou]{5,}', caseSensitive: false).hasMatch(text)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /// Checks if text has reasonable word structure
+  static bool _hasReasonableWordStructure(String text) {
+    // Split into words
+    final words = text.split(RegExp(r'\s+'));
+    
+    // Filter out very short words (1-2 characters) for checking
+    final meaningfulWords = words.where((w) => w.length > 2).toList();
+    
+    // Should have at least one word longer than 2 characters
+    if (meaningfulWords.isEmpty && text.length > 20) {
+      return false;
+    }
+
+    // Check if at least 30% of text consists of alphabetic characters
+    final alphabeticCount = text.split('').where((c) => 
+      RegExp(r'[a-zA-Z]').hasMatch(c)
+    ).length;
+    
+    if (alphabeticCount < text.length * 0.3) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /// Checks for excessive non-alphabetic characters
+  static bool _hasExcessiveNonAlphabetic(String text) {
+    final nonAlphabeticCount = text.split('').where((c) => 
+      !RegExp(r'[a-zA-Z\s]').hasMatch(c)
+    ).length;
+
+    // More than 50% non-alphabetic (excluding spaces) is suspicious
+    return nonAlphabeticCount > text.length * 0.5;
+  }
 }

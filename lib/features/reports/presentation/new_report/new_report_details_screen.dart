@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/validators.dart';
 import '../../../auth/presentation/barangays_provider.dart';
 import 'new_report_controller.dart';
 import 'new_report_review_screen.dart';
@@ -22,6 +23,7 @@ class _NewReportDetailsScreenState
   final _descriptionController = TextEditingController();
   final _streetLandmarkController = TextEditingController();
   static final _addressInputRegex = RegExp(r"[A-Za-z0-9\s,.'#/()-]");
+  bool _isFormValid = false;
 
   @override
   void initState() {
@@ -31,6 +33,10 @@ class _NewReportDetailsScreenState
     _titleController.text = state.title ?? '';
     _descriptionController.text = state.description;
     _streetLandmarkController.text = state.streetLandmark ?? '';
+    // Check initial validity
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkFormValidity();
+    });
   }
 
   @override
@@ -45,6 +51,15 @@ class _NewReportDetailsScreenState
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const NewReportReviewScreen()));
+  }
+
+  void _checkFormValidity() {
+    final isValid = _formKey.currentState?.validate() ?? false;
+    if (_isFormValid != isValid) {
+      setState(() {
+        _isFormValid = isValid;
+      });
+    }
   }
 
   @override
@@ -145,7 +160,7 @@ class _NewReportDetailsScreenState
                       textInputAction: TextInputAction.next,
                       onChanged: (v) {
                         controller.setTitle(v);
-                        _formKey.currentState?.validate();
+                        _checkFormValidity();
                       },
                       decoration: InputDecoration(
                         hintText: 'Brief title for your report',
@@ -154,6 +169,12 @@ class _NewReportDetailsScreenState
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
+                      validator: (v) {
+                        if (v != null && v.trim().isNotEmpty) {
+                          return Validators.reportText(v, isRequired: false);
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
 
@@ -167,7 +188,7 @@ class _NewReportDetailsScreenState
                       textInputAction: TextInputAction.newline,
                       onChanged: (v) {
                         controller.setDescription(v);
-                        _formKey.currentState?.validate();
+                        _checkFormValidity();
                       },
                       decoration: InputDecoration(
                         hintText:
@@ -177,12 +198,7 @@ class _NewReportDetailsScreenState
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) {
-                          return 'Description is required';
-                        }
-                        return null;
-                      },
+                      validator: Validators.reportText,
                     ),
                     const SizedBox(height: 16),
 
@@ -279,7 +295,7 @@ class _NewReportDetailsScreenState
                       ],
                       onChanged: (v) {
                         controller.setStreetLandmark(v);
-                        _formKey.currentState?.validate();
+                        _checkFormValidity();
                       },
                       decoration: InputDecoration(
                         hintText: 'Street address or nearby landmark',
@@ -332,12 +348,8 @@ class _NewReportDetailsScreenState
           Padding(
             padding: const EdgeInsets.all(16),
             child: ElevatedButton(
-              onPressed: state.hasDetails
-                  ? () {
-                      if (_formKey.currentState?.validate() ?? false) {
-                        _navigateToReview();
-                      }
-                    }
+              onPressed: (state.hasDetails && _isFormValid)
+                  ? _navigateToReview
                   : null,
               child: const Text('Continue to Review'),
             ),
