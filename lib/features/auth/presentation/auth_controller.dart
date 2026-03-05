@@ -120,6 +120,7 @@ class AuthController extends _$AuthController {
     required String passwordConfirm,
     required String firstName,
     required String lastName,
+    required String barangayId,
   }) async {
     state = const AuthLoading();
 
@@ -130,6 +131,7 @@ class AuthController extends _$AuthController {
       passwordConfirm: passwordConfirm,
       firstName: firstName,
       lastName: lastName,
+      barangayId: barangayId,
     );
 
     return result.when(

@@ -41,6 +41,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String passwordConfirm,
     required String firstName,
     required String lastName,
+    required String barangayId,
   }) async {
     try {
       final response = await _dio.post(
@@ -51,6 +52,7 @@ class AuthRepositoryImpl implements AuthRepository {
           passwordConfirm: passwordConfirm,
           firstName: firstName,
           lastName: lastName,
+          barangayId: barangayId,
         ).toJson(),
       );
       // Backend returns tokens on registration (same shape as login)

@@ -21,6 +21,7 @@ abstract interface class AuthRepository {
     required String passwordConfirm,
     required String firstName,
     required String lastName,
+    required String barangayId,
   });
 
   /// Refresh access token using refresh token

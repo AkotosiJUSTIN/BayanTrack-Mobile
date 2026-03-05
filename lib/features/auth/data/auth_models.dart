@@ -38,6 +38,7 @@ sealed class RegisterRequest with _$RegisterRequest {
     @JsonKey(name: 'password_confirm') required String passwordConfirm,
     @JsonKey(name: 'first_name') required String firstName,
     @JsonKey(name: 'last_name') required String lastName,
+    @JsonKey(name: 'barangay_id') required String barangayId,
     @Default('citizen') String role,
   }) = _RegisterRequest;
 

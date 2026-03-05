@@ -8,6 +8,7 @@ import '../../../core/presentation/widgets/password_strength_indicator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import 'auth_controller.dart';
+import 'barangays_provider.dart';
 
 /// Register screen matching the BayanTrack design mockup.
 /// Features: Full name, email, phone (optional), password with confirmation.
@@ -30,6 +31,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _obscureConfirmPassword = true;
   bool _termsAccepted = false;
   bool _privacyAccepted = false;
+  String? _selectedBarangayId;
 
   bool get _agreeToTerms => _termsAccepted && _privacyAccepted;
 
@@ -52,6 +54,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       return;
     }
 
+    if (_selectedBarangayId == null) {
+      AppToast.warning(context, 'Please select your barangay');
+      return;
+    }
+
     if (_formKey.currentState?.validate() ?? false) {
       final success = await ref
           .read(authControllerProvider.notifier)
@@ -61,6 +68,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             passwordConfirm: _confirmPasswordController.text,
             firstName: _firstNameController.text.trim(),
             lastName: _lastNameController.text.trim(),
+            barangayId: _selectedBarangayId!,
           );
 
       if (success && mounted) {
@@ -316,6 +324,38 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     }
                     return null;
                   },
+                ),
+                const SizedBox(height: 20),
+
+                // Barangay field
+                Text('Barangay', style: theme.textTheme.titleMedium),
+                const SizedBox(height: 8),
+                ref.watch(barangaysProvider).when(
+                  loading: () => const LinearProgressIndicator(),
+                  error: (_, __) => Text(
+                    'Failed to load barangays. Please restart the app.',
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
+                  data: (barangays) => DropdownButtonFormField<String>(
+                    value: _selectedBarangayId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      hintText: 'Select your barangay',
+                      prefixIcon: Icon(Icons.location_city_outlined),
+                    ),
+                    items: barangays
+                        .map((b) => DropdownMenuItem(
+                              value: b.id,
+                              child: Text(b.name),
+                            ))
+                        .toList(),
+                    onChanged: isLoading
+                        ? null
+                        : (value) => setState(() => _selectedBarangayId = value),
+                    validator: (_) => _selectedBarangayId == null
+                        ? 'Please select your barangay'
+                        : null,
+                  ),
                 ),
                 const SizedBox(height: 24),
 
