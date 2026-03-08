@@ -4,8 +4,7 @@ import '../../domain/entities/report_enums.dart';
 /// Priority badge widget displaying priority level with color coding
 class PriorityBadge extends StatelessWidget {
   final PriorityLevel? priorityLevel;
-  final int? baseScore;
-  final int? hotspotScore;
+  final int? priorityScore;
   final bool showScores;
   final double fontSize;
   final EdgeInsets padding;
@@ -13,8 +12,7 @@ class PriorityBadge extends StatelessWidget {
   const PriorityBadge({
     super.key,
     required this.priorityLevel,
-    this.baseScore,
-    this.hotspotScore,
+    this.priorityScore,
     this.showScores = false,
     this.fontSize = 11,
     this.padding = const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -27,7 +25,7 @@ class PriorityBadge extends StatelessWidget {
     }
 
     final colors = _getPriorityColors(priorityLevel!);
-    final totalScore = (baseScore ?? 0) + (hotspotScore ?? 0);
+    final score = priorityScore ?? 0;
 
     return Container(
       padding: padding,
@@ -54,7 +52,7 @@ class PriorityBadge extends StatelessWidget {
               letterSpacing: 0.5,
             ),
           ),
-          if (showScores && totalScore > 0) ...[
+          if (showScores && score > 0) ...[
             const SizedBox(width: 4),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
@@ -63,7 +61,7 @@ class PriorityBadge extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                totalScore.toString(),
+                score.toString(),
                 style: TextStyle(
                   fontSize: fontSize - 1,
                   fontWeight: FontWeight.w600,
@@ -83,6 +81,7 @@ class PriorityBadge extends StatelessWidget {
       PriorityLevel.high => Icons.warning,
       PriorityLevel.medium => Icons.info_outline,
       PriorityLevel.low => Icons.check_circle_outline,
+      PriorityLevel.veryLow => Icons.remove_circle_outline,
     };
   }
 
@@ -107,6 +106,11 @@ class PriorityBadge extends StatelessWidget {
           background: const Color(0xFFE8F5E9),
           border: const Color(0xFF66BB6A),
           text: const Color(0xFF2E7D32),
+        ),
+      PriorityLevel.veryLow => _PriorityColors(
+          background: const Color(0xFFE3F2FD),
+          border: const Color(0xFF42A5F5),
+          text: const Color(0xFF1565C0),
         ),
     };
   }

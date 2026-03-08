@@ -164,6 +164,8 @@ enum DuplicateState {
 // ==================== PRIORITY LEVEL ====================
 
 enum PriorityLevel {
+  @JsonValue('VERY_LOW')
+  veryLow,
   @JsonValue('LOW')
   low,
   @JsonValue('MEDIUM')
@@ -174,6 +176,7 @@ enum PriorityLevel {
   critical;
 
   String get displayName => switch (this) {
+    veryLow => 'Very Low',
     low => 'Low',
     medium => 'Medium',
     high => 'High',
@@ -181,6 +184,7 @@ enum PriorityLevel {
   };
 
   String get value => switch (this) {
+    veryLow => 'VERY_LOW',
     low => 'LOW',
     medium => 'MEDIUM',
     high => 'HIGH',

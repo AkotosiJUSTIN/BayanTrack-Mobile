@@ -174,12 +174,14 @@ enum DuplicateState {
 
 /// Priority level from AI prioritization
 enum PriorityLevel {
+  veryLow,
   low,
   medium,
   high,
   critical;
 
   String get displayName => switch (this) {
+    veryLow => 'Very Low',
     low => 'Low',
     medium => 'Medium',
     high => 'High',
@@ -187,14 +189,28 @@ enum PriorityLevel {
   };
 
   String get apiValue => switch (this) {
+    veryLow => 'VERY_LOW',
     low => 'LOW',
     medium => 'MEDIUM',
     high => 'HIGH',
     critical => 'CRITICAL',
   };
 
+  /// Map AI integer level (1-5) to PriorityLevel
+  static PriorityLevel fromInt(int? value) {
+    return switch (value) {
+      1 => PriorityLevel.veryLow,
+      2 => PriorityLevel.low,
+      3 => PriorityLevel.medium,
+      4 => PriorityLevel.high,
+      5 => PriorityLevel.critical,
+      _ => PriorityLevel.medium,
+    };
+  }
+
   static PriorityLevel fromString(String? value) {
     return switch (value?.toUpperCase()) {
+      'VERY_LOW' => PriorityLevel.veryLow,
       'LOW' => PriorityLevel.low,
       'MEDIUM' => PriorityLevel.medium,
       'HIGH' => PriorityLevel.high,
