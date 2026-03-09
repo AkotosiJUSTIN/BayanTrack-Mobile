@@ -16,6 +16,7 @@ abstract interface class ReportsRepository {
     String? status,
     String? zone,
     String? category,
+    String? sortBy, // 'date', 'severity', 'priority'
   });
 
   /// Get current user's reports
@@ -23,6 +24,7 @@ abstract interface class ReportsRepository {
     int page = 1,
     int pageSize = 20,
     String? status,
+    String? sortBy, // 'date', 'severity', 'priority'
   });
 
   /// Get a single report by ID

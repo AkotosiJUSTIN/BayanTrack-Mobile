@@ -15,6 +15,7 @@ class GetReportsUseCase {
     String? status,
     String? zone,
     String? category,
+    String? sortBy,
   }) {
     return _repository.getReports(
       page: page,
@@ -22,6 +23,7 @@ class GetReportsUseCase {
       status: status,
       zone: zone,
       category: category,
+      sortBy: sortBy,
     );
   }
 }

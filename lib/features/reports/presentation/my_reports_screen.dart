@@ -39,9 +39,11 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     (label: 'In Progress', status: 'in_progress'),
     (label: 'Resolved', status: 'resolved'),
     (label: 'Rejected', status: 'rejected'),
+    (label: 'Escalated', status: 'escalated'),
   ];
 
   String? get _selectedStatus => _filters[_selectedFilter].status;
+  String get _selectedSort => 'date';
   bool get _hasNextPage => _currentPage < _totalPages;
 
   @override
@@ -73,7 +75,11 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     });
 
     final getMyReports = ref.read(getMyReportsUseCaseProvider);
-    final result = await getMyReports(page: 1, status: _selectedStatus);
+    final result = await getMyReports(
+      page: 1,
+      status: _selectedStatus,
+      sortBy: _selectedSort,
+    );
 
     if (!mounted) return;
 
@@ -102,7 +108,11 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
 
     final nextPage = _currentPage + 1;
     final getMyReports = ref.read(getMyReportsUseCaseProvider);
-    final result = await getMyReports(page: nextPage, status: _selectedStatus);
+    final result = await getMyReports(
+      page: nextPage,
+      status: _selectedStatus,
+      sortBy: _selectedSort,
+    );
 
     if (!mounted) return;
 
@@ -176,6 +186,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
             SliverToBoxAdapter(
               child: VerificationBanner(permissions: permissions),
             ),
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 48,
@@ -306,12 +317,9 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   }
 
   List<_ReportSectionItem> _buildSectionItems(List<Report> reports) {
-    final sortedReports = [...reports]
-      ..sort((a, b) {
-        final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        return bDate.compareTo(aDate);
-      });
+    // Backend now always sorts by priority_level then date
+    // Preserve backend order
+    final sortedReports = reports;
 
     final items = <_ReportSectionItem>[];
     DateTime? previousDate;

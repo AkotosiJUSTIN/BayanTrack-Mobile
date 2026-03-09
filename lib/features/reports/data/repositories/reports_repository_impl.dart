@@ -28,6 +28,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
     String? category,
     String? severity,
     bool? isEmergency,
+    String? sortBy,
   }) async {
     try {
       final queryParams = <String, dynamic>{
@@ -39,6 +40,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
       if (category != null) queryParams['category'] = category;
       if (severity != null) queryParams['severity'] = severity;
       if (isEmergency != null) queryParams['is_emergency'] = isEmergency;
+      if (sortBy != null) queryParams['sort_by'] = sortBy;
 
       final response = await _dio.get(
         ApiConstants.reports,
@@ -56,6 +58,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
     int page = 1,
     int pageSize = 20,
     String? status,
+    String? sortBy,
   }) async {
     try {
       final queryParams = <String, dynamic>{
@@ -63,6 +66,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
         'page_size': pageSize,
       };
       if (status != null) queryParams['status'] = status;
+      if (sortBy != null) queryParams['sort_by'] = sortBy;
 
       final response = await _dio.get(
         ApiConstants.myReports,

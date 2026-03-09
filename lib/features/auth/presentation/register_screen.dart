@@ -29,11 +29,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _termsAccepted = false;
-  bool _privacyAccepted = false;
+  bool _termsAndPrivacyAccepted = false;
   String? _selectedBarangayId;
 
-  bool get _agreeToTerms => _termsAccepted && _privacyAccepted;
+  bool get _agreeToTerms => _termsAndPrivacyAccepted;
 
   @override
   void dispose() {
@@ -87,20 +86,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     Navigator.of(context).pop();
   }
 
-  void _showTermsAndConditions() {
+  void _showTermsAndPrivacyPolicy() {
     _showPolicyDialog(
-      'Terms & Conditions',
+      'Terms & Conditions and Privacy Policy',
       onAccepted: () {
-        _termsAccepted = true;
-      },
-    );
-  }
-
-  void _showPrivacyPolicy() {
-    _showPolicyDialog(
-      'Privacy Policy',
-      onAccepted: () {
-        _privacyAccepted = true;
+        _termsAndPrivacyAccepted = true;
       },
     );
   }
@@ -359,7 +349,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Terms & Conditions checkbox
+                // Terms & Conditions and Privacy Policy checkbox
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -373,23 +363,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             children: [
                               const TextSpan(text: 'I agree to the '),
                               TextSpan(
-                                text: 'Terms & Conditions',
+                                text: 'Terms & Conditions and Privacy Policy',
                                 style: TextStyle(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w500,
                                 ),
                                 recognizer: TapGestureRecognizer()
-                                  ..onTap = _showTermsAndConditions,
-                              ),
-                              const TextSpan(text: ' and '),
-                              TextSpan(
-                                text: 'Privacy Policy',
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = _showPrivacyPolicy,
+                                  ..onTap = _showTermsAndPrivacyPolicy,
                               ),
                             ],
                           ),
@@ -454,6 +434,10 @@ class _PolicyDialogState extends State<_PolicyDialog> {
   bool _canAccept = false;
 
   static const String _dummyContent = '''
+========================================
+TERMS & CONDITIONS
+========================================
+
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer in massa id massa finibus ullamcorper. Sed volutpat ullamcorper eros, et dictum augue laoreet non. Curabitur bibendum tincidunt ante, at tristique ex dignissim non.
 
 Vivamus nec justo vitae eros feugiat efficitur. Fusce interdum, justo in elementum feugiat, nisl nunc posuere mi, a hendrerit elit orci at nibh. Suspendisse potenti. Quisque lobortis mi id ipsum dignissim, non ullamcorper nisl eleifend.
@@ -464,9 +448,21 @@ Nulla facilisi. Pellentesque in gravida urna. Donec pretium arcu vitae leo ultri
 
 Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Integer tristique libero ac lacus placerat, vel ultricies est volutpat. Nunc posuere, turpis in fermentum viverra, ipsum lectus tristique justo, id convallis metus justo nec mauris.
 
+
+========================================
+PRIVACY POLICY
+========================================
+
 Aliquam erat volutpat. Etiam aliquam sapien ac odio volutpat, eu scelerisque erat bibendum. Morbi in malesuada elit. Integer tincidunt vulputate dui, in gravida purus tincidunt non. Sed sagittis commodo est, ut bibendum lorem blandit vel.
 
-By tapping Accept, you acknowledge you have read and understood this policy text.
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer in massa id massa finibus ullamcorper. Sed volutpat ullamcorper eros, et dictum augue laoreet non. Curabitur bibendum tincidunt ante, at tristique ex dignissim non.
+
+Vivamus nec justo vitae eros feugiat efficitur. Fusce interdum, justo in elementum feugiat, nisl nunc posuere mi, a hendrerit elit orci at nibh. Suspendisse potenti. Quisque lobortis mi id ipsum dignissim, non ullamcorper nisl eleifend.
+
+Mauris porttitor neque id justo egestas, et varius mi porttitor. Nunc euismod, mi in viverra viverra, augue leo convallis neque, in blandit risus justo vitae orci. Proin ultrices sapien eu sem fermentum, ac laoreet lectus pellentesque.
+
+
+By tapping Accept, you acknowledge you have read and understood both the Terms & Conditions and Privacy Policy.
 ''';
 
   @override

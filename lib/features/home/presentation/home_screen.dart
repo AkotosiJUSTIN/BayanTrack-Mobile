@@ -8,6 +8,7 @@ import '../../kyc/presentation/kyc_controller.dart';
 import '../../reports/domain/entities/report.dart';
 import '../../reports/domain/entities/report_enums.dart';
 import '../../reports/presentation/report_detail_screen.dart';
+import '../../reports/presentation/reports_controller.dart';
 import '../../reports/reports_di.dart';
 import 'widgets/home_report_card.dart';
 import 'widgets/map_placeholder.dart';
@@ -42,10 +43,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     (label: 'Under Review', status: 'under_review'),
     (label: 'In Progress', status: 'in_progress'),
     (label: 'Resolved', status: 'resolved'),
+    (label: 'Escalated', status: 'escalated'),
   ];
 
   String? get _selectedStatus =>
       _statusFilters[_selectedStatusFilterIndex].status;
+  String get _selectedSort => 'date';
   bool get _hasNextPage => _currentPage < _totalPages;
 
   @override
@@ -80,14 +83,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
 
     final getReports = ref.read(getReportsUseCaseProvider);
-    final result = await getReports(page: 1, status: _selectedStatus);
+    final result = await getReports(
+      page: 1,
+      status: _selectedStatus,
+      sortBy: _selectedSort,
+    );
 
     if (!mounted) return;
 
     result.when(
       success: (data) {
+        // Filter out closed and rejected reports
+        final filteredReports = data.results.where((report) {
+          return report.status != ReportStatus.closed &&
+                 report.status != ReportStatus.rejected;
+        }).toList();
+
         setState(() {
-          _reports.addAll(data.results);
+          _reports.addAll(filteredReports);
           _currentPage = data.page;
           _totalPages = data.totalPages;
           _totalReports = data.total;
@@ -110,15 +123,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final nextPage = _currentPage + 1;
     final getReports = ref.read(getReportsUseCaseProvider);
-    final result = await getReports(page: nextPage, status: _selectedStatus);
+    final result = await getReports(
+      page: nextPage,
+      status: _selectedStatus,
+      sortBy: _selectedSort,
+    );
 
     if (!mounted) return;
 
     result.when(
       success: (data) {
         final existingIds = _reports.map((r) => r.id).toSet();
+        // Filter out closed and rejected reports, and duplicates
         final newReports = data.results
-            .where((report) => !existingIds.contains(report.id))
+            .where((report) {
+              return report.status != ReportStatus.closed &&
+                     report.status != ReportStatus.rejected &&
+                     !existingIds.contains(report.id);
+            })
             .toList();
 
         setState(() {
@@ -168,6 +190,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
+    // Auto-refresh when a new report is created
+    ref.listen<int>(myReportsRefreshProvider, (previous, next) {
+      if (previous != null && next > previous) {
+        _loadInitialReports();
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
@@ -489,12 +518,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   List<_ReportSectionItem> _buildSectionItems(List<Report> reports) {
-    final sortedReports = [...reports]
-      ..sort((a, b) {
-        final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        return bDate.compareTo(aDate);
-      });
+    // Backend now always sorts by priority_level then date
+    // Preserve backend order
+    final sortedReports = reports;
 
     final items = <_ReportSectionItem>[];
     DateTime? previousDate;
