@@ -208,14 +208,14 @@ enum PriorityLevel {
     };
   }
 
-  static PriorityLevel fromString(String? value) {
+  static PriorityLevel? fromString(String? value) {
     return switch (value?.toUpperCase()) {
       'VERY_LOW' => PriorityLevel.veryLow,
       'LOW' => PriorityLevel.low,
       'MEDIUM' => PriorityLevel.medium,
       'HIGH' => PriorityLevel.high,
       'CRITICAL' => PriorityLevel.critical,
-      _ => PriorityLevel.medium,
+      _ => null,
     };
   }
 }

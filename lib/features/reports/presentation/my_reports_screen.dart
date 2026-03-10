@@ -317,14 +317,18 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   }
 
   List<_ReportSectionItem> _buildSectionItems(List<Report> reports) {
-    // Backend now always sorts by priority_level then date
-    // Preserve backend order
-    final sortedReports = reports;
+    // Sort by createdAt descending so date sections are always contiguous
+    final sorted = [...reports]
+      ..sort((a, b) {
+        final aDate = a.createdAt ?? DateTime(0);
+        final bDate = b.createdAt ?? DateTime(0);
+        return bDate.compareTo(aDate);
+      });
 
     final items = <_ReportSectionItem>[];
     DateTime? previousDate;
 
-    for (final report in sortedReports) {
+    for (final report in sorted) {
       final createdAt = report.createdAt;
       final reportDate = createdAt == null
           ? null

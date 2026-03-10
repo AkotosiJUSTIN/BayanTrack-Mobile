@@ -48,7 +48,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   String? get _selectedStatus =>
       _statusFilters[_selectedStatusFilterIndex].status;
-  String get _selectedSort => 'date';
+  String _selectedSort = 'date';
   bool get _hasNextPage => _currentPage < _totalPages;
 
   @override
@@ -213,16 +213,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                       child: TextField(
                         controller: _searchController,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           hintText: 'Search reports...',
-                          prefixIcon: const Icon(Icons.search),
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.tune),
-                            onPressed: () {},
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                          ),
+                          prefixIcon: Icon(Icons.search),
+                          contentPadding: EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
                     ),
@@ -263,8 +257,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 ),
                               ],
                             ),
+                          ),                          const SizedBox(width: 8),
+                          _buildSortChip(
+                            label: 'Date',
+                            value: 'date',
+                            icon: Icons.calendar_today_outlined,
+                            isDark: isDark,
                           ),
-                          const Spacer(),
+                          const SizedBox(width: 4),
+                          _buildSortChip(
+                            label: 'Priority',
+                            value: 'priority',
+                            icon: Icons.flag_outlined,
+                            isDark: isDark,
+                          ),                          const Spacer(),
                           Text(
                             '$_totalReports reports',
                             style: theme.textTheme.bodySmall,
@@ -332,6 +338,66 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSortChip({
+    required String label,
+    required String value,
+    required IconData icon,
+    required bool isDark,
+  }) {
+    final isSelected = _selectedSort == value;
+    final selectedColor = AppColors.primary;
+    return GestureDetector(
+      onTap: () {
+        if (_selectedSort != value) {
+          setState(() => _selectedSort = value);
+          _loadInitialReports();
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? selectedColor.withValues(alpha: 0.12)
+              : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: isSelected
+                ? selectedColor
+                : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 12,
+              color: isSelected
+                  ? selectedColor
+                  : (isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight:
+                    isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected
+                    ? selectedColor
+                    : (isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -518,14 +584,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   List<_ReportSectionItem> _buildSectionItems(List<Report> reports) {
-    // Backend now always sorts by priority_level then date
-    // Preserve backend order
-    final sortedReports = reports;
+    if (_selectedSort == 'priority') {
+      return _buildPrioritySections(reports);
+    }
 
     final items = <_ReportSectionItem>[];
     DateTime? previousDate;
 
-    for (final report in sortedReports) {
+    for (final report in reports) {
       final createdAt = report.createdAt;
       final reportDate = createdAt == null
           ? null
@@ -534,6 +600,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (reportDate != previousDate) {
         items.add(_ReportSectionItem.header(_sectionLabelForDate(reportDate)));
         previousDate = reportDate;
+      }
+      items.add(_ReportSectionItem.report(report));
+    }
+
+    return items;
+  }
+
+  List<_ReportSectionItem> _buildPrioritySections(List<Report> reports) {
+    // Sort critical → high → medium → low → very low → unscored
+    const order = [
+      PriorityLevel.critical,
+      PriorityLevel.high,
+      PriorityLevel.medium,
+      PriorityLevel.low,
+      PriorityLevel.veryLow,
+    ];
+
+    final sorted = [...reports];
+    sorted.sort((a, b) {
+      final aIdx = a.priorityLevel == null
+          ? order.length
+          : order.indexOf(a.priorityLevel!);
+      final bIdx = b.priorityLevel == null
+          ? order.length
+          : order.indexOf(b.priorityLevel!);
+      return aIdx.compareTo(bIdx);
+    });
+
+    final items = <_ReportSectionItem>[];
+    PriorityLevel? previousLevel;
+    bool unscored = false;
+
+    for (final report in sorted) {
+      final level = report.priorityLevel;
+      if (level != previousLevel || (level == null && !unscored)) {
+        final label = level != null
+            ? 'Level ${5 - order.indexOf(level)} — ${level.displayName}'
+            : 'Unscored';
+        items.add(_ReportSectionItem.header(label));
+        previousLevel = level;
+        if (level == null) unscored = true;
       }
       items.add(_ReportSectionItem.report(report));
     }
