@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_colors.dart';
@@ -324,54 +326,72 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Container(
-              height: 150,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceVariant
-                    : AppColors.lightSurfaceVariant,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                height: 200,
+                child: Stack(
+                  children: [
+                    FlutterMap(
+                      options: MapOptions(
+                        initialCenter: LatLng(
+                          report.latitude!,
+                          report.longitude!,
+                        ),
+                        initialZoom: 16,
+                        interactionOptions: const InteractionOptions(
+                          flags: InteractiveFlag.pinchZoom |
+                              InteractiveFlag.drag,
+                        ),
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName:
+                              'com.example.bayantrack_mobile',
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: LatLng(
+                                report.latitude!,
+                                report.longitude!,
+                              ),
+                              width: 40,
+                              height: 40,
+                              child: const Icon(
+                                Icons.location_on,
+                                size: 40,
+                                color: AppColors.alertHigh,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.scaffoldBackgroundColor
+                              .withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '${report.latitude?.toStringAsFixed(7)}, '
+                          '${report.longitude?.toStringAsFixed(7)}',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              child: Stack(
-                children: [
-                  Center(
-                    child: Icon(
-                      Icons.map_outlined,
-                      size: 64,
-                      color: isDark
-                          ? AppColors.darkTextSecondary.withValues(alpha: 0.3)
-                          : AppColors.lightTextSecondary.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  Center(
-                    child: Icon(
-                      Icons.location_on,
-                      size: 36,
-                      color: AppColors.alertHigh,
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '${report.latitude}, ${report.longitude}',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ),
             const SizedBox(height: 24),
@@ -878,9 +898,17 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: theme.textTheme.bodySmall),
-          Text(value, style: theme.textTheme.bodyMedium),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              value,
+              style: theme.textTheme.bodyMedium,
+              textAlign: TextAlign.end,
+            ),
+          ),
         ],
       ),
     );

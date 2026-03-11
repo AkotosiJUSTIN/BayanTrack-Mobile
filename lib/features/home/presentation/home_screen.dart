@@ -257,20 +257,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 ),
                               ],
                             ),
-                          ),                          const SizedBox(width: 8),
-                          _buildSortChip(
-                            label: 'Date',
-                            value: 'date',
-                            icon: Icons.calendar_today_outlined,
-                            isDark: isDark,
                           ),
-                          const SizedBox(width: 4),
-                          _buildSortChip(
-                            label: 'Priority',
-                            value: 'priority',
-                            icon: Icons.flag_outlined,
-                            isDark: isDark,
-                          ),                          const Spacer(),
+                          const Spacer(),
                           Text(
                             '$_totalReports reports',
                             style: theme.textTheme.bodySmall,
