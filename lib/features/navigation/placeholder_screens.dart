@@ -11,18 +11,7 @@ class NotificationsPlaceholder extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        actions: [
-          TextButton(
-            onPressed: () {},
-            child: Text(
-              'Mark all read',
-              style: TextStyle(color: AppColors.primary),
-            ),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Notifications')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -36,9 +25,25 @@ class NotificationsPlaceholder extends StatelessWidget {
             Text('Notifications', style: theme.textTheme.headlineSmall),
             const SizedBox(height: 8),
             Text(
-              'Coming in Phase 5',
+              'Notifications are not available on mobile yet.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.outline,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                'Coming soon',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],

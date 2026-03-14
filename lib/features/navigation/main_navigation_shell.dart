@@ -5,7 +5,7 @@ import '../auth/data/user_permissions.dart';
 import '../auth/presentation/verification_widgets.dart';
 import '../auth/presentation/profile_screen.dart';
 import '../home/presentation/home_screen.dart';
-import '../notifications/presentation/notifications_screen.dart';
+import 'placeholder_screens.dart';
 import '../reports/presentation/my_reports_screen.dart';
 import '../reports/presentation/new_report/new_report_photos_screen.dart';
 
@@ -32,7 +32,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const MyReportsScreen(),
-    const NotificationsScreen(),
+    const NotificationsPlaceholder(),
     const ProfileScreen(),
   ];
 
