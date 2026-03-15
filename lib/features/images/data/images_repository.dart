@@ -26,6 +26,7 @@ class ImagesRepository {
     required File imageFile,
     required String reportId,
     bool isPrimary = false,
+    void Function(int sent, int total)? onSendProgress,
   }) async {
     debugPrint('=== UPLOADING IMAGE ===');
     debugPrint('File path: ${imageFile.path}');
@@ -48,6 +49,7 @@ class ImagesRepository {
       final response = await _dio.post(
         ApiConstants.imageUpload,
         data: formData,
+        onSendProgress: onSendProgress,
       );
 
       debugPrint('=== UPLOAD SUCCESS ===');
@@ -69,6 +71,7 @@ class ImagesRepository {
   Future<List<UploadedImage>> bulkUploadImages({
     required List<File> imageFiles,
     required String reportId,
+    void Function(int sent, int total)? onSendProgress,
   }) async {
     final formData = FormData();
 
@@ -89,6 +92,7 @@ class ImagesRepository {
       final response = await _dio.post(
         ApiConstants.imageBulkUpload,
         data: formData,
+        onSendProgress: onSendProgress,
         // Don't set contentType manually - Dio handles multipart/form-data automatically
       );
 

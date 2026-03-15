@@ -15,6 +15,10 @@ ReportsRepository reportsRepository(Ref ref) {
 
 class ReportsRepository {
   final Dio _dio;
+  ReportFormOptions? _cachedFormOptions;
+  DateTime? _formOptionsCachedAt;
+
+  static const Duration _formOptionsCacheTtl = Duration(hours: 24);
 
   ReportsRepository(this._dio);
 
@@ -126,7 +130,17 @@ class ReportsRepository {
   // ==================== FORM OPTIONS ====================
 
   Future<ReportFormOptions> getFormOptions() async {
+    final now = DateTime.now();
+    if (_cachedFormOptions != null &&
+        _formOptionsCachedAt != null &&
+        now.difference(_formOptionsCachedAt!) < _formOptionsCacheTtl) {
+      return _cachedFormOptions!;
+    }
+
     final response = await _dio.get(ApiConstants.reportFormOptions);
-    return ReportFormOptions.fromJson(response.data);
+    final parsed = ReportFormOptions.fromJson(response.data);
+    _cachedFormOptions = parsed;
+    _formOptionsCachedAt = now;
+    return parsed;
   }
 }

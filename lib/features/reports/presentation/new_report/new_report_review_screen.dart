@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 import '../../../../core/constants/mangaldan_geo.dart';
 import '../../../../core/presentation/widgets/app_toast.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -8,6 +9,8 @@ import '../../data/report_models.dart';
 import '../../data/reports_repository.dart';
 import '../reports_controller.dart';
 import 'new_report_controller.dart';
+import 'dart:io';
+import '../../../../core/utils/image_utils.dart';
 
 /// Fourth step: Review, consent, and submit the report
 class NewReportReviewScreen extends ConsumerStatefulWidget {
@@ -23,6 +26,10 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
   String _statusMessage = '';
 
   Future<void> _submitReport() async {
+    if (_isSubmitting) {
+      return;
+    }
+
     final state = ref.read(newReportControllerProvider);
 
     if (state.latitude != null &&
@@ -49,40 +56,67 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     });
 
     try {
-      // Step 1: Create the report using the new comprehensive request
+      // Step 1: Compress photos up-front with bounded parallelism.
+      List<File> filesForUpload = state.selectedImages;
+      if (state.selectedImages.isNotEmpty) {
+        setState(() => _statusMessage = 'Preparing your photos...');
+        filesForUpload = await _compressFilesInParallel(state.selectedImages);
+      }
+
+      // Step 2: Create the report using the new comprehensive request
       final reportsRepo = ref.read(reportsRepositoryProvider);
       final request = state.toCreateRequest();
 
+      final createStopwatch = Stopwatch()..start();
       final createdReport = await reportsRepo.createReport(request);
+      createStopwatch.stop();
+      debugPrint('Create report took ${createStopwatch.elapsedMilliseconds} ms');
 
       // Check if report was detected as a potential duplicate
       final isDuplicate = createdReport.duplicateState == 'potential_duplicate';
 
-      // Step 2: Upload images (if any) - upload one at a time for reliability
-      if (state.selectedImages.isNotEmpty) {
+      // Step 3: Upload images (if any)
+      if (filesForUpload.isNotEmpty) {
         setState(() => _statusMessage = 'Uploading your photos...');
 
         final imagesRepo = ref.read(imagesRepositoryProvider);
+
+        // Try bulk upload first (single request, fewer round-trips)
         try {
-          for (int i = 0; i < state.selectedImages.length; i++) {
-            setState(
-              () => _statusMessage =
-                  'Uploading photo ${i + 1} of ${state.selectedImages.length}...',
-            );
-            await imagesRepo.uploadImage(
-              imageFile: state.selectedImages[i],
-              reportId: createdReport.id,
-              isPrimary: i == 0, // First image is primary
-            );
+          final stopwatch = Stopwatch()..start();
+          setState(() => _statusMessage = 'Uploading ${filesForUpload.length} photos...');
+
+          // Use bulk-upload endpoint
+          final uploaded = await imagesRepo.bulkUploadImages(
+            imageFiles: filesForUpload,
+            reportId: createdReport.id,
+            onSendProgress: _onBulkUploadProgress,
+          ).timeout(
+            const Duration(seconds: 25),
+            onTimeout: () => throw TimeoutException('Bulk upload timed out'),
+          );
+
+          stopwatch.stop();
+          debugPrint('Bulk upload of ${uploaded.length} images took ${stopwatch.elapsedMilliseconds} ms');
+
+          // If backend uploaded fewer than expected, fall back to parallel individual uploads
+          if (uploaded.length < filesForUpload.length) {
+            debugPrint('Bulk upload incomplete, falling back to parallel uploads');
+            await _parallelUploadFallback(imagesRepo, filesForUpload, createdReport.id);
           }
         } catch (e) {
-          // Log but don't fail - report was already created
-          debugPrint('Image upload failed: $e');
-          if (mounted) {
-            AppToast.warning(
-              context,
-              'Your report was submitted successfully, but we had trouble uploading some photos. You can add them later.',
-            );
+          debugPrint('Bulk upload failed: $e');
+          // Fallback: upload in parallel with limited concurrency
+          try {
+            await _parallelUploadFallback(imagesRepo, filesForUpload, createdReport.id);
+          } catch (e2) {
+            debugPrint('Parallel upload fallback failed: $e2');
+            if (mounted) {
+              AppToast.warning(
+                context,
+                'Your report was submitted, but we could not upload photos. You can add them later.',
+              );
+            }
           }
         }
       }
@@ -120,6 +154,95 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
         );
       }
     }
+  }
+
+  /// Try to compress the file on-device; returns new File or null to indicate no change
+  Future<File?> _maybeCompressFile(File original) async {
+    try {
+      final compressed = await ImageUtils.maybeCompressFile(original);
+      return compressed;
+    } catch (e) {
+      debugPrint('Compression failed for ${original.path}: $e');
+      return null;
+    }
+  }
+
+  Future<List<File>> _compressFilesInParallel(List<File> files) async {
+    const concurrency = 3;
+    final compressed = List<File?>.filled(files.length, null);
+    final stopwatch = Stopwatch()..start();
+
+    for (var i = 0; i < files.length; i += concurrency) {
+      final batchFutures = <Future<void>>[];
+      final slice = files.skip(i).take(concurrency).toList();
+      for (var j = 0; j < slice.length; j++) {
+        final idx = i + j;
+        final file = slice[j];
+        batchFutures.add(_maybeCompressFile(file).then((value) {
+          compressed[idx] = value ?? file;
+          if (mounted) {
+            setState(() {
+              _statusMessage = 'Preparing photos ${idx + 1} of ${files.length}...';
+            });
+          }
+        }));
+      }
+      await Future.wait(batchFutures);
+    }
+
+    stopwatch.stop();
+    debugPrint('Compression for ${files.length} images took ${stopwatch.elapsedMilliseconds} ms');
+    return compressed.map((file) => file!).toList();
+  }
+
+  void _onBulkUploadProgress(int sent, int total) {
+    if (!mounted || total <= 0) {
+      return;
+    }
+    final pct = ((sent / total) * 100).clamp(0, 100).toStringAsFixed(0);
+    setState(() {
+      _statusMessage = 'Uploading photos... $pct%';
+    });
+  }
+
+  /// Parallel upload with limited concurrency (3)
+  Future<void> _parallelUploadFallback(ImagesRepository imagesRepo, List<File> files, String reportId) async {
+    const concurrency = 3;
+    final stopwatch = Stopwatch()..start();
+
+    for (var i = 0; i < files.length; i += concurrency) {
+      final batch = <Future<void>>[];
+      final slice = files.skip(i).take(concurrency).toList();
+      for (var j = 0; j < slice.length; j++) {
+        final fileIndex = i + j;
+        final file = slice[j];
+        if (mounted) setState(() => _statusMessage = 'Uploading photo ${fileIndex + 1} of ${files.length}...');
+        final future = imagesRepo
+            .uploadImage(
+              imageFile: file,
+              reportId: reportId,
+              isPrimary: fileIndex == 0,
+              onSendProgress: (sent, total) {
+                if (!mounted || total <= 0) {
+                  return;
+                }
+                final pct = ((sent / total) * 100).clamp(0, 100).toStringAsFixed(0);
+                setState(() {
+                  _statusMessage = 'Uploading photo ${fileIndex + 1}/${files.length}... $pct%';
+                });
+              },
+            )
+            .then((_) {})
+            .catchError((e) {
+          debugPrint('Upload failed for ${file.path}: $e');
+        });
+        batch.add(future);
+      }
+      await Future.wait(batch);
+    }
+
+    stopwatch.stop();
+    debugPrint('Parallel upload of ${files.length} images took ${stopwatch.elapsedMilliseconds} ms');
   }
 
   Future<void> _showDuplicateWarning(
