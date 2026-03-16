@@ -284,6 +284,13 @@ sealed class Report with _$Report {
 
     // Images
     @Default([]) List<ReportImage> images,
+    @JsonKey(name: 'resolved_proof_image_ids')
+    @Default([])
+    List<String> resolvedProofImageIds,
+    @JsonKey(name: 'closure_signature_image_id') String? closureSignatureImageId,
+    @JsonKey(name: 'closure_signature_document_ids')
+    @Default([])
+    List<String> closureSignatureDocumentIds,
 
     // Timestamps
     @JsonKey(name: 'created_at') String? createdAt,

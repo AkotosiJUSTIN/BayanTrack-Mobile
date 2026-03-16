@@ -57,6 +57,9 @@ class Report extends Equatable {
 
   // Images
   final List<ReportImage> images;
+  final List<String> resolvedProofImageIds;
+  final String? closureSignatureImageId;
+  final List<String> closureSignatureDocumentIds;
 
   // Timestamps
   final DateTime? createdAt;
@@ -115,6 +118,9 @@ class Report extends Equatable {
     this.sentimentScore,
     this.autoCategorySuggestion,
     this.images = const [],
+    this.resolvedProofImageIds = const [],
+    this.closureSignatureImageId,
+    this.closureSignatureDocumentIds = const [],
     this.createdAt,
     this.updatedAt,
     this.submittedAt,
@@ -141,6 +147,21 @@ class Report extends Equatable {
 
   /// Check if report has GPS coordinates
   bool get hasCoordinates => latitude != null && longitude != null;
+
+  Set<String> get _supplementalImageIds => {
+    ...resolvedProofImageIds,
+    if (closureSignatureImageId != null) closureSignatureImageId!,
+    ...closureSignatureDocumentIds,
+  };
+
+  List<ReportImage> get coreImages {
+    final filtered = images.where((image) => !_supplementalImageIds.contains(image.id)).toList();
+    return filtered.isNotEmpty ? filtered : images;
+  }
+
+  List<ReportImage> get resolvedProofImages => images
+      .where((image) => resolvedProofImageIds.contains(image.id))
+      .toList();
 
   /// Check if report is still open (not resolved or rejected)
   bool get isOpen =>

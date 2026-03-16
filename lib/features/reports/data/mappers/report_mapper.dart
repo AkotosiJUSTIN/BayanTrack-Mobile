@@ -54,6 +54,9 @@ class ReportMapper {
       sentimentScore: dtoReport.sentimentScore,
       autoCategorySuggestion: dtoReport.autoCategorySuggestion,
       images: dtoReport.images.map(imageFromDto).toList(),
+      resolvedProofImageIds: dtoReport.resolvedProofImageIds,
+      closureSignatureImageId: dtoReport.closureSignatureImageId,
+      closureSignatureDocumentIds: dtoReport.closureSignatureDocumentIds,
       createdAt: dtoReport.createdAt != null
           ? DateTime.tryParse(dtoReport.createdAt!)
           : null,

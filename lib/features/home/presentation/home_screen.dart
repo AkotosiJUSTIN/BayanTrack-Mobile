@@ -445,36 +445,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return _buildEmptyState(theme);
     }
 
-    return Stack(
-      children: [
-        MapPlaceholder(
-          reports: _reports.where((r) => r.status != ReportStatus.closed).toList(),
-          onMarkerTap: (report) => _openReportDetail(report.id, report),
-        ),
-        Positioned(
-          left: 16,
-          bottom: 16,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Theme.of(
-                context,
-              ).scaffoldBackgroundColor.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(8),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final viewportHeight = constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : MediaQuery.of(context).size.height;
+
+        return ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(
+              height: viewportHeight,
+              child: Stack(
+                children: [
+                  MapPlaceholder(
+                    reports: _reports
+                        .where((r) => r.status != ReportStatus.closed)
+                        .toList(),
+                    onMarkerTap: (report) => _openReportDetail(report.id, report),
+                  ),
+                  Positioned(
+                    left: 16,
+                    bottom: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).scaffoldBackgroundColor.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Wrap(
+                        spacing: 12,
+                        runSpacing: 8,
+                        children: [
+                          _buildLegendItem('Submitted', AppColors.alertMedium),
+                          _buildLegendItem(
+                            'In Progress',
+                            const Color(0xFF3B82F6),
+                          ),
+                          _buildLegendItem('Escalated', AppColors.alertHigh),
+                          _buildLegendItem('Resolved', AppColors.success),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                _buildLegendItem('Submitted', AppColors.alertMedium),
-                _buildLegendItem('In Progress', const Color(0xFF3B82F6)),
-                _buildLegendItem('Escalated', AppColors.alertHigh),
-                _buildLegendItem('Resolved', AppColors.success),
-              ],
-            ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
@@ -510,6 +534,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return ListView.builder(
       controller: _listScrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: sectionItems.length + 1,
       itemBuilder: (context, index) {

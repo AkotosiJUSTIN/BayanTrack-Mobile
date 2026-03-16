@@ -78,7 +78,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           ],
         ),
         data: (report) {
-          final imageUrls = report.images
+          final imageUrls = report.coreImages
               .map((img) => ApiConstants.getImageUrl(img.url))
               .toList();
 
@@ -452,6 +452,59 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           // Report ID
           _buildInfoRow('Report ID', report.id.substring(0, 8), theme),
           const SizedBox(height: 24),
+
+          if (report.resolvedProofImages.isNotEmpty &&
+              (report.status == ReportStatus.resolved ||
+                  report.status == ReportStatus.closed)) ...[
+            Text(
+              'Resolution Proof',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              report.status == ReportStatus.resolved
+                  ? 'Staff-uploaded proof for your review before final closure.'
+                  : 'Staff-uploaded proof associated with this closed report.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 104,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: report.resolvedProofImages.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final proofImage = report.resolvedProofImages[index];
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      ApiConstants.getImageUrl(proofImage.url),
+                      width: 140,
+                      height: 104,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 140,
+                        height: 104,
+                        color: isDark
+                            ? AppColors.darkSurface
+                            : AppColors.lightSurfaceVariant,
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.broken_image_outlined),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
 
           // Citizen resolution review banner (shown only to the report owner
           // when the report has been resolved by barangay staff)

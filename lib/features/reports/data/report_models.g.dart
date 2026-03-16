@@ -93,6 +93,17 @@ _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
           ?.map((e) => ReportImage.fromJson(e as Map<String, dynamic>))
           .toList() ??
       const [],
+  resolvedProofImageIds:
+      (json['resolved_proof_image_ids'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
+  closureSignatureImageId: json['closure_signature_image_id'] as String?,
+  closureSignatureDocumentIds:
+      (json['closure_signature_document_ids'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
   createdAt: json['created_at'] as String?,
   updatedAt: json['updated_at'] as String?,
   submittedAt: json['submitted_at'] as String?,
@@ -155,6 +166,9 @@ Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
   'sentiment_score': instance.sentimentScore,
   'auto_category_suggestion': instance.autoCategorySuggestion,
   'images': instance.images,
+  'resolved_proof_image_ids': instance.resolvedProofImageIds,
+  'closure_signature_image_id': instance.closureSignatureImageId,
+  'closure_signature_document_ids': instance.closureSignatureDocumentIds,
   'created_at': instance.createdAt,
   'updated_at': instance.updatedAt,
   'submitted_at': instance.submittedAt,

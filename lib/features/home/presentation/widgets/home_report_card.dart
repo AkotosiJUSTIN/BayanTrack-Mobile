@@ -39,11 +39,11 @@ class HomeReportCard extends StatelessWidget {
                       : AppColors.lightSurfaceVariant,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: report.images.isNotEmpty
+                child: report.coreImages.isNotEmpty
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          ApiConstants.getImageUrl(report.images.first.url),
+                          ApiConstants.getImageUrl(report.coreImages.first.url),
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => _buildPlaceholderIcon(),
                         ),
