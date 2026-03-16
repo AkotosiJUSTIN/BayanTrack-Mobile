@@ -15,12 +15,16 @@ class CitizenCloseReportUseCase {
     required bool satisfied,
     int? rating,
     String? note,
+    String? signatureImageId,
+    String? signatureName,
   }) {
     return repository.citizenCloseReport(
       id: reportId,
       satisfied: satisfied,
       rating: rating,
       note: note,
+      signatureImageId: signatureImageId,
+      signatureName: signatureName,
     );
   }
 }

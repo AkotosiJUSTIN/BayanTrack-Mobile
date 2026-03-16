@@ -21,11 +21,17 @@ class ImagesRepository {
 
   // ==================== UPLOAD ====================
 
-  /// Upload a single image for a report
+  /// Upload a single image for a report.
+  ///
+  /// [purpose] categorises the image:
+  ///   - `'evidence'` (default) — report photo submitted by the citizen.
+  ///   - `'signature'` — citizen e-signature drawn on the closure screen.
+  ///   - `'document'` — scanned closure document.
   Future<UploadedImage> uploadImage({
     required File imageFile,
     required String reportId,
     bool isPrimary = false,
+    String purpose = 'evidence',
     void Function(int sent, int total)? onSendProgress,
   }) async {
     debugPrint('=== UPLOADING IMAGE ===');
@@ -33,8 +39,9 @@ class ImagesRepository {
     debugPrint('File exists: ${await imageFile.exists()}');
     debugPrint('Report ID: $reportId');
     debugPrint('Is Primary: $isPrimary');
+    debugPrint('Purpose: $purpose');
     debugPrint('Upload URL: ${ApiConstants.imageUpload}');
-    
+
     final formData = FormData.fromMap({
       'image': await MultipartFile.fromFile(
         imageFile.path,
@@ -42,6 +49,7 @@ class ImagesRepository {
       ),
       'report_id': reportId,
       'is_primary': isPrimary.toString(),
+      'purpose': purpose,
     });
 
     try {

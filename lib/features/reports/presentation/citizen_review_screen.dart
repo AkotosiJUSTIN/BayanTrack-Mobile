@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -89,9 +88,9 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
     try {
       // 1. Export canvas as PNG bytes
       final signatureBytes = await _signatureController.toPngBytes();
-      String signatureUrl = '';
+      String? signatureImageId;
 
-      // 2. Upload signature to S3/IPFS if available
+      // 2. Upload signature image to get a proper record ID
       if (signatureBytes != null && signatureBytes.isNotEmpty) {
         try {
           final tempDir = await getTemporaryDirectory();
@@ -105,28 +104,24 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
             imageFile: tempFile,
             reportId: widget.report.id,
             isPrimary: false,
+            purpose: 'signature',
           );
-          signatureUrl = uploaded.url;
-          
+          // Use the database record ID (not the S3 URL) so the backend can
+          // resolve it to the closure_signature_image_id field.
+          signatureImageId = uploaded.id;
+
           // Clean up temp file
           if (await tempFile.exists()) {
             await tempFile.delete();
           }
         } catch (uploadError) {
           debugPrint('Signature upload failed: $uploadError');
-          // Fallback to base64 if upload fails, but preferred is S3
-          final signatureB64 = base64Encode(signatureBytes);
-          signatureUrl = 'data:image/png;base64,$signatureB64';
+          // Proceed without an image ID — backend will still store the name
         }
       }
 
       final note = _noteController.text.trim();
       final fullName = _nameController.text.trim();
-      final confirmedNote = [
-        if (note.isNotEmpty) note,
-        'Digitally signed by: $fullName',
-        if (signatureUrl.isNotEmpty) '[signature_url]: $signatureUrl',
-      ].join('\n');
 
       final controller = ref.read(
         reportDetailControllerProvider(widget.report.id).notifier,
@@ -134,7 +129,9 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
       final result = await controller.citizenCloseReport(
         satisfied: satisfied,
         rating: _rating > 0 ? _rating : null,
-        note: confirmedNote,
+        note: note.isNotEmpty ? note : null,
+        signatureImageId: signatureImageId,
+        signatureName: fullName,
       );
 
       if (!mounted) return;

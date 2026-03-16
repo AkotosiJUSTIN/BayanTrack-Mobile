@@ -51,6 +51,8 @@ class ReportDetailController extends _$ReportDetailController {
     required bool satisfied,
     int? rating,
     String? note,
+    String? signatureImageId,
+    String? signatureName,
   }) async {
     final id = reportId;
     final useCase = ref.read(citizenCloseReportUseCaseProvider);
@@ -60,6 +62,8 @@ class ReportDetailController extends _$ReportDetailController {
       satisfied: satisfied,
       rating: rating,
       note: note,
+      signatureImageId: signatureImageId,
+      signatureName: signatureName,
     );
 
     return result.when(

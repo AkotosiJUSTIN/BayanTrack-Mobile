@@ -92,6 +92,7 @@ class ReportMapper {
       reportId: dtoImage.reportId,
       userId: dtoImage.userId,
       isPrimary: dtoImage.isPrimary,
+      purpose: dtoImage.purpose,
       width: dtoImage.width,
       height: dtoImage.height,
       createdAt: dtoImage.createdAt != null

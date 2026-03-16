@@ -208,6 +208,8 @@ sealed class ReportImage with _$ReportImage {
     int? width,
     int? height,
     @JsonKey(name: 'is_primary') @Default(false) bool isPrimary,
+    /// 'evidence' | 'signature' | 'document' — null means legacy/pre-field record.
+    String? purpose,
     @JsonKey(name: 'created_at') String? createdAt,
     @JsonKey(name: 'updated_at') String? updatedAt,
   }) = _ReportImage;

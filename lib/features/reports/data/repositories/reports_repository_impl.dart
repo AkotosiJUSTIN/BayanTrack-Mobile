@@ -291,11 +291,19 @@ class ReportsRepositoryImpl implements ReportsRepository {
     required bool satisfied,
     int? rating,
     String? note,
+    String? signatureImageId,
+    String? signatureName,
   }) async {
     try {
       final body = <String, dynamic>{'satisfied': satisfied};
       if (rating != null) body['rating'] = rating;
       if (note != null && note.isNotEmpty) body['note'] = note;
+      if (signatureImageId != null && signatureImageId.isNotEmpty) {
+        body['signature_image_id'] = signatureImageId;
+      }
+      if (signatureName != null && signatureName.isNotEmpty) {
+        body['signature_name'] = signatureName;
+      }
 
       final response = await _dio.patch(
         ApiConstants.reportCitizenClose(id),

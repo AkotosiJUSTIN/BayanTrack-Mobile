@@ -154,9 +154,20 @@ class Report extends Equatable {
     ...closureSignatureDocumentIds,
   };
 
+  /// Report evidence photos, excluding signatures and proof-of-resolution images.
+  ///
+  /// Filtering is done on two axes so that both new and legacy records work:
+  /// 1. **By ID** — excludes any image whose ID is in [_supplementalImageIds].
+  ///    Reliable when [closureSignatureImageId] is populated.
+  /// 2. **By purpose tag** — excludes any image explicitly tagged `'signature'`.
+  ///    Catches older records where [closureSignatureImageId] was null but the
+  ///    image was uploaded with `purpose=signature` via the updated mobile app.
   List<ReportImage> get coreImages {
-    final filtered = images.where((image) => !_supplementalImageIds.contains(image.id)).toList();
-    return filtered.isNotEmpty ? filtered : images;
+    final filtered = images
+        .where((img) => !_supplementalImageIds.contains(img.id))
+        .where((img) => !img.isSignature)
+        .toList();
+    return filtered.isNotEmpty ? filtered : images.where((img) => !img.isSignature).toList();
   }
 
   List<ReportImage> get resolvedProofImages => images

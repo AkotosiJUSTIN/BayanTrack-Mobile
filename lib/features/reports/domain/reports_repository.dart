@@ -83,13 +83,17 @@ abstract interface class ReportsRepository {
 
   /// Submit citizen closure review for a resolved report.
   ///
-  /// [satisfied] — true if the citizen confirms resolution, false to reopen.
-  /// [rating]    — optional 1–5 star rating.
-  /// [note]      — optional free-text feedback.
+  /// [satisfied]         — true if the citizen confirms resolution, false to reopen.
+  /// [rating]            — optional 1–5 star rating.
+  /// [note]              — optional free-text feedback.
+  /// [signatureImageId]  — uploaded image ID of the drawn signature.
+  /// [signatureName]     — full name typed by the citizen for identity confirmation.
   Future<Result<Map<String, dynamic>>> citizenCloseReport({
     required String id,
     required bool satisfied,
     int? rating,
     String? note,
+    String? signatureImageId,
+    String? signatureName,
   });
 }
