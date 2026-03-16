@@ -19,6 +19,22 @@ class ReportsRepositoryImpl implements ReportsRepository {
 
   ReportsRepositoryImpl(this._dio);
 
+  String? _legacyStatusFallback(String status) {
+    return switch (status) {
+      'submitted' => 'Pending',
+      'under_review' => 'Under Review',
+      'verified' => 'Verified',
+      'assigned' => 'Assigned',
+      'in_progress' => 'In Progress',
+      'resolved' => 'Resolved',
+      'closed' => 'Closed',
+      'rejected' => 'Rejected',
+      'escalated' => 'Escalated',
+      'endorsed' => 'Endorsed',
+      _ => null,
+    };
+  }
+
   @override
   Future<Result<PaginatedReports>> getReports({
     int page = 1,
@@ -72,7 +88,34 @@ class ReportsRepositoryImpl implements ReportsRepository {
         ApiConstants.myReports,
         queryParameters: queryParams,
       );
-      final dtoResult = dto.PaginatedReports.fromJson(response.data);
+      var dtoResult = dto.PaginatedReports.fromJson(response.data);
+
+      // Some older records store status labels capitalized (e.g. "Closed").
+      // Retry once with the legacy label if the strict status lookup is empty.
+      if (status != null && dtoResult.results.isEmpty) {
+        final legacyStatus = _legacyStatusFallback(status);
+        if (legacyStatus != null && legacyStatus != status) {
+          final fallbackQuery = <String, dynamic>{
+            'page': page,
+            'page_size': pageSize,
+            'status': legacyStatus,
+          };
+          if (sortBy != null) fallbackQuery['sort_by'] = sortBy;
+
+          final fallbackResponse = await _dio.get(
+            ApiConstants.myReports,
+            queryParameters: fallbackQuery,
+          );
+          final fallbackResult = dto.PaginatedReports.fromJson(
+            fallbackResponse.data,
+          );
+
+          if (fallbackResult.results.isNotEmpty) {
+            dtoResult = fallbackResult;
+          }
+        }
+      }
+
       return Success(ReportMapper.paginatedFromDto(dtoResult));
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));

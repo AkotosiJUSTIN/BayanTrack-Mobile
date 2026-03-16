@@ -86,8 +86,14 @@ enum ReportStatus {
   };
 
   static ReportStatus fromString(String? value) {
-    return switch (value) {
-      'submitted' => ReportStatus.submitted,
+    final normalized = value
+        ?.trim()
+        .toLowerCase()
+        .replaceAll('-', '_')
+        .replaceAll(' ', '_');
+
+    return switch (normalized) {
+      'submitted' || 'pending' => ReportStatus.submitted,
       'under_review' => ReportStatus.underReview,
       'verified' => ReportStatus.verified,
       'assigned' => ReportStatus.assigned,
@@ -95,7 +101,7 @@ enum ReportStatus {
       'escalated' => ReportStatus.escalated,
       'endorsed' => ReportStatus.endorsed,
       'resolved' => ReportStatus.resolved,
-      'closed' => ReportStatus.closed,
+      'closed' || 'citizen_closed' => ReportStatus.closed,
       'rejected' => ReportStatus.rejected,
       _ => ReportStatus.submitted,
     };

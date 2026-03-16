@@ -601,30 +601,39 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Icon(
-                Icons.account_tree_outlined,
-                size: 20,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Blockchain Verification',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.account_tree_outlined,
+                    size: 18,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Blockchain Verification',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
               if (_isVerifying)
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                const Padding(
+                  padding: EdgeInsets.only(right: 8),
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 )
               else
                 TextButton.icon(
@@ -632,10 +641,13 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                       ? null
                       : () => _handleVerification(report.id),
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Verify Integrity'),
+                  label: const Text('Verify Now'),
                   style: TextButton.styleFrom(
                     visualDensity: VisualDensity.compact,
-                    textStyle: theme.textTheme.labelMedium,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    textStyle: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
             ],

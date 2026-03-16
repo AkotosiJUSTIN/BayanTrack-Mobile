@@ -1,10 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:signature/signature.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../images/data/images_repository.dart';
 import '../domain/entities/report.dart';
 import 'report_detail_controller.dart';
 
@@ -84,17 +87,45 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      // Export canvas as PNG bytes → base64 string appended to the note
+      // 1. Export canvas as PNG bytes
       final signatureBytes = await _signatureController.toPngBytes();
-      final signatureB64 =
-          signatureBytes != null ? base64Encode(signatureBytes) : '';
+      String signatureUrl = '';
+
+      // 2. Upload signature to S3/IPFS if available
+      if (signatureBytes != null && signatureBytes.isNotEmpty) {
+        try {
+          final tempDir = await getTemporaryDirectory();
+          final fileName =
+              'signature_${widget.report.reportId ?? widget.report.id}_${DateTime.now().millisecondsSinceEpoch}.png';
+          final tempFile = File('${tempDir.path}/$fileName');
+          await tempFile.writeAsBytes(signatureBytes);
+
+          final repo = ref.read(imagesRepositoryProvider);
+          final uploaded = await repo.uploadImage(
+            imageFile: tempFile,
+            reportId: widget.report.id,
+            isPrimary: false,
+          );
+          signatureUrl = uploaded.url;
+          
+          // Clean up temp file
+          if (await tempFile.exists()) {
+            await tempFile.delete();
+          }
+        } catch (uploadError) {
+          debugPrint('Signature upload failed: $uploadError');
+          // Fallback to base64 if upload fails, but preferred is S3
+          final signatureB64 = base64Encode(signatureBytes);
+          signatureUrl = 'data:image/png;base64,$signatureB64';
+        }
+      }
 
       final note = _noteController.text.trim();
       final fullName = _nameController.text.trim();
       final confirmedNote = [
         if (note.isNotEmpty) note,
         'Digitally signed by: $fullName',
-        if (signatureB64.isNotEmpty) '[signature_png_b64]:$signatureB64',
+        if (signatureUrl.isNotEmpty) '[signature_url]: $signatureUrl',
       ].join('\n');
 
       final controller = ref.read(

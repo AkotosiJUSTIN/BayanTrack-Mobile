@@ -38,6 +38,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     (label: 'Under Review', status: 'under_review'),
     (label: 'In Progress', status: 'in_progress'),
     (label: 'Resolved', status: 'resolved'),
+    (label: 'Closed', status: 'closed'),
     (label: 'Rejected', status: 'rejected'),
     (label: 'Escalated', status: 'escalated'),
   ];

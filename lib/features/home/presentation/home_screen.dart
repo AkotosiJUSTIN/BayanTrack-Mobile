@@ -103,7 +103,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _reports.addAll(filteredReports);
           _currentPage = data.page;
           _totalPages = data.totalPages;
-          _totalReports = data.total;
+          // Set total to the count of displayed reports, not backend total
+          _totalReports = _reports.length;
           _isInitialLoading = false;
         });
       },
@@ -147,7 +148,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _reports.addAll(newReports);
           _currentPage = data.page;
           _totalPages = data.totalPages;
-          _totalReports = data.total;
+          // Set total to the count of displayed reports, not backend total
+          _totalReports = _reports.length;
           _isLoadingMore = false;
         });
       },
@@ -203,126 +205,110 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: Column(
         children: [
           VerificationBanner(permissions: permissions),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                hintText: 'Search reports...',
+                prefixIcon: Icon(Icons.search),
+                contentPadding: EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.darkSurface
+                        : AppColors.lightSurface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : AppColors.lightBorder,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildToggleButton(
+                        label: 'Map',
+                        icon: Icons.map_outlined,
+                        isSelected: _isMapView,
+                        onTap: () => setState(() => _isMapView = true),
+                      ),
+                      _buildToggleButton(
+                        label: 'List',
+                        icon: Icons.list,
+                        isSelected: !_isMapView,
+                        onTap: () => setState(() => _isMapView = false),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '$_totalReports ${_totalReports == 1 ? 'report' : 'reports'}',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 48,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _statusFilters.length,
+              itemBuilder: (context, index) {
+                final isSelected = _selectedStatusFilterIndex == index;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    selected: isSelected,
+                    label: Text(_statusFilters[index].label),
+                    selectedColor: AppColors.primary,
+                    backgroundColor: isDark
+                        ? AppColors.darkSurface
+                        : AppColors.lightSurface,
+                    labelStyle: TextStyle(
+                      color: isSelected
+                          ? Colors.white
+                          : (isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.lightTextPrimary),
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                    side: BorderSide(
+                      color: isSelected
+                          ? AppColors.primary
+                          : (isDark
+                                ? AppColors.darkBorder
+                                : AppColors.lightBorder),
+                    ),
+                    onSelected: (_) {
+                      setState(() {
+                        _selectedStatusFilterIndex = index;
+                      });
+                      _loadInitialReports();
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _onRefresh,
-              child: CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: const InputDecoration(
-                          hintText: 'Search reports...',
-                          prefixIcon: Icon(Icons.search),
-                          contentPadding: EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? AppColors.darkSurface
-                                  : AppColors.lightSurface,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isDark
-                                    ? AppColors.darkBorder
-                                    : AppColors.lightBorder,
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _buildToggleButton(
-                                  label: 'Map',
-                                  icon: Icons.map_outlined,
-                                  isSelected: _isMapView,
-                                  onTap: () =>
-                                      setState(() => _isMapView = true),
-                                ),
-                                _buildToggleButton(
-                                  label: 'List',
-                                  icon: Icons.list,
-                                  isSelected: !_isMapView,
-                                  onTap: () =>
-                                      setState(() => _isMapView = false),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Spacer(),
-                          Text(
-                            '$_totalReports reports',
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: 48,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _statusFilters.length,
-                        itemBuilder: (context, index) {
-                          final isSelected =
-                              _selectedStatusFilterIndex == index;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: FilterChip(
-                              selected: isSelected,
-                              label: Text(_statusFilters[index].label),
-                              selectedColor: AppColors.primary,
-                              backgroundColor: isDark
-                                  ? AppColors.darkSurface
-                                  : AppColors.lightSurface,
-                              labelStyle: TextStyle(
-                                color: isSelected
-                                    ? Colors.white
-                                    : (isDark
-                                          ? AppColors.darkTextPrimary
-                                          : AppColors.lightTextPrimary),
-                                fontWeight: isSelected
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                              ),
-                              side: BorderSide(
-                                color: isSelected
-                                    ? AppColors.primary
-                                    : (isDark
-                                          ? AppColors.darkBorder
-                                          : AppColors.lightBorder),
-                              ),
-                              onSelected: (_) {
-                                setState(() {
-                                  _selectedStatusFilterIndex = index;
-                                });
-                                _loadInitialReports();
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
-                  SliverFillRemaining(
-                    child: _isMapView
-                        ? _buildMapView(theme)
-                        : _buildListView(theme),
-                  ),
-                ],
-              ),
+              child: _isMapView
+                  ? _buildMapView(theme)
+                  : _buildListView(theme),
             ),
           ),
         ],
