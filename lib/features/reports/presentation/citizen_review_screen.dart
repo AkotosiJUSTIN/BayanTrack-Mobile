@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:signature/signature.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/string_utils.dart';
 import '../../images/data/images_repository.dart';
 import '../domain/entities/report.dart';
 import 'report_detail_controller.dart';
@@ -59,10 +60,12 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
       widget.report.reportId ??
       widget.report.id.substring(0, 8).toUpperCase();
 
-  String get _resolutionNote =>
-      widget.report.adminRemarks?.isNotEmpty == true
-          ? widget.report.adminRemarks!
-          : 'The barangay has marked this report as resolved.';
+  String get _resolutionNote {
+    final rawText = widget.report.adminRemarks?.isNotEmpty == true
+        ? widget.report.adminRemarks!
+        : 'The barangay has marked this report as resolved.';
+    return StringUtils.unescapeHtml(rawText);
+  }
 
   bool get _nameValid =>
       _nameController.text.trim().split(' ').length >= 2;
