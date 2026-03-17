@@ -10,6 +10,7 @@ import '../../../core/utils/string_utils.dart';
 import '../../images/data/images_repository.dart';
 import '../domain/entities/report.dart';
 import 'report_detail_controller.dart';
+import '../../auth/presentation/auth_controller.dart';
 
 /// Screen shown to citizens so they can review a barangay-resolved report,
 /// provide a star rating, an optional note, and a digital confirmation
@@ -67,8 +68,19 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
     return StringUtils.unescapeHtml(rawText);
   }
 
-  bool get _nameValid =>
-      _nameController.text.trim().split(' ').length >= 2;
+  String get _userFullName {
+    final authState = ref.read(authControllerProvider);
+    if (authState is AuthSuccess) {
+      return authState.user?.fullName ?? '';
+    }
+    return '';
+  }
+
+  bool get _nameValid {
+    final inputName = _nameController.text.trim().toLowerCase();
+    final expectedName = _userFullName.toLowerCase();
+    return inputName.isNotEmpty && inputName == expectedName;
+  }
 
   bool get _canvasValid => _signatureController.isNotEmpty;
 
@@ -78,7 +90,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
 
   Future<void> _submit({required bool satisfied}) async {
     if (!_nameValid) {
-      _showSnackBar('Please enter your full name.', error: true);
+      _showSnackBar('Please enter your registered full name ($_userFullName).', error: true);
       return;
     }
     if (!_canvasValid) {
@@ -562,7 +574,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              'Please enter your first and last name.',
+              'Please enter your registered full name.',
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: AppColors.alertHigh),
             ),
