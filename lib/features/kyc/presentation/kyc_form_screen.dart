@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import '../data/kyc_models.dart';
 import '../domain/entities/kyc_status.dart';
+import '../../auth/presentation/barangays_provider.dart';
 import 'kyc_controller.dart';
 
 /// KYC Form Screen - Comprehensive user verification form
@@ -54,6 +55,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   final _zipCodeController = TextEditingController();
   final _idNumberController = TextEditingController();
 
+  String? _selectedBarangayName;
   int _currentStep = 0;
 
   @override
@@ -71,7 +73,16 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     _nationalityController.text = existing.nationality ?? '';
     _emailController.text = existing.email ?? '';
     _mobileNumberController.text = existing.mobileNumber ?? '';
-    _streetBarangayController.text = existing.streetBarangay ?? '';
+    
+    final fullAddress = existing.streetBarangay ?? '';
+    if (fullAddress.contains(',')) {
+      final parts = fullAddress.split(',');
+      _selectedBarangayName = parts.last.trim();
+      _streetBarangayController.text = parts.sublist(0, parts.length - 1).join(',').trim();
+    } else {
+      _streetBarangayController.text = fullAddress;
+    }
+
     _cityMunicipalityController.text = existing.cityMunicipality ?? '';
     _provinceController.text = existing.province ?? '';
     _zipCodeController.text = existing.zipCode ?? '';
@@ -194,14 +205,12 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     if (Validators.email(email) != null) {
       return 1;
     }
-    final cleanedMobile = mobile.replaceAll(RegExp(r'[\s\-]'), '');
-    if (mobile.isEmpty ||
-        !RegExp(r'^\+?[0-9]{10,15}$').hasMatch(cleanedMobile)) {
+    if (mobile.isEmpty || mobile.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(mobile)) {
       return 1;
     }
 
     // Check Address (Step 2)
-    if (_streetBarangayController.text.trim().isEmpty ||
+    if (_streetBarangayController.text.trim().isEmpty || _selectedBarangayName == null ||
         _cityMunicipalityController.text.trim().isEmpty ||
         _provinceController.text.trim().isEmpty) {
       return 2;
@@ -234,9 +243,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         if (Validators.email(email) != null) {
           return 'Please enter a valid email address (e.g., name@example.com)';
         }
-        return 'Please enter a valid mobile number';
+        return 'Please enter a valid mobile number (exactly 10 digits)';
       case 2:
-        return 'Please complete Address: Street/Barangay, City/Municipality, and Province are required';
+        return 'Please complete Address: House No./Street, Barangay, City/Municipality, and Province are required';
       case 3:
         return 'Please select an ID type and enter ID number';
       case 4:
@@ -662,12 +671,13 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             labelText: 'Mobile Number *',
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.phone),
-            hintText: '+63 9XX XXX XXXX',
+            prefixText: '+63 ',
+            hintText: '9123456789',
           ),
-          keyboardType: TextInputType.phone,
+          keyboardType: TextInputType.number,
           inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[\d+\s-]')),
-            LengthLimitingTextInputFormatter(20),
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(10),
           ],
           onChanged: (v) {
             controller.setMobileNumber(v);
@@ -677,9 +687,8 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             if (v == null || v.trim().isEmpty) {
               return 'Mobile number is required';
             }
-            final cleaned = v.replaceAll(RegExp(r'[\s\-]'), '');
-            if (!RegExp(r'^\+?[0-9]{10,15}$').hasMatch(cleaned)) {
-              return 'Enter a valid mobile number (10-15 digits)';
+            if (v.length != 10) {
+              return 'Mobile number must be exactly 10 digits';
             }
             return null;
           },
@@ -690,17 +699,34 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
   Widget _buildAddressSection(KycFormState state) {
     final controller = ref.read(kycFormControllerProvider.notifier);
+    final theme = Theme.of(context);
+
+    // Update the controller whenever either field changes
+    void updateStreetBarangay() {
+      final street = _streetBarangayController.text.trim();
+      final barangay = _selectedBarangayName ?? '';
+      if (street.isNotEmpty && barangay.isNotEmpty) {
+        controller.setStreetBarangay('$street, $barangay');
+      } else if (street.isNotEmpty) {
+        controller.setStreetBarangay(street);
+      } else if (barangay.isNotEmpty) {
+        controller.setStreetBarangay(barangay);
+      } else {
+        controller.setStreetBarangay('');
+      }
+      _validateLive();
+    }
 
     return Column(
       children: [
-        // Street / Barangay *
+        // House No. / Street *
         TextFormField(
           controller: _streetBarangayController,
           decoration: const InputDecoration(
-            labelText: 'Street / Barangay *',
+            labelText: 'House No. / Street *',
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.home),
-            hintText: 'House No., Street, Barangay',
+            hintText: 'House No., Street',
           ),
           textCapitalization: TextCapitalization.words,
           inputFormatters: [
@@ -708,12 +734,50 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             LengthLimitingTextInputFormatter(255),
           ],
           onChanged: (v) {
-            controller.setStreetBarangay(v);
-            _validateLive();
+            updateStreetBarangay();
           },
           validator: (v) => v == null || v.trim().isEmpty
-              ? 'Street/Barangay is required'
+              ? 'House No./Street is required'
               : null,
+        ),
+        const SizedBox(height: 16),
+
+        // Barangay Dropdown *
+        ref.watch(barangaysProvider).when(
+          loading: () => const LinearProgressIndicator(),
+          error: (_, __) => Text(
+            'Failed to load barangays',
+            style: TextStyle(color: theme.colorScheme.error),
+          ),
+          data: (barangays) {
+            final validBarangay = barangays.any((b) => b.name == _selectedBarangayName) 
+                ? _selectedBarangayName 
+                : null;
+            
+            return DropdownButtonFormField<String>(
+              value: validBarangay,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Barangay *',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.location_city_outlined),
+                hintText: 'Select your barangay',
+              ),
+              items: barangays
+                  .map((b) => DropdownMenuItem(
+                        value: b.name,
+                        child: Text(b.name),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() => _selectedBarangayName = value);
+                updateStreetBarangay();
+              },
+              validator: (_) => _selectedBarangayName == null
+                  ? 'Please select your barangay'
+                  : null,
+            );
+          },
         ),
         const SizedBox(height: 16),
 

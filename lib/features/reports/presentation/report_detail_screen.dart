@@ -894,14 +894,8 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     );
   }
 
-  String _getActionLabel(int type) {
-    return switch (type) {
-      0 => 'Created',
-      1 => 'Status Updated',
-      2 => 'Metadata Updated',
-      _ => 'Unknown Action',
-    };
-  }
+  String _getActionLabel(int type) =>
+      AuditActionType.fromInt(type).displayLabel;
 
   Future<void> _handleVerification(String reportId) async {
     setState(() => _isVerifying = true);
