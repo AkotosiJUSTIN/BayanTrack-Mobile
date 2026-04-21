@@ -177,7 +177,7 @@ void main() {
       );
       expect(
         Validators.reportText(
-          'May butas sa kalsada malapit sa simbahan ng Mangaldan',
+          'May butas sa kalsada malapit sa simbahan ng Urdaneta',
         ),
         isNull,
       );

@@ -5,7 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../../core/constants/mangaldan_geo.dart';
+import '../../../../core/constants/urdaneta_geo.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'new_report_controller.dart';
 import 'new_report_details_screen.dart';
@@ -25,10 +25,10 @@ class _NewReportLocationScreenState
     extends ConsumerState<NewReportLocationScreen> {
   final MapController _mapController = MapController();
   final LatLngBounds _mangaldanBounds = LatLngBounds(
-    const LatLng(MangaldanGeo.south, MangaldanGeo.west),
-    const LatLng(MangaldanGeo.north, MangaldanGeo.east),
+    const LatLng(UrdanetaGeo.south, UrdanetaGeo.west),
+    const LatLng(UrdanetaGeo.north, UrdanetaGeo.east),
   );
-  final List<LatLng> _mangaldanPolygon = MangaldanGeo.boundary
+  final List<LatLng> _mangaldanPolygon = UrdanetaGeo.boundary
       .map((point) => LatLng(point.$1, point.$2))
       .toList(growable: false);
 
@@ -56,14 +56,14 @@ class _NewReportLocationScreenState
 
     if (state.latitude != null && state.longitude != null) {
       _selectedPoint = LatLng(state.latitude!, state.longitude!);
-      _isOutsideServiceArea = !MangaldanGeo.contains(
+      _isOutsideServiceArea = !UrdanetaGeo.contains(
         state.latitude!,
         state.longitude!,
       );
       return;
     }
 
-    _selectedPoint = const LatLng(MangaldanGeo.defaultLat, MangaldanGeo.defaultLng);
+    _selectedPoint = const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng);
     _isOutsideServiceArea = false;
   }
 
@@ -78,7 +78,7 @@ class _NewReportLocationScreenState
 
     _setSelectedPoint(
       point,
-      locationLabel: MangaldanGeo.defaultLocationLabel,
+      locationLabel: UrdanetaGeo.defaultLocationLabel,
     );
   }
 
@@ -200,12 +200,12 @@ class _NewReportLocationScreenState
     }
 
     final point = LatLng(position.latitude, position.longitude);
-    if (!MangaldanGeo.contains(point.latitude, point.longitude)) {
+    if (!UrdanetaGeo.contains(point.latitude, point.longitude)) {
       ref.read(newReportControllerProvider.notifier).clearLocation();
       setState(() {
         _isOutsideServiceArea = true;
         _error =
-            'Report creation is only available within Mangaldan, Pangasinan.';
+          'Report creation is only available within Urdaneta, Pangasinan.';
       });
       return;
     }
@@ -218,14 +218,14 @@ class _NewReportLocationScreenState
   }
 
   void _setSelectedPoint(LatLng point, {required String locationLabel}) {
-    final inMangaldan = MangaldanGeo.contains(point.latitude, point.longitude);
+    final inMangaldan = UrdanetaGeo.contains(point.latitude, point.longitude);
 
     if (!inMangaldan) {
       ref.read(newReportControllerProvider.notifier).clearLocation();
       setState(() {
         _isOutsideServiceArea = true;
         _error =
-            'Report creation is only available within Mangaldan, Pangasinan.';
+          'Report creation is only available within Urdaneta, Pangasinan.';
       });
       return;
     }
@@ -236,8 +236,8 @@ class _NewReportLocationScreenState
       longitude: point.longitude,
       location: locationLabel,
     );
-    controller.setCityMunicipality(MangaldanGeo.defaultCityMunicipality);
-    controller.setProvince(MangaldanGeo.defaultProvince);
+    controller.setCityMunicipality(UrdanetaGeo.defaultCityMunicipality);
+    controller.setProvince(UrdanetaGeo.defaultProvince);
 
     setState(() {
       _selectedPoint = point;
@@ -260,11 +260,11 @@ class _NewReportLocationScreenState
 
   void _onMapTap(LatLng point) {
     if (_locationInputMode != _LocationInputMode.manual) return;
-    if (!MangaldanGeo.contains(point.latitude, point.longitude)) {
+    if (!UrdanetaGeo.contains(point.latitude, point.longitude)) {
       setState(() {
         _isOutsideServiceArea = true;
         _error =
-            'You can only place a manual pin within Mangaldan, Pangasinan.';
+          'You can only place a manual pin within Urdaneta, Pangasinan.';
       });
       return;
     }
@@ -292,8 +292,8 @@ class _NewReportLocationScreenState
 
   void _useDefaultLocation() {
     _setSelectedPoint(
-      const LatLng(MangaldanGeo.defaultLat, MangaldanGeo.defaultLng),
-      locationLabel: MangaldanGeo.defaultLocationLabel,
+      const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng),
+      locationLabel: UrdanetaGeo.defaultLocationLabel,
     );
   }
 
@@ -309,7 +309,7 @@ class _NewReportLocationScreenState
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final selectedPoint = _selectedPoint ??
-        const LatLng(MangaldanGeo.defaultLat, MangaldanGeo.defaultLng);
+        const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng);
 
     return Scaffold(
       appBar: AppBar(title: const Text('New Report')),
@@ -344,7 +344,7 @@ class _NewReportLocationScreenState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Choose location source: phone GPS or manual pin in Mangaldan only.',
+                  'Choose location source: phone GPS or manual pin in Urdaneta only.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: isDark
                         ? AppColors.darkTextSecondary
@@ -558,7 +558,7 @@ class _NewReportLocationScreenState
             )
           else
             IconButton(
-              tooltip: 'Use Salay default',
+              tooltip: 'Use default Urdaneta location',
               onPressed: _useDefaultLocation,
               icon: const Icon(Icons.pin_drop_outlined),
             ),
@@ -577,7 +577,7 @@ class _NewReportLocationScreenState
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        'Tap the map to place your pin. Selection is limited to Mangaldan.',
+        'Tap the map to place your pin. Selection is limited to Urdaneta.',
         style: theme.textTheme.bodySmall,
         textAlign: TextAlign.center,
       ),

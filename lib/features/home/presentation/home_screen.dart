@@ -316,66 +316,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildSortChip({
-    required String label,
-    required String value,
-    required IconData icon,
-    required bool isDark,
-  }) {
-    final isSelected = _selectedSort == value;
-    final selectedColor = AppColors.primary;
-    return GestureDetector(
-      onTap: () {
-        if (_selectedSort != value) {
-          setState(() => _selectedSort = value);
-          _loadInitialReports();
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? selectedColor.withValues(alpha: 0.12)
-              : (isDark ? AppColors.darkSurface : AppColors.lightSurface),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: isSelected
-                ? selectedColor
-                : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 12,
-              color: isSelected
-                  ? selectedColor
-                  : (isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight:
-                    isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected
-                    ? selectedColor
-                    : (isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildToggleButton({
     required String label,
     required IconData icon,

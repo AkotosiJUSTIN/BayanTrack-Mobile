@@ -4,7 +4,7 @@
 /// The data layer DTOs retain @JsonValue for serialization.
 library;
 
-/// Report category aligned with Mangaldan Municipal Office routing
+/// Report category aligned with Urdaneta City office routing
 enum ReportCategory {
   engineeringInfrastructure,
   floodDisaster,

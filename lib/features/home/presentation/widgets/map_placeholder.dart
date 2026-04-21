@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../../core/constants/mangaldan_geo.dart';
+import '../../../../core/constants/urdaneta_geo.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../reports/domain/entities/report.dart';
 import '../../../reports/domain/entities/report_enums.dart';
@@ -17,12 +17,12 @@ class MapPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final reportsWithCoordinates = _reportsWithCoordinates(reports);
     final initialCenter = _initialCenterFor(reportsWithCoordinates);
-    final mangaldanPolygon = MangaldanGeo.boundary
+    final mangaldanPolygon = UrdanetaGeo.boundary
         .map((point) => LatLng(point.$1, point.$2))
         .toList(growable: false);
     final mangaldanBounds = LatLngBounds(
-      LatLng(MangaldanGeo.south, MangaldanGeo.west),
-      LatLng(MangaldanGeo.north, MangaldanGeo.east),
+      LatLng(UrdanetaGeo.south, UrdanetaGeo.west),
+      LatLng(UrdanetaGeo.north, UrdanetaGeo.east),
     );
     final markers = reportsWithCoordinates
         .map(
@@ -97,13 +97,13 @@ class MapPlaceholder extends StatelessWidget {
       final lng = report.longitude;
       if (lat == null || lng == null) return false;
       if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return false;
-      return MangaldanGeo.contains(lat, lng);
+      return UrdanetaGeo.contains(lat, lng);
     }).toList();
   }
 
   LatLng _initialCenterFor(List<Report> reportsWithCoordinates) {
     if (reportsWithCoordinates.isEmpty) {
-      return const LatLng(MangaldanGeo.defaultLat, MangaldanGeo.defaultLng);
+      return const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng);
     }
 
     final latitudeTotal = reportsWithCoordinates.fold<double>(
@@ -140,7 +140,7 @@ class MapPlaceholder extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'No report coordinates available in Mangaldan yet.',
+              'No report coordinates available in Urdaneta yet.',
               style: theme.textTheme.bodySmall,
             ),
           ),

@@ -26,7 +26,7 @@ class NullableIntConverter implements JsonConverter<int?, dynamic> {
 
 // ==================== REPORT CATEGORIES ====================
 
-/// Report categories aligned with Mangaldan Municipal Office routing (V23 XLM-RoBERTa)
+/// Report categories aligned with Urdaneta City office routing (V23 XLM-RoBERTa)
 enum ReportCategory {
   @JsonValue('Municipal Engineering & Infrastructure')
   engineeringInfrastructure,
