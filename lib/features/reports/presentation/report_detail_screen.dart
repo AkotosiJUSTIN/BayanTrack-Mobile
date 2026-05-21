@@ -926,13 +926,13 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       ReportStatus.submitted => (const Color(0xFFF59E0B), 'Submitted'), // Amber
       ReportStatus.underReview => (const Color(0xFF8B5CF6), 'Under Review'), // Violet
       ReportStatus.inProgress => (const Color(0xFF2563EB), 'In Progress'), // Blue
-      ReportStatus.escalated => (const Color(0xFFDC2626), 'Escalated'), // Red
-      ReportStatus.endorsed => (const Color(0xFF06B6D4), 'Endorsed'), // Cyan
+      ReportStatus.escalated => (const Color(0xFF8B5CF6), 'Under Review'), // Violet
+      ReportStatus.endorsed => (const Color(0xFF8B5CF6), 'Under Review'), // Violet
       ReportStatus.resolved => (const Color(0xFF22C55E), 'Resolved'), // Green
       ReportStatus.closed => (const Color(0xFF64748B), 'Closed'), // Gray
       ReportStatus.rejected => (const Color(0xFFEF4444), 'Rejected'), // Light Red
-      ReportStatus.verified => (const Color(0xFF10B981), 'Verified'), // Emerald
-      ReportStatus.assigned => (const Color(0xFF3B82F6), 'Assigned'), // Light Blue
+      ReportStatus.verified => (const Color(0xFF8B5CF6), 'Under Review'), // Violet
+      ReportStatus.assigned => (const Color(0xFF8B5CF6), 'Under Review'), // Violet
     };
 
     return Container(

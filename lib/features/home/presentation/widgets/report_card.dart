@@ -169,14 +169,14 @@ class ReportCard extends StatelessWidget {
         'In Progress',
       ),
       ReportStatus.escalated => (
-        isDark ? AppColors.rejectedBgDark : AppColors.rejectedBg,
-        isDark ? AppColors.rejectedTextDark : AppColors.rejectedText,
-        'Escalated',
+        isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
+        isDark ? AppColors.pendingTextDark : AppColors.pendingText,
+        'Under Review',
       ),
       ReportStatus.endorsed => (
-        isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
-        isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
-        'Endorsed',
+        isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
+        isDark ? AppColors.pendingTextDark : AppColors.pendingText,
+        'Under Review',
       ),
       ReportStatus.resolved => (
         isDark ? AppColors.resolvedBgDark : AppColors.resolvedBg,
@@ -194,14 +194,14 @@ class ReportCard extends StatelessWidget {
         'Rejected',
       ),
       ReportStatus.verified => (
-        isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
-        isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
-        'Verified',
+        isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
+        isDark ? AppColors.pendingTextDark : AppColors.pendingText,
+        'Under Review',
       ),
       ReportStatus.assigned => (
-        isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
-        isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
-        'Assigned',
+        isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
+        isDark ? AppColors.pendingTextDark : AppColors.pendingText,
+        'Under Review',
       ),
     };
 

@@ -153,11 +153,11 @@ class MapPlaceholder extends StatelessWidget {
     return switch (status) {
       ReportStatus.submitted => AppColors.alertMedium,
       ReportStatus.underReview => AppColors.alertMedium,
-      ReportStatus.verified => AppColors.primary,
-      ReportStatus.assigned => AppColors.primary,
+      ReportStatus.verified => AppColors.alertMedium,
+      ReportStatus.assigned => AppColors.alertMedium,
       ReportStatus.inProgress => const Color(0xFF3B82F6), // Blue
-      ReportStatus.escalated => AppColors.alertHigh,
-      ReportStatus.endorsed => const Color(0xFF8B5CF6), // Purple
+      ReportStatus.escalated => AppColors.alertMedium,
+      ReportStatus.endorsed => AppColors.alertMedium,
       ReportStatus.resolved => AppColors.success,
       ReportStatus.closed => AppColors.success,
       ReportStatus.rejected => AppColors.alertHigh,

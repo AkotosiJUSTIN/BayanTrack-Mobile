@@ -40,7 +40,6 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     (label: 'Resolved', status: 'resolved'),
     (label: 'Closed', status: 'closed'),
     (label: 'Rejected', status: 'rejected'),
-    (label: 'Escalated', status: 'escalated'),
   ];
 
   String? get _selectedStatus => _filters[_selectedFilter].status;
