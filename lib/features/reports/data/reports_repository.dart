@@ -80,14 +80,20 @@ class ReportsRepository {
   // ==================== CREATE / UPDATE / DELETE ====================
 
   /// Create a report with all new fields
-  Future<Report> createReport(CreateReportRequest request) async {
-    final jsonData = request.toJson();
+  Future<Report> createReport(
+    CreateReportRequest request, {
+    bool isQuickReport = false,
+  }) async {
+    final jsonData = {
+      ...request.toJson(),
+      if (isQuickReport) 'is_quick_report': true,
+    };
     // Debug: Print the request payload
     debugPrint('CreateReport request payload: $jsonData');
     
     final response = await _dio.post(
       ApiConstants.reports,
-      data: request.toJson(),
+      data: jsonData,
     );
     // Backend returns {report: {...}, message: "..."}
     final data = response.data;

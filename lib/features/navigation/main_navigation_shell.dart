@@ -7,6 +7,7 @@ import '../auth/presentation/profile_screen.dart';
 import '../home/presentation/home_screen.dart';
 import 'placeholder_screens.dart';
 import '../reports/presentation/my_reports_screen.dart';
+import '../reports/presentation/new_report/quick_report_screen.dart';
 import '../reports/presentation/new_report/new_report_photos_screen.dart';
 
 /// Main navigation shell with bottom nav bar and center FAB.
@@ -53,15 +54,63 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
       return;
     }
 
-    // Navigate to new report flow, guarded to prevent duplicate pushes.
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Create report',
+                  style: Theme.of(sheetContext).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Choose the faster quick report or the full multi-step report.',
+                  style: Theme.of(sheetContext).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(sheetContext);
+                    _openReportFlow(const QuickReportScreen());
+                  },
+                  icon: const Icon(Icons.flash_on),
+                  label: const Text('Quick Report'),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(sheetContext);
+                    _openReportFlow(const NewReportPhotosScreen());
+                  },
+                  icon: const Icon(Icons.photo_library_outlined),
+                  label: const Text('Full Report'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _openReportFlow(Widget page) {
+    if (_isNavigatingToNewReport || !mounted) return;
+
     setState(() => _isNavigatingToNewReport = true);
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const NewReportPhotosScreen()))
-        .whenComplete(() {
-          if (mounted) {
-            setState(() => _isNavigatingToNewReport = false);
-          }
-        });
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page)).whenComplete(() {
+      if (mounted) {
+        setState(() => _isNavigatingToNewReport = false);
+      }
+    });
   }
 
   @override

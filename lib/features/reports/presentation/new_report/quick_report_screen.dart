@@ -1,0 +1,619 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
+
+import '../../../../core/constants/urdaneta_geo.dart';
+import '../../../../core/presentation/widgets/app_toast.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../auth/presentation/barangays_provider.dart';
+import '../../../auth/data/user_permissions.dart';
+import '../../../auth/presentation/verification_widgets.dart';
+import '../../data/report_models.dart' hide LocationAccuracy;
+import '../../data/reports_repository.dart';
+import '../reports_controller.dart';
+import 'quick_report_geo.dart';
+
+enum _QuickLocationInputMode { phone, manual }
+
+/// Quick report flow: location + short description only.
+class QuickReportScreen extends ConsumerStatefulWidget {
+  const QuickReportScreen({super.key});
+
+  @override
+  ConsumerState<QuickReportScreen> createState() => _QuickReportScreenState();
+}
+
+class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
+  final MapController _mapController = MapController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final LatLngBounds _serviceBounds = LatLngBounds(
+    const LatLng(UrdanetaGeo.south, UrdanetaGeo.west),
+    const LatLng(UrdanetaGeo.north, UrdanetaGeo.east),
+  );
+  final List<LatLng> _servicePolygon = UrdanetaGeo.boundary
+      .map((point) => LatLng(point.$1, point.$2))
+      .toList(growable: false);
+
+  bool _isSubmitting = false;
+  bool _isLoadingLocation = false;
+  bool _isGettingPreciseLocation = false;
+  String? _error;
+  Position? _currentPosition;
+  LatLng? _selectedPoint;
+  String? _locationLabel;
+  _QuickLocationInputMode _locationInputMode = _QuickLocationInputMode.phone;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedPoint = const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng);
+    _locationLabel = UrdanetaGeo.defaultLocationLabel;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncSelectedPoint();
+      _getCurrentLocation();
+    });
+  }
+
+  @override
+  void dispose() {
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  void _syncSelectedPoint() {
+    final point = _selectedPoint;
+    if (point == null) return;
+    if (!UrdanetaGeo.contains(point.latitude, point.longitude)) {
+      setState(() {
+        _error = 'Report creation is only available within Urdaneta, Pangasinan.';
+      });
+      return;
+    }
+  }
+
+  void _setSelectedPoint(LatLng point, {required String locationLabel}) {
+    if (!UrdanetaGeo.contains(point.latitude, point.longitude)) {
+      setState(() {
+        _error = 'Report creation is only available within Urdaneta, Pangasinan.';
+      });
+      return;
+    }
+
+    setState(() {
+      _selectedPoint = point;
+      _locationLabel = locationLabel;
+      _error = null;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _mapController.move(point, 15);
+    });
+  }
+
+  void _onMapTap(LatLng point) {
+    if (_locationInputMode != _QuickLocationInputMode.manual) return;
+
+    _setSelectedPoint(
+      point,
+      locationLabel:
+          'Manual pin: ${point.latitude.toStringAsFixed(6)}, ${point.longitude.toStringAsFixed(6)}',
+    );
+  }
+
+  void _switchLocationMode(_QuickLocationInputMode mode) {
+    if (_locationInputMode == mode) return;
+
+    setState(() {
+      _locationInputMode = mode;
+      _error = null;
+    });
+
+    if (mode == _QuickLocationInputMode.phone) {
+      _getCurrentLocation();
+    } else {
+      final point = _selectedPoint ??
+          const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng);
+      _setSelectedPoint(
+        point,
+        locationLabel: 'Manual pin: ${point.latitude.toStringAsFixed(6)}, ${point.longitude.toStringAsFixed(6)}',
+      );
+    }
+  }
+
+  Future<void> _getCurrentLocation() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingLocation = true;
+      _error = null;
+    });
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (!mounted) return;
+        setState(() {
+          _error = 'Location services are disabled. Please enable GPS.';
+          _isLoadingLocation = false;
+        });
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (!mounted) return;
+          setState(() {
+            _error = 'Location permission denied';
+            _isLoadingLocation = false;
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        setState(() {
+          _error = 'Location permissions are permanently denied. Enable them in Settings.';
+          _isLoadingLocation = false;
+        });
+        return;
+      }
+
+      final lastPosition = await Geolocator.getLastKnownPosition();
+      if (lastPosition != null && mounted) {
+        setState(() {
+          _currentPosition = lastPosition;
+          _isLoadingLocation = false;
+          _isGettingPreciseLocation = true;
+        });
+        _updateLocationFromPosition(lastPosition);
+      }
+
+      await _getPreciseLocationInBackground(lastPosition);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Failed to get location: ${e.toString()}';
+        _isLoadingLocation = false;
+      });
+    }
+  }
+
+  Future<void> _getPreciseLocationInBackground(Position? fallbackPosition) async {
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: AndroidSettings(
+          accuracy: LocationAccuracy.medium,
+          distanceFilter: 10,
+          forceLocationManager: false,
+          intervalDuration: const Duration(seconds: 5),
+          foregroundNotificationConfig: const ForegroundNotificationConfig(
+            notificationTitle: 'Getting location',
+            notificationText: 'BayanTrack is getting your location',
+            enableWakeLock: false,
+          ),
+        ),
+      ).timeout(
+        const Duration(seconds: 8),
+        onTimeout: () {
+          if (fallbackPosition != null) return fallbackPosition;
+          throw TimeoutException('Location request timed out');
+        },
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _currentPosition = position;
+        _isGettingPreciseLocation = false;
+        _isLoadingLocation = false;
+      });
+      _updateLocationFromPosition(position);
+    } on TimeoutException {
+      if (!mounted) return;
+      setState(() {
+        _isGettingPreciseLocation = false;
+        _isLoadingLocation = false;
+        if (_currentPosition == null) {
+          _error = 'Location request timed out. Please try again.';
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isGettingPreciseLocation = false;
+        _isLoadingLocation = false;
+        if (_currentPosition == null) {
+          _error = 'Failed to get precise location: ${e.toString()}';
+        }
+      });
+    }
+  }
+
+  void _updateLocationFromPosition(Position position) {
+    if (_locationInputMode != _QuickLocationInputMode.phone) {
+      return;
+    }
+
+    final point = LatLng(position.latitude, position.longitude);
+    if (!UrdanetaGeo.contains(point.latitude, point.longitude)) {
+      setState(() {
+        _error = 'Report creation is only available within Urdaneta, Pangasinan.';
+        _selectedPoint = null;
+        _locationLabel = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _selectedPoint = point;
+      _locationLabel =
+          '${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}';
+      _error = null;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _mapController.move(point, 15);
+    });
+  }
+
+  String? _resolveNearestBarangayName(double latitude, double longitude) {
+    try {
+      final barangays = ref.read(barangaysProvider).asData?.value;
+      if (barangays == null || barangays.isEmpty) {
+        debugPrint(
+          'QuickReport: barangay list unavailable; proceeding without derived barangay.',
+        );
+        return null;
+      }
+
+      return deriveNearestBarangayName(
+        barangays,
+        latitude: latitude,
+        longitude: longitude,
+      );
+    } catch (e) {
+      debugPrint(
+        'QuickReport: failed to derive barangay from geolocation: $e',
+      );
+      return null;
+    }
+  }
+
+  Future<void> _submitQuickReport() async {
+    if (_isSubmitting) return;
+
+    final description = _descriptionController.text.trim();
+    if (description.isEmpty) {
+      AppToast.warning(context, 'Please enter a short description.');
+      return;
+    }
+
+    final point = _selectedPoint;
+    if (point == null) {
+      AppToast.warning(context, 'Please wait for your location to load.');
+      return;
+    }
+
+    if (!UrdanetaGeo.contains(point.latitude, point.longitude)) {
+      AppToast.warning(
+        context,
+        'Report creation is only available within Urdaneta, Pangasinan.',
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+      _error = null;
+    });
+
+    try {
+      final reportsRepo = ref.read(reportsRepositoryProvider);
+      final nearestBarangay = _resolveNearestBarangayName(
+        point.latitude,
+        point.longitude,
+      );
+      final result = await reportsRepo.createReport(
+        CreateReportRequest(
+          description: description,
+          isHappeningNow: true,
+          zone: nearestBarangay,
+          barangay: nearestBarangay,
+          cityMunicipality: UrdanetaGeo.defaultCityMunicipality,
+          province: UrdanetaGeo.defaultProvince,
+          latitude: point.latitude.toStringAsFixed(10),
+          longitude: point.longitude.toStringAsFixed(10),
+          locationAccuracy: 'exact',
+          location: _locationLabel,
+          declarationConfirmed: true,
+          dataProcessingConsent: true,
+        ),
+        isQuickReport: true,
+      );
+
+      ref.invalidate(reportsControllerProvider);
+      ref.read(myReportsRefreshProvider.notifier).increment();
+
+      if (!mounted) return;
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      AppToast.success(context, 'Your quick report has been submitted.');
+      debugPrint('Quick report submitted: ${result.id}');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+        _error = 'Unable to submit your quick report. Please try again.';
+      });
+      AppToast.error(
+        context,
+        'Unable to submit your quick report. Please check your connection and try again.',
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final permissions = ref.watch(userPermissionsProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final point = _selectedPoint ?? const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng);
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Quick Report'),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.only(bottom: bottomInset + 20),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: MediaQuery.sizeOf(context).height),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                VerificationBanner(permissions: permissions),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Fast report',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Use your current location and a short description. The system will categorize it automatically and mark it as highest priority.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Card(
+                    elevation: 0,
+                    color: isDark ? AppColors.darkSurfaceVariant : AppColors.lightSurfaceVariant,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.my_location, color: AppColors.primary),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _locationInputMode == _QuickLocationInputMode.manual
+                                          ? 'Manual pin'
+                                          : 'Current location',
+                                      style: theme.textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _locationLabel ?? 'Getting location...',
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: isDark
+                                            ? AppColors.darkTextSecondary
+                                            : AppColors.lightTextSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SegmentedButton<_QuickLocationInputMode>(
+                            segments: const [
+                              ButtonSegment(
+                                value: _QuickLocationInputMode.phone,
+                                label: Text('Phone GPS'),
+                                icon: Icon(Icons.gps_fixed),
+                              ),
+                              ButtonSegment(
+                                value: _QuickLocationInputMode.manual,
+                                label: Text('Manual pin'),
+                                icon: Icon(Icons.add_location_alt_outlined),
+                              ),
+                            ],
+                            selected: {_locationInputMode},
+                            onSelectionChanged: (selection) {
+                              _switchLocationMode(selection.first);
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Lat ${point.latitude.toStringAsFixed(6)}  •  Lng ${point.longitude.toStringAsFixed(6)}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 220,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: FlutterMap(
+                                mapController: _mapController,
+                                options: MapOptions(
+                                  initialCenter: point,
+                                  initialZoom: 15,
+                                  minZoom: 12,
+                                  maxZoom: 18,
+                                  cameraConstraint: CameraConstraint.contain(
+                                    bounds: _serviceBounds,
+                                  ),
+                                  onTap: (_, tappedPoint) => _onMapTap(tappedPoint),
+                                ),
+                                children: [
+                                  TileLayer(
+                                    urlTemplate:
+                                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                    userAgentPackageName: 'com.example.bayantrack_mobile',
+                                  ),
+                                  PolygonLayer(
+                                    polygons: [
+                                      Polygon(
+                                        points: _servicePolygon,
+                                        color: AppColors.primary.withValues(alpha: 0.08),
+                                        borderColor: AppColors.primary.withValues(alpha: 0.45),
+                                        borderStrokeWidth: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  MarkerLayer(
+                                    markers: [
+                                      Marker(
+                                        point: point,
+                                        width: 44,
+                                        height: 44,
+                                        child: Icon(
+                                          Icons.location_pin,
+                                          size: 40,
+                                          color: _locationInputMode == _QuickLocationInputMode.manual
+                                              ? AppColors.primary
+                                              : AppColors.alertHigh,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const RichAttributionWidget(
+                                    attributions: [
+                                      TextSourceAttribution('OpenStreetMap contributors'),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _locationInputMode == _QuickLocationInputMode.manual
+                                ? 'Tap the map to place a manual pin within Urdaneta.'
+                                : 'Your GPS location is used automatically. Switch to manual pin if needed.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.lightTextSecondary,
+                            ),
+                          ),
+                          if (_isLoadingLocation || _isGettingPreciseLocation) ...[
+                            const SizedBox(height: 12),
+                            const LinearProgressIndicator(),
+                          ],
+                          if (_error != null) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              _error!,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: AppColors.alertHigh,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: _isLoadingLocation ? null : _getCurrentLocation,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Refresh location'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: TextField(
+                    controller: _descriptionController,
+                    maxLines: 4,
+                    maxLength: 500,
+                    textInputAction: TextInputAction.newline,
+                    decoration: const InputDecoration(
+                      labelText: 'Short description',
+                      hintText: 'What is happening? Keep it short and clear.',
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: FilledButton(
+                    onPressed: _isSubmitting ? null : _submitQuickReport,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Submit Quick Report'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
