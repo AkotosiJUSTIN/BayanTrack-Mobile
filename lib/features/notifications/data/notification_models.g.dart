@@ -12,7 +12,11 @@ _AppNotification _$AppNotificationFromJson(Map<String, dynamic> json) =>
       title: json['title'] as String,
       message: json['message'] as String,
       type:
-          $enumDecodeNullable(_$NotificationTypeEnumMap, json['type']) ??
+          $enumDecodeNullable(
+            _$NotificationTypeEnumMap,
+            json['type'],
+            unknownValue: NotificationType.system,
+          ) ??
           NotificationType.system,
       isRead: json['is_read'] as bool? ?? false,
       reportId: json['related_report_id'] as String?,
@@ -31,9 +35,12 @@ Map<String, dynamic> _$AppNotificationToJson(_AppNotification instance) =>
     };
 
 const _$NotificationTypeEnumMap = {
+  NotificationType.reportSubmitted: 'report_submitted',
   NotificationType.statusChange: 'status_change',
   NotificationType.comment: 'comment',
   NotificationType.assignment: 'assignment',
+  NotificationType.reportUpdated: 'report_updated',
+  NotificationType.kycUpdate: 'kyc_update',
   NotificationType.system: 'system',
 };
 

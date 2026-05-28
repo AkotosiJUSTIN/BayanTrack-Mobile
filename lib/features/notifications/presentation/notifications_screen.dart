@@ -238,6 +238,9 @@ class _NotificationTile extends StatelessWidget {
     Color color;
 
     switch (notification.type) {
+      case NotificationType.reportSubmitted:
+        icon = Icons.upload_file;
+        color = AppColors.primary;
       case NotificationType.statusChange:
         icon = Icons.sync;
         color = AppColors.primary;
@@ -247,6 +250,12 @@ class _NotificationTile extends StatelessWidget {
       case NotificationType.assignment:
         icon = Icons.assignment_ind;
         color = AppColors.success;
+      case NotificationType.reportUpdated:
+        icon = Icons.edit_note;
+        color = AppColors.primary;
+      case NotificationType.kycUpdate:
+        icon = Icons.verified_user;
+        color = AppColors.alertMedium;
       case NotificationType.system:
         icon = Icons.info;
         color = isDark

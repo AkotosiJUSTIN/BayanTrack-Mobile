@@ -4,6 +4,13 @@ import '../../kyc/presentation/kyc_controller.dart';
 import '../../navigation/main_navigation_shell.dart';
 import 'auth_controller.dart';
 import 'login_screen.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+import '../../notifications/push_service.dart';
+import '../../notifications/local_notification_service.dart';
+import '../../notifications/presentation/notifications_controller.dart';
+import '../../../core/network/dio_provider.dart';
+import '../../reports/presentation/report_detail_screen.dart';
 
 class AuthWrapper extends ConsumerStatefulWidget {
   const AuthWrapper({super.key});
@@ -14,6 +21,7 @@ class AuthWrapper extends ConsumerStatefulWidget {
 
 class _AuthWrapperState extends ConsumerState<AuthWrapper>
     with WidgetsBindingObserver {
+  bool _pushInitialized = false;
   @override
   void initState() {
     super.initState();
@@ -48,6 +56,15 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
       final authState = ref.read(authControllerProvider);
       if (authState is AuthSuccess) {
         ref.invalidate(kycStatusControllerProvider);
+        Future.microtask(() async {
+          try {
+            final pushService = ref.read(pushServiceProvider);
+            final dio = ref.read(dioProvider);
+            await pushService.ensureRegistered('android', dio);
+          } catch (e) {
+            debugPrint('Push token refresh on resume failed: $e');
+          }
+        });
       }
     }
   }
@@ -56,6 +73,65 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   Widget build(BuildContext context) {
     final state = ref.watch(authControllerProvider);
     debugPrint('[AuthWrapper] AuthState changed: ${state.runtimeType}');
+
+    // Initialize push service once after successful auth
+    if (state is AuthSuccess && !_pushInitialized) {
+      _pushInitialized = true;
+      Future.microtask(() async {
+        try {
+          final pushService = ref.read(pushServiceProvider);
+          await pushService.requestPermission();
+          final dio = ref.read(dioProvider);
+          await Future.delayed(const Duration(seconds: 2));
+          await pushService.ensureRegistered('android', dio);
+
+          pushService.onTokenRefresh((token) async {
+            await pushService.registerToken(token, 'android', dio);
+          });
+
+          // Foreground message handler: show simple in-app snackbar and persist
+          pushService.onMessage((message) async {
+            final title = message.notification?.title ?? 'Notification';
+            final body = message.notification?.body ?? '';
+            ref.invalidate(notificationsControllerProvider);
+            await LocalNotificationService.showFromRemoteMessage(message);
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('$title: $body')),
+            );
+          });
+
+          // When a user taps a notification and app opens from background
+          pushService.onMessageOpened((message) {
+            final reportId = message.data['report_id'] as String?;
+            if (reportId != null) {
+              ref.invalidate(notificationsControllerProvider);
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ReportDetailScreen(reportId: reportId),
+                ),
+              );
+            }
+          });
+
+          // If launched from terminated state via notification
+          final initial = await FirebaseMessaging.instance.getInitialMessage();
+          if (initial != null) {
+            final reportId = initial.data['report_id'] as String?;
+            if (reportId != null && mounted) {
+              ref.invalidate(notificationsControllerProvider);
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ReportDetailScreen(reportId: reportId),
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          debugPrint('Push initialization failed: $e');
+        }
+      });
+    }
 
     return switch (state) {
       AuthSuccess() => const MainNavigationShell(),

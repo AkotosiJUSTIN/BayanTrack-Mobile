@@ -6,12 +6,18 @@ part 'notification_models.g.dart';
 // ==================== NOTIFICATION TYPE ====================
 
 enum NotificationType {
+  @JsonValue('report_submitted')
+  reportSubmitted,
   @JsonValue('status_change')
   statusChange,
   @JsonValue('comment')
   comment,
   @JsonValue('assignment')
   assignment,
+  @JsonValue('report_updated')
+  reportUpdated,
+  @JsonValue('kyc_update')
+  kycUpdate,
   @JsonValue('system')
   system,
 }
@@ -24,6 +30,7 @@ sealed class AppNotification with _$AppNotification {
     @JsonKey(name: 'id') required String id,
     required String title,
     required String message,
+    @JsonKey(unknownEnumValue: NotificationType.system)
     @Default(NotificationType.system) NotificationType type,
     @JsonKey(name: 'is_read') @Default(false) bool isRead,
     @JsonKey(name: 'related_report_id') String? reportId,

@@ -27,12 +27,17 @@ class NotificationMapper {
   }
 
   static NotificationType _mapNotificationType(dto.NotificationType type) {
-    return switch (type) {
-      dto.NotificationType.statusChange => NotificationType.statusChange,
-      dto.NotificationType.comment => NotificationType.comment,
-      dto.NotificationType.assignment => NotificationType.assignment,
-      dto.NotificationType.system => NotificationType.system,
+    const mapping = {
+      dto.NotificationType.reportSubmitted: NotificationType.reportSubmitted,
+      dto.NotificationType.statusChange: NotificationType.statusChange,
+      dto.NotificationType.comment: NotificationType.comment,
+      dto.NotificationType.assignment: NotificationType.assignment,
+      dto.NotificationType.reportUpdated: NotificationType.reportUpdated,
+      dto.NotificationType.kycUpdate: NotificationType.kycUpdate,
+      dto.NotificationType.system: NotificationType.system,
     };
+
+    return mapping[type] ?? NotificationType.system;
   }
 
   // ==================== PAGINATED NOTIFICATIONS MAPPING ====================
