@@ -148,18 +148,11 @@ enum LocationAccuracy {
   };
 }
 
-// ==================== DUPLICATE STATE ====================
+// ==================== ROUTING / DEPARTMENT METADATA ====================
 
-enum DuplicateState {
-  @JsonValue('new')
-  newReport,
-  @JsonValue('potential_duplicate')
-  potentialDuplicate,
-  @JsonValue('confirmed_duplicate')
-  confirmedDuplicate,
-  @JsonValue('unique')
-  unique,
-}
+/// Department routing metadata provided by the AI routing flow
+/// These fields are persisted on the report and surfaced to mobile clients.
+
 
 // ==================== PRIORITY LEVEL ====================
 
@@ -272,14 +265,10 @@ sealed class Report with _$Report {
     @JsonKey(name: 'base_score') @NullableIntConverter() int? baseScore,
     @JsonKey(name: 'hotspot_score') @NullableIntConverter() int? hotspotScore,
     @JsonKey(name: 'urgency_score') double? urgencyScore,
-    @JsonKey(name: 'duplicate_state') String? duplicateState,
-    @JsonKey(name: 'related_report_id') String? relatedReportId,
-    @JsonKey(name: 'duplicate_score') double? duplicateScore,
-    @JsonKey(name: 'duplicate_confidence') String? duplicateConfidence,
-    @JsonKey(name: 'duplicate_text_similarity') double? duplicateTextSimilarity,
-    @JsonKey(name: 'duplicate_location_similarity')
-    double? duplicateLocationSimilarity,
-    @JsonKey(name: 'duplicate_explanation') String? duplicateExplanation,
+    //@JsonKey(name: 'recommended_department') String? recommendedDepartment,
+    //@JsonKey(name: 'department_confidence') double? departmentConfidence,
+    //@JsonKey(name: 'routing_reasons') List<String>? routingReasons,
+    //@JsonKey(name: 'needs_department_review') bool? needsDepartmentReview,
     @JsonKey(name: 'related_issue_id') String? relatedIssueId,
     @JsonKey(name: 'sentiment_score') double? sentimentScore,
     @JsonKey(name: 'auto_category_suggestion') String? autoCategorySuggestion,

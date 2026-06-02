@@ -153,30 +153,7 @@ enum LocationAccuracy {
   }
 }
 
-/// Duplicate detection state
-enum DuplicateState {
-  newReport,
-  potentialDuplicate,
-  confirmedDuplicate,
-  unique;
-
-  String get apiValue => switch (this) {
-    newReport => 'new',
-    potentialDuplicate => 'potential_duplicate',
-    confirmedDuplicate => 'confirmed_duplicate',
-    unique => 'unique',
-  };
-
-  static DuplicateState fromString(String? value) {
-    return switch (value) {
-      'new' => DuplicateState.newReport,
-      'potential_duplicate' => DuplicateState.potentialDuplicate,
-      'confirmed_duplicate' => DuplicateState.confirmedDuplicate,
-      'unique' => DuplicateState.unique,
-      _ => DuplicateState.newReport,
-    };
-  }
-}
+// Duplicate detection retired; routing metadata is used instead.
 
 /// Priority level from AI prioritization
 enum PriorityLevel {

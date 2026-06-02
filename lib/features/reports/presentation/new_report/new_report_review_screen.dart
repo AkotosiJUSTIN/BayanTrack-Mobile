@@ -72,8 +72,6 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
       createStopwatch.stop();
       debugPrint('Create report took ${createStopwatch.elapsedMilliseconds} ms');
 
-      // Check if report was detected as a potential duplicate
-      final isDuplicate = createdReport.duplicateState == 'potential_duplicate';
 
       // Step 3: Upload images (if any)
       if (filesForUpload.isNotEmpty) {
@@ -135,12 +133,6 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
         // Pop all the way back to the main navigation
         Navigator.of(context).popUntil((route) => route.isFirst);
 
-        // Show duplicate warning if detected
-        if (isDuplicate) {
-          await _showDuplicateWarning(context, createdReport);
-        } else {
-          AppToast.success(context, 'Your report has been submitted.');
-        }
       }
     } catch (e) {
       setState(() {
@@ -243,154 +235,6 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
 
     stopwatch.stop();
     debugPrint('Parallel upload of ${files.length} images took ${stopwatch.elapsedMilliseconds} ms');
-  }
-
-  Future<void> _showDuplicateWarning(
-    BuildContext context,
-    Report report,
-  ) async {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        icon: Icon(
-          Icons.warning_amber_rounded,
-          color: AppColors.alertMedium,
-          size: 48,
-        ),
-        title: const Text(
-          'Possible Duplicate Report',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Your report was submitted successfully, but it appears similar to an existing report.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isDark ? Colors.grey[300] : Colors.grey[700],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.alertMedium.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppColors.alertMedium.withOpacity(0.3),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          size: 16,
-                          color: AppColors.alertMedium,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            report.duplicateExplanation ??
-                                'Similar content and location detected',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (report.duplicateScore != null) ...[
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Text(
-                            'Similarity: ',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark
-                                  ? Colors.grey[400]
-                                  : Colors.grey[600],
-                            ),
-                          ),
-                          Text(
-                            '${(report.duplicateScore! * 100).toStringAsFixed(0)}%',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.alertMedium,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Confidence: ',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark
-                                  ? Colors.grey[400]
-                                  : Colors.grey[600],
-                            ),
-                          ),
-                          Text(
-                            report.duplicateConfidence?.toUpperCase() ??
-                                'MEDIUM',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.alertMedium,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Your report will be reviewed by administrators who may consolidate it with the existing report.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-          if (report.relatedReportId != null)
-            FilledButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-                // Navigate to original report detail
-                Navigator.pushNamed(
-                  context,
-                  '/report-detail',
-                  arguments: report.relatedReportId,
-                );
-              },
-              icon: const Icon(Icons.visibility, size: 18),
-              label: const Text('View Original'),
-              style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
-            ),
-        ],
-      ),
-    );
   }
 
   @override

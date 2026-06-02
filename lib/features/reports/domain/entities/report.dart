@@ -49,8 +49,11 @@ class Report extends Equatable {
   final int? baseScore;
   final int? hotspotScore;
   final double? urgencyScore;
-  final DuplicateState? duplicateState;
-  final String? relatedReportId;
+  // Routing metadata (new)
+  final String? recommendedDepartment;
+  final double? departmentConfidence;
+  final List<String> routingReasons;
+  final bool needsDepartmentReview;
   final String? relatedIssueId;
   final double? sentimentScore;
   final String? autoCategorySuggestion;
@@ -112,8 +115,10 @@ class Report extends Equatable {
     this.baseScore,
     this.hotspotScore,
     this.urgencyScore,
-    this.duplicateState,
-    this.relatedReportId,
+    this.recommendedDepartment,
+    this.departmentConfidence,
+    this.routingReasons = const [],
+    this.needsDepartmentReview = false,
     this.relatedIssueId,
     this.sentimentScore,
     this.autoCategorySuggestion,
