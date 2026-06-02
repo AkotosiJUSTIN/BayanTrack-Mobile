@@ -47,10 +47,10 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   void _onFabPressed() {
     if (_isNavigatingToNewReport || !mounted) return;
 
-    // Check if user has permission to create reports
     final permissions = ref.read(userPermissionsProvider);
 
-    if (!permissions.hasPermission(UserPermission.createReports)) {
+    // Only blocked if account is suspended
+    if (permissions.isSuspended) {
       showVerificationRequiredDialog(context, permissions, 'create reports');
       return;
     }

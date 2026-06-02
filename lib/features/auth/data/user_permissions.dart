@@ -106,14 +106,14 @@ class UserPermissions {
       case UserPermission.resubmitKyc:
         return canResubmitKyc;
 
-      // Verified users only
+      // All authenticated (non-suspended) users
       case UserPermission.createReports:
       case UserPermission.updateOwnReports:
       case UserPermission.deleteOwnReports:
       case UserPermission.uploadImages:
       case UserPermission.addComments:
       case UserPermission.exportReports:
-        return isVerified;
+        return !isSuspended;
     }
   }
 
