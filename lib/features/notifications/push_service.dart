@@ -2,7 +2,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
-import '../../../core/network/dio_provider.dart';
 import '../../../core/constants/api_constants.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
