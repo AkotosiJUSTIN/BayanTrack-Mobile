@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/constants/urdaneta_geo.dart';
 import '../../../../core/presentation/widgets/app_toast.dart';
@@ -14,6 +16,7 @@ import '../../../auth/data/user_permissions.dart';
 import '../../../auth/presentation/verification_widgets.dart';
 import '../../data/report_models.dart' hide LocationAccuracy;
 import '../../data/reports_repository.dart';
+import '../../../images/data/images_repository.dart';
 import '../reports_controller.dart';
 import 'quick_report_geo.dart';
 
@@ -310,6 +313,46 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       return;
     }
 
+    try {
+      final nearby = await ref.read(reportsRepositoryProvider).getNearbyReports(
+            latitude: point.latitude,
+            longitude: point.longitude,
+          );
+      if (nearby.isNotEmpty && mounted) {
+        final submitAnyway = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Reports already nearby'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: nearby.take(3).map((report) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.near_me_outlined),
+                    title: Text(report.category),
+                    subtitle: Text(
+                      '${report.distanceMeters} m away - ${report.status.replaceAll('_', ' ')}'
+                      '${report.isGrouped ? ' - grouped incident' : ''}',
+                    ),
+                  )).toList(),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Review mine'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('Submit anyway'),
+              ),
+            ],
+          ),
+        );
+        if (submitAnyway != true) return;
+      }
+    } catch (e) {
+      debugPrint('Nearby report check unavailable: $e');
+    }
+
     setState(() {
       _isSubmitting = true;
       _error = null;
@@ -343,6 +386,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       ref.read(myReportsRefreshProvider.notifier).increment();
 
       if (!mounted) return;
+      await _offerPhotoUpload(result.id);
+      if (!mounted) return;
       Navigator.of(context).popUntil((route) => route.isFirst);
       AppToast.success(context, 'Your quick report has been submitted.');
       debugPrint('Quick report submitted: ${result.id}');
@@ -359,12 +404,66 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     }
   }
 
+  Future<void> _offerPhotoUpload(String reportId) async {
+    final addPhoto = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Report submitted'),
+        content: const Text('Add an optional photo as evidence?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Done'),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            icon: const Icon(Icons.add_a_photo_outlined),
+            label: const Text('Add photo'),
+          ),
+        ],
+      ),
+    );
+    if (addPhoto != true || !mounted) return;
+
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      imageQuality: 75,
+    );
+    if (picked == null || !mounted) return;
+
+    Object? lastError;
+    for (var attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await ref.read(imagesRepositoryProvider).uploadImage(
+              imageFile: File(picked.path),
+              reportId: reportId,
+              isPrimary: true,
+            ).timeout(const Duration(seconds: 25));
+        if (mounted) AppToast.success(context, 'Photo uploaded.');
+        return;
+      } catch (e) {
+        lastError = e;
+        if (attempt < 3) {
+          await Future<void>.delayed(Duration(seconds: attempt * 2));
+        }
+      }
+    }
+    debugPrint('Quick report photo upload failed: $lastError');
+    if (mounted) {
+      AppToast.warning(
+        context,
+        'Report saved, but photo upload failed. You can add it later.',
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final point = _selectedPoint ?? const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng);
+    final point = _selectedPoint ??
+        const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng);
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return Scaffold(
@@ -398,7 +497,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Use your current location and a short description. The system will categorize it automatically and mark it as highest priority.',
+                        'Use your current location and a short description. The system will categorize and prioritize it automatically.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                         ),

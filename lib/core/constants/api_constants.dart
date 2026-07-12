@@ -61,6 +61,7 @@ class ApiConstants {
 
   // Reports Endpoints
   static const String reports = '/reports/';
+  static const String nearbyReports = '/reports/nearby/';
   static const String myReports = '/reports/my-reports/';
   static const String reportStats = '/reports/stats/';
   static const String reportFormOptions = '/reports/form-options/';

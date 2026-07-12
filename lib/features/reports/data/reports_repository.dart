@@ -22,6 +22,25 @@ class ReportsRepository {
 
   ReportsRepository(this._dio);
 
+  Future<List<NearbyReport>> getNearbyReports({
+    required double latitude,
+    required double longitude,
+    int radiusMeters = 500,
+  }) async {
+    final response = await _dio.get(
+      ApiConstants.nearbyReports,
+      queryParameters: {
+        'latitude': latitude,
+        'longitude': longitude,
+        'radius_m': radiusMeters,
+      },
+    );
+    final items = response.data['reports'] as List<dynamic>? ?? const [];
+    return items
+        .map((item) => NearbyReport.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
   // ==================== LIST REPORTS ====================
 
   /// Get all reports (paginated, filtered by user's role on backend)
@@ -149,4 +168,25 @@ class ReportsRepository {
     _formOptionsCachedAt = now;
     return parsed;
   }
+}
+
+class NearbyReport {
+  final String category;
+  final String status;
+  final int distanceMeters;
+  final bool isGrouped;
+
+  const NearbyReport({
+    required this.category,
+    required this.status,
+    required this.distanceMeters,
+    required this.isGrouped,
+  });
+
+  factory NearbyReport.fromJson(Map<String, dynamic> json) => NearbyReport(
+        category: json['category']?.toString() ?? 'Uncategorized incident',
+        status: json['status']?.toString() ?? 'submitted',
+        distanceMeters: (json['distance_m'] as num?)?.round() ?? 0,
+        isGrouped: json['incident_group_id'] != null,
+      );
 }
