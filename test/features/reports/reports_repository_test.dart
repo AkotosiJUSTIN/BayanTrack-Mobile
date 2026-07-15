@@ -30,6 +30,9 @@ void main() {
               'zone': 'Zone 1',
               'latitude': '14.5995',
               'longitude': '120.9842',
+              'recommended_department': 'Engineering',
+              'department_confidence': 0.91,
+              'credibility_score': 72.5,
               'images': [],
               'created_at': '2026-01-15T00:00:00Z',
             },
@@ -71,6 +74,9 @@ void main() {
         expect(result.results.first.id, 'report_1');
         expect(result.results.first.description, 'Broken streetlight');
         expect(result.results.first.status, 'submitted');
+        expect(result.results.first.recommendedDepartment, 'Engineering');
+        expect(result.results.first.departmentConfidence, 0.91);
+        expect(result.results.first.credibilityScore, 72.5);
         expect(result.results[1].status, 'in_progress');
       });
 

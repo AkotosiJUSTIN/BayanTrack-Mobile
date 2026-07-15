@@ -258,6 +258,13 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                 priorityLevel: report.priorityLevel,
                 showScores: false, // Simplified view for citizens
               ),
+              if (report.credibilityScore != null)
+                Chip(
+                  visualDensity: VisualDensity.compact,
+                  label: Text(
+                    'Credibility ${report.credibilityScore!.round()}/100',
+                  ),
+                ),
               if (report.blockchainSynced)
                 Container(
                   padding: const EdgeInsets.symmetric(

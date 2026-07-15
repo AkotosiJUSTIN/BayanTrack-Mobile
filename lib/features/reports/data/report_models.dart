@@ -153,7 +153,6 @@ enum LocationAccuracy {
 /// Department routing metadata provided by the AI routing flow
 /// These fields are persisted on the report and surfaced to mobile clients.
 
-
 // ==================== PRIORITY LEVEL ====================
 
 enum PriorityLevel {
@@ -201,6 +200,7 @@ sealed class ReportImage with _$ReportImage {
     int? width,
     int? height,
     @JsonKey(name: 'is_primary') @Default(false) bool isPrimary,
+
     /// 'evidence' | 'signature' | 'document' — null means legacy/pre-field record.
     String? purpose,
     @JsonKey(name: 'created_at') String? createdAt,
@@ -265,10 +265,11 @@ sealed class Report with _$Report {
     @JsonKey(name: 'base_score') @NullableIntConverter() int? baseScore,
     @JsonKey(name: 'hotspot_score') @NullableIntConverter() int? hotspotScore,
     @JsonKey(name: 'urgency_score') double? urgencyScore,
-    //@JsonKey(name: 'recommended_department') String? recommendedDepartment,
-    //@JsonKey(name: 'department_confidence') double? departmentConfidence,
-    //@JsonKey(name: 'routing_reasons') List<String>? routingReasons,
-    //@JsonKey(name: 'needs_department_review') bool? needsDepartmentReview,
+    @JsonKey(name: 'recommended_department') String? recommendedDepartment,
+    @JsonKey(name: 'department_confidence') double? departmentConfidence,
+    @JsonKey(name: 'routing_reasons') List<String>? routingReasons,
+    @JsonKey(name: 'needs_department_review') bool? needsDepartmentReview,
+    @JsonKey(name: 'credibility_score') double? credibilityScore,
     @JsonKey(name: 'related_issue_id') String? relatedIssueId,
     @JsonKey(name: 'sentiment_score') double? sentimentScore,
     @JsonKey(name: 'auto_category_suggestion') String? autoCategorySuggestion,

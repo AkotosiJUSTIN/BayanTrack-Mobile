@@ -49,6 +49,7 @@ class Report extends Equatable {
   final int? baseScore;
   final int? hotspotScore;
   final double? urgencyScore;
+  final double? credibilityScore;
   // Routing metadata (new)
   final String? recommendedDepartment;
   final double? departmentConfidence;
@@ -115,6 +116,7 @@ class Report extends Equatable {
     this.baseScore,
     this.hotspotScore,
     this.urgencyScore,
+    this.credibilityScore,
     this.recommendedDepartment,
     this.departmentConfidence,
     this.routingReasons = const [],
@@ -199,6 +201,7 @@ class Report extends Equatable {
     onChainId,
     onChainHash,
     blockchainSynced,
+    credibilityScore,
   ];
 
   @override

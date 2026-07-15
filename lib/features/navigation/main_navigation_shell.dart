@@ -48,8 +48,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
 
     final permissions = ref.read(userPermissionsProvider);
 
-    // Only blocked if account is suspended
-    if (permissions.isSuspended) {
+    if (!permissions.hasPermission(UserPermission.createReports)) {
       showVerificationRequiredDialog(context, permissions, 'create reports');
       return;
     }

@@ -111,14 +111,24 @@ class UserPermissions {
       case UserPermission.updateOwnReports:
       case UserPermission.deleteOwnReports:
       case UserPermission.uploadImages:
-      case UserPermission.addComments:
-      case UserPermission.exportReports:
         return !isSuspended;
+
+      // Backend still requires verified citizens for comments.
+      case UserPermission.addComments:
+        return isVerified;
+
+      // Report export is staff-only and unavailable in the citizen app.
+      case UserPermission.exportReports:
+        return false;
     }
   }
 
   /// Get reason why permission is denied
   String getDenialReason(UserPermission permission) {
+    if (isSuspended) {
+      return 'Your account is suspended. Contact support for assistance';
+    }
+
     if (!isVerified) {
       switch (permission) {
         case UserPermission.createReports:
