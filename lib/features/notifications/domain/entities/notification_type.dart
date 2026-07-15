@@ -16,7 +16,7 @@ enum NotificationType {
     comment => 'Comment',
     assignment => 'Assignment',
     reportUpdated => 'Report Updated',
-    kycUpdate => 'KYC Update',
+    kycUpdate => 'Verification Update',
     system => 'System',
   };
 

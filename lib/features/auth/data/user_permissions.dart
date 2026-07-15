@@ -3,8 +3,8 @@ import '../../kyc/domain/entities/kyc_enums.dart';
 import '../../kyc/domain/entities/kyc_status.dart';
 import '../../kyc/presentation/kyc_controller.dart';
 
-/// KYC-based permissions service
-/// Determines what actions a user can perform based on their KYC verification status
+/// Identity-verification-aware permissions service.
+/// Existing KYC data is the current verification provider.
 ///
 /// IMPORTANT: Suspended users should be blocked at login by the backend.
 /// If a suspended user somehow has an active session, they will have read-only access
@@ -44,7 +44,7 @@ final userPermissionsProvider = Provider<UserPermissions>((ref) {
   return kycStatusAsync.when(
     data: (kycStatus) => UserPermissions(kycStatus),
     loading: () => UserPermissions(null),
-    error: (_, __) => UserPermissions(null),
+    error: (_, _) => UserPermissions(null),
   );
 });
 
@@ -80,7 +80,7 @@ class UserPermissions {
       kycStatus == null ||
       kycStatus!.status == KycVerificationStatus.unverified;
 
-  /// Get user's KYC status
+  /// Get user's verification status
   KycVerificationStatus? get currentStatus => kycStatus?.status;
 
   // ==================== PERMISSION CHECKS ====================

@@ -1,4 +1,5 @@
 import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
+import 'package:bayantrack_mobile/core/constants/api_constants.dart';
 import 'package:bayantrack_mobile/features/kyc/domain/entities/kyc_enums.dart';
 import 'package:bayantrack_mobile/features/kyc/domain/entities/kyc_status.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,13 +8,24 @@ void main() {
   UserPermissions permissions(KycVerificationStatus status) =>
       UserPermissions(KycStatusEntity(status: status));
 
-  test('unverified citizens can create, edit, and add report evidence', () {
-    final unverified = permissions(KycVerificationStatus.unverified);
+  test('all non-suspended verification states retain report actions', () {
+    const allowedStatuses = [
+      KycVerificationStatus.unverified,
+      KycVerificationStatus.pending,
+      KycVerificationStatus.verified,
+      KycVerificationStatus.rejected,
+      KycVerificationStatus.resubmitRequested,
+    ];
 
-    expect(unverified.hasPermission(UserPermission.createReports), isTrue);
-    expect(unverified.hasPermission(UserPermission.updateOwnReports), isTrue);
-    expect(unverified.hasPermission(UserPermission.deleteOwnReports), isTrue);
-    expect(unverified.hasPermission(UserPermission.uploadImages), isTrue);
+    for (final status in allowedStatuses) {
+      final current = permissions(status);
+      expect(current.hasPermission(UserPermission.createReports), isTrue);
+      expect(current.hasPermission(UserPermission.updateOwnReports), isTrue);
+      expect(current.hasPermission(UserPermission.deleteOwnReports), isTrue);
+      expect(current.hasPermission(UserPermission.uploadImages), isTrue);
+      expect(current.hasPermission(UserPermission.viewProfile), isTrue);
+      expect(current.hasPermission(UserPermission.updateProfile), isTrue);
+    }
   });
 
   test('suspended citizens cannot mutate reports', () {
@@ -33,4 +45,16 @@ void main() {
     expect(verified.hasPermission(UserPermission.addComments), isTrue);
     expect(verified.hasPermission(UserPermission.exportReports), isFalse);
   });
+
+  test(
+    'mobile uses preferred verification routes and retains legacy aliases',
+    () {
+      expect(ApiConstants.verificationSubmit, '/auth/verification/submit/');
+      expect(ApiConstants.verificationStatus, '/auth/verification/status/');
+      expect(ApiConstants.verificationResubmit, '/auth/verification/resubmit/');
+      expect(ApiConstants.kycSubmit, '/auth/kyc/submit/');
+      expect(ApiConstants.kycStatus, '/auth/kyc/status/');
+      expect(ApiConstants.kycResubmit, '/auth/kyc/resubmit/');
+    },
+  );
 }

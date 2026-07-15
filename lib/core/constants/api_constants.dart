@@ -84,7 +84,15 @@ class ApiConstants {
   static const String notificationPushToken = '/notifications/push-token/';
   static String notificationById(String id) => '/notifications/$id/';
 
-  // KYC Endpoints
+  // Preferred identity verification endpoints
+  static const String verificationIdTypes = '/auth/verification/id-types/';
+  static const String verificationSubmit = '/auth/verification/submit/';
+  static const String verificationStatus = '/auth/verification/status/';
+  static const String verificationResubmit = '/auth/verification/resubmit/';
+  static const String verificationFormOptions =
+      '/auth/verification/form-options/';
+
+  // Legacy KYC route aliases
   static const String kycIdTypes = '/auth/kyc/id-types/';
   static const String kycSubmit = '/auth/kyc/submit/';
   static const String kycStatus = '/auth/kyc/status/';
