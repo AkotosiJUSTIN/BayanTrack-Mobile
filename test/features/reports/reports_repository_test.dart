@@ -203,6 +203,48 @@ void main() {
         expect(result.description, 'Detailed report');
         expect(result.status, 'resolved');
       });
+
+      test(
+        'should tolerate advisory duplicate metadata without exposing candidate data',
+        () async {
+          const reportId = 'report_123';
+          final responseData = {
+            'id': reportId,
+            'description': 'Detailed report',
+            'status': 'submitted',
+            'duplicate_state': 'potential_duplicate',
+            'duplicate_score': 0.91,
+            'duplicate_confidence': 'high',
+            'duplicate_explanation': 'similar_wording, same_barangay',
+            'duplicate_suggestions': [
+              {
+                'candidate_report_id': 'PRIVATE-CANDIDATE-ID',
+                'candidate_title': 'Private candidate title',
+              },
+            ],
+          };
+
+          when(() => mockDio.get(ApiConstants.reportById(reportId))).thenAnswer(
+            (_) async => Response(
+              data: responseData,
+              statusCode: 200,
+              requestOptions: RequestOptions(
+                path: ApiConstants.reportById(reportId),
+              ),
+            ),
+          );
+
+          final result = await reportsRepository.getReport(reportId);
+
+          expect(result.id, reportId);
+          expect(result.description, 'Detailed report');
+          expect(result.toJson().containsKey('duplicate_suggestions'), isFalse);
+          expect(
+            result.toJson().toString(),
+            isNot(contains('PRIVATE-CANDIDATE-ID')),
+          );
+        },
+      );
     });
 
     group('createReport', () {
