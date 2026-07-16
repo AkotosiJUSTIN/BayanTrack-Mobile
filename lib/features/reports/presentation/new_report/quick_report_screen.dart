@@ -9,8 +9,11 @@ import 'package:latlong2/latlong.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/constants/urdaneta_geo.dart';
+import '../../../../core/network/error_mapper.dart';
 import '../../../../core/presentation/widgets/app_toast.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/municipality_geo.dart';
+import '../../../auth/data/auth_models.dart';
 import '../../../auth/presentation/barangays_provider.dart';
 import '../../../auth/data/user_permissions.dart';
 import '../../../auth/presentation/verification_widgets.dart';
@@ -33,13 +36,30 @@ class QuickReportScreen extends ConsumerStatefulWidget {
 class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   final MapController _mapController = MapController();
   final TextEditingController _descriptionController = TextEditingController();
-  final LatLngBounds _serviceBounds = LatLngBounds(
-    const LatLng(UrdanetaGeo.south, UrdanetaGeo.west),
-    const LatLng(UrdanetaGeo.north, UrdanetaGeo.east),
-  );
-  final List<LatLng> _servicePolygon = UrdanetaGeo.boundary
-      .map((point) => LatLng(point.$1, point.$2))
-      .toList(growable: false);
+  MunicipalityModel _selectedMunicipality = bundledUrdanetaMunicipality;
+
+  LatLngBounds get _serviceBounds {
+    final bounds = _selectedMunicipality.bounds!;
+    return LatLngBounds(
+      LatLng(bounds.south, bounds.west),
+      LatLng(bounds.north, bounds.east),
+    );
+  }
+
+  List<LatLng> get _servicePolygon {
+    if (_selectedMunicipality.id == defaultMunicipalityId) {
+      return UrdanetaGeo.boundary
+          .map((point) => LatLng(point.$1, point.$2))
+          .toList(growable: false);
+    }
+    final bounds = _selectedMunicipality.bounds!;
+    return [
+      LatLng(bounds.south, bounds.west),
+      LatLng(bounds.south, bounds.east),
+      LatLng(bounds.north, bounds.east),
+      LatLng(bounds.north, bounds.west),
+    ];
+  }
 
   bool _isSubmitting = false;
   bool _isLoadingLocation = false;
@@ -53,7 +73,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedPoint = const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng);
+    _selectedPoint = const LatLng(
+      UrdanetaGeo.defaultLat,
+      UrdanetaGeo.defaultLng,
+    );
     _locationLabel = UrdanetaGeo.defaultLocationLabel;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _syncSelectedPoint();
@@ -70,18 +93,48 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   void _syncSelectedPoint() {
     final point = _selectedPoint;
     if (point == null) return;
-    if (!UrdanetaGeo.contains(point.latitude, point.longitude)) {
+    if (!_contains(point)) {
       setState(() {
-        _error = 'Report creation is only available within Urdaneta, Pangasinan.';
+        _error = municipalityUnavailableMessage(_selectedMunicipality);
       });
       return;
     }
   }
 
+  bool _contains(LatLng point) => municipalityContains(
+    _selectedMunicipality,
+    point.latitude,
+    point.longitude,
+  );
+
+  void _selectMunicipality(MunicipalityModel municipality) {
+    if (municipality.id == _selectedMunicipality.id) return;
+    final bounds = municipality.bounds;
+    if (bounds == null || !bounds.isValid) {
+      setState(() => _error = municipalityUnavailableMessage(municipality));
+      return;
+    }
+    final center = LatLng(
+      municipality.centerLat ?? (bounds.south + bounds.north) / 2,
+      municipality.centerLng ?? (bounds.west + bounds.east) / 2,
+    );
+    setState(() {
+      _selectedMunicipality = municipality;
+      _selectedPoint = center;
+      _locationLabel = '${municipality.name}, ${municipality.province}';
+      _currentPosition = null;
+      _error = null;
+    });
+    _mapController.move(center, 13);
+    if (_locationInputMode == _QuickLocationInputMode.phone) {
+      _getCurrentLocation();
+    }
+  }
+
   void _setSelectedPoint(LatLng point, {required String locationLabel}) {
-    if (!UrdanetaGeo.contains(point.latitude, point.longitude)) {
+    if (!_contains(point)) {
       setState(() {
-        _error = 'Report creation is only available within Urdaneta, Pangasinan.';
+        _error = municipalityUnavailableMessage(_selectedMunicipality);
       });
       return;
     }
@@ -119,11 +172,13 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     if (mode == _QuickLocationInputMode.phone) {
       _getCurrentLocation();
     } else {
-      final point = _selectedPoint ??
+      final point =
+          _selectedPoint ??
           const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng);
       _setSelectedPoint(
         point,
-        locationLabel: 'Manual pin: ${point.latitude.toStringAsFixed(6)}, ${point.longitude.toStringAsFixed(6)}',
+        locationLabel:
+            'Manual pin: ${point.latitude.toStringAsFixed(6)}, ${point.longitude.toStringAsFixed(6)}',
       );
     }
   }
@@ -163,7 +218,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       if (permission == LocationPermission.deniedForever) {
         if (!mounted) return;
         setState(() {
-          _error = 'Location permissions are permanently denied. Enable them in Settings.';
+          _error =
+              'Location permissions are permanently denied. Enable them in Settings.';
           _isLoadingLocation = false;
         });
         return;
@@ -189,27 +245,30 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     }
   }
 
-  Future<void> _getPreciseLocationInBackground(Position? fallbackPosition) async {
+  Future<void> _getPreciseLocationInBackground(
+    Position? fallbackPosition,
+  ) async {
     try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: AndroidSettings(
-          accuracy: LocationAccuracy.medium,
-          distanceFilter: 10,
-          forceLocationManager: false,
-          intervalDuration: const Duration(seconds: 5),
-          foregroundNotificationConfig: const ForegroundNotificationConfig(
-            notificationTitle: 'Getting location',
-            notificationText: 'BayanTrack is getting your location',
-            enableWakeLock: false,
-          ),
-        ),
-      ).timeout(
-        const Duration(seconds: 8),
-        onTimeout: () {
-          if (fallbackPosition != null) return fallbackPosition;
-          throw TimeoutException('Location request timed out');
-        },
-      );
+      final position =
+          await Geolocator.getCurrentPosition(
+            locationSettings: AndroidSettings(
+              accuracy: LocationAccuracy.medium,
+              distanceFilter: 10,
+              forceLocationManager: false,
+              intervalDuration: const Duration(seconds: 5),
+              foregroundNotificationConfig: const ForegroundNotificationConfig(
+                notificationTitle: 'Getting location',
+                notificationText: 'BayanTrack is getting your location',
+                enableWakeLock: false,
+              ),
+            ),
+          ).timeout(
+            const Duration(seconds: 8),
+            onTimeout: () {
+              if (fallbackPosition != null) return fallbackPosition;
+              throw TimeoutException('Location request timed out');
+            },
+          );
 
       if (!mounted) return;
       setState(() {
@@ -245,9 +304,9 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     }
 
     final point = LatLng(position.latitude, position.longitude);
-    if (!UrdanetaGeo.contains(point.latitude, point.longitude)) {
+    if (!_contains(point)) {
       setState(() {
-        _error = 'Report creation is only available within Urdaneta, Pangasinan.';
+        _error = municipalityUnavailableMessage(_selectedMunicipality);
         _selectedPoint = null;
         _locationLabel = null;
       });
@@ -267,9 +326,12 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     });
   }
 
-  String? _resolveNearestBarangayName(double latitude, double longitude) {
+  BarangayModel? _resolveNearestBarangay(double latitude, double longitude) {
     try {
-      final barangays = ref.read(barangaysProvider).asData?.value;
+      final barangays = ref
+          .read(municipalityBarangaysProvider(_selectedMunicipality.id))
+          .asData
+          ?.value;
       if (barangays == null || barangays.isEmpty) {
         debugPrint(
           'QuickReport: barangay list unavailable; proceeding without derived barangay.',
@@ -277,15 +339,13 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         return null;
       }
 
-      return deriveNearestBarangayName(
+      return deriveNearestBarangay(
         barangays,
         latitude: latitude,
         longitude: longitude,
       );
     } catch (e) {
-      debugPrint(
-        'QuickReport: failed to derive barangay from geolocation: $e',
-      );
+      debugPrint('QuickReport: failed to derive barangay from geolocation: $e');
       return null;
     }
   }
@@ -305,18 +365,21 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       return;
     }
 
-    if (!UrdanetaGeo.contains(point.latitude, point.longitude)) {
+    if (!_contains(point)) {
       AppToast.warning(
         context,
-        'Report creation is only available within Urdaneta, Pangasinan.',
+        municipalityUnavailableMessage(_selectedMunicipality),
       );
       return;
     }
 
     try {
-      final nearby = await ref.read(reportsRepositoryProvider).getNearbyReports(
+      final nearby = await ref
+          .read(reportsRepositoryProvider)
+          .getNearbyReports(
             latitude: point.latitude,
             longitude: point.longitude,
+            municipalityId: _selectedMunicipality.id,
           );
       if (nearby.isNotEmpty && mounted) {
         final submitAnyway = await showDialog<bool>(
@@ -325,15 +388,20 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
             title: const Text('Reports already nearby'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
-              children: nearby.take(3).map((report) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.near_me_outlined),
-                    title: Text(report.category),
-                    subtitle: Text(
-                      '${report.distanceMeters} m away - ${report.status.replaceAll('_', ' ')}'
-                      '${report.isGrouped ? ' - grouped incident' : ''}',
+              children: nearby
+                  .take(3)
+                  .map(
+                    (report) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.near_me_outlined),
+                      title: Text(report.category),
+                      subtitle: Text(
+                        '${report.distanceMeters} m away - ${report.status.replaceAll('_', ' ')}'
+                        '${report.isGrouped ? ' - grouped incident' : ''}',
+                      ),
                     ),
-                  )).toList(),
+                  )
+                  .toList(),
             ),
             actions: [
               TextButton(
@@ -360,7 +428,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
     try {
       final reportsRepo = ref.read(reportsRepositoryProvider);
-      final nearestBarangay = _resolveNearestBarangayName(
+      final nearestBarangay = _resolveNearestBarangay(
         point.latitude,
         point.longitude,
       );
@@ -368,10 +436,12 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         CreateReportRequest(
           description: description,
           isHappeningNow: true,
-          zone: nearestBarangay,
-          barangay: nearestBarangay,
-          cityMunicipality: UrdanetaGeo.defaultCityMunicipality,
-          province: UrdanetaGeo.defaultProvince,
+          zone: nearestBarangay?.name,
+          municipalityId: _selectedMunicipality.id,
+          barangayId: nearestBarangay?.id,
+          barangay: nearestBarangay?.name,
+          cityMunicipality: _selectedMunicipality.name,
+          province: _selectedMunicipality.province,
           latitude: point.latitude.toStringAsFixed(10),
           longitude: point.longitude.toStringAsFixed(10),
           locationAccuracy: 'exact',
@@ -393,14 +463,12 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       debugPrint('Quick report submitted: ${result.id}');
     } catch (e) {
       if (!mounted) return;
+      final message = ErrorMapper.userMessage(ErrorMapper.mapException(e));
       setState(() {
         _isSubmitting = false;
-        _error = 'Unable to submit your quick report. Please try again.';
+        _error = message;
       });
-      AppToast.error(
-        context,
-        'Unable to submit your quick report. Please check your connection and try again.',
-      );
+      AppToast.error(context, message);
     }
   }
 
@@ -434,11 +502,14 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     Object? lastError;
     for (var attempt = 1; attempt <= 3; attempt++) {
       try {
-        await ref.read(imagesRepositoryProvider).uploadImage(
+        await ref
+            .read(imagesRepositoryProvider)
+            .uploadImage(
               imageFile: File(picked.path),
               reportId: reportId,
               isPrimary: true,
-            ).timeout(const Duration(seconds: 25));
+            )
+            .timeout(const Duration(seconds: 25));
         if (mounted) AppToast.success(context, 'Photo uploaded.');
         return;
       } catch (e) {
@@ -462,8 +533,15 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final point = _selectedPoint ??
-        const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng);
+    final municipalityBounds = _selectedMunicipality.bounds!;
+    final point =
+        _selectedPoint ??
+        LatLng(
+          _selectedMunicipality.centerLat ??
+              (municipalityBounds.south + municipalityBounds.north) / 2,
+          _selectedMunicipality.centerLng ??
+              (municipalityBounds.west + municipalityBounds.east) / 2,
+        );
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return Scaffold(
@@ -479,7 +557,9 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.only(bottom: bottomInset + 20),
           child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: MediaQuery.sizeOf(context).height),
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.sizeOf(context).height,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -499,17 +579,62 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                       Text(
                         'Use your current location and a short description. The system will categorize and prioritize it automatically.',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
                         ),
                       ),
                     ],
                   ),
                 ),
                 Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                  child: ref
+                      .watch(municipalitiesProvider)
+                      .when(
+                        data: (municipalities) =>
+                            DropdownButtonFormField<String>(
+                              initialValue: _selectedMunicipality.id,
+                              decoration: const InputDecoration(
+                                labelText: 'Municipality',
+                                prefixIcon: Icon(Icons.location_city),
+                                border: OutlineInputBorder(),
+                              ),
+                              items: municipalities
+                                  .map(
+                                    (item) => DropdownMenuItem(
+                                      value: item.id,
+                                      child: Text(
+                                        '${item.name}, ${item.province}',
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: _isSubmitting
+                                  ? null
+                                  : (value) {
+                                      if (value == null) return;
+                                      _selectMunicipality(
+                                        municipalities.firstWhere(
+                                          (item) => item.id == value,
+                                        ),
+                                      );
+                                    },
+                            ),
+                        loading: () => const LinearProgressIndicator(),
+                        error: (error, stack) => Text(
+                          'Municipality metadata unavailable.',
+                          style: TextStyle(color: theme.colorScheme.error),
+                        ),
+                      ),
+                ),
+                Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Card(
                     elevation: 0,
-                    color: isDark ? AppColors.darkSurfaceVariant : AppColors.lightSurfaceVariant,
+                    color: isDark
+                        ? AppColors.darkSurfaceVariant
+                        : AppColors.lightSurfaceVariant,
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -520,10 +645,15 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(alpha: 0.12),
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.12,
+                                  ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: const Icon(Icons.my_location, color: AppColors.primary),
+                                child: const Icon(
+                                  Icons.my_location,
+                                  color: AppColors.primary,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -531,21 +661,24 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      _locationInputMode == _QuickLocationInputMode.manual
+                                      _locationInputMode ==
+                                              _QuickLocationInputMode.manual
                                           ? 'Manual pin'
                                           : 'Current location',
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                      ),
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       _locationLabel ?? 'Getting location...',
-                                      style: theme.textTheme.bodyMedium?.copyWith(
-                                        color: isDark
-                                            ? AppColors.darkTextSecondary
-                                            : AppColors.lightTextSecondary,
-                                      ),
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            color: isDark
+                                                ? AppColors.darkTextSecondary
+                                                : AppColors.lightTextSecondary,
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -575,7 +708,9 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                           Text(
                             'Lat ${point.latitude.toStringAsFixed(6)}  •  Lng ${point.longitude.toStringAsFixed(6)}',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                              color: isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.lightTextSecondary,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -593,20 +728,25 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                   cameraConstraint: CameraConstraint.contain(
                                     bounds: _serviceBounds,
                                   ),
-                                  onTap: (_, tappedPoint) => _onMapTap(tappedPoint),
+                                  onTap: (_, tappedPoint) =>
+                                      _onMapTap(tappedPoint),
                                 ),
                                 children: [
                                   TileLayer(
                                     urlTemplate:
                                         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                                    userAgentPackageName: 'com.example.bayantrack_mobile',
+                                    userAgentPackageName:
+                                        'com.example.bayantrack_mobile',
                                   ),
                                   PolygonLayer(
                                     polygons: [
                                       Polygon(
                                         points: _servicePolygon,
-                                        color: AppColors.primary.withValues(alpha: 0.08),
-                                        borderColor: AppColors.primary.withValues(alpha: 0.45),
+                                        color: AppColors.primary.withValues(
+                                          alpha: 0.08,
+                                        ),
+                                        borderColor: AppColors.primary
+                                            .withValues(alpha: 0.45),
                                         borderStrokeWidth: 2,
                                       ),
                                     ],
@@ -620,7 +760,9 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                         child: Icon(
                                           Icons.location_pin,
                                           size: 40,
-                                          color: _locationInputMode == _QuickLocationInputMode.manual
+                                          color:
+                                              _locationInputMode ==
+                                                  _QuickLocationInputMode.manual
                                               ? AppColors.primary
                                               : AppColors.alertHigh,
                                         ),
@@ -629,7 +771,9 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                   ),
                                   const RichAttributionWidget(
                                     attributions: [
-                                      TextSourceAttribution('OpenStreetMap contributors'),
+                                      TextSourceAttribution(
+                                        'OpenStreetMap contributors',
+                                      ),
                                     ],
                                   ),
                                 ],
@@ -639,7 +783,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                           const SizedBox(height: 8),
                           Text(
                             _locationInputMode == _QuickLocationInputMode.manual
-                                ? 'Tap the map to place a manual pin within Urdaneta.'
+                                ? 'Tap the map to place a manual pin within ${_selectedMunicipality.name}.'
                                 : 'Your GPS location is used automatically. Switch to manual pin if needed.',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: isDark
@@ -647,7 +791,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                   : AppColors.lightTextSecondary,
                             ),
                           ),
-                          if (_isLoadingLocation || _isGettingPreciseLocation) ...[
+                          if (_isLoadingLocation ||
+                              _isGettingPreciseLocation) ...[
                             const SizedBox(height: 12),
                             const LinearProgressIndicator(),
                           ],
@@ -665,7 +810,9 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: TextButton.icon(
-                              onPressed: _isLoadingLocation ? null : _getCurrentLocation,
+                              onPressed: _isLoadingLocation
+                                  ? null
+                                  : _getCurrentLocation,
                               icon: const Icon(Icons.refresh),
                               label: const Text('Refresh location'),
                             ),

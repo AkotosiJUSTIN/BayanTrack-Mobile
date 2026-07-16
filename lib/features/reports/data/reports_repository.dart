@@ -25,6 +25,7 @@ class ReportsRepository {
   Future<List<NearbyReport>> getNearbyReports({
     required double latitude,
     required double longitude,
+    String municipalityId = 'urdaneta',
     int radiusMeters = 500,
   }) async {
     final response = await _dio.get(
@@ -32,6 +33,7 @@ class ReportsRepository {
       queryParameters: {
         'latitude': latitude,
         'longitude': longitude,
+        'municipality_id': municipalityId,
         'radius_m': radiusMeters,
       },
     );
@@ -53,10 +55,7 @@ class ReportsRepository {
     String? severity,
     bool? isEmergency,
   }) async {
-    final queryParams = <String, dynamic>{
-      'page': page, 
-      'page_size': pageSize,
-    };
+    final queryParams = <String, dynamic>{'page': page, 'page_size': pageSize};
     if (status != null) queryParams['status'] = status;
     if (zone != null) queryParams['zone'] = zone;
     if (category != null) queryParams['category'] = category;
@@ -72,16 +71,13 @@ class ReportsRepository {
 
   /// Get current user's reports
   Future<PaginatedReports> getMyReports({
-    int page = 1, 
+    int page = 1,
     int pageSize = 20,
     String? status,
   }) async {
-    final queryParams = <String, dynamic>{
-      'page': page, 
-      'page_size': pageSize,
-    };
+    final queryParams = <String, dynamic>{'page': page, 'page_size': pageSize};
     if (status != null) queryParams['status'] = status;
-    
+
     final response = await _dio.get(
       ApiConstants.myReports,
       queryParameters: queryParams,
@@ -109,11 +105,8 @@ class ReportsRepository {
     };
     // Debug: Print the request payload
     debugPrint('CreateReport request payload: $jsonData');
-    
-    final response = await _dio.post(
-      ApiConstants.reports,
-      data: jsonData,
-    );
+
+    final response = await _dio.post(ApiConstants.reports, data: jsonData);
     // Backend returns {report: {...}, message: "..."}
     final data = response.data;
     if (data is Map && data.containsKey('report')) {
@@ -132,7 +125,10 @@ class ReportsRepository {
   }
 
   /// Update report status (admin only)
-  Future<Report> updateReportStatus(String id, ReportStatusUpdateRequest request) async {
+  Future<Report> updateReportStatus(
+    String id,
+    ReportStatusUpdateRequest request,
+  ) async {
     final response = await _dio.patch(
       '${ApiConstants.reportById(id)}status/',
       data: request.toJson(),
@@ -184,9 +180,9 @@ class NearbyReport {
   });
 
   factory NearbyReport.fromJson(Map<String, dynamic> json) => NearbyReport(
-        category: json['category']?.toString() ?? 'Uncategorized incident',
-        status: json['status']?.toString() ?? 'submitted',
-        distanceMeters: (json['distance_m'] as num?)?.round() ?? 0,
-        isGrouped: json['incident_group_id'] != null,
-      );
+    category: json['category']?.toString() ?? 'Uncategorized incident',
+    status: json['status']?.toString() ?? 'submitted',
+    distanceMeters: (json['distance_m'] as num?)?.round() ?? 0,
+    isGrouped: json['incident_group_id'] != null,
+  );
 }

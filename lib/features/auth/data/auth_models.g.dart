@@ -162,6 +162,9 @@ _BarangayModel _$BarangayModelFromJson(Map<String, dynamic> json) =>
       name: json['name'] as String,
       centerLat: (json['center_lat'] as num).toDouble(),
       centerLng: (json['center_lng'] as num).toDouble(),
+      municipalityId: json['municipality_id'] as String? ?? 'urdaneta',
+      municipality: json['municipality'] as String?,
+      province: json['province'] as String?,
     );
 
 Map<String, dynamic> _$BarangayModelToJson(_BarangayModel instance) =>
@@ -170,6 +173,9 @@ Map<String, dynamic> _$BarangayModelToJson(_BarangayModel instance) =>
       'name': instance.name,
       'center_lat': instance.centerLat,
       'center_lng': instance.centerLng,
+      'municipality_id': instance.municipalityId,
+      'municipality': instance.municipality,
+      'province': instance.province,
     };
 
 _BarangaysResponse _$BarangaysResponseFromJson(Map<String, dynamic> json) =>

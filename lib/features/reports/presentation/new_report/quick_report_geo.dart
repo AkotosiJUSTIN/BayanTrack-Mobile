@@ -4,12 +4,7 @@ import '../../../auth/data/auth_models.dart';
 
 double _toRadians(double degrees) => degrees * (math.pi / 180.0);
 
-double _haversineMeters(
-  double lat1,
-  double lon1,
-  double lat2,
-  double lon2,
-) {
+double _haversineMeters(double lat1, double lon1, double lat2, double lon2) {
   const earthRadiusMeters = 6371000.0;
   final dLat = _toRadians(lat2 - lat1);
   final dLon = _toRadians(lon2 - lon1);
@@ -22,13 +17,13 @@ double _haversineMeters(
   return earthRadiusMeters * c;
 }
 
-String? deriveNearestBarangayName(
+BarangayModel? deriveNearestBarangay(
   List<BarangayModel> barangays, {
   required double latitude,
   required double longitude,
 }) {
   if (barangays.isEmpty) return null;
-  String? nearestName;
+  BarangayModel? nearest;
   double? nearestMeters;
   for (final b in barangays) {
     final meters = _haversineMeters(
@@ -39,8 +34,8 @@ String? deriveNearestBarangayName(
     );
     if (nearestMeters == null || meters < nearestMeters) {
       nearestMeters = meters;
-      nearestName = b.name;
+      nearest = b;
     }
   }
-  return nearestName;
+  return nearest;
 }

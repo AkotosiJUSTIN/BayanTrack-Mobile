@@ -3,9 +3,9 @@ import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/new_report/quick_report_geo.dart';
 
 void main() {
-  group('deriveNearestBarangayName', () {
+  group('deriveNearestBarangay', () {
     test('returns null when barangay list is empty', () {
-      final result = deriveNearestBarangayName(
+      final result = deriveNearestBarangay(
         const [],
         latitude: 15.98,
         longitude: 120.62,
@@ -29,12 +29,13 @@ void main() {
         ),
       ];
 
-      final result = deriveNearestBarangayName(
+      final result = deriveNearestBarangay(
         barangays,
         latitude: 15.979204,
         longitude: 120.622210,
       );
-      expect(result, 'Barangay B');
+      expect(result?.id, '2');
+      expect(result?.name, 'Barangay B');
     });
   });
 }

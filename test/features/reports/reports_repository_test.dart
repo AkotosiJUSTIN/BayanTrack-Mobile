@@ -253,6 +253,8 @@ void main() {
         final request = CreateReportRequest(
           description: 'New issue report',
           streetLandmark: '123 Main Street, Quezon City',
+          municipalityId: 'urdaneta',
+          barangayId: 'zone_5',
           barangay: 'Zone 5',
           latitude: "14.5995",
           longitude: "120.9842",
@@ -286,6 +288,8 @@ void main() {
         expect(result.id, 'new_report_123');
         expect(result.description, 'New issue report');
         expect(result.status, 'submitted');
+        expect(request.toJson()['municipality_id'], 'urdaneta');
+        expect(request.toJson()['barangay_id'], 'zone_5');
         verify(
           () => mockDio.post(ApiConstants.reports, data: request.toJson()),
         ).called(1);

@@ -213,9 +213,26 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<List<BarangayModel>>> getBarangays() async {
+  Future<Result<List<MunicipalityModel>>> getMunicipalities() async {
     try {
-      final response = await _dio.get(ApiConstants.barangays);
+      final response = await _dio.get(ApiConstants.municipalities);
+      return Success(
+        MunicipalitiesResponse.fromJson(response.data).municipalities,
+      );
+    } catch (e, stack) {
+      return Err(ErrorMapper.mapException(e, stack));
+    }
+  }
+
+  @override
+  Future<Result<List<BarangayModel>>> getBarangays({
+    String municipalityId = 'urdaneta',
+  }) async {
+    try {
+      final response = await _dio.get(
+        ApiConstants.barangays,
+        queryParameters: {'municipality_id': municipalityId},
+      );
       final barangaysResponse = BarangaysResponse.fromJson(response.data);
       return Success(barangaysResponse.barangays);
     } catch (e, stack) {

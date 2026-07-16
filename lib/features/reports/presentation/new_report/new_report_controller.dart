@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../../core/constants/urdaneta_geo.dart';
 import '../../data/report_models.dart';
 
 part 'new_report_controller.g.dart';
@@ -8,28 +9,31 @@ part 'new_report_controller.g.dart';
 class NewReportState {
   // Images
   final List<File> selectedImages;
-  
+
   // Section A: Report Details
   final ReportCategory? category;
   final String? title;
   final String description;
   final DateTime? incidentDatetime;
   final bool isHappeningNow;
-  
+
   // Section B: Location Information
   final String? zone;
   final String? streetLandmark;
+  final String municipalityId;
+  final String? barangayId;
+  final String? barangay;
   final String? cityMunicipality;
   final String? province;
   final double? latitude;
   final double? longitude;
   final LocationAccuracy locationAccuracy;
   final String? location; // Human-readable full address
-  
+
   // Section C: Consent & Declaration
   final bool declarationConfirmed;
   final bool dataProcessingConsent;
-  
+
   // Form state
   final bool isSubmitting;
   final String? error;
@@ -43,8 +47,11 @@ class NewReportState {
     this.isHappeningNow = false,
     this.zone,
     this.streetLandmark,
-    this.cityMunicipality,
-    this.province,
+    this.municipalityId = 'urdaneta',
+    this.barangayId,
+    this.barangay,
+    this.cityMunicipality = UrdanetaGeo.defaultCityMunicipality,
+    this.province = UrdanetaGeo.defaultProvince,
     this.latitude,
     this.longitude,
     this.locationAccuracy = LocationAccuracy.approximate,
@@ -64,6 +71,9 @@ class NewReportState {
     bool? isHappeningNow,
     String? zone,
     String? streetLandmark,
+    String? municipalityId,
+    String? barangayId,
+    String? barangay,
     String? cityMunicipality,
     String? province,
     double? latitude,
@@ -74,6 +84,8 @@ class NewReportState {
     bool? dataProcessingConsent,
     bool? isSubmitting,
     String? error,
+    bool clearLocation = false,
+    bool clearBarangay = false,
   }) {
     return NewReportState(
       selectedImages: selectedImages ?? this.selectedImages,
@@ -82,16 +94,22 @@ class NewReportState {
       description: description ?? this.description,
       incidentDatetime: incidentDatetime ?? this.incidentDatetime,
       isHappeningNow: isHappeningNow ?? this.isHappeningNow,
-      zone: zone ?? this.zone,
-      streetLandmark: streetLandmark ?? this.streetLandmark,
+      zone: clearLocation || clearBarangay ? null : zone ?? this.zone,
+      streetLandmark: clearLocation
+          ? null
+          : streetLandmark ?? this.streetLandmark,
+      municipalityId: municipalityId ?? this.municipalityId,
+      barangayId: clearBarangay ? null : barangayId ?? this.barangayId,
+      barangay: clearBarangay ? null : barangay ?? this.barangay,
       cityMunicipality: cityMunicipality ?? this.cityMunicipality,
       province: province ?? this.province,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
+      latitude: clearLocation ? null : latitude ?? this.latitude,
+      longitude: clearLocation ? null : longitude ?? this.longitude,
       locationAccuracy: locationAccuracy ?? this.locationAccuracy,
-      location: location ?? this.location,
+      location: clearLocation ? null : location ?? this.location,
       declarationConfirmed: declarationConfirmed ?? this.declarationConfirmed,
-      dataProcessingConsent: dataProcessingConsent ?? this.dataProcessingConsent,
+      dataProcessingConsent:
+          dataProcessingConsent ?? this.dataProcessingConsent,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       error: error,
     );
@@ -107,15 +125,14 @@ class NewReportState {
 
   /// Section validations
   bool get hasPhotos => selectedImages.isNotEmpty;
-  
-  bool get hasLocation => 
+
+  bool get hasLocation =>
       (zone != null && zone!.isNotEmpty) ||
       (streetLandmark != null && streetLandmark!.isNotEmpty) ||
       (latitude != null && longitude != null);
-  
-  bool get hasDetails => 
-      description.trim().isNotEmpty;
-  
+
+  bool get hasDetails => description.trim().isNotEmpty;
+
   bool get hasConsent => declarationConfirmed && dataProcessingConsent;
 
   /// Build CreateReportRequest from current state
@@ -128,12 +145,15 @@ class NewReportState {
       isHappeningNow: isHappeningNow,
       zone: zone,
       streetLandmark: streetLandmark,
+      municipalityId: municipalityId,
+      barangayId: barangayId,
       cityMunicipality: cityMunicipality,
       province: province,
       latitude: _formatCoordinate(latitude),
       longitude: _formatCoordinate(longitude),
       locationAccuracy: locationAccuracy.name,
       location: streetLandmark ?? location,
+      barangay: barangay ?? zone,
       declarationConfirmed: declarationConfirmed,
       dataProcessingConsent: dataProcessingConsent,
     );
@@ -220,6 +240,25 @@ class NewReportController extends _$NewReportController {
     state = state.copyWith(zone: zone);
   }
 
+  void setMunicipality({
+    required String id,
+    required String name,
+    required String province,
+  }) {
+    if (state.municipalityId == id) return;
+    state = state.copyWith(
+      municipalityId: id,
+      cityMunicipality: name,
+      province: province,
+      clearLocation: true,
+      clearBarangay: true,
+    );
+  }
+
+  void setBarangay({required String id, required String name}) {
+    state = state.copyWith(barangayId: id, barangay: name, zone: name);
+  }
+
   void setStreetLandmark(String? streetLandmark) {
     state = state.copyWith(streetLandmark: streetLandmark);
   }
@@ -237,13 +276,7 @@ class NewReportController extends _$NewReportController {
   }
 
   void clearLocation() {
-    state = state.copyWith(
-      latitude: null,
-      longitude: null,
-      location: null,
-      zone: null,
-      streetLandmark: null,
-    );
+    state = state.copyWith(clearLocation: true, clearBarangay: true);
   }
 
   // ==================== CONSENT (Section C) ====================

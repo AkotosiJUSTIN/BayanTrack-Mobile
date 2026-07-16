@@ -22,6 +22,8 @@ class Report extends Equatable {
   // Location Information
   final String? zone;
   final String? streetLandmark;
+  final String municipalityId;
+  final String? barangayId;
   final String? cityMunicipality;
   final String? province;
   final double? latitude;
@@ -95,6 +97,8 @@ class Report extends Equatable {
     this.isHappeningNow = false,
     this.zone,
     this.streetLandmark,
+    this.municipalityId = 'urdaneta',
+    this.barangayId,
     this.cityMunicipality,
     this.province,
     this.latitude,
@@ -174,7 +178,9 @@ class Report extends Equatable {
         .where((img) => !_supplementalImageIds.contains(img.id))
         .where((img) => !img.isSignature)
         .toList();
-    return filtered.isNotEmpty ? filtered : images.where((img) => !img.isSignature).toList();
+    return filtered.isNotEmpty
+        ? filtered
+        : images.where((img) => !img.isSignature).toList();
   }
 
   List<ReportImage> get resolvedProofImages => images
@@ -202,6 +208,8 @@ class Report extends Equatable {
     onChainHash,
     blockchainSynced,
     credibilityScore,
+    municipalityId,
+    barangayId,
   ];
 
   @override

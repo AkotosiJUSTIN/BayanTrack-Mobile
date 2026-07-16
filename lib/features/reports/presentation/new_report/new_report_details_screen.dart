@@ -229,35 +229,120 @@ class _NewReportDetailsScreenState
                     ),
                     const SizedBox(height: 12),
 
-                    // Zone Dropdown
+                    _buildSectionLabel(theme, 'Municipality *'),
+                    const SizedBox(height: 8),
+                    ref
+                        .watch(municipalitiesProvider)
+                        .when(
+                          data: (municipalities) => DropdownButtonFormField<String>(
+                            initialValue:
+                                municipalities.any(
+                                  (item) => item.id == state.municipalityId,
+                                )
+                                ? state.municipalityId
+                                : null,
+                            decoration: InputDecoration(
+                              hintText: 'Select municipality',
+                              prefixIcon: const Icon(Icons.location_city),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            items: municipalities
+                                .map(
+                                  (item) => DropdownMenuItem(
+                                    value: item.id,
+                                    child: Text(
+                                      '${item.name}, ${item.province}',
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              if (value == null) return;
+                              final selected = municipalities.firstWhere(
+                                (item) => item.id == value,
+                              );
+                              controller.setMunicipality(
+                                id: selected.id,
+                                name: selected.name,
+                                province: selected.province,
+                              );
+                              _streetLandmarkController.clear();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Place a location pin for the selected municipality.',
+                                  ),
+                                ),
+                              );
+                              Navigator.of(context).pop();
+                            },
+                            validator: (value) => value == null
+                                ? 'Please select a municipality'
+                                : null,
+                          ),
+                          loading: () => const LinearProgressIndicator(),
+                          error: (error, stack) => Text(
+                            'Municipality metadata is unavailable.',
+                            style: TextStyle(color: theme.colorScheme.error),
+                          ),
+                        ),
+                    const SizedBox(height: 16),
+
+                    // Barangay Dropdown (stores the stable ID)
                     _buildSectionLabel(theme, 'Barangay *'),
                     const SizedBox(height: 8),
                     Consumer(
                       builder: (context, ref, child) {
-                        final barangaysAsync = ref.watch(barangaysProvider);
-                        
+                        final barangaysAsync = ref.watch(
+                          municipalityBarangaysProvider(state.municipalityId),
+                        );
+
                         return barangaysAsync.when(
                           data: (barangays) => DropdownButtonFormField<String>(
-                            initialValue: state.zone,
+                            initialValue:
+                                barangays.any(
+                                  (item) => item.id == state.barangayId,
+                                )
+                                ? state.barangayId
+                                : null,
                             decoration: InputDecoration(
                               hintText: 'Select barangay',
-                              prefixIcon: const Icon(Icons.location_city_outlined),
+                              prefixIcon: const Icon(
+                                Icons.location_city_outlined,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                             items: barangays.map((barangay) {
                               return DropdownMenuItem(
-                                value: barangay.name,
+                                value: barangay.id,
                                 child: Text(barangay.name),
                               );
                             }).toList(),
-                            onChanged: (value) => controller.setZone(value),
+                            onChanged: (value) {
+                              if (value == null) return;
+                              final selected = barangays.firstWhere(
+                                (item) => item.id == value,
+                              );
+                              controller.setBarangay(
+                                id: selected.id,
+                                name: selected.name,
+                              );
+                              _checkFormValidity();
+                            },
+                            validator: (value) => value == null
+                                ? 'Please select a barangay'
+                                : null,
                           ),
                           loading: () => DropdownButtonFormField<String>(
                             decoration: InputDecoration(
                               hintText: 'Loading barangays...',
-                              prefixIcon: const Icon(Icons.location_city_outlined),
+                              prefixIcon: const Icon(
+                                Icons.location_city_outlined,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -267,11 +352,18 @@ class _NewReportDetailsScreenState
                           ),
                           error: (error, stack) => DropdownButtonFormField<String>(
                             decoration: InputDecoration(
-                              hintText: 'Error loading barangays',
-                              prefixIcon: const Icon(Icons.location_city_outlined),
+                              hintText:
+                                  state.municipalityId == defaultMunicipalityId
+                                  ? 'Using bundled Urdaneta barangays'
+                                  : 'Barangays unavailable for this municipality',
+                              prefixIcon: const Icon(
+                                Icons.location_city_outlined,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: theme.colorScheme.error),
+                                borderSide: BorderSide(
+                                  color: theme.colorScheme.error,
+                                ),
                               ),
                             ),
                             items: const [],

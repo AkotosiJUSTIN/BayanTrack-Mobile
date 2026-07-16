@@ -17,13 +17,9 @@ class MapPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     final reportsWithCoordinates = _reportsWithCoordinates(reports);
     final initialCenter = _initialCenterFor(reportsWithCoordinates);
-    final mangaldanPolygon = UrdanetaGeo.boundary
-        .map((point) => LatLng(point.$1, point.$2))
+    final coordinates = reportsWithCoordinates
+        .map((report) => LatLng(report.latitude!, report.longitude!))
         .toList(growable: false);
-    final mangaldanBounds = LatLngBounds(
-      LatLng(UrdanetaGeo.south, UrdanetaGeo.west),
-      LatLng(UrdanetaGeo.north, UrdanetaGeo.east),
-    );
     final markers = reportsWithCoordinates
         .map(
           (report) => Marker(
@@ -51,26 +47,20 @@ class MapPlaceholder extends StatelessWidget {
           options: MapOptions(
             initialCenter: initialCenter,
             initialZoom: 13,
-            minZoom: 12,
+            initialCameraFit: coordinates.isEmpty
+                ? null
+                : CameraFit.coordinates(
+                    coordinates: coordinates,
+                    padding: const EdgeInsets.all(40),
+                    maxZoom: 14,
+                  ),
+            minZoom: 4,
             maxZoom: 18,
-            cameraConstraint: CameraConstraint.contain(bounds: mangaldanBounds),
           ),
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.example.bayantrack_mobile',
-            ),
-            PolygonLayer(
-              polygons: [
-                Polygon(
-                  points: mangaldanPolygon,
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  borderColor: AppColors.alertHigh,
-                  borderStrokeWidth: 2,
-                  pattern: const StrokePattern.dotted(spacingFactor: 1.2),
-                ),
-              ],
-              invertedFill: Colors.black.withValues(alpha: 0.55),
             ),
             MarkerLayer(markers: markers),
             const RichAttributionWidget(
@@ -96,8 +86,7 @@ class MapPlaceholder extends StatelessWidget {
       final lat = report.latitude;
       final lng = report.longitude;
       if (lat == null || lng == null) return false;
-      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return false;
-      return UrdanetaGeo.contains(lat, lng);
+      return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
     }).toList();
   }
 
@@ -140,7 +129,7 @@ class MapPlaceholder extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'No report coordinates available in Urdaneta yet.',
+              'No report coordinates available yet.',
               style: theme.textTheme.bodySmall,
             ),
           ),

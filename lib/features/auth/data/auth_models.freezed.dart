@@ -2672,7 +2672,7 @@ as String,
 /// @nodoc
 mixin _$BarangayModel {
 
- String get id; String get name;@JsonKey(name: 'center_lat') double get centerLat;@JsonKey(name: 'center_lng') double get centerLng;
+ String get id; String get name;@JsonKey(name: 'center_lat') double get centerLat;@JsonKey(name: 'center_lng') double get centerLng;@JsonKey(name: 'municipality_id') String get municipalityId; String? get municipality; String? get province;
 /// Create a copy of BarangayModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2685,16 +2685,16 @@ $BarangayModelCopyWith<BarangayModel> get copyWith => _$BarangayModelCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BarangayModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.centerLat, centerLat) || other.centerLat == centerLat)&&(identical(other.centerLng, centerLng) || other.centerLng == centerLng));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BarangayModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.centerLat, centerLat) || other.centerLat == centerLat)&&(identical(other.centerLng, centerLng) || other.centerLng == centerLng)&&(identical(other.municipalityId, municipalityId) || other.municipalityId == municipalityId)&&(identical(other.municipality, municipality) || other.municipality == municipality)&&(identical(other.province, province) || other.province == province));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,centerLat,centerLng);
+int get hashCode => Object.hash(runtimeType,id,name,centerLat,centerLng,municipalityId,municipality,province);
 
 @override
 String toString() {
-  return 'BarangayModel(id: $id, name: $name, centerLat: $centerLat, centerLng: $centerLng)';
+  return 'BarangayModel(id: $id, name: $name, centerLat: $centerLat, centerLng: $centerLng, municipalityId: $municipalityId, municipality: $municipality, province: $province)';
 }
 
 
@@ -2705,7 +2705,7 @@ abstract mixin class $BarangayModelCopyWith<$Res>  {
   factory $BarangayModelCopyWith(BarangayModel value, $Res Function(BarangayModel) _then) = _$BarangayModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String name,@JsonKey(name: 'center_lat') double centerLat,@JsonKey(name: 'center_lng') double centerLng
+ String id, String name,@JsonKey(name: 'center_lat') double centerLat,@JsonKey(name: 'center_lng') double centerLng,@JsonKey(name: 'municipality_id') String municipalityId, String? municipality, String? province
 });
 
 
@@ -2722,13 +2722,16 @@ class _$BarangayModelCopyWithImpl<$Res>
 
 /// Create a copy of BarangayModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? centerLat = null,Object? centerLng = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? centerLat = null,Object? centerLng = null,Object? municipalityId = null,Object? municipality = freezed,Object? province = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,centerLat: null == centerLat ? _self.centerLat : centerLat // ignore: cast_nullable_to_non_nullable
 as double,centerLng: null == centerLng ? _self.centerLng : centerLng // ignore: cast_nullable_to_non_nullable
-as double,
+as double,municipalityId: null == municipalityId ? _self.municipalityId : municipalityId // ignore: cast_nullable_to_non_nullable
+as String,municipality: freezed == municipality ? _self.municipality : municipality // ignore: cast_nullable_to_non_nullable
+as String?,province: freezed == province ? _self.province : province // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -2810,10 +2813,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name, @JsonKey(name: 'center_lat')  double centerLat, @JsonKey(name: 'center_lng')  double centerLng)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name, @JsonKey(name: 'center_lat')  double centerLat, @JsonKey(name: 'center_lng')  double centerLng, @JsonKey(name: 'municipality_id')  String municipalityId,  String? municipality,  String? province)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BarangayModel() when $default != null:
-return $default(_that.id,_that.name,_that.centerLat,_that.centerLng);case _:
+return $default(_that.id,_that.name,_that.centerLat,_that.centerLng,_that.municipalityId,_that.municipality,_that.province);case _:
   return orElse();
 
 }
@@ -2831,10 +2834,10 @@ return $default(_that.id,_that.name,_that.centerLat,_that.centerLng);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name, @JsonKey(name: 'center_lat')  double centerLat, @JsonKey(name: 'center_lng')  double centerLng)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name, @JsonKey(name: 'center_lat')  double centerLat, @JsonKey(name: 'center_lng')  double centerLng, @JsonKey(name: 'municipality_id')  String municipalityId,  String? municipality,  String? province)  $default,) {final _that = this;
 switch (_that) {
 case _BarangayModel():
-return $default(_that.id,_that.name,_that.centerLat,_that.centerLng);}
+return $default(_that.id,_that.name,_that.centerLat,_that.centerLng,_that.municipalityId,_that.municipality,_that.province);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -2848,10 +2851,10 @@ return $default(_that.id,_that.name,_that.centerLat,_that.centerLng);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name, @JsonKey(name: 'center_lat')  double centerLat, @JsonKey(name: 'center_lng')  double centerLng)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name, @JsonKey(name: 'center_lat')  double centerLat, @JsonKey(name: 'center_lng')  double centerLng, @JsonKey(name: 'municipality_id')  String municipalityId,  String? municipality,  String? province)?  $default,) {final _that = this;
 switch (_that) {
 case _BarangayModel() when $default != null:
-return $default(_that.id,_that.name,_that.centerLat,_that.centerLng);case _:
+return $default(_that.id,_that.name,_that.centerLat,_that.centerLng,_that.municipalityId,_that.municipality,_that.province);case _:
   return null;
 
 }
@@ -2863,13 +2866,16 @@ return $default(_that.id,_that.name,_that.centerLat,_that.centerLng);case _:
 @JsonSerializable()
 
 class _BarangayModel implements BarangayModel {
-  const _BarangayModel({required this.id, required this.name, @JsonKey(name: 'center_lat') required this.centerLat, @JsonKey(name: 'center_lng') required this.centerLng});
+  const _BarangayModel({required this.id, required this.name, @JsonKey(name: 'center_lat') required this.centerLat, @JsonKey(name: 'center_lng') required this.centerLng, @JsonKey(name: 'municipality_id') this.municipalityId = 'urdaneta', this.municipality, this.province});
   factory _BarangayModel.fromJson(Map<String, dynamic> json) => _$BarangayModelFromJson(json);
 
 @override final  String id;
 @override final  String name;
 @override@JsonKey(name: 'center_lat') final  double centerLat;
 @override@JsonKey(name: 'center_lng') final  double centerLng;
+@override@JsonKey(name: 'municipality_id') final  String municipalityId;
+@override final  String? municipality;
+@override final  String? province;
 
 /// Create a copy of BarangayModel
 /// with the given fields replaced by the non-null parameter values.
@@ -2884,16 +2890,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BarangayModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.centerLat, centerLat) || other.centerLat == centerLat)&&(identical(other.centerLng, centerLng) || other.centerLng == centerLng));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BarangayModel&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.centerLat, centerLat) || other.centerLat == centerLat)&&(identical(other.centerLng, centerLng) || other.centerLng == centerLng)&&(identical(other.municipalityId, municipalityId) || other.municipalityId == municipalityId)&&(identical(other.municipality, municipality) || other.municipality == municipality)&&(identical(other.province, province) || other.province == province));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,name,centerLat,centerLng);
+int get hashCode => Object.hash(runtimeType,id,name,centerLat,centerLng,municipalityId,municipality,province);
 
 @override
 String toString() {
-  return 'BarangayModel(id: $id, name: $name, centerLat: $centerLat, centerLng: $centerLng)';
+  return 'BarangayModel(id: $id, name: $name, centerLat: $centerLat, centerLng: $centerLng, municipalityId: $municipalityId, municipality: $municipality, province: $province)';
 }
 
 
@@ -2904,7 +2910,7 @@ abstract mixin class _$BarangayModelCopyWith<$Res> implements $BarangayModelCopy
   factory _$BarangayModelCopyWith(_BarangayModel value, $Res Function(_BarangayModel) _then) = __$BarangayModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name,@JsonKey(name: 'center_lat') double centerLat,@JsonKey(name: 'center_lng') double centerLng
+ String id, String name,@JsonKey(name: 'center_lat') double centerLat,@JsonKey(name: 'center_lng') double centerLng,@JsonKey(name: 'municipality_id') String municipalityId, String? municipality, String? province
 });
 
 
@@ -2921,13 +2927,16 @@ class __$BarangayModelCopyWithImpl<$Res>
 
 /// Create a copy of BarangayModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? centerLat = null,Object? centerLng = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? centerLat = null,Object? centerLng = null,Object? municipalityId = null,Object? municipality = freezed,Object? province = freezed,}) {
   return _then(_BarangayModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,centerLat: null == centerLat ? _self.centerLat : centerLat // ignore: cast_nullable_to_non_nullable
 as double,centerLng: null == centerLng ? _self.centerLng : centerLng // ignore: cast_nullable_to_non_nullable
-as double,
+as double,municipalityId: null == municipalityId ? _self.municipalityId : municipalityId // ignore: cast_nullable_to_non_nullable
+as String,municipality: freezed == municipality ? _self.municipality : municipality // ignore: cast_nullable_to_non_nullable
+as String?,province: freezed == province ? _self.province : province // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

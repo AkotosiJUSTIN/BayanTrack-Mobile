@@ -58,6 +58,7 @@ class ApiConstants {
   static const String profile = '/auth/profile/';
   static const String profileUpdate = '/auth/profile/update/';
   static const String changePassword = '/auth/change-password/';
+  static const String municipalities = '/auth/municipalities/';
   static const String barangays = '/auth/barangays/';
 
   // Reports Endpoints

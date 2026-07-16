@@ -156,10 +156,136 @@ sealed class BarangayModel with _$BarangayModel {
     required String name,
     @JsonKey(name: 'center_lat') required double centerLat,
     @JsonKey(name: 'center_lng') required double centerLng,
+    @JsonKey(name: 'municipality_id')
+    @Default('urdaneta')
+    String municipalityId,
+    String? municipality,
+    String? province,
   }) = _BarangayModel;
 
   factory BarangayModel.fromJson(Map<String, dynamic> json) =>
       _$BarangayModelFromJson(json);
+}
+
+/// Geographic bounds supplied by the municipality metadata endpoint.
+class MunicipalityBounds {
+  final double south;
+  final double west;
+  final double north;
+  final double east;
+
+  const MunicipalityBounds({
+    required this.south,
+    required this.west,
+    required this.north,
+    required this.east,
+  });
+
+  factory MunicipalityBounds.fromJson(Map<String, dynamic> json) {
+    double number(String key) => (json[key] as num).toDouble();
+    return MunicipalityBounds(
+      south: number('south'),
+      west: number('west'),
+      north: number('north'),
+      east: number('east'),
+    );
+  }
+
+  bool get isValid => south < north && west < east;
+
+  bool contains(double latitude, double longitude) =>
+      isValid &&
+      latitude >= south &&
+      latitude <= north &&
+      longitude >= west &&
+      longitude <= east;
+
+  Map<String, dynamic> toJson() => {
+    'south': south,
+    'west': west,
+    'north': north,
+    'east': east,
+  };
+}
+
+/// Canonical municipality metadata used by report submission.
+class MunicipalityModel {
+  final String id;
+  final String name;
+  final String province;
+  final double? centerLat;
+  final double? centerLng;
+  final MunicipalityBounds? bounds;
+  final bool isDefault;
+  final bool isSupported;
+
+  const MunicipalityModel({
+    required this.id,
+    required this.name,
+    required this.province,
+    this.centerLat,
+    this.centerLng,
+    this.bounds,
+    this.isDefault = false,
+    this.isSupported = true,
+  });
+
+  factory MunicipalityModel.fromJson(Map<String, dynamic> json) {
+    final rawBounds = json['bounds'];
+    return MunicipalityModel(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      province: json['province']?.toString() ?? '',
+      centerLat: (json['center_lat'] as num?)?.toDouble(),
+      centerLng: (json['center_lng'] as num?)?.toDouble(),
+      bounds: rawBounds is Map
+          ? MunicipalityBounds.fromJson(Map<String, dynamic>.from(rawBounds))
+          : null,
+      isDefault: json['is_default'] == true,
+      isSupported: json['is_supported'] != false,
+    );
+  }
+
+  bool get hasUsableBounds => bounds?.isValid == true;
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'province': province,
+    'center_lat': centerLat,
+    'center_lng': centerLng,
+    'bounds': bounds?.toJson(),
+    'is_default': isDefault,
+    'is_supported': isSupported,
+  };
+}
+
+class MunicipalitiesResponse {
+  final List<MunicipalityModel> municipalities;
+  final int count;
+  final String defaultMunicipalityId;
+
+  const MunicipalitiesResponse({
+    required this.municipalities,
+    required this.count,
+    required this.defaultMunicipalityId,
+  });
+
+  factory MunicipalitiesResponse.fromJson(Map<String, dynamic> json) {
+    final items = json['municipalities'] as List<dynamic>? ?? const [];
+    return MunicipalitiesResponse(
+      municipalities: items
+          .map(
+            (item) => MunicipalityModel.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList(growable: false),
+      count: (json['count'] as num?)?.toInt() ?? items.length,
+      defaultMunicipalityId:
+          json['default_municipality_id']?.toString() ?? 'urdaneta',
+    );
+  }
 }
 
 @freezed

@@ -66,6 +66,11 @@ abstract interface class AuthRepository {
     required String newPasswordConfirm,
   });
 
-  /// Get list of barangays for location picker
-  Future<Result<List<BarangayModel>>> getBarangays();
+  /// Get supported municipality metadata for report submission.
+  Future<Result<List<MunicipalityModel>>> getMunicipalities();
+
+  /// Get barangays belonging to one municipality.
+  Future<Result<List<BarangayModel>>> getBarangays({
+    String municipalityId = 'urdaneta',
+  });
 }

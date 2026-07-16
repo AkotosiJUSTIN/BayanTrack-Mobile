@@ -1,15 +1,18 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:async';
-import '../../../../core/constants/urdaneta_geo.dart';
+
+import '../../../../core/network/error_mapper.dart';
 import '../../../../core/presentation/widgets/app_toast.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/municipality_geo.dart';
+import '../../../auth/presentation/barangays_provider.dart';
 import '../../../images/data/images_repository.dart';
-import '../../data/report_models.dart';
 import '../../data/reports_repository.dart';
 import '../reports_controller.dart';
 import 'new_report_controller.dart';
-import 'dart:io';
 import '../../../../core/utils/image_utils.dart';
 
 /// Fourth step: Review, consent, and submit the report
@@ -31,14 +34,34 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     }
 
     final state = ref.read(newReportControllerProvider);
+    final municipalities =
+        ref.read(municipalitiesProvider).asData?.value ??
+        const [bundledUrdanetaMunicipality];
+    final matchingMunicipalities = municipalities.where(
+      (item) => item.id == state.municipalityId,
+    );
+    final municipality = matchingMunicipalities.isEmpty
+        ? null
+        : matchingMunicipalities.first;
+
+    if (municipality == null ||
+        (municipality.id != defaultMunicipalityId &&
+            !municipality.hasUsableBounds)) {
+      AppToast.warning(
+        context,
+        'Municipality metadata is unavailable. Refresh it before submitting.',
+      );
+      return;
+    }
 
     if (state.latitude != null &&
         state.longitude != null &&
-        !UrdanetaGeo.contains(state.latitude!, state.longitude!)) {
-      AppToast.warning(
-        context,
-        'Report creation is only available within Urdaneta, Pangasinan.',
-      );
+        !municipalityContains(
+          municipality,
+          state.latitude!,
+          state.longitude!,
+        )) {
+      AppToast.warning(context, municipalityUnavailableMessage(municipality));
       return;
     }
 
@@ -70,8 +93,9 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
       final createStopwatch = Stopwatch()..start();
       final createdReport = await reportsRepo.createReport(request);
       createStopwatch.stop();
-      debugPrint('Create report took ${createStopwatch.elapsedMilliseconds} ms');
-
+      debugPrint(
+        'Create report took ${createStopwatch.elapsedMilliseconds} ms',
+      );
 
       // Step 3: Upload images (if any)
       if (filesForUpload.isNotEmpty) {
@@ -82,31 +106,49 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
         // Try bulk upload first (single request, fewer round-trips)
         try {
           final stopwatch = Stopwatch()..start();
-          setState(() => _statusMessage = 'Uploading ${filesForUpload.length} photos...');
-
-          // Use bulk-upload endpoint
-          final uploaded = await imagesRepo.bulkUploadImages(
-            imageFiles: filesForUpload,
-            reportId: createdReport.id,
-            onSendProgress: _onBulkUploadProgress,
-          ).timeout(
-            const Duration(seconds: 25),
-            onTimeout: () => throw TimeoutException('Bulk upload timed out'),
+          setState(
+            () =>
+                _statusMessage = 'Uploading ${filesForUpload.length} photos...',
           );
 
+          // Use bulk-upload endpoint
+          final uploaded = await imagesRepo
+              .bulkUploadImages(
+                imageFiles: filesForUpload,
+                reportId: createdReport.id,
+                onSendProgress: _onBulkUploadProgress,
+              )
+              .timeout(
+                const Duration(seconds: 25),
+                onTimeout: () =>
+                    throw TimeoutException('Bulk upload timed out'),
+              );
+
           stopwatch.stop();
-          debugPrint('Bulk upload of ${uploaded.length} images took ${stopwatch.elapsedMilliseconds} ms');
+          debugPrint(
+            'Bulk upload of ${uploaded.length} images took ${stopwatch.elapsedMilliseconds} ms',
+          );
 
           // If backend uploaded fewer than expected, fall back to parallel individual uploads
           if (uploaded.length < filesForUpload.length) {
-            debugPrint('Bulk upload incomplete, falling back to parallel uploads');
-            await _parallelUploadFallback(imagesRepo, filesForUpload, createdReport.id);
+            debugPrint(
+              'Bulk upload incomplete, falling back to parallel uploads',
+            );
+            await _parallelUploadFallback(
+              imagesRepo,
+              filesForUpload,
+              createdReport.id,
+            );
           }
         } catch (e) {
           debugPrint('Bulk upload failed: $e');
           // Fallback: upload in parallel with limited concurrency
           try {
-            await _parallelUploadFallback(imagesRepo, filesForUpload, createdReport.id);
+            await _parallelUploadFallback(
+              imagesRepo,
+              filesForUpload,
+              createdReport.id,
+            );
           } catch (e2) {
             debugPrint('Parallel upload fallback failed: $e2');
             if (mounted) {
@@ -132,18 +174,15 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
       if (mounted) {
         // Pop all the way back to the main navigation
         Navigator.of(context).popUntil((route) => route.isFirst);
-
       }
     } catch (e) {
+      final message = ErrorMapper.userMessage(ErrorMapper.mapException(e));
       setState(() {
         _isSubmitting = false;
         _statusMessage = '';
       });
       if (mounted) {
-        AppToast.error(
-          context,
-          'Unable to submit your report. Please check your internet connection and try again.',
-        );
+        AppToast.error(context, message);
       }
     }
   }
@@ -170,20 +209,25 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
       for (var j = 0; j < slice.length; j++) {
         final idx = i + j;
         final file = slice[j];
-        batchFutures.add(_maybeCompressFile(file).then((value) {
-          compressed[idx] = value ?? file;
-          if (mounted) {
-            setState(() {
-              _statusMessage = 'Preparing photos ${idx + 1} of ${files.length}...';
-            });
-          }
-        }));
+        batchFutures.add(
+          _maybeCompressFile(file).then((value) {
+            compressed[idx] = value ?? file;
+            if (mounted) {
+              setState(() {
+                _statusMessage =
+                    'Preparing photos ${idx + 1} of ${files.length}...';
+              });
+            }
+          }),
+        );
       }
       await Future.wait(batchFutures);
     }
 
     stopwatch.stop();
-    debugPrint('Compression for ${files.length} images took ${stopwatch.elapsedMilliseconds} ms');
+    debugPrint(
+      'Compression for ${files.length} images took ${stopwatch.elapsedMilliseconds} ms',
+    );
     return compressed.map((file) => file!).toList();
   }
 
@@ -198,7 +242,11 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
   }
 
   /// Parallel upload with limited concurrency (3)
-  Future<void> _parallelUploadFallback(ImagesRepository imagesRepo, List<File> files, String reportId) async {
+  Future<void> _parallelUploadFallback(
+    ImagesRepository imagesRepo,
+    List<File> files,
+    String reportId,
+  ) async {
     const concurrency = 3;
     final stopwatch = Stopwatch()..start();
 
@@ -208,7 +256,11 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
       for (var j = 0; j < slice.length; j++) {
         final fileIndex = i + j;
         final file = slice[j];
-        if (mounted) setState(() => _statusMessage = 'Uploading photo ${fileIndex + 1} of ${files.length}...');
+        if (mounted)
+          setState(
+            () => _statusMessage =
+                'Uploading photo ${fileIndex + 1} of ${files.length}...',
+          );
         final future = imagesRepo
             .uploadImage(
               imageFile: file,
@@ -218,23 +270,28 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                 if (!mounted || total <= 0) {
                   return;
                 }
-                final pct = ((sent / total) * 100).clamp(0, 100).toStringAsFixed(0);
+                final pct = ((sent / total) * 100)
+                    .clamp(0, 100)
+                    .toStringAsFixed(0);
                 setState(() {
-                  _statusMessage = 'Uploading photo ${fileIndex + 1}/${files.length}... $pct%';
+                  _statusMessage =
+                      'Uploading photo ${fileIndex + 1}/${files.length}... $pct%';
                 });
               },
             )
             .then((_) {})
             .catchError((e) {
-          debugPrint('Upload failed for ${file.path}: $e');
-        });
+              debugPrint('Upload failed for ${file.path}: $e');
+            });
         batch.add(future);
       }
       await Future.wait(batch);
     }
 
     stopwatch.stop();
-    debugPrint('Parallel upload of ${files.length} images took ${stopwatch.elapsedMilliseconds} ms');
+    debugPrint(
+      'Parallel upload of ${files.length} images took ${stopwatch.elapsedMilliseconds} ms',
+    );
   }
 
   @override

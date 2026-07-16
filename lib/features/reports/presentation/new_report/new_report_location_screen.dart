@@ -7,6 +7,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/constants/urdaneta_geo.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/municipality_geo.dart';
+import '../../../auth/data/auth_models.dart';
+import '../../../auth/presentation/barangays_provider.dart';
 import 'new_report_controller.dart';
 import 'new_report_details_screen.dart';
 
@@ -24,13 +27,30 @@ class NewReportLocationScreen extends ConsumerStatefulWidget {
 class _NewReportLocationScreenState
     extends ConsumerState<NewReportLocationScreen> {
   final MapController _mapController = MapController();
-  final LatLngBounds _mangaldanBounds = LatLngBounds(
-    const LatLng(UrdanetaGeo.south, UrdanetaGeo.west),
-    const LatLng(UrdanetaGeo.north, UrdanetaGeo.east),
-  );
-  final List<LatLng> _mangaldanPolygon = UrdanetaGeo.boundary
-      .map((point) => LatLng(point.$1, point.$2))
-      .toList(growable: false);
+  MunicipalityModel _selectedMunicipality = bundledUrdanetaMunicipality;
+
+  LatLngBounds get _municipalityBounds {
+    final bounds = _selectedMunicipality.bounds!;
+    return LatLngBounds(
+      LatLng(bounds.south, bounds.west),
+      LatLng(bounds.north, bounds.east),
+    );
+  }
+
+  List<LatLng> get _municipalityPolygon {
+    if (_selectedMunicipality.id == defaultMunicipalityId) {
+      return UrdanetaGeo.boundary
+          .map((point) => LatLng(point.$1, point.$2))
+          .toList(growable: false);
+    }
+    final bounds = _selectedMunicipality.bounds!;
+    return [
+      LatLng(bounds.south, bounds.west),
+      LatLng(bounds.south, bounds.east),
+      LatLng(bounds.north, bounds.east),
+      LatLng(bounds.north, bounds.west),
+    ];
+  }
 
   bool _isLoading = false;
   bool _isGettingPreciseLocation = false;
@@ -38,6 +58,7 @@ class _NewReportLocationScreenState
   String? _error;
   Position? _currentPosition;
   LatLng? _selectedPoint;
+  String? _pendingMetadataId;
   _LocationInputMode _locationInputMode = _LocationInputMode.phone;
 
   @override
@@ -56,15 +77,77 @@ class _NewReportLocationScreenState
 
     if (state.latitude != null && state.longitude != null) {
       _selectedPoint = LatLng(state.latitude!, state.longitude!);
-      _isOutsideServiceArea = !UrdanetaGeo.contains(
+      _isOutsideServiceArea = !municipalityContains(
+        _selectedMunicipality,
         state.latitude!,
         state.longitude!,
       );
       return;
     }
 
-    _selectedPoint = const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng);
+    _selectedPoint = const LatLng(
+      UrdanetaGeo.defaultLat,
+      UrdanetaGeo.defaultLng,
+    );
     _isOutsideServiceArea = false;
+  }
+
+  void _selectMunicipality(MunicipalityModel municipality) {
+    if (municipality.id == _selectedMunicipality.id) return;
+    final bounds = municipality.bounds;
+    if (bounds == null || !bounds.isValid) {
+      setState(() => _error = municipalityUnavailableMessage(municipality));
+      return;
+    }
+    ref
+        .read(newReportControllerProvider.notifier)
+        .setMunicipality(
+          id: municipality.id,
+          name: municipality.name,
+          province: municipality.province,
+        );
+    final center = LatLng(
+      municipality.centerLat ?? (bounds.south + bounds.north) / 2,
+      municipality.centerLng ?? (bounds.west + bounds.east) / 2,
+    );
+    setState(() {
+      _selectedMunicipality = municipality;
+      _selectedPoint = center;
+      _currentPosition = null;
+      _error = null;
+      _isOutsideServiceArea = false;
+    });
+    _setSelectedPoint(
+      center,
+      locationLabel: '${municipality.name}, ${municipality.province}',
+    );
+    if (_locationInputMode == _LocationInputMode.phone) {
+      _getCurrentLocation();
+    }
+  }
+
+  void _restoreMunicipalityMetadata(MunicipalityModel municipality) {
+    if (!mounted || municipality.id == _selectedMunicipality.id) return;
+    final state = ref.read(newReportControllerProvider);
+    final bounds = municipality.bounds;
+    if (bounds == null || !bounds.isValid) return;
+    final point = state.latitude != null && state.longitude != null
+        ? LatLng(state.latitude!, state.longitude!)
+        : LatLng(
+            municipality.centerLat ?? (bounds.south + bounds.north) / 2,
+            municipality.centerLng ?? (bounds.west + bounds.east) / 2,
+          );
+    setState(() {
+      _selectedMunicipality = municipality;
+      _selectedPoint = point;
+      _isOutsideServiceArea = !municipalityContains(
+        municipality,
+        point.latitude,
+        point.longitude,
+      );
+      _pendingMetadataId = null;
+    });
+    _moveCameraToSelection();
   }
 
   void _syncInitialSelectionToProvider() {
@@ -78,7 +161,8 @@ class _NewReportLocationScreenState
 
     _setSelectedPoint(
       point,
-      locationLabel: UrdanetaGeo.defaultLocationLabel,
+      locationLabel:
+          '${_selectedMunicipality.name}, ${_selectedMunicipality.province}',
     );
   }
 
@@ -144,27 +228,30 @@ class _NewReportLocationScreenState
     }
   }
 
-  Future<void> _getPreciseLocationInBackground(Position? fallbackPosition) async {
+  Future<void> _getPreciseLocationInBackground(
+    Position? fallbackPosition,
+  ) async {
     try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: AndroidSettings(
-          accuracy: LocationAccuracy.medium,
-          distanceFilter: 10,
-          forceLocationManager: false,
-          intervalDuration: const Duration(seconds: 5),
-          foregroundNotificationConfig: const ForegroundNotificationConfig(
-            notificationTitle: 'Getting location',
-            notificationText: 'BayanTrack is getting your location',
-            enableWakeLock: false,
-          ),
-        ),
-      ).timeout(
-        const Duration(seconds: 8),
-        onTimeout: () {
-          if (fallbackPosition != null) return fallbackPosition;
-          throw TimeoutException('Location request timed out');
-        },
-      );
+      final position =
+          await Geolocator.getCurrentPosition(
+            locationSettings: AndroidSettings(
+              accuracy: LocationAccuracy.medium,
+              distanceFilter: 10,
+              forceLocationManager: false,
+              intervalDuration: const Duration(seconds: 5),
+              foregroundNotificationConfig: const ForegroundNotificationConfig(
+                notificationTitle: 'Getting location',
+                notificationText: 'BayanTrack is getting your location',
+                enableWakeLock: false,
+              ),
+            ),
+          ).timeout(
+            const Duration(seconds: 8),
+            onTimeout: () {
+              if (fallbackPosition != null) return fallbackPosition;
+              throw TimeoutException('Location request timed out');
+            },
+          );
 
       if (!mounted) return;
       setState(() {
@@ -200,12 +287,15 @@ class _NewReportLocationScreenState
     }
 
     final point = LatLng(position.latitude, position.longitude);
-    if (!UrdanetaGeo.contains(point.latitude, point.longitude)) {
+    if (!municipalityContains(
+      _selectedMunicipality,
+      point.latitude,
+      point.longitude,
+    )) {
       ref.read(newReportControllerProvider.notifier).clearLocation();
       setState(() {
         _isOutsideServiceArea = true;
-        _error =
-          'Report creation is only available within Urdaneta, Pangasinan.';
+        _error = municipalityUnavailableMessage(_selectedMunicipality);
       });
       return;
     }
@@ -218,14 +308,17 @@ class _NewReportLocationScreenState
   }
 
   void _setSelectedPoint(LatLng point, {required String locationLabel}) {
-    final inMangaldan = UrdanetaGeo.contains(point.latitude, point.longitude);
+    final inMunicipality = municipalityContains(
+      _selectedMunicipality,
+      point.latitude,
+      point.longitude,
+    );
 
-    if (!inMangaldan) {
+    if (!inMunicipality) {
       ref.read(newReportControllerProvider.notifier).clearLocation();
       setState(() {
         _isOutsideServiceArea = true;
-        _error =
-          'Report creation is only available within Urdaneta, Pangasinan.';
+        _error = municipalityUnavailableMessage(_selectedMunicipality);
       });
       return;
     }
@@ -236,8 +329,8 @@ class _NewReportLocationScreenState
       longitude: point.longitude,
       location: locationLabel,
     );
-    controller.setCityMunicipality(UrdanetaGeo.defaultCityMunicipality);
-    controller.setProvince(UrdanetaGeo.defaultProvince);
+    controller.setCityMunicipality(_selectedMunicipality.name);
+    controller.setProvince(_selectedMunicipality.province);
 
     setState(() {
       _selectedPoint = point;
@@ -260,11 +353,14 @@ class _NewReportLocationScreenState
 
   void _onMapTap(LatLng point) {
     if (_locationInputMode != _LocationInputMode.manual) return;
-    if (!UrdanetaGeo.contains(point.latitude, point.longitude)) {
+    if (!municipalityContains(
+      _selectedMunicipality,
+      point.latitude,
+      point.longitude,
+    )) {
       setState(() {
         _isOutsideServiceArea = true;
-        _error =
-          'You can only place a manual pin within Urdaneta, Pangasinan.';
+        _error = municipalityUnavailableMessage(_selectedMunicipality);
       });
       return;
     }
@@ -291,9 +387,14 @@ class _NewReportLocationScreenState
   }
 
   void _useDefaultLocation() {
+    final bounds = _selectedMunicipality.bounds!;
     _setSelectedPoint(
-      const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng),
-      locationLabel: UrdanetaGeo.defaultLocationLabel,
+      LatLng(
+        _selectedMunicipality.centerLat ?? (bounds.south + bounds.north) / 2,
+        _selectedMunicipality.centerLng ?? (bounds.west + bounds.east) / 2,
+      ),
+      locationLabel:
+          '${_selectedMunicipality.name}, ${_selectedMunicipality.province}',
     );
   }
 
@@ -306,10 +407,30 @@ class _NewReportLocationScreenState
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(newReportControllerProvider);
+    final municipalitiesAsync = ref.watch(municipalitiesProvider);
+    final municipality = municipalitiesAsync.asData == null
+        ? null
+        : findMunicipalityMetadata(
+            municipalitiesAsync.asData!.value,
+            state.municipalityId,
+          );
+    if (municipality != null &&
+        municipality.id != _selectedMunicipality.id &&
+        _pendingMetadataId != municipality.id) {
+      _pendingMetadataId = municipality.id;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _restoreMunicipalityMetadata(municipality);
+      });
+    }
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final selectedPoint = _selectedPoint ??
-        const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng);
+    final bounds = _selectedMunicipality.bounds!;
+    final selectedPoint =
+        _selectedPoint ??
+        LatLng(
+          _selectedMunicipality.centerLat ?? (bounds.south + bounds.north) / 2,
+          _selectedMunicipality.centerLng ?? (bounds.west + bounds.east) / 2,
+        );
 
     return Scaffold(
       appBar: AppBar(title: const Text('New Report')),
@@ -344,11 +465,46 @@ class _NewReportLocationScreenState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Choose location source: phone GPS or manual pin in Urdaneta only.',
+                  'Select a municipality, then use phone GPS or a manual pin within its boundary.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: isDark
                         ? AppColors.darkTextSecondary
                         : AppColors.lightTextSecondary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                municipalitiesAsync.when(
+                  data: (municipalities) => DropdownButtonFormField<String>(
+                    initialValue:
+                        municipalities.any(
+                          (item) => item.id == state.municipalityId,
+                        )
+                        ? state.municipalityId
+                        : _selectedMunicipality.id,
+                    decoration: const InputDecoration(
+                      labelText: 'Municipality',
+                      prefixIcon: Icon(Icons.location_city),
+                      border: OutlineInputBorder(),
+                    ),
+                    items: municipalities
+                        .map(
+                          (item) => DropdownMenuItem(
+                            value: item.id,
+                            child: Text('${item.name}, ${item.province}'),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      _selectMunicipality(
+                        municipalities.firstWhere((item) => item.id == value),
+                      );
+                    },
+                  ),
+                  loading: () => const LinearProgressIndicator(),
+                  error: (error, stack) => Text(
+                    'Municipality metadata is unavailable.',
+                    style: TextStyle(color: theme.colorScheme.error),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -432,7 +588,9 @@ class _NewReportLocationScreenState
               initialZoom: 15,
               minZoom: 12,
               maxZoom: 18,
-              cameraConstraint: CameraConstraint.contain(bounds: _mangaldanBounds),
+              cameraConstraint: CameraConstraint.contain(
+                bounds: _municipalityBounds,
+              ),
               onTap: (_, point) => _onMapTap(point),
             ),
             children: [
@@ -443,7 +601,7 @@ class _NewReportLocationScreenState
               PolygonLayer(
                 polygons: [
                   Polygon(
-                    points: _mangaldanPolygon,
+                    points: _municipalityPolygon,
                     color: AppColors.primary.withValues(alpha: 0.08),
                     borderColor: AppColors.alertHigh,
                     borderStrokeWidth: 2,
@@ -558,7 +716,7 @@ class _NewReportLocationScreenState
             )
           else
             IconButton(
-              tooltip: 'Use default Urdaneta location',
+              tooltip: 'Use ${_selectedMunicipality.name} center',
               onPressed: _useDefaultLocation,
               icon: const Icon(Icons.pin_drop_outlined),
             ),
@@ -577,7 +735,7 @@ class _NewReportLocationScreenState
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        'Tap the map to place your pin. Selection is limited to Urdaneta.',
+        'Tap the map to place your pin within ${_selectedMunicipality.name}.',
         style: theme.textTheme.bodySmall,
         textAlign: TextAlign.center,
       ),

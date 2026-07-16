@@ -3,6 +3,22 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'report_models.freezed.dart';
 part 'report_models.g.dart';
 
+Object _readMunicipalityId(Map<dynamic, dynamic> json, String key) =>
+    json[key]?.toString() ?? 'urdaneta';
+
+Object? _readBarangayId(Map<dynamic, dynamic> json, String key) {
+  final explicit = json[key] ?? json['assigned_barangay_id'];
+  if (explicit != null && explicit.toString().trim().isNotEmpty) {
+    return explicit.toString();
+  }
+  final legacy = json['barangay']?.toString().trim();
+  if (legacy == null || legacy.isEmpty) return null;
+  return legacy
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'^_+|_+$'), '');
+}
+
 // ==================== JSON CONVERTERS ====================
 
 /// Converts a value that could be int, String, or null to int?
@@ -231,6 +247,11 @@ sealed class Report with _$Report {
     // Location Information
     String? zone,
     @JsonKey(name: 'street_landmark') String? streetLandmark,
+    @JsonKey(name: 'municipality_id', readValue: _readMunicipalityId)
+    @Default('urdaneta')
+    String municipalityId,
+    @JsonKey(name: 'barangay_id', readValue: _readBarangayId)
+    String? barangayId,
     @JsonKey(name: 'city_municipality') String? cityMunicipality,
     String? province,
     String? latitude,
@@ -257,9 +278,7 @@ sealed class Report with _$Report {
     // AI Fields
     @JsonKey(name: 'category_confidence') double? categoryConfidence,
     String? priority,
-    @JsonKey(name: 'priority_score')
-    @NullableIntConverter()
-    int? priorityScore,
+    @JsonKey(name: 'priority_score') @NullableIntConverter() int? priorityScore,
     @JsonKey(name: 'priority_level') String? priorityLevel,
     @JsonKey(name: 'priority_reasons') List<String>? priorityReasons,
     @JsonKey(name: 'base_score') @NullableIntConverter() int? baseScore,
@@ -279,7 +298,8 @@ sealed class Report with _$Report {
     @JsonKey(name: 'resolved_proof_image_ids')
     @Default([])
     List<String> resolvedProofImageIds,
-    @JsonKey(name: 'closure_signature_image_id') String? closureSignatureImageId,
+    @JsonKey(name: 'closure_signature_image_id')
+    String? closureSignatureImageId,
     @JsonKey(name: 'closure_signature_document_ids')
     @Default([])
     List<String> closureSignatureDocumentIds,
@@ -324,6 +344,10 @@ sealed class CreateReportRequest with _$CreateReportRequest {
     // Location Information (Section B)
     String? zone,
     @JsonKey(name: 'street_landmark') String? streetLandmark,
+    @JsonKey(name: 'municipality_id')
+    @Default('urdaneta')
+    String municipalityId,
+    @JsonKey(name: 'barangay_id') String? barangayId,
     @JsonKey(name: 'city_municipality') String? cityMunicipality,
     String? province,
     String? latitude,
@@ -359,6 +383,8 @@ sealed class UpdateReportRequest with _$UpdateReportRequest {
     @JsonKey(name: 'incident_type') String? incidentType,
     String? zone,
     @JsonKey(name: 'street_landmark') String? streetLandmark,
+    @JsonKey(name: 'municipality_id') String? municipalityId,
+    @JsonKey(name: 'barangay_id') String? barangayId,
     @JsonKey(name: 'city_municipality') String? cityMunicipality,
     String? province,
     // Legacy

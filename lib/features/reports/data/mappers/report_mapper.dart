@@ -27,6 +27,8 @@ class ReportMapper {
       isHappeningNow: dtoReport.isHappeningNow,
       zone: dtoReport.zone,
       streetLandmark: dtoReport.streetLandmark,
+      municipalityId: dtoReport.municipalityId,
+      barangayId: dtoReport.barangayId,
       cityMunicipality: dtoReport.cityMunicipality,
       province: dtoReport.province,
       latitude: double.tryParse(dtoReport.latitude ?? ''),
