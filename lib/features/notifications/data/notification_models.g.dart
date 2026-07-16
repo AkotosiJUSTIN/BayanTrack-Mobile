@@ -51,6 +51,7 @@ _PaginatedNotifications _$PaginatedNotificationsFromJson(
       .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
       .toList(),
   count: (json['count'] as num?)?.toInt() ?? 0,
+  total: (json['total'] as num?)?.toInt(),
   unreadCount: (json['unread_count'] as num?)?.toInt() ?? 0,
   next: json['next'] as String?,
   previous: json['previous'] as String?,
@@ -61,6 +62,7 @@ Map<String, dynamic> _$PaginatedNotificationsToJson(
 ) => <String, dynamic>{
   'notifications': instance.results,
   'count': instance.count,
+  'total': instance.total,
   'unread_count': instance.unreadCount,
   'next': instance.next,
   'previous': instance.previous,
@@ -78,26 +80,6 @@ _NotificationPreferences _$NotificationPreferencesFromJson(
 
 Map<String, dynamic> _$NotificationPreferencesToJson(
   _NotificationPreferences instance,
-) => <String, dynamic>{
-  'email_enabled': instance.emailEnabled,
-  'push_enabled': instance.pushEnabled,
-  'notify_on_status_change': instance.notifyOnStatusChange,
-  'notify_on_comment': instance.notifyOnComment,
-  'notify_on_assignment': instance.notifyOnAssignment,
-};
-
-_UpdatePreferencesRequest _$UpdatePreferencesRequestFromJson(
-  Map<String, dynamic> json,
-) => _UpdatePreferencesRequest(
-  emailEnabled: json['email_enabled'] as bool?,
-  pushEnabled: json['push_enabled'] as bool?,
-  notifyOnStatusChange: json['notify_on_status_change'] as bool?,
-  notifyOnComment: json['notify_on_comment'] as bool?,
-  notifyOnAssignment: json['notify_on_assignment'] as bool?,
-);
-
-Map<String, dynamic> _$UpdatePreferencesRequestToJson(
-  _UpdatePreferencesRequest instance,
 ) => <String, dynamic>{
   'email_enabled': instance.emailEnabled,
   'push_enabled': instance.pushEnabled,

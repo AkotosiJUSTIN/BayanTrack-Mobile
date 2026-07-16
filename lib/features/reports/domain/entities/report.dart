@@ -57,7 +57,7 @@ class Report extends Equatable {
   final double? departmentConfidence;
   final List<String> routingReasons;
   final bool needsDepartmentReview;
-  final String? relatedIssueId;
+  final String? incidentGroupId;
   final double? sentimentScore;
   final String? autoCategorySuggestion;
 
@@ -125,7 +125,7 @@ class Report extends Equatable {
     this.departmentConfidence,
     this.routingReasons = const [],
     this.needsDepartmentReview = false,
-    this.relatedIssueId,
+    this.incidentGroupId,
     this.sentimentScore,
     this.autoCategorySuggestion,
     this.images = const [],

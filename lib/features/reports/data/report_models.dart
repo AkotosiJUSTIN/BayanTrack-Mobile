@@ -289,7 +289,7 @@ sealed class Report with _$Report {
     @JsonKey(name: 'routing_reasons') List<String>? routingReasons,
     @JsonKey(name: 'needs_department_review') bool? needsDepartmentReview,
     @JsonKey(name: 'credibility_score') double? credibilityScore,
-    @JsonKey(name: 'related_issue_id') String? relatedIssueId,
+    @JsonKey(name: 'incident_group_id') String? incidentGroupId,
     @JsonKey(name: 'sentiment_score') double? sentimentScore,
     @JsonKey(name: 'auto_category_suggestion') String? autoCategorySuggestion,
 

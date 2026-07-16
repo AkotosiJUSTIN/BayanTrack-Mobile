@@ -88,7 +88,7 @@ _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
       .toList(),
   needsDepartmentReview: json['needs_department_review'] as bool?,
   credibilityScore: (json['credibility_score'] as num?)?.toDouble(),
-  relatedIssueId: json['related_issue_id'] as String?,
+  incidentGroupId: json['incident_group_id'] as String?,
   sentimentScore: (json['sentiment_score'] as num?)?.toDouble(),
   autoCategorySuggestion: json['auto_category_suggestion'] as String?,
   images:
@@ -165,7 +165,7 @@ Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
   'routing_reasons': instance.routingReasons,
   'needs_department_review': instance.needsDepartmentReview,
   'credibility_score': instance.credibilityScore,
-  'related_issue_id': instance.relatedIssueId,
+  'incident_group_id': instance.incidentGroupId,
   'sentiment_score': instance.sentimentScore,
   'auto_category_suggestion': instance.autoCategorySuggestion,
   'images': instance.images,

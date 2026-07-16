@@ -48,7 +48,7 @@ class NotificationMapper {
   ) {
     return domain_paginated.PaginatedNotifications(
       results: dtoObj.results.map(toNotificationEntity).toList(),
-      count: dtoObj.count,
+      count: dtoObj.total ?? dtoObj.count,
       unreadCount: dtoObj.unreadCount,
       next: dtoObj.next,
       previous: dtoObj.previous,

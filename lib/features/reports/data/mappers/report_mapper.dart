@@ -55,7 +55,7 @@ class ReportMapper {
       routingReasons: dtoReport.routingReasons ?? [],
       needsDepartmentReview: dtoReport.needsDepartmentReview ?? false,
       credibilityScore: dtoReport.credibilityScore,
-      relatedIssueId: dtoReport.relatedIssueId,
+      incidentGroupId: dtoReport.incidentGroupId,
       sentimentScore: dtoReport.sentimentScore,
       autoCategorySuggestion: dtoReport.autoCategorySuggestion,
       images: dtoReport.images.map(imageFromDto).toList(),

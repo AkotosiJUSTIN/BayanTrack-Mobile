@@ -82,7 +82,8 @@ class ApiConstants {
   // Notifications Endpoints
   static const String notifications = '/notifications/';
   static const String notificationPreferences = '/notifications/preferences/';
-  static const String notificationMarkAllRead = '/notifications/mark-all-read/';
+  static const String notificationMarkAllRead =
+      '/notifications/actions/mark-all-read/';
   static const String notificationPushToken = '/notifications/push-token/';
   static String notificationById(String id) => '/notifications/$id/';
 

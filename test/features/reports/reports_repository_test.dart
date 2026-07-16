@@ -216,6 +216,8 @@ void main() {
             'duplicate_score': 0.91,
             'duplicate_confidence': 'high',
             'duplicate_explanation': 'similar_wording, same_barangay',
+            'related_issue_id': 'LEGACY-RELATED-ID',
+            'incident_group_id': 'IG-1',
             'duplicate_suggestions': [
               {
                 'candidate_report_id': 'PRIVATE-CANDIDATE-ID',
@@ -238,7 +240,9 @@ void main() {
 
           expect(result.id, reportId);
           expect(result.description, 'Detailed report');
+          expect(result.incidentGroupId, 'IG-1');
           expect(result.toJson().containsKey('duplicate_suggestions'), isFalse);
+          expect(result.toJson().containsKey('related_issue_id'), isFalse);
           expect(
             result.toJson().toString(),
             isNot(contains('PRIVATE-CANDIDATE-ID')),
