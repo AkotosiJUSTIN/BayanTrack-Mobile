@@ -4,11 +4,12 @@ class ApiConstants {
   // MODE A — USB cable + adb reverse (no firewall issues):
   //   1. Connect phone via USB
   //   2. Run: adb reverse tcp:8000 tcp:8000
-  //   3. Django: python manage.py runserver   (127.0.0.1:8000 is fine)
+  //   3. Backend: python -m uvicorn backend.asgi:application --port 8000
   //   4. Set _devServerIp = ''  →  app uses http://localhost:8000
   //
   // MODE B — WiFi / mobile hotspot (USB not required):
-  //   1. Django MUST bind to all interfaces: python manage.py runserver 0.0.0.0:8000
+  //   1. Backend MUST bind to all interfaces:
+  //      python -m uvicorn backend.asgi:application --host 0.0.0.0 --port 8000
   //   2. Allow port 8000 through Windows Firewall (if prompted, click "Allow")
   //   3. Set _devServerIp = '<your PC WiFi IP>'  (run ipconfig → Wi-Fi IPv4)
   //      Current PC Wi-Fi IP: 192.168.1.23

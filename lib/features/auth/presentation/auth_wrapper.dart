@@ -10,7 +10,13 @@ import '../../notifications/push_service.dart';
 import '../../notifications/local_notification_service.dart';
 import '../../notifications/presentation/notifications_controller.dart';
 import '../../../core/network/dio_provider.dart';
+import '../../../core/constants/api_constants.dart';
+import '../../../core/realtime/realtime_contract.dart';
+import '../../../core/realtime/realtime_service.dart';
+import '../auth_di.dart';
 import '../../reports/presentation/report_detail_screen.dart';
+import '../../reports/presentation/report_detail_controller.dart';
+import '../../reports/presentation/reports_controller.dart';
 
 class AuthWrapper extends ConsumerStatefulWidget {
   const AuthWrapper({super.key});
@@ -22,6 +28,9 @@ class AuthWrapper extends ConsumerStatefulWidget {
 class _AuthWrapperState extends ConsumerState<AuthWrapper>
     with WidgetsBindingObserver {
   bool _pushInitialized = false;
+  RealtimeService? _realtimeService;
+  String? _realtimeUserId;
+  bool _realtimeStarting = false;
   @override
   void initState() {
     super.initState();
@@ -45,7 +54,56 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _realtimeService?.dispose();
     super.dispose();
+  }
+
+  Future<void> _startRealtime(String userId, {bool force = false}) async {
+    if (_realtimeStarting || (!force && _realtimeUserId == userId)) return;
+    _realtimeStarting = true;
+    try {
+      final token = await ref
+          .read(authSessionRepositoryProvider)
+          .getAccessToken();
+      final current = ref.read(authControllerProvider);
+      if (!mounted ||
+          token == null ||
+          token.isEmpty ||
+          current is! AuthSuccess ||
+          current.user?.id != userId) {
+        return;
+      }
+      final service = _realtimeService ??= RealtimeService();
+      service.connect(
+        serverUrl: ApiConstants.mediaBaseUrl,
+        token: token,
+        onEvent: _handleRealtimeEvent,
+      );
+      _realtimeUserId = userId;
+    } finally {
+      _realtimeStarting = false;
+    }
+  }
+
+  void _stopRealtime() {
+    _realtimeService?.dispose();
+    _realtimeService = null;
+    _realtimeUserId = null;
+  }
+
+  void _handleRealtimeEvent(RealtimeEvent event) {
+    final targets = invalidationTargets(event);
+    if (targets.contains(RealtimeTarget.reports)) {
+      ref.invalidate(reportsControllerProvider);
+      ref.invalidate(myReportsControllerProvider);
+      ref.read(myReportsRefreshProvider.notifier).increment();
+      if (event.entityKind == 'report') {
+        ref.invalidate(reportDetailControllerProvider(event.entityId));
+      }
+    }
+    if (targets.contains(RealtimeTarget.notifications)) {
+      ref.invalidate(notificationsControllerProvider);
+    }
   }
 
   @override
@@ -55,6 +113,10 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     if (state == AppLifecycleState.resumed) {
       final authState = ref.read(authControllerProvider);
       if (authState is AuthSuccess) {
+        final userId = authState.user?.id;
+        if (userId != null) {
+          Future.microtask(() => _startRealtime(userId, force: true));
+        }
         ref.invalidate(kycStatusControllerProvider);
         Future.microtask(() async {
           try {
@@ -95,10 +157,10 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
             final body = message.notification?.body ?? '';
             ref.invalidate(notificationsControllerProvider);
             await LocalNotificationService.showFromRemoteMessage(message);
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('$title: $body')),
-            );
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('$title: $body')));
           });
 
           // When a user taps a notification and app opens from background
@@ -118,7 +180,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
           final initial = await FirebaseMessaging.instance.getInitialMessage();
           if (initial != null) {
             final reportId = initial.data['report_id'] as String?;
-            if (reportId != null && mounted) {
+            if (reportId != null && context.mounted) {
               ref.invalidate(notificationsControllerProvider);
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -131,6 +193,15 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
           debugPrint('Push initialization failed: $e');
         }
       });
+    }
+
+    final authenticatedUserId = state is AuthSuccess ? state.user?.id : null;
+    if (authenticatedUserId != null &&
+        authenticatedUserId != _realtimeUserId &&
+        !_realtimeStarting) {
+      Future.microtask(() => _startRealtime(authenticatedUserId));
+    } else if (authenticatedUserId == null && _realtimeService != null) {
+      _stopRealtime();
     }
 
     return switch (state) {

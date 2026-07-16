@@ -60,6 +60,7 @@ dependencies:
   package_info_plus: ^8.1.2
   flutter_svg: ^2.2.3
   signature: ^5.5.0
+  socket_io_client: ^3.1.6
   path_provider: 2.1.5
 
 dev_dependencies:
