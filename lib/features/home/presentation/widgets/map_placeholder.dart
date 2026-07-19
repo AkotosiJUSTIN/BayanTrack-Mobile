@@ -8,7 +8,7 @@ import '../../../reports/domain/entities/report.dart';
 import '../../../reports/domain/entities/report_enums.dart';
 
 /// OpenStreetMap widget that renders report pins from fetched coordinates.
-class MapPlaceholder extends StatelessWidget {
+class MapPlaceholder extends StatefulWidget {
   const MapPlaceholder({
     super.key,
     required this.reports,
@@ -21,8 +21,21 @@ class MapPlaceholder extends StatelessWidget {
   final ValueChanged<Report>? onMarkerTap;
 
   @override
+  State<MapPlaceholder> createState() => _MapPlaceholderState();
+}
+
+class _MapPlaceholderState extends State<MapPlaceholder> {
+  final MapController _mapController = MapController();
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final reportsWithCoordinates = _reportsWithCoordinates(reports);
+    final reportsWithCoordinates = _reportsWithCoordinates(widget.reports);
     final initialCenter = _initialCenterFor(reportsWithCoordinates);
     final markers = reportsWithCoordinates
         .map(
@@ -37,7 +50,9 @@ class MapPlaceholder extends StatelessWidget {
               preferBelow: false,
               verticalOffset: 18,
               child: GestureDetector(
-                onTap: onMarkerTap == null ? null : () => onMarkerTap!(report),
+                onTap: widget.onMarkerTap == null
+                    ? null
+                    : () => widget.onMarkerTap!(report),
                 child: _buildMarker(_colorForStatus(report.status)),
               ),
             ),
@@ -48,12 +63,15 @@ class MapPlaceholder extends StatelessWidget {
     return Stack(
       children: [
         FlutterMap(
+          mapController: _mapController,
           options: MapOptions(
             initialCenter: initialCenter,
             initialZoom: 13,
-            initialCameraFit: MunicipalityMapCamera.initialFit(municipality),
+            initialCameraFit: MunicipalityMapCamera.initialFit(
+              widget.municipality,
+            ),
             cameraConstraint:
-                MunicipalityMapCamera.constraintFor(municipality) ??
+                MunicipalityMapCamera.constraintFor(widget.municipality) ??
                 const CameraConstraint.unconstrained(),
             minZoom: 4,
             maxZoom: 18,
@@ -63,7 +81,7 @@ class MapPlaceholder extends StatelessWidget {
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.example.bayantrack_mobile',
             ),
-            MunicipalityBoundaryLayer(boundary: municipality.boundary),
+            MunicipalityBoundaryLayer(boundary: widget.municipality.boundary),
             MarkerLayer(markers: markers),
             const RichAttributionWidget(
               attributions: [
@@ -71,6 +89,19 @@ class MapPlaceholder extends StatelessWidget {
               ],
             ),
           ],
+        ),
+        Positioned(
+          right: 12,
+          top: markers.isEmpty ? 76 : 12,
+          child: IconButton.filledTonal(
+            constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+            tooltip: 'Recenter to ${widget.municipality.name}',
+            onPressed: () => MunicipalityMapCamera.recenter(
+              _mapController,
+              widget.municipality,
+            ),
+            icon: const Icon(Icons.center_focus_strong_outlined),
+          ),
         ),
         if (markers.isEmpty)
           Positioned(
@@ -94,11 +125,11 @@ class MapPlaceholder extends StatelessWidget {
 
   LatLng _initialCenterFor(List<Report> reportsWithCoordinates) {
     if (reportsWithCoordinates.isEmpty) {
-      final bounds = municipality.bounds;
+      final bounds = widget.municipality.bounds;
       return LatLng(
-        municipality.centerLat ??
+        widget.municipality.centerLat ??
             (bounds == null ? 15.9530 : (bounds.south + bounds.north) / 2),
-        municipality.centerLng ??
+        widget.municipality.centerLng ??
             (bounds == null ? 120.5772 : (bounds.west + bounds.east) / 2),
       );
     }

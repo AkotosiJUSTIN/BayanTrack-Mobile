@@ -40,6 +40,12 @@ class _NewReportLocationScreenState
   _LocationInputMode _locationInputMode = _LocationInputMode.phone;
 
   @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     _applyDefaultLocationIfMissing();

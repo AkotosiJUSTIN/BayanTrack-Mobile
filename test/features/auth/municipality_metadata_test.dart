@@ -181,21 +181,44 @@ void main() {
     );
   });
 
-  test('bundled Urdaneta GeoJSON is validated once and matches the typed asset',
-      () async {
-    final raw = await rootBundle.loadString('assets/boundaries/0105546000.geojson');
-    final feature = jsonDecode(raw) as Map<String, dynamic>;
-    final boundary = MunicipalityBoundary.tryParse(feature['geometry']);
+  test(
+    'bundled Urdaneta GeoJSON is validated once and matches the typed asset',
+    () async {
+      final raw = await rootBundle.loadString(
+        'assets/boundaries/0105546000.geojson',
+      );
+      final feature = jsonDecode(raw) as Map<String, dynamic>;
+      final boundary = MunicipalityBoundary.tryParse(feature['geometry']);
 
-    expect(feature['properties']['psgc_code'], UrdanetaGeo.psgcCode);
-    expect(feature['properties']['geometry_sha256'], UrdanetaGeo.geometrySha256);
-    expect(boundary, isNotNull);
-    expect(boundary!.polygons.single.first.length, UrdanetaGeo.boundary.length);
-    expect(municipalityContains(bundledUrdanetaMunicipality, 15.953, 120.5772), isTrue);
-    expect(municipalityContains(bundledUrdanetaMunicipality, 15.95, 120.49), isFalse);
-    final edge = UrdanetaGeo.boundary.first;
-    expect(municipalityContains(bundledUrdanetaMunicipality, edge.latitude, edge.longitude), isTrue);
-  });
+      expect(feature['properties']['psgc_code'], UrdanetaGeo.psgcCode);
+      expect(
+        feature['properties']['geometry_sha256'],
+        UrdanetaGeo.geometrySha256,
+      );
+      expect(boundary, isNotNull);
+      expect(
+        boundary!.polygons.single.first.length,
+        UrdanetaGeo.boundary.length,
+      );
+      expect(
+        municipalityContains(bundledUrdanetaMunicipality, 15.953, 120.5772),
+        isTrue,
+      );
+      expect(
+        municipalityContains(bundledUrdanetaMunicipality, 15.95, 120.49),
+        isFalse,
+      );
+      final edge = UrdanetaGeo.boundary.first;
+      expect(
+        municipalityContains(
+          bundledUrdanetaMunicipality,
+          edge.latitude,
+          edge.longitude,
+        ),
+        isTrue,
+      );
+    },
+  );
 
   test('parses MultiPolygon and rejects malformed GeoJSON', () {
     final multiPolygon = MunicipalityBoundary.tryParse({
@@ -213,6 +236,37 @@ void main() {
     });
 
     expect(multiPolygon, isNotNull);
-    expect(MunicipalityBoundary.tryParse({'type': 'Polygon', 'coordinates': []}), isNull);
+    expect(
+      MunicipalityBoundary.tryParse({'type': 'Polygon', 'coordinates': []}),
+      isNull,
+    );
+    expect(
+      MunicipalityBoundary.tryParse({
+        'type': 'Polygon',
+        'coordinates': [
+          [
+            [120, 15],
+            [121, 15],
+            [121, 16],
+            [120, 16],
+          ],
+        ],
+      }),
+      isNull,
+    );
+    expect(
+      MunicipalityBoundary.tryParse({
+        'type': 'Polygon',
+        'coordinates': [
+          [
+            [120, 15],
+            [121, 15],
+            [double.infinity, 16],
+            [120, 15],
+          ],
+        ],
+      }),
+      isNull,
+    );
   });
 }

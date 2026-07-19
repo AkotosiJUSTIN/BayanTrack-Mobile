@@ -1,12 +1,8 @@
-import 'package:latlong2/latlong.dart';
-
 class GeoCoordinate {
   final double latitude;
   final double longitude;
 
   const GeoCoordinate(this.latitude, this.longitude);
-
-  LatLng toLatLng() => LatLng(latitude, longitude);
 }
 
 /// Validated Polygon or MultiPolygon geometry. Points on a boundary are in.
@@ -17,7 +13,8 @@ class MunicipalityBoundary {
   const MunicipalityBoundary({required this.type, required this.polygons});
 
   static MunicipalityBoundary? tryParse(Object? raw) {
-    if (raw is! Map || (raw['type'] != 'Polygon' && raw['type'] != 'MultiPolygon')) {
+    if (raw is! Map ||
+        (raw['type'] != 'Polygon' && raw['type'] != 'MultiPolygon')) {
       return null;
     }
     final rawCoordinates = raw['coordinates'];
@@ -26,7 +23,10 @@ class MunicipalityBoundary {
         ? _parsePolygons([rawCoordinates])
         : _parsePolygons(rawCoordinates);
     if (polygons == null || polygons.isEmpty) return null;
-    return MunicipalityBoundary(type: raw['type'] as String, polygons: polygons);
+    return MunicipalityBoundary(
+      type: raw['type'] as String,
+      polygons: polygons,
+    );
   }
 
   static List<List<List<GeoCoordinate>>>? _parsePolygons(List<dynamic> values) {
@@ -41,10 +41,14 @@ class MunicipalityBoundary {
           if (rawPoint is! List || rawPoint.length < 2) return null;
           final longitude = rawPoint[0];
           final latitude = rawPoint[1];
-          if (longitude is! num || latitude is! num ||
-              !longitude.isFinite || !latitude.isFinite ||
-              longitude < -180 || longitude > 180 ||
-              latitude < -90 || latitude > 90) {
+          if (longitude is! num ||
+              latitude is! num ||
+              !longitude.isFinite ||
+              !latitude.isFinite ||
+              longitude < -180 ||
+              longitude > 180 ||
+              latitude < -90 ||
+              latitude > 90) {
             return null;
           }
           ring.add(GeoCoordinate(latitude.toDouble(), longitude.toDouble()));
@@ -59,10 +63,6 @@ class MunicipalityBoundary {
 
   static bool _samePoint(GeoCoordinate first, GeoCoordinate second) =>
       first.latitude == second.latitude && first.longitude == second.longitude;
-
-  LatLngBounds get bounds => LatLngBounds.fromPoints(
-    polygons.expand((polygon) => polygon.expand((ring) => ring.map((point) => point.toLatLng()))).toList(growable: false),
-  );
 
   Map<String, dynamic> toGeoJson() => {
     'type': type,
@@ -130,7 +130,8 @@ class MunicipalityBoundary {
     GeoCoordinate end,
   ) {
     const epsilon = 1e-9;
-    final cross = (longitude - start.longitude) * (end.latitude - start.latitude) -
+    final cross =
+        (longitude - start.longitude) * (end.latitude - start.latitude) -
         (latitude - start.latitude) * (end.longitude - start.longitude);
     if (cross.abs() > epsilon) return false;
     return longitude >= _min(start.longitude, end.longitude) - epsilon &&

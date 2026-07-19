@@ -9,9 +9,9 @@ class MunicipalityMapCamera {
   const MunicipalityMapCamera._();
 
   static LatLngBounds? boundsFor(MunicipalityModel municipality) {
-    final source = municipality.boundary?.bounds;
+    final source = municipality.boundary;
     final fallback = municipality.bounds;
-    if (source != null) return _pad(source);
+    if (source != null) return _pad(_boundsFromBoundary(source));
     if (fallback == null || !fallback.isValid) return null;
     return _pad(
       LatLngBounds(
@@ -34,10 +34,18 @@ class MunicipalityMapCamera {
 
   static CameraConstraint? constraintFor(MunicipalityModel municipality) {
     final bounds = boundsFor(municipality);
-    return bounds == null ? null : CameraConstraint.contain(bounds: bounds);
+    // `contain` stops constraining when a viewport is wider than the city.
+    // Keeping the camera center inside the padded city bounds works at every
+    // zoom without fighting the initial fit or creating a correction loop.
+    return bounds == null
+        ? null
+        : CameraConstraint.containCenter(bounds: bounds);
   }
 
-  static void recenter(MapController controller, MunicipalityModel municipality) {
+  static void recenter(
+    MapController controller,
+    MunicipalityModel municipality,
+  ) {
     final fit = initialFit(municipality);
     if (fit != null) controller.fitCamera(fit);
   }
@@ -50,6 +58,14 @@ class MunicipalityMapCamera {
       LatLng(bounds.north + latitudePadding, bounds.east + longitudePadding),
     );
   }
+
+  static LatLngBounds _boundsFromBoundary(MunicipalityBoundary boundary) =>
+      LatLngBounds.fromPoints(
+        boundary.polygons
+            .expand((polygon) => polygon.expand((ring) => ring))
+            .map((point) => LatLng(point.latitude, point.longitude))
+            .toList(growable: false),
+      );
 }
 
 /// Boundary layer is deliberately placed before report markers and pins.
@@ -67,13 +83,13 @@ class MunicipalityBoundaryLayer extends StatelessWidget {
           .map(
             (polygon) => Polygon(
               points: polygon.first
-                  .map((point) => point.toLatLng())
+                  .map((point) => LatLng(point.latitude, point.longitude))
                   .toList(growable: false),
               holePointsList: polygon
                   .skip(1)
                   .map(
                     (ring) => ring
-                        .map((point) => point.toLatLng())
+                        .map((point) => LatLng(point.latitude, point.longitude))
                         .toList(growable: false),
                   )
                   .toList(growable: false),

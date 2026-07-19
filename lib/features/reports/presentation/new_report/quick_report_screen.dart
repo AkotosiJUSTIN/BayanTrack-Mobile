@@ -64,6 +64,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
   @override
   void dispose() {
+    _mapController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }

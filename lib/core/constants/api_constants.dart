@@ -20,7 +20,7 @@ class ApiConstants {
   static const String _prodUrl = 'https://your-production-domain.com';
 
   // MODE A (USB+adb): leave empty. MODE B (WiFi): set to PC's WiFi IP.
-  static const String _devServerIp = '192.168.1.37';
+  static const String _devServerIp = '';
   // ───────────────────────────────────────────────────────────────────────────
 
   static String get baseUrl {

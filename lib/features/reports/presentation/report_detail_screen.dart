@@ -32,9 +32,16 @@ class ReportDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
+  final MapController _locationMapController = MapController();
   int _currentImageIndex = 0;
   BlockchainVerificationResult? _verificationResult;
   bool _isVerifying = false;
+
+  @override
+  void dispose() {
+    _locationMapController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -228,7 +235,8 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
   Widget _buildReportContent(ThemeData theme, bool isDark, Report report) {
     final municipalities = ref.watch(municipalitiesProvider).asData?.value;
-    final municipality = findMunicipalityMetadata(
+    final municipality =
+        findMunicipalityMetadata(
           municipalities ?? const [bundledUrdanetaMunicipality],
           report.municipalityId,
         ) ??
@@ -350,6 +358,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                 child: Stack(
                   children: [
                     FlutterMap(
+                      mapController: _locationMapController,
                       options: MapOptions(
                         initialCenter: LatLng(
                           report.latitude!,
@@ -362,20 +371,19 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                         cameraConstraint: municipality == null
                             ? const CameraConstraint.unconstrained()
                             : MunicipalityMapCamera.constraintFor(
-                                  municipality,
-                                ) ??
-                                const CameraConstraint.unconstrained(),
+                                    municipality,
+                                  ) ??
+                                  const CameraConstraint.unconstrained(),
                         interactionOptions: const InteractionOptions(
-                          flags: InteractiveFlag.pinchZoom |
-                              InteractiveFlag.drag,
+                          flags:
+                              InteractiveFlag.pinchZoom | InteractiveFlag.drag,
                         ),
                       ),
                       children: [
                         TileLayer(
                           urlTemplate:
                               'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName:
-                              'com.example.bayantrack_mobile',
+                          userAgentPackageName: 'com.example.bayantrack_mobile',
                         ),
                         MunicipalityBoundaryLayer(
                           boundary: municipality?.boundary,
@@ -399,6 +407,23 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                         ),
                       ],
                     ),
+                    if (municipality != null)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: IconButton.filledTonal(
+                          constraints: const BoxConstraints.tightFor(
+                            width: 48,
+                            height: 48,
+                          ),
+                          tooltip: 'Recenter to ${municipality.name}',
+                          onPressed: () => MunicipalityMapCamera.recenter(
+                            _locationMapController,
+                            municipality,
+                          ),
+                          icon: const Icon(Icons.center_focus_strong_outlined),
+                        ),
+                      ),
                     Positioned(
                       bottom: 8,
                       left: 8,
@@ -408,8 +433,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: theme.scaffoldBackgroundColor
-                              .withValues(alpha: 0.85),
+                          color: theme.scaffoldBackgroundColor.withValues(
+                            alpha: 0.85,
+                          ),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -574,9 +600,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           decoration: BoxDecoration(
             color: AppColors.success.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.success.withValues(alpha: 0.3),
-            ),
+            border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
@@ -611,9 +635,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             ],
           ),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.success.withValues(alpha: 0.4),
-          ),
+          border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -652,9 +674,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   );
                   // Refresh report after review is submitted
                   if (acted == true && mounted) {
-                    ref.invalidate(
-                      reportDetailControllerProvider(report.id),
-                    );
+                    ref.invalidate(reportDetailControllerProvider(report.id));
                   }
                 },
                 icon: const Icon(Icons.rate_review_outlined),
@@ -671,7 +691,8 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     );
   }
 
-  Widget _buildBlockchainSection(ThemeData theme, bool isDark, Report report) {    return Container(
+  Widget _buildBlockchainSection(ThemeData theme, bool isDark, Report report) {
+    return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurface : Colors.grey.shade50,
@@ -953,15 +974,36 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   Widget _buildStatusBadge(ReportStatus status) {
     final (color, label) = switch (status) {
       ReportStatus.submitted => (const Color(0xFFF59E0B), 'Submitted'), // Amber
-      ReportStatus.underReview => (const Color(0xFF8B5CF6), 'Under Review'), // Violet
-      ReportStatus.inProgress => (const Color(0xFF2563EB), 'In Progress'), // Blue
-      ReportStatus.escalated => (const Color(0xFF8B5CF6), 'Under Review'), // Violet
-      ReportStatus.endorsed => (const Color(0xFF8B5CF6), 'Under Review'), // Violet
+      ReportStatus.underReview => (
+        const Color(0xFF8B5CF6),
+        'Under Review',
+      ), // Violet
+      ReportStatus.inProgress => (
+        const Color(0xFF2563EB),
+        'In Progress',
+      ), // Blue
+      ReportStatus.escalated => (
+        const Color(0xFF8B5CF6),
+        'Under Review',
+      ), // Violet
+      ReportStatus.endorsed => (
+        const Color(0xFF8B5CF6),
+        'Under Review',
+      ), // Violet
       ReportStatus.resolved => (const Color(0xFF22C55E), 'Resolved'), // Green
       ReportStatus.closed => (const Color(0xFF64748B), 'Closed'), // Gray
-      ReportStatus.rejected => (const Color(0xFFEF4444), 'Rejected'), // Light Red
-      ReportStatus.verified => (const Color(0xFF8B5CF6), 'Under Review'), // Violet
-      ReportStatus.assigned => (const Color(0xFF8B5CF6), 'Under Review'), // Violet
+      ReportStatus.rejected => (
+        const Color(0xFFEF4444),
+        'Rejected',
+      ), // Light Red
+      ReportStatus.verified => (
+        const Color(0xFF8B5CF6),
+        'Under Review',
+      ), // Violet
+      ReportStatus.assigned => (
+        const Color(0xFF8B5CF6),
+        'Under Review',
+      ), // Violet
     };
 
     return Container(
