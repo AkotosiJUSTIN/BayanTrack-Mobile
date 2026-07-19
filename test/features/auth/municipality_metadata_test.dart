@@ -9,6 +9,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/services.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   const otherBounds = MunicipalityBounds(
     south: 14,
     west: 120,

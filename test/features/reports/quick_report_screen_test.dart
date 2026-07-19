@@ -1,0 +1,336 @@
+import 'dart:async';
+
+import 'package:bayantrack_mobile/core/theme/app_theme.dart';
+import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
+import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
+import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
+import 'package:bayantrack_mobile/features/reports/data/reports_repository.dart';
+import 'package:bayantrack_mobile/features/reports/presentation/new_report/quick_report_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:mocktail/mocktail.dart';
+
+class _TestMunicipalities extends Municipalities {
+  @override
+  FutureOr<List<MunicipalityModel>> build() => const [
+    bundledUrdanetaMunicipality,
+  ];
+}
+
+class _ReportsRepositoryMock extends Mock implements ReportsRepository {}
+
+Position _position(double latitude, double longitude) => Position(
+  latitude: latitude,
+  longitude: longitude,
+  timestamp: DateTime(2026, 7, 19),
+  accuracy: 5,
+  altitude: 0,
+  altitudeAccuracy: 0,
+  heading: 0,
+  headingAccuracy: 0,
+  speed: 0,
+  speedAccuracy: 0,
+);
+
+Future<void> _pumpQuickReport(
+  WidgetTester tester, {
+  required Future<Position> Function() locate,
+  Size size = const Size(360, 800),
+  double textScale = 1,
+  ReportsRepository? reportsRepository,
+}) async {
+  tester.view.physicalSize = size;
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        userPermissionsProvider.overrideWithValue(UserPermissions(null)),
+        municipalitiesProvider.overrideWith(_TestMunicipalities.new),
+        if (reportsRepository != null)
+          reportsRepositoryProvider.overrideWithValue(reportsRepository),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.light,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
+        home: QuickReportScreen(
+          key: UniqueKey(),
+          locationOverride: locate,
+          showMapTiles: false,
+        ),
+      ),
+    ),
+  );
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 1));
+}
+
+void main() {
+  final inside = _position(15.979204, 120.622210);
+  final outside = _position(14.5995, 120.9842);
+
+  testWidgets('verification notice is compact and does not gate reporting', (
+    tester,
+  ) async {
+    await _pumpQuickReport(tester, locate: () async => inside);
+
+    expect(
+      find.text(
+        'You can report now. Verification improves trust and unlocks account features.',
+      ),
+      findsOneWidget,
+    );
+    await tester.enterText(
+      find.byKey(const Key('quick-report-description')),
+      'Floodwater is rising near the public market.',
+    );
+    await tester.pump();
+
+    final submit = tester.widget<ElevatedButton>(
+      find.byKey(const Key('quick-report-submit')),
+    );
+    expect(submit.onPressed, isNotNull);
+  });
+
+  testWidgets('GPS loading, success, and failure stay near location controls', (
+    tester,
+  ) async {
+    final pending = Completer<Position>();
+    await _pumpQuickReport(tester, locate: () => pending.future);
+
+    expect(find.text('Locating…'), findsOneWidget);
+    expect(find.text('Waiting for an incident location…'), findsOneWidget);
+
+    pending.complete(inside);
+    await tester.pump();
+    expect(find.text('GPS location found'), findsOneWidget);
+
+    await _pumpQuickReport(
+      tester,
+      locate: () => Future<Position>.error(StateError('GPS unavailable')),
+    );
+    await tester.pump();
+    expect(
+      find.text('Could not get device location. Refresh or use Manual Pin.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('outside GPS explains manual selection without blocking access', (
+    tester,
+  ) async {
+    await _pumpQuickReport(tester, locate: () async => outside);
+
+    expect(find.text('Location is outside Urdaneta'), findsOneWidget);
+    expect(
+      find.textContaining('You do not need to be in the city.'),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('quick-report-switch-manual')), findsOneWidget);
+
+    final switchToManual = find.byKey(const Key('quick-report-switch-manual'));
+    await tester.ensureVisible(switchToManual);
+    await tester.pump();
+    await tester.tap(switchToManual);
+    await tester.pump();
+    expect(find.text('Manual Pin'), findsOneWidget);
+    expect(
+      find.text('Tap the map to choose an incident location.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('manual pin accepts inside taps and rejects outside taps', (
+    tester,
+  ) async {
+    await _pumpQuickReport(tester, locate: () async => inside);
+    await tester.tap(find.text('Manual Pin'));
+    await tester.pump();
+
+    final mapFinder = find.byKey(const Key('quick-report-map'));
+    await tester.ensureVisible(mapFinder);
+    await tester.pump();
+    final onMapTap = tester
+        .widget<FlutterMap>(find.byType(FlutterMap))
+        .options
+        .onTap!;
+    onMapTap(
+      const TapPosition(Offset.zero, Offset.zero),
+      const LatLng(15.95, 120.49),
+    );
+    await tester.pump();
+    expect(find.text('Incident pin must be inside Urdaneta.'), findsOneWidget);
+
+    onMapTap(
+      const TapPosition(Offset.zero, Offset.zero),
+      const LatLng(15.979204, 120.622210),
+    );
+    await tester.pump();
+    expect(find.text('Incident location selected'), findsOneWidget);
+  });
+
+  testWidgets('submit is sticky, keyboard-safe, and explains disabled state', (
+    tester,
+  ) async {
+    await _pumpQuickReport(tester, locate: () async => inside);
+
+    expect(find.text('Add a short description to continue.'), findsOneWidget);
+    final submitBar = find.byKey(const Key('quick-report-submit-bar'));
+    final initialTop = tester.getTopLeft(submitBar).dy;
+
+    await tester.dragFrom(const Offset(4, 600), const Offset(0, -250));
+    await tester.pump();
+    expect(tester.getTopLeft(submitBar).dy, initialTop);
+
+    final description = find.byKey(const Key('quick-report-description'));
+    await tester.ensureVisible(description);
+    await tester.pump();
+    await tester.tap(description);
+    await tester.showKeyboard(description);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    await tester.pump();
+    expect(tester.getRect(submitBar).bottom, lessThanOrEqualTo(500));
+  });
+
+  testWidgets('submit shows a readable loading state and prevents repeats', (
+    tester,
+  ) async {
+    final reports = _ReportsRepositoryMock();
+    final nearby = Completer<List<NearbyReport>>();
+    when(
+      () => reports.getNearbyReports(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+        municipalityId: any(named: 'municipalityId'),
+      ),
+    ).thenAnswer((_) => nearby.future);
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      reportsRepository: reports,
+    );
+    await tester.enterText(
+      find.byKey(const Key('quick-report-description')),
+      'A fallen tree is blocking both lanes.',
+    );
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('quick-report-submit')));
+    await tester.pump();
+    expect(find.text('Submitting Quick Report…'), findsOneWidget);
+    expect(
+      tester
+          .widget<ElevatedButton>(find.byKey(const Key('quick-report-submit')))
+          .onPressed,
+      isNull,
+    );
+
+    nearby.complete([
+      const NearbyReport(
+        category: 'Infrastructure',
+        status: 'submitted',
+        distanceMeters: 20,
+        isGrouped: false,
+      ),
+    ]);
+    await tester.pump();
+    expect(find.text('Reports already nearby'), findsOneWidget);
+    await tester.tap(find.text('Review mine'));
+    await tester.pump();
+    expect(find.text('Submit Quick Report'), findsOneWidget);
+  });
+
+  for (final size in const [Size(360, 800), Size(390, 844), Size(412, 915)]) {
+    testWidgets('layout has no overflow at ${size.width}×${size.height}', (
+      tester,
+    ) async {
+      await _pumpQuickReport(tester, locate: () async => inside, size: size);
+      expect(
+        find.byKey(const Key('quick-report-submit')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('large text keeps controls and sticky submit unclipped', (
+    tester,
+  ) async {
+    await _pumpQuickReport(tester, locate: () async => outside, textScale: 2);
+
+    expect(find.text('Phone GPS'), findsOneWidget);
+    expect(
+      find.byKey(const Key('quick-report-submit')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('map controls and primary fields expose accessible labels', (
+    tester,
+  ) async {
+    await _pumpQuickReport(tester, locate: () async => inside);
+
+    expect(
+      tester
+          .widget<IconButton>(
+            find.byKey(const Key('quick-report-refresh-location')),
+          )
+          .tooltip,
+      'Refresh device location',
+    );
+    expect(
+      tester
+          .widget<IconButton>(
+            find.byKey(const Key('quick-report-recenter-municipality')),
+          )
+          .tooltip,
+      'Recenter municipality',
+    );
+    expect(
+      find.ancestor(
+        of: find.byKey(const Key('quick-report-description')),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.label == 'Short description',
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.ancestor(
+        of: find.byKey(const Key('quick-report-submit')),
+        matching: find.byWidgetPredicate(
+          (widget) =>
+              widget is Semantics &&
+              widget.properties.label == 'Submit Quick Report',
+        ),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('pending location completion is ignored after disposal', (
+    tester,
+  ) async {
+    final pending = Completer<Position>();
+    await _pumpQuickReport(tester, locate: () => pending.future);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    pending.complete(inside);
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+  });
+}

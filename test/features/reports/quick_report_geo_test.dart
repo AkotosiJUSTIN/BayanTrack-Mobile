@@ -3,6 +3,20 @@ import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/new_report/quick_report_geo.dart';
 
 void main() {
+  group('quickReportDescriptionError', () {
+    test('requires meaningful text and enforces the 500-character limit', () {
+      expect(
+        quickReportDescriptionError('   '),
+        'Add a short description to continue.',
+      );
+      expect(quickReportDescriptionError('Blocked drainage'), isNull);
+      expect(
+        quickReportDescriptionError(List.filled(501, 'x').join()),
+        'Description must be 500 characters or fewer.',
+      );
+    });
+  });
+
   group('deriveNearestBarangay', () {
     test('returns null when barangay list is empty', () {
       final result = deriveNearestBarangay(
