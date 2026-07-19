@@ -1,25 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../../core/constants/urdaneta_geo.dart';
+import '../../../../core/maps/municipality_map.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/data/auth_models.dart';
 import '../../../reports/domain/entities/report.dart';
 import '../../../reports/domain/entities/report_enums.dart';
 
 /// OpenStreetMap widget that renders report pins from fetched coordinates.
 class MapPlaceholder extends StatelessWidget {
-  const MapPlaceholder({super.key, required this.reports, this.onMarkerTap});
+  const MapPlaceholder({
+    super.key,
+    required this.reports,
+    required this.municipality,
+    this.onMarkerTap,
+  });
 
   final List<Report> reports;
+  final MunicipalityModel municipality;
   final ValueChanged<Report>? onMarkerTap;
 
   @override
   Widget build(BuildContext context) {
     final reportsWithCoordinates = _reportsWithCoordinates(reports);
     final initialCenter = _initialCenterFor(reportsWithCoordinates);
-    final coordinates = reportsWithCoordinates
-        .map((report) => LatLng(report.latitude!, report.longitude!))
-        .toList(growable: false);
     final markers = reportsWithCoordinates
         .map(
           (report) => Marker(
@@ -47,13 +51,10 @@ class MapPlaceholder extends StatelessWidget {
           options: MapOptions(
             initialCenter: initialCenter,
             initialZoom: 13,
-            initialCameraFit: coordinates.isEmpty
-                ? null
-                : CameraFit.coordinates(
-                    coordinates: coordinates,
-                    padding: const EdgeInsets.all(40),
-                    maxZoom: 14,
-                  ),
+            initialCameraFit: MunicipalityMapCamera.initialFit(municipality),
+            cameraConstraint:
+                MunicipalityMapCamera.constraintFor(municipality) ??
+                const CameraConstraint.unconstrained(),
             minZoom: 4,
             maxZoom: 18,
           ),
@@ -62,6 +63,7 @@ class MapPlaceholder extends StatelessWidget {
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.example.bayantrack_mobile',
             ),
+            MunicipalityBoundaryLayer(boundary: municipality.boundary),
             MarkerLayer(markers: markers),
             const RichAttributionWidget(
               attributions: [
@@ -92,7 +94,13 @@ class MapPlaceholder extends StatelessWidget {
 
   LatLng _initialCenterFor(List<Report> reportsWithCoordinates) {
     if (reportsWithCoordinates.isEmpty) {
-      return const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng);
+      final bounds = municipality.bounds;
+      return LatLng(
+        municipality.centerLat ??
+            (bounds == null ? 15.9530 : (bounds.south + bounds.north) / 2),
+        municipality.centerLng ??
+            (bounds == null ? 120.5772 : (bounds.west + bounds.east) / 2),
+      );
     }
 
     final latitudeTotal = reportsWithCoordinates.fold<double>(

@@ -22,6 +22,8 @@ const bundledUrdanetaMunicipality = MunicipalityModel(
     north: UrdanetaGeo.north,
     east: UrdanetaGeo.east,
   ),
+  boundary: UrdanetaGeo.boundaryGeometry,
+  psgcCode: UrdanetaGeo.psgcCode,
   isDefault: true,
 );
 
@@ -48,7 +50,7 @@ List<MunicipalityModel>? validateMunicipalities(
       return null;
     }
     if (municipality.id != defaultMunicipalityId &&
-        !municipality.hasUsableBounds) {
+        !municipality.hasUsableBoundary) {
       return null;
     }
     validated.add(
@@ -60,6 +62,8 @@ List<MunicipalityModel>? validateMunicipalities(
               centerLat: bundledUrdanetaMunicipality.centerLat,
               centerLng: bundledUrdanetaMunicipality.centerLng,
               bounds: bundledUrdanetaMunicipality.bounds,
+              boundary: bundledUrdanetaMunicipality.boundary,
+              psgcCode: bundledUrdanetaMunicipality.psgcCode,
               isDefault: true,
               isSupported: municipality.isSupported,
             )

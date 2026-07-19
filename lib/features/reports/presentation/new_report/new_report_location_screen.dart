@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/constants/urdaneta_geo.dart';
+import '../../../../core/maps/municipality_map.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/municipality_geo.dart';
 import '../../../auth/data/auth_models.dart';
@@ -29,29 +30,6 @@ class _NewReportLocationScreenState
   final MapController _mapController = MapController();
   MunicipalityModel _selectedMunicipality = bundledUrdanetaMunicipality;
 
-  LatLngBounds get _municipalityBounds {
-    final bounds = _selectedMunicipality.bounds!;
-    return LatLngBounds(
-      LatLng(bounds.south, bounds.west),
-      LatLng(bounds.north, bounds.east),
-    );
-  }
-
-  List<LatLng> get _municipalityPolygon {
-    if (_selectedMunicipality.id == defaultMunicipalityId) {
-      return UrdanetaGeo.boundary
-          .map((point) => LatLng(point.$1, point.$2))
-          .toList(growable: false);
-    }
-    final bounds = _selectedMunicipality.bounds!;
-    return [
-      LatLng(bounds.south, bounds.west),
-      LatLng(bounds.south, bounds.east),
-      LatLng(bounds.north, bounds.east),
-      LatLng(bounds.north, bounds.west),
-    ];
-  }
-
   bool _isLoading = false;
   bool _isGettingPreciseLocation = false;
   bool _isOutsideServiceArea = false;
@@ -67,7 +45,6 @@ class _NewReportLocationScreenState
     _applyDefaultLocationIfMissing();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _syncInitialSelectionToProvider();
-      _moveCameraToSelection();
       _getCurrentLocation();
     });
   }
@@ -95,7 +72,7 @@ class _NewReportLocationScreenState
   void _selectMunicipality(MunicipalityModel municipality) {
     if (municipality.id == _selectedMunicipality.id) return;
     final bounds = municipality.bounds;
-    if (bounds == null || !bounds.isValid) {
+    if (bounds == null || !municipality.hasUsableBoundary) {
       setState(() => _error = municipalityUnavailableMessage(municipality));
       return;
     }
@@ -130,7 +107,7 @@ class _NewReportLocationScreenState
     if (!mounted || municipality.id == _selectedMunicipality.id) return;
     final state = ref.read(newReportControllerProvider);
     final bounds = municipality.bounds;
-    if (bounds == null || !bounds.isValid) return;
+    if (bounds == null || !municipality.hasUsableBoundary) return;
     final point = state.latitude != null && state.longitude != null
         ? LatLng(state.latitude!, state.longitude!)
         : LatLng(
@@ -163,6 +140,7 @@ class _NewReportLocationScreenState
       point,
       locationLabel:
           '${_selectedMunicipality.name}, ${_selectedMunicipality.province}',
+      moveCamera: false,
     );
   }
 
@@ -295,6 +273,7 @@ class _NewReportLocationScreenState
       ref.read(newReportControllerProvider.notifier).clearLocation();
       setState(() {
         _isOutsideServiceArea = true;
+        _selectedPoint = null;
         _error = municipalityUnavailableMessage(_selectedMunicipality);
       });
       return;
@@ -307,7 +286,11 @@ class _NewReportLocationScreenState
     );
   }
 
-  void _setSelectedPoint(LatLng point, {required String locationLabel}) {
+  void _setSelectedPoint(
+    LatLng point, {
+    required String locationLabel,
+    bool moveCamera = true,
+  }) {
     final inMunicipality = municipalityContains(
       _selectedMunicipality,
       point.latitude,
@@ -338,7 +321,7 @@ class _NewReportLocationScreenState
       _error = null;
     });
 
-    _moveCameraToSelection();
+    if (moveCamera) _moveCameraToSelection();
   }
 
   void _moveCameraToSelection() {
@@ -588,9 +571,12 @@ class _NewReportLocationScreenState
               initialZoom: 15,
               minZoom: 12,
               maxZoom: 18,
-              cameraConstraint: CameraConstraint.contain(
-                bounds: _municipalityBounds,
+              initialCameraFit: MunicipalityMapCamera.initialFit(
+                _selectedMunicipality,
               ),
+              cameraConstraint:
+                  MunicipalityMapCamera.constraintFor(_selectedMunicipality) ??
+                  const CameraConstraint.unconstrained(),
               onTap: (_, point) => _onMapTap(point),
             ),
             children: [
@@ -598,33 +584,27 @@ class _NewReportLocationScreenState
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.bayantrack_mobile',
               ),
-              PolygonLayer(
-                polygons: [
-                  Polygon(
-                    points: _municipalityPolygon,
-                    color: AppColors.primary.withValues(alpha: 0.08),
-                    borderColor: AppColors.alertHigh,
-                    borderStrokeWidth: 2,
-                    pattern: const StrokePattern.dotted(spacingFactor: 1.2),
-                  ),
-                ],
-                invertedFill: Colors.black.withValues(alpha: 0.55),
+              MunicipalityBoundaryLayer(
+                boundary: _selectedMunicipality.boundary,
               ),
               MarkerLayer(
-                markers: [
-                  Marker(
-                    point: selectedPoint,
-                    width: 40,
-                    height: 40,
-                    child: Icon(
-                      Icons.location_on,
-                      size: 36,
-                      color: _locationInputMode == _LocationInputMode.manual
-                          ? AppColors.primary
-                          : AppColors.alertHigh,
-                    ),
-                  ),
-                ],
+                markers: _selectedPoint == null
+                    ? const []
+                    : [
+                        Marker(
+                          point: selectedPoint,
+                          width: 40,
+                          height: 40,
+                          child: Icon(
+                            Icons.location_on,
+                            size: 36,
+                            color:
+                                _locationInputMode == _LocationInputMode.manual
+                                ? AppColors.primary
+                                : AppColors.alertHigh,
+                          ),
+                        ),
+                      ],
               ),
               const RichAttributionWidget(
                 attributions: [
@@ -648,6 +628,18 @@ class _NewReportLocationScreenState
             ),
           if (_locationInputMode == _LocationInputMode.phone && _isLoading)
             const Center(child: CircularProgressIndicator()),
+          Positioned(
+            right: 12,
+            bottom: 12,
+            child: IconButton.filledTonal(
+              tooltip: 'Recenter to municipality',
+              onPressed: () => MunicipalityMapCamera.recenter(
+                _mapController,
+                _selectedMunicipality,
+              ),
+              icon: const Icon(Icons.center_focus_strong_outlined),
+            ),
+          ),
         ],
       ),
     );

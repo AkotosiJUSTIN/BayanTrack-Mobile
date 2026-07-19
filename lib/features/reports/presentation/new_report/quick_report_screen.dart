@@ -9,6 +9,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/constants/urdaneta_geo.dart';
+import '../../../../core/maps/municipality_map.dart';
 import '../../../../core/network/error_mapper.dart';
 import '../../../../core/presentation/widgets/app_toast.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -37,29 +38,6 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   final MapController _mapController = MapController();
   final TextEditingController _descriptionController = TextEditingController();
   MunicipalityModel _selectedMunicipality = bundledUrdanetaMunicipality;
-
-  LatLngBounds get _serviceBounds {
-    final bounds = _selectedMunicipality.bounds!;
-    return LatLngBounds(
-      LatLng(bounds.south, bounds.west),
-      LatLng(bounds.north, bounds.east),
-    );
-  }
-
-  List<LatLng> get _servicePolygon {
-    if (_selectedMunicipality.id == defaultMunicipalityId) {
-      return UrdanetaGeo.boundary
-          .map((point) => LatLng(point.$1, point.$2))
-          .toList(growable: false);
-    }
-    final bounds = _selectedMunicipality.bounds!;
-    return [
-      LatLng(bounds.south, bounds.west),
-      LatLng(bounds.south, bounds.east),
-      LatLng(bounds.north, bounds.east),
-      LatLng(bounds.north, bounds.west),
-    ];
-  }
 
   bool _isSubmitting = false;
   bool _isLoadingLocation = false;
@@ -110,7 +88,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   void _selectMunicipality(MunicipalityModel municipality) {
     if (municipality.id == _selectedMunicipality.id) return;
     final bounds = municipality.bounds;
-    if (bounds == null || !bounds.isValid) {
+    if (bounds == null || !municipality.hasUsableBoundary) {
       setState(() => _error = municipalityUnavailableMessage(municipality));
       return;
     }
@@ -171,15 +149,6 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
     if (mode == _QuickLocationInputMode.phone) {
       _getCurrentLocation();
-    } else {
-      final point =
-          _selectedPoint ??
-          const LatLng(UrdanetaGeo.defaultLat, UrdanetaGeo.defaultLng);
-      _setSelectedPoint(
-        point,
-        locationLabel:
-            'Manual pin: ${point.latitude.toStringAsFixed(6)}, ${point.longitude.toStringAsFixed(6)}',
-      );
     }
   }
 
@@ -706,7 +675,9 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'Lat ${point.latitude.toStringAsFixed(6)}  •  Lng ${point.longitude.toStringAsFixed(6)}',
+                            _selectedPoint == null
+                                ? 'No incident location selected.'
+                                : 'Lat ${point.latitude.toStringAsFixed(6)}  •  Lng ${point.longitude.toStringAsFixed(6)}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: isDark
                                   ? AppColors.darkTextSecondary
@@ -725,9 +696,15 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                   initialZoom: 15,
                                   minZoom: 12,
                                   maxZoom: 18,
-                                  cameraConstraint: CameraConstraint.contain(
-                                    bounds: _serviceBounds,
-                                  ),
+                                  initialCameraFit:
+                                      MunicipalityMapCamera.initialFit(
+                                        _selectedMunicipality,
+                                      ),
+                                  cameraConstraint:
+                                      MunicipalityMapCamera.constraintFor(
+                                        _selectedMunicipality,
+                                      ) ??
+                                      const CameraConstraint.unconstrained(),
                                   onTap: (_, tappedPoint) =>
                                       _onMapTap(tappedPoint),
                                 ),
@@ -738,36 +715,29 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                     userAgentPackageName:
                                         'com.example.bayantrack_mobile',
                                   ),
-                                  PolygonLayer(
-                                    polygons: [
-                                      Polygon(
-                                        points: _servicePolygon,
-                                        color: AppColors.primary.withValues(
-                                          alpha: 0.08,
-                                        ),
-                                        borderColor: AppColors.primary
-                                            .withValues(alpha: 0.45),
-                                        borderStrokeWidth: 2,
-                                      ),
-                                    ],
+                                  MunicipalityBoundaryLayer(
+                                    boundary: _selectedMunicipality.boundary,
                                   ),
                                   MarkerLayer(
-                                    markers: [
-                                      Marker(
-                                        point: point,
-                                        width: 44,
-                                        height: 44,
-                                        child: Icon(
-                                          Icons.location_pin,
-                                          size: 40,
-                                          color:
-                                              _locationInputMode ==
-                                                  _QuickLocationInputMode.manual
-                                              ? AppColors.primary
-                                              : AppColors.alertHigh,
-                                        ),
-                                      ),
-                                    ],
+                                    markers: _selectedPoint == null
+                                        ? const []
+                                        : [
+                                            Marker(
+                                              point: point,
+                                              width: 44,
+                                              height: 44,
+                                              child: Icon(
+                                                Icons.location_pin,
+                                                size: 40,
+                                                color:
+                                                    _locationInputMode ==
+                                                        _QuickLocationInputMode
+                                                            .manual
+                                                    ? AppColors.primary
+                                                    : AppColors.alertHigh,
+                                              ),
+                                            ),
+                                          ],
                                   ),
                                   const RichAttributionWidget(
                                     attributions: [
@@ -809,12 +779,28 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                           const SizedBox(height: 12),
                           Align(
                             alignment: Alignment.centerLeft,
-                            child: TextButton.icon(
-                              onPressed: _isLoadingLocation
-                                  ? null
-                                  : _getCurrentLocation,
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Refresh location'),
+                            child: Wrap(
+                              spacing: 8,
+                              children: [
+                                TextButton.icon(
+                                  onPressed: _isLoadingLocation
+                                      ? null
+                                      : _getCurrentLocation,
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('Refresh location'),
+                                ),
+                                TextButton.icon(
+                                  onPressed: () =>
+                                      MunicipalityMapCamera.recenter(
+                                        _mapController,
+                                        _selectedMunicipality,
+                                      ),
+                                  icon: const Icon(
+                                    Icons.center_focus_strong_outlined,
+                                  ),
+                                  label: const Text('Recenter municipality'),
+                                ),
+                              ],
                             ),
                           ),
                         ],

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/presentation/widgets/empty_content_placeholder.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/data/user_permissions.dart';
+import '../../auth/presentation/barangays_provider.dart';
 import '../../auth/presentation/verification_widgets.dart';
 import '../../kyc/presentation/kyc_controller.dart';
 import '../../reports/domain/entities/report.dart';
@@ -385,6 +386,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return _buildEmptyState(theme);
     }
 
+    final mapReports = _reports
+        .where((report) => report.status != ReportStatus.closed)
+        .toList(growable: false);
+    final municipalityIds = mapReports
+        .map((report) => report.municipalityId)
+        .toSet();
+    final municipalityId = municipalityIds.length == 1
+        ? municipalityIds.single
+        : defaultMunicipalityId;
+    final municipalities = ref.watch(municipalitiesProvider).asData?.value;
+    final municipality = findMunicipalityMetadata(
+          municipalities ?? const [bundledUrdanetaMunicipality],
+          municipalityId,
+        ) ??
+        bundledUrdanetaMunicipality;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final viewportHeight = constraints.maxHeight.isFinite
@@ -399,9 +416,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: Stack(
                 children: [
                   MapPlaceholder(
-                    reports: _reports
-                        .where((r) => r.status != ReportStatus.closed)
-                        .toList(),
+                    reports: mapReports,
+                    municipality: municipality,
                     onMarkerTap: (report) => _openReportDetail(report.id, report),
                   ),
                   Positioned(

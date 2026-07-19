@@ -1,22 +1,16 @@
 import '../../features/auth/data/auth_models.dart';
-import '../constants/urdaneta_geo.dart';
 
-/// Uses the exact bundled Urdaneta polygon and API bounds elsewhere.
+/// Bounds constrain the camera; only a verified polygon validates a pin.
 bool municipalityContains(
   MunicipalityModel municipality,
   double latitude,
   double longitude,
 ) {
-  if (!municipality.isSupported) return false;
-  if (municipality.id == 'urdaneta') {
-    return UrdanetaGeo.contains(latitude, longitude);
-  }
-  return municipality.bounds?.contains(latitude, longitude) == true;
+  return municipality.isSupported &&
+      municipality.boundary?.contains(latitude, longitude) == true;
 }
 
 String municipalityUnavailableMessage(MunicipalityModel municipality) =>
-    municipality.id == 'urdaneta'
-    ? 'Report creation is only available within Urdaneta, Pangasinan.'
-    : municipality.hasUsableBounds
-    ? 'The selected location is outside ${municipality.name}, ${municipality.province}.'
-    : 'Location boundaries for ${municipality.name} are unavailable. Refresh municipality data before submitting.';
+    municipality.hasUsableBoundary
+        ? 'The selected location is outside ${municipality.name}, ${municipality.province}.'
+        : 'Verified boundaries for ${municipality.name} are unavailable. Refresh municipality data before submitting.';

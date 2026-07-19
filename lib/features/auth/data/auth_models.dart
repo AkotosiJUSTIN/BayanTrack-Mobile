@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../core/maps/municipality_boundary.dart';
+
 part 'auth_models.freezed.dart';
 part 'auth_models.g.dart';
 
@@ -216,6 +218,8 @@ class MunicipalityModel {
   final double? centerLat;
   final double? centerLng;
   final MunicipalityBounds? bounds;
+  final MunicipalityBoundary? boundary;
+  final String? psgcCode;
   final bool isDefault;
   final bool isSupported;
 
@@ -226,12 +230,15 @@ class MunicipalityModel {
     this.centerLat,
     this.centerLng,
     this.bounds,
+    this.boundary,
+    this.psgcCode,
     this.isDefault = false,
     this.isSupported = true,
   });
 
   factory MunicipalityModel.fromJson(Map<String, dynamic> json) {
     final rawBounds = json['bounds'];
+    final boundary = MunicipalityBoundary.tryParse(json['boundary']);
     return MunicipalityModel(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
@@ -241,12 +248,15 @@ class MunicipalityModel {
       bounds: rawBounds is Map
           ? MunicipalityBounds.fromJson(Map<String, dynamic>.from(rawBounds))
           : null,
+      boundary: boundary,
+      psgcCode: json['psgc_code']?.toString(),
       isDefault: json['is_default'] == true,
       isSupported: json['is_supported'] != false,
     );
   }
 
   bool get hasUsableBounds => bounds?.isValid == true;
+  bool get hasUsableBoundary => boundary != null && hasUsableBounds;
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -255,6 +265,8 @@ class MunicipalityModel {
     'center_lat': centerLat,
     'center_lng': centerLng,
     'bounds': bounds?.toJson(),
+    'boundary': boundary?.toGeoJson(),
+    'psgc_code': psgcCode,
     'is_default': isDefault,
     'is_supported': isSupported,
   };

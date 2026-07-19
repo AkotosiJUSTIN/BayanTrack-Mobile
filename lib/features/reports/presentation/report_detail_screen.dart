@@ -5,7 +5,9 @@ import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../core/constants/api_constants.dart';
+import '../../../core/maps/municipality_map.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/presentation/barangays_provider.dart';
 import '../../auth/presentation/profile_controller.dart';
 import '../domain/entities/blockchain_verification.dart';
 import '../domain/entities/report.dart';
@@ -225,6 +227,14 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   }
 
   Widget _buildReportContent(ThemeData theme, bool isDark, Report report) {
+    final municipalities = ref.watch(municipalitiesProvider).asData?.value;
+    final municipality = findMunicipalityMetadata(
+          municipalities ?? const [bundledUrdanetaMunicipality],
+          report.municipalityId,
+        ) ??
+        (report.municipalityId == defaultMunicipalityId
+            ? bundledUrdanetaMunicipality
+            : null);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -346,6 +356,15 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                           report.longitude!,
                         ),
                         initialZoom: 16,
+                        initialCameraFit: municipality == null
+                            ? null
+                            : MunicipalityMapCamera.initialFit(municipality),
+                        cameraConstraint: municipality == null
+                            ? const CameraConstraint.unconstrained()
+                            : MunicipalityMapCamera.constraintFor(
+                                  municipality,
+                                ) ??
+                                const CameraConstraint.unconstrained(),
                         interactionOptions: const InteractionOptions(
                           flags: InteractiveFlag.pinchZoom |
                               InteractiveFlag.drag,
@@ -357,6 +376,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                               'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                           userAgentPackageName:
                               'com.example.bayantrack_mobile',
+                        ),
+                        MunicipalityBoundaryLayer(
+                          boundary: municipality?.boundary,
                         ),
                         MarkerLayer(
                           markers: [
