@@ -25,7 +25,10 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final response = await _dio.post(
         ApiConstants.login,
-        data: LoginRequest(email: email, password: password).toJson(),
+        data: {
+          ...LoginRequest(email: email, password: password).toJson(),
+          'client_type': 'mobile',
+        },
       );
       final loginResponse = LoginResponse.fromJson(response.data);
       return Success(AuthMapper.tokensFromLoginResponse(loginResponse));
@@ -46,14 +49,17 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final response = await _dio.post(
         ApiConstants.register,
-        data: RegisterRequest(
-          email: email,
-          password: password,
-          passwordConfirm: passwordConfirm,
-          firstName: firstName,
-          lastName: lastName,
-          barangayId: barangayId,
-        ).toJson(),
+        data: {
+          ...RegisterRequest(
+            email: email,
+            password: password,
+            passwordConfirm: passwordConfirm,
+            firstName: firstName,
+            lastName: lastName,
+            barangayId: barangayId,
+          ).toJson(),
+          'client_type': 'mobile',
+        },
       );
       // Backend returns tokens on registration (same shape as login)
       final loginResponse = LoginResponse.fromJson(response.data);
@@ -68,7 +74,10 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final response = await _dio.post(
         ApiConstants.refresh,
-        data: RefreshTokenRequest(refreshToken: refreshToken).toJson(),
+        data: {
+          ...RefreshTokenRequest(refreshToken: refreshToken).toJson(),
+          'client_type': 'mobile',
+        },
       );
       final tokenResponse = RefreshTokenResponse.fromJson(response.data);
       return Success(AuthMapper.tokensFromRefreshResponse(tokenResponse));
