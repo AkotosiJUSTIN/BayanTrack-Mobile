@@ -9,9 +9,10 @@ const realtimeEventNames = <String>{
   'incident_group.changed',
   'notification.created',
   'integrity.changed',
+  'user_directory.changed',
 };
 
-enum RealtimeTarget { reports, notifications, integrity }
+enum RealtimeTarget { reports, notifications, integrity, profile }
 
 class RealtimeEvent {
   const RealtimeEvent({
@@ -89,11 +90,18 @@ class RealtimeEventRouter {
   }
 }
 
-Set<RealtimeTarget> invalidationTargets(RealtimeEvent event) => {
-  if (event.name != 'notification.created') RealtimeTarget.reports,
-  if (event.name == 'notification.created') RealtimeTarget.notifications,
-  if (event.name == 'integrity.changed') RealtimeTarget.integrity,
-};
+Set<RealtimeTarget> invalidationTargets(RealtimeEvent event) {
+  if (event.name == 'user_directory.changed') {
+    return {RealtimeTarget.profile};
+  }
+  if (event.name == 'notification.created') {
+    return {RealtimeTarget.notifications};
+  }
+  return {
+    RealtimeTarget.reports,
+    if (event.name == 'integrity.changed') RealtimeTarget.integrity,
+  };
+}
 
 Map<String, dynamic> buildSocketOptions(String token) => {
   'transports': ['websocket'],

@@ -9,7 +9,11 @@ class User extends Equatable {
   final String email;
   final String firstName;
   final String lastName;
+  final String? phone;
   final String? avatarUrl;
+  final int avatarRevision;
+  final String? avatarStorageStatus;
+  final int profileRevision;
   final UserRole role;
   final bool isActive;
   final DateTime? createdAt;
@@ -20,7 +24,11 @@ class User extends Equatable {
     required this.email,
     required this.firstName,
     required this.lastName,
+    this.phone,
     this.avatarUrl,
+    this.avatarRevision = 0,
+    this.avatarStorageStatus,
+    this.profileRevision = 0,
     required this.role,
     this.isActive = true,
     this.createdAt,
@@ -39,7 +47,11 @@ class User extends Equatable {
     email,
     firstName,
     lastName,
+    phone,
     avatarUrl,
+    avatarRevision,
+    avatarStorageStatus,
+    profileRevision,
     role,
     isActive,
     createdAt,

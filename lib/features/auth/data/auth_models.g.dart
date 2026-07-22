@@ -77,7 +77,11 @@ _UserProfile _$UserProfileFromJson(Map<String, dynamic> json) => _UserProfile(
   email: json['email'] as String,
   firstName: json['first_name'] as String? ?? '',
   lastName: json['last_name'] as String? ?? '',
+  phone: json['phone'] as String?,
   avatarUrl: json['avatar_url'] as String?,
+  avatarRevision: (json['avatar_revision'] as num?)?.toInt() ?? 0,
+  avatarStorageStatus: json['avatar_storage_status'] as String?,
+  profileRevision: (json['profile_revision'] as num?)?.toInt() ?? 0,
   role: json['role'] as String? ?? 'citizen',
   isActive: json['is_active'] as bool? ?? true,
   createdAt: json['created_at'] as String?,
@@ -90,7 +94,11 @@ Map<String, dynamic> _$UserProfileToJson(_UserProfile instance) =>
       'email': instance.email,
       'first_name': instance.firstName,
       'last_name': instance.lastName,
+      'phone': instance.phone,
       'avatar_url': instance.avatarUrl,
+      'avatar_revision': instance.avatarRevision,
+      'avatar_storage_status': instance.avatarStorageStatus,
+      'profile_revision': instance.profileRevision,
       'role': instance.role,
       'is_active': instance.isActive,
       'created_at': instance.createdAt,
@@ -102,7 +110,8 @@ _ProfileUpdateRequest _$ProfileUpdateRequestFromJson(
 ) => _ProfileUpdateRequest(
   firstName: json['first_name'] as String?,
   lastName: json['last_name'] as String?,
-  avatarUrl: json['avatar_url'] as String?,
+  phone: json['phone'] as String?,
+  expectedRevision: (json['expected_revision'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$ProfileUpdateRequestToJson(
@@ -110,7 +119,8 @@ Map<String, dynamic> _$ProfileUpdateRequestToJson(
 ) => <String, dynamic>{
   'first_name': instance.firstName,
   'last_name': instance.lastName,
-  'avatar_url': ?instance.avatarUrl,
+  'phone': instance.phone,
+  'expected_revision': instance.expectedRevision,
 };
 
 _ChangePasswordRequest _$ChangePasswordRequestFromJson(

@@ -80,7 +80,11 @@ sealed class UserProfile with _$UserProfile {
     required String email,
     @JsonKey(name: 'first_name') @Default('') String firstName,
     @JsonKey(name: 'last_name') @Default('') String lastName,
+    String? phone,
     @JsonKey(name: 'avatar_url') String? avatarUrl,
+    @JsonKey(name: 'avatar_revision') @Default(0) int avatarRevision,
+    @JsonKey(name: 'avatar_storage_status') String? avatarStorageStatus,
+    @JsonKey(name: 'profile_revision') @Default(0) int profileRevision,
     @Default('citizen') String role,
     @JsonKey(name: 'is_active') @Default(true) bool isActive,
     @JsonKey(name: 'created_at') String? createdAt,
@@ -103,9 +107,8 @@ sealed class ProfileUpdateRequest with _$ProfileUpdateRequest {
   const factory ProfileUpdateRequest({
     @JsonKey(name: 'first_name') String? firstName,
     @JsonKey(name: 'last_name') String? lastName,
-    // includeIfNull: false → field is excluded from JSON when null.
-    // This prevents a name-only save from wiping the stored avatar_url.
-    @JsonKey(name: 'avatar_url', includeIfNull: false) String? avatarUrl,
+    String? phone,
+    @JsonKey(name: 'expected_revision') int? expectedRevision,
   }) = _ProfileUpdateRequest;
 
   factory ProfileUpdateRequest.fromJson(Map<String, dynamic> json) =>

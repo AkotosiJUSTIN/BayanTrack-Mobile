@@ -10,6 +10,7 @@ class RealtimeService {
     required String serverUrl,
     required String token,
     required void Function(RealtimeEvent event) onEvent,
+    void Function()? onConnect,
   }) {
     _disconnectSocket();
     final socket = io.io(serverUrl, buildSocketOptions(token));
@@ -20,6 +21,7 @@ class RealtimeService {
         if (event != null) onEvent(event);
       });
     }
+    if (onConnect != null) socket.onConnect(onConnect);
     socket.connect();
   }
 

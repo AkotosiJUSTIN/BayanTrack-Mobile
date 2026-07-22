@@ -46,6 +46,12 @@ void main() {
       invalidationTargets(RealtimeEvent.tryParse(event('integrity.changed'))!),
       {RealtimeTarget.reports, RealtimeTarget.integrity},
     );
+    expect(
+      invalidationTargets(
+        RealtimeEvent.tryParse(event('user_directory.changed'))!,
+      ),
+      {RealtimeTarget.profile},
+    );
   });
 
   test('uses one fresh socket and bounded reconnect attempts', () {

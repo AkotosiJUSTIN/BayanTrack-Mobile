@@ -149,12 +149,26 @@ class ProfileScreen extends ConsumerWidget {
         CircleAvatar(
           radius: 50,
           backgroundColor: AppColors.primary,
-          backgroundImage:
-              profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty
-              ? NetworkImage(ApiConstants.getImageUrl(profile.avatarUrl!))
-              : null,
           child: profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty
-              ? null
+              ? ClipOval(
+                  child: Image.network(
+                    ApiConstants.getImageUrl(profile.avatarUrl!),
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                    semanticLabel: '${getDisplayName()} profile picture',
+                    errorBuilder: (_, _, _) => Center(
+                      child: Text(
+                        getInitials(),
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
               : Text(
                   getInitials(),
                   style: const TextStyle(
@@ -177,6 +191,23 @@ class ProfileScreen extends ConsumerWidget {
             color: theme.colorScheme.outline,
           ),
         ),
+        if (profile.phone != null && profile.phone!.isNotEmpty)
+          Text(
+            profile.phone!,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.outline,
+            ),
+          ),
+        if (profile.avatarStorageStatus == 'degraded')
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Profile picture backup pending',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.tertiary,
+              ),
+            ),
+          ),
         const SizedBox(height: 8),
         Chip(
           label: Text(profile.role.toUpperCase()),

@@ -17,6 +17,7 @@ import '../auth_di.dart';
 import '../../reports/presentation/report_detail_screen.dart';
 import '../../reports/presentation/report_detail_controller.dart';
 import '../../reports/presentation/reports_controller.dart';
+import 'profile_controller.dart';
 
 class AuthWrapper extends ConsumerStatefulWidget {
   const AuthWrapper({super.key});
@@ -78,6 +79,9 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
         serverUrl: ApiConstants.mediaBaseUrl,
         token: token,
         onEvent: _handleRealtimeEvent,
+        onConnect: () {
+          if (mounted) ref.invalidate(profileControllerProvider);
+        },
       );
       _realtimeUserId = userId;
     } finally {
@@ -104,6 +108,10 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     if (targets.contains(RealtimeTarget.notifications)) {
       ref.invalidate(notificationsControllerProvider);
     }
+    if (targets.contains(RealtimeTarget.profile) &&
+        event.entityId == _realtimeUserId) {
+      ref.invalidate(profileControllerProvider);
+    }
   }
 
   @override
@@ -118,6 +126,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
           Future.microtask(() => _startRealtime(userId, force: true));
         }
         ref.invalidate(kycStatusControllerProvider);
+        ref.invalidate(profileControllerProvider);
         Future.microtask(() async {
           try {
             final pushService = ref.read(pushServiceProvider);

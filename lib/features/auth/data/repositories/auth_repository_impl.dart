@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/domain/failures.dart';
@@ -125,7 +127,8 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Result<User>> updateProfile({
     String? firstName,
     String? lastName,
-    String? avatarUrl,
+    String? phone,
+    int? expectedRevision,
   }) async {
     try {
       final response = await _dio.put(
@@ -133,12 +136,51 @@ class AuthRepositoryImpl implements AuthRepository {
         data: ProfileUpdateRequest(
           firstName: firstName,
           lastName: lastName,
-          avatarUrl: avatarUrl,
+          phone: phone,
+          expectedRevision: expectedRevision,
         ).toJson(),
       );
       final userData = response.data['user'] ?? response.data;
       final profile = UserProfile.fromJson(userData);
       return Success(AuthMapper.userFromProfile(profile));
+    } catch (e, stack) {
+      return Err(ErrorMapper.mapException(e, stack));
+    }
+  }
+
+  @override
+  Future<Result<User>> uploadAvatar(
+    File imageFile, {
+    void Function(int sent, int total)? onSendProgress,
+  }) async {
+    try {
+      final response = await _dio.post(
+        ApiConstants.profileAvatar,
+        data: FormData.fromMap({
+          'avatar': await MultipartFile.fromFile(
+            imageFile.path,
+            filename: 'avatar',
+          ),
+        }),
+        onSendProgress: onSendProgress,
+      );
+      final userData = response.data['user'] ?? response.data;
+      return Success(
+        AuthMapper.userFromProfile(UserProfile.fromJson(userData)),
+      );
+    } catch (e, stack) {
+      return Err(ErrorMapper.mapException(e, stack));
+    }
+  }
+
+  @override
+  Future<Result<User>> removeAvatar() async {
+    try {
+      final response = await _dio.delete(ApiConstants.profileAvatar);
+      final userData = response.data['user'] ?? response.data;
+      return Success(
+        AuthMapper.userFromProfile(UserProfile.fromJson(userData)),
+      );
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));
     }

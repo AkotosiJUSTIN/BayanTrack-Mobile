@@ -33,7 +33,7 @@ final class MunicipalitiesProvider
   Municipalities create() => Municipalities();
 }
 
-String _$municipalitiesHash() => r'31a9e7beb19f39fa4861f19b05c7f8a481885e07';
+String _$municipalitiesHash() => r'2282a8b3c0e83bc24cec11ffe3bf2ea5e3b88f2c';
 
 abstract class _$Municipalities
     extends $AsyncNotifier<List<MunicipalityModel>> {
@@ -104,7 +104,7 @@ final class MunicipalityBarangaysProvider
 }
 
 String _$municipalityBarangaysHash() =>
-    r'2724dfa12a568a7e28e86670862e6cfffc5f693d';
+    r'e178d1a9c493a4bf573d9ff67baae46e6390568b';
 
 final class MunicipalityBarangaysFamily extends $Family
     with
@@ -185,7 +185,7 @@ final class BarangaysProvider
   Barangays create() => Barangays();
 }
 
-String _$barangaysHash() => r'5068d7b6a52a96f5e432364ce36dc55fcef8eaac';
+String _$barangaysHash() => r'b83e7748bf8789ac5f883c5b6d49d76619aec42c';
 
 /// Provider that fetches and caches the list of barangays from the API.
 /// Used by the new report screen for the location dropdown.

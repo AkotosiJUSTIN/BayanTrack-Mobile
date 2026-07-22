@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import '../../../core/domain/result.dart';
 import '../data/auth_models.dart';
 import 'entities/user.dart';
@@ -40,8 +42,16 @@ abstract interface class AuthRepository {
   Future<Result<User>> updateProfile({
     String? firstName,
     String? lastName,
-    String? avatarUrl,
+    String? phone,
+    int? expectedRevision,
   });
+
+  Future<Result<User>> uploadAvatar(
+    File imageFile, {
+    void Function(int sent, int total)? onSendProgress,
+  });
+
+  Future<Result<User>> removeAvatar();
 
   /// Change password
   Future<Result<void>> changePassword({
