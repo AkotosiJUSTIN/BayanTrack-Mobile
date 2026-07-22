@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:bayantrack_mobile/core/constants/urdaneta_barangays.dart';
 import 'package:bayantrack_mobile/core/theme/app_theme.dart';
 import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
+import 'package:bayantrack_mobile/features/reports/data/report_models.dart';
 import 'package:bayantrack_mobile/features/reports/data/reports_repository.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/new_report/quick_report_screen.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +23,23 @@ class _TestMunicipalities extends Municipalities {
   ];
 }
 
+class _TestMunicipalityBarangays extends MunicipalityBarangays {
+  @override
+  FutureOr<List<BarangayModel>> build(String municipalityId) =>
+      bundledUrdanetaBarangays;
+}
+
 class _ReportsRepositoryMock extends Mock implements ReportsRepository {}
+
+class _CountingNavigatorObserver extends NavigatorObserver {
+  int popCount = 0;
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    if (route is PageRoute<void>) popCount++;
+    super.didPop(route, previousRoute);
+  }
+}
 
 Position _position(double latitude, double longitude) => Position(
   latitude: latitude,
@@ -42,20 +60,34 @@ Future<void> _pumpQuickReport(
   Size size = const Size(360, 800),
   double textScale = 1,
   ReportsRepository? reportsRepository,
+  NavigatorObserver? navigatorObserver,
+  bool pushFromRoot = false,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
+
+  final navigatorKey = GlobalKey<NavigatorState>();
+  Widget quickReport() => QuickReportScreen(
+    key: UniqueKey(),
+    locationOverride: locate,
+    showMapTiles: false,
+  );
 
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
         userPermissionsProvider.overrideWithValue(UserPermissions(null)),
         municipalitiesProvider.overrideWith(_TestMunicipalities.new),
+        municipalityBarangaysProvider.overrideWith(
+          _TestMunicipalityBarangays.new,
+        ),
         if (reportsRepository != null)
           reportsRepositoryProvider.overrideWithValue(reportsRepository),
       ],
       child: MaterialApp(
+        navigatorKey: navigatorKey,
+        navigatorObservers: [?navigatorObserver],
         theme: AppTheme.light,
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(
@@ -63,14 +95,17 @@ Future<void> _pumpQuickReport(
           ).copyWith(textScaler: TextScaler.linear(textScale)),
           child: child!,
         ),
-        home: QuickReportScreen(
-          key: UniqueKey(),
-          locationOverride: locate,
-          showMapTiles: false,
-        ),
+        home: pushFromRoot ? const Scaffold(body: Text('Home')) : quickReport(),
       ),
     ),
   );
+  if (pushFromRoot) {
+    unawaited(
+      navigatorKey.currentState!.push(
+        MaterialPageRoute<void>(builder: (_) => quickReport()),
+      ),
+    );
+  }
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 1));
 }
@@ -78,6 +113,12 @@ Future<void> _pumpQuickReport(
 void main() {
   final inside = _position(15.979204, 120.622210);
   final outside = _position(14.5995, 120.9842);
+
+  setUpAll(() {
+    registerFallbackValue(
+      const CreateReportRequest(description: 'fallback report'),
+    );
+  });
 
   testWidgets('verification notice is compact and does not gate reporting', (
     tester,
@@ -331,6 +372,153 @@ void main() {
     pending.complete(inside);
     await tester.pump();
 
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('successful submission navigates once and submits once', (
+    tester,
+  ) async {
+    final reports = _ReportsRepositoryMock();
+    final observer = _CountingNavigatorObserver();
+    when(
+      () => reports.getNearbyReports(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+        municipalityId: any(named: 'municipalityId'),
+      ),
+    ).thenAnswer((_) async => const []);
+    when(
+      () => reports.createReport(
+        any(),
+        isQuickReport: any(named: 'isQuickReport'),
+      ),
+    ).thenAnswer(
+      (_) async => const Report(
+        id: 'quick-report-123',
+        description: 'A fallen tree is blocking both lanes.',
+      ),
+    );
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      reportsRepository: reports,
+      navigatorObserver: observer,
+      pushFromRoot: true,
+    );
+    await tester.enterText(
+      find.byKey(const Key('quick-report-description')),
+      'A fallen tree is blocking both lanes.',
+    );
+    await tester.pump();
+
+    final submit = tester
+        .widget<ElevatedButton>(find.byKey(const Key('quick-report-submit')))
+        .onPressed!;
+    submit();
+    submit();
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Report submitted'), findsOneWidget);
+    verify(() => reports.createReport(any(), isQuickReport: true)).called(1);
+
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+
+    expect(observer.popCount, 1);
+    expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Your quick report has been submitted.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('submission completion after disposal is ignored', (
+    tester,
+  ) async {
+    final reports = _ReportsRepositoryMock();
+    final pending = Completer<Report>();
+    when(
+      () => reports.getNearbyReports(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+        municipalityId: any(named: 'municipalityId'),
+      ),
+    ).thenAnswer((_) async => const []);
+    when(
+      () => reports.createReport(
+        any(),
+        isQuickReport: any(named: 'isQuickReport'),
+      ),
+    ).thenAnswer((_) => pending.future);
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      reportsRepository: reports,
+    );
+    await tester.enterText(
+      find.byKey(const Key('quick-report-description')),
+      'A fallen tree is blocking both lanes.',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('quick-report-submit')));
+    await tester.pump();
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    pending.complete(
+      const Report(
+        id: 'quick-report-123',
+        description: 'A fallen tree is blocking both lanes.',
+      ),
+    );
+    await tester.pump();
+
+    verify(() => reports.createReport(any(), isQuickReport: true)).called(1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('failed submission displays its error and allows retry', (
+    tester,
+  ) async {
+    final reports = _ReportsRepositoryMock();
+    when(
+      () => reports.getNearbyReports(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+        municipalityId: any(named: 'municipalityId'),
+      ),
+    ).thenAnswer((_) async => const []);
+    when(
+      () => reports.createReport(
+        any(),
+        isQuickReport: any(named: 'isQuickReport'),
+      ),
+    ).thenThrow(StateError('Submission failed'));
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      reportsRepository: reports,
+    );
+    await tester.enterText(
+      find.byKey(const Key('quick-report-description')),
+      'A fallen tree is blocking both lanes.',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('quick-report-submit')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.textContaining('Bad state: Submission failed'),
+      findsAtLeastNWidgets(1),
+    );
+    expect(find.byKey(const Key('quick-report-submit-error')), findsOneWidget);
+    expect(
+      tester
+          .widget<ElevatedButton>(find.byKey(const Key('quick-report-submit')))
+          .onPressed,
+      isNotNull,
+    );
     expect(tester.takeException(), isNull);
   });
 }

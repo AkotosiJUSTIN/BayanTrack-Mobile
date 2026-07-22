@@ -434,13 +434,14 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
     if (!mounted) return;
 
+    final reportsRepo = ref.read(reportsRepositoryProvider);
+    final nearestBarangay = _resolveNearestBarangay(
+      point.latitude,
+      point.longitude,
+    );
+    late final Report result;
     try {
-      final reportsRepo = ref.read(reportsRepositoryProvider);
-      final nearestBarangay = _resolveNearestBarangay(
-        point.latitude,
-        point.longitude,
-      );
-      final result = await reportsRepo.createReport(
+      result = await reportsRepo.createReport(
         CreateReportRequest(
           description: description,
           isHappeningNow: true,
@@ -459,16 +460,6 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         ),
         isQuickReport: true,
       );
-
-      ref.invalidate(reportsControllerProvider);
-      ref.read(myReportsRefreshProvider.notifier).increment();
-
-      if (!mounted) return;
-      await _offerPhotoUpload(result.id);
-      if (!mounted) return;
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      AppToast.success(context, 'Your quick report has been submitted.');
-      debugPrint('Quick report submitted: ${result.id}');
     } catch (e) {
       if (!mounted) return;
       final message = ErrorMapper.userMessage(ErrorMapper.mapException(e));
@@ -477,7 +468,18 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         _submissionError = message;
       });
       AppToast.error(context, message);
+      return;
     }
+
+    if (!mounted) return;
+    ref.invalidate(reportsControllerProvider);
+    ref.read(myReportsRefreshProvider.notifier).increment();
+
+    await _offerPhotoUpload(result.id);
+    if (!mounted) return;
+    AppToast.success(context, 'Your quick report has been submitted.');
+    debugPrint('Quick report submitted: ${result.id}');
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   Future<void> _offerPhotoUpload(String reportId) async {
@@ -506,12 +508,12 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       imageQuality: 75,
     );
     if (picked == null || !mounted) return;
+    final imagesRepository = ref.read(imagesRepositoryProvider);
 
     Object? lastError;
     for (var attempt = 1; attempt <= 3; attempt++) {
       try {
-        await ref
-            .read(imagesRepositoryProvider)
+        await imagesRepository
             .uploadImage(
               imageFile: File(picked.path),
               reportId: reportId,
@@ -524,6 +526,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         lastError = e;
         if (attempt < 3) {
           await Future<void>.delayed(Duration(seconds: attempt * 2));
+          if (!mounted) return;
         }
       }
     }

@@ -116,6 +116,7 @@ class Municipalities extends _$Municipalities {
 
   Future<void> _refreshFromApi() async {
     final values = await _fetch();
+    if (!ref.mounted) return;
     if (values != null) state = AsyncValue.data(values);
   }
 
@@ -148,12 +149,14 @@ class MunicipalityBarangays extends _$MunicipalityBarangays {
 
   Future<void> _refreshFromApi() async {
     final values = await _fetch();
+    if (!ref.mounted) return;
     if (values != null) state = AsyncValue.data(values);
   }
 
   Future<void> refresh() async {
     final previous = state.asData?.value;
     final values = await _fetch();
+    if (!ref.mounted) return;
     if (values != null) {
       state = AsyncValue.data(values);
     } else if (previous == null || previous.isEmpty) {
@@ -191,12 +194,15 @@ class Barangays extends _$Barangays {
 
   Future<void> _refreshFromApi() async {
     final barangays = await _fetchFromApiOrBundle();
+    if (!ref.mounted) return;
     state = AsyncValue.data(barangays);
   }
 
   /// Refresh barangays list
   Future<void> refresh() async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(_fetchFromApiOrBundle);
+    final value = await AsyncValue.guard(_fetchFromApiOrBundle);
+    if (!ref.mounted) return;
+    state = value;
   }
 }
