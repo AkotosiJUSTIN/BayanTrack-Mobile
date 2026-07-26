@@ -24,9 +24,7 @@ class PushService {
   }
 
   /// Listen for token refreshes so we keep the backend in sync.
-  void onTokenRefresh(
-    Future<void> Function(String token) handler,
-  ) {
+  void onTokenRefresh(Future<void> Function(String token) handler) {
     FirebaseMessaging.instance.onTokenRefresh.listen((token) async {
       try {
         await handler(token);
@@ -39,11 +37,11 @@ class PushService {
   /// Register current token with backend using provided dio client.
   Future<void> registerToken(String token, String deviceType, Dio dio) async {
     try {
-      debugPrint('Registering FCM token for $deviceType: ${token.substring(0, token.length > 10 ? 10 : token.length)}...');
-      await dio.post(ApiConstants.notificationPushToken, data: {
-        'token': token,
-        'device_type': deviceType,
-      });
+      debugPrint('Registering FCM token for $deviceType');
+      await dio.post(
+        ApiConstants.notificationPushToken,
+        data: {'token': token, 'device_type': deviceType},
+      );
       // persist registered token
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('push_token', token);
@@ -64,7 +62,7 @@ class PushService {
     final registered = prefs.getBool('push_token_registered') ?? false;
 
     debugPrint(
-      'ensureRegistered start: savedToken=${savedToken == null ? "null" : savedToken.substring(0, savedToken.length > 10 ? 10 : savedToken.length)}... '
+      'ensureRegistered start: hasSavedToken=${savedToken != null} '
       'registered=$registered',
     );
 
@@ -86,8 +84,6 @@ class PushService {
       await prefs.setBool('push_token_registered', false);
       return;
     }
-
-    debugPrint('ensureRegistered got token: ${token.substring(0, token.length > 10 ? 10 : token.length)}...');
 
     // Try registering with simple retry/backoff
     int attempts = 0;

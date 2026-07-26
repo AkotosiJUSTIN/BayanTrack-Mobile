@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,11 +8,13 @@ import '../../../../core/presentation/widgets/app_toast.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/municipality_geo.dart';
 import '../../../auth/presentation/barangays_provider.dart';
-import '../../../images/data/images_repository.dart';
+import '../../../auth/presentation/auth_controller.dart';
+import '../../../images/data/evidence_upload_queue.dart';
+import '../../../images/data/evidence_upload_queue_provider.dart';
+import '../../data/report_models.dart' show Report;
 import '../../data/reports_repository.dart';
 import '../reports_controller.dart';
 import 'new_report_controller.dart';
-import '../../../../core/utils/image_utils.dart';
 
 /// Fourth step: Review, consent, and submit the report
 class NewReportReviewScreen extends ConsumerStatefulWidget {
@@ -73,225 +74,69 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
       return;
     }
 
+    final auth = ref.read(authControllerProvider);
+    final userId = auth is AuthSuccess ? auth.user?.id : null;
+    if (userId == null) {
+      AppToast.warning(context, 'Please sign in again before submitting.');
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
       _statusMessage = 'Submitting your report...';
     });
 
+    late final EvidenceUploadQueue uploadQueue;
+    late final Report createdReport;
     try {
-      // Step 1: Compress photos up-front with bounded parallelism.
-      List<File> filesForUpload = state.selectedImages;
-      if (state.selectedImages.isNotEmpty) {
-        setState(() => _statusMessage = 'Preparing your photos...');
-        filesForUpload = await _compressFilesInParallel(state.selectedImages);
-      }
-
-      // Step 2: Create the report using the new comprehensive request
+      uploadQueue = await ref.read(evidenceUploadQueueProvider.future);
+      if (!mounted) return;
       final reportsRepo = ref.read(reportsRepositoryProvider);
       final request = state.toCreateRequest();
-
-      final createStopwatch = Stopwatch()..start();
-      final createdReport = await reportsRepo.createReport(request);
-      createStopwatch.stop();
-      debugPrint(
-        'Create report took ${createStopwatch.elapsedMilliseconds} ms',
-      );
-
-      // Step 3: Upload images (if any)
-      if (filesForUpload.isNotEmpty) {
-        setState(() => _statusMessage = 'Uploading your photos...');
-
-        final imagesRepo = ref.read(imagesRepositoryProvider);
-
-        // Try bulk upload first (single request, fewer round-trips)
-        try {
-          final stopwatch = Stopwatch()..start();
-          setState(
-            () =>
-                _statusMessage = 'Uploading ${filesForUpload.length} photos...',
-          );
-
-          // Use bulk-upload endpoint
-          final uploaded = await imagesRepo
-              .bulkUploadImages(
-                imageFiles: filesForUpload,
-                reportId: createdReport.id,
-                onSendProgress: _onBulkUploadProgress,
-              )
-              .timeout(
-                const Duration(seconds: 25),
-                onTimeout: () =>
-                    throw TimeoutException('Bulk upload timed out'),
-              );
-
-          stopwatch.stop();
-          debugPrint(
-            'Bulk upload of ${uploaded.length} images took ${stopwatch.elapsedMilliseconds} ms',
-          );
-
-          // If backend uploaded fewer than expected, fall back to parallel individual uploads
-          if (uploaded.length < filesForUpload.length) {
-            debugPrint(
-              'Bulk upload incomplete, falling back to parallel uploads',
-            );
-            await _parallelUploadFallback(
-              imagesRepo,
-              filesForUpload,
-              createdReport.id,
-            );
-          }
-        } catch (e) {
-          debugPrint('Bulk upload failed: $e');
-          // Fallback: upload in parallel with limited concurrency
-          try {
-            await _parallelUploadFallback(
-              imagesRepo,
-              filesForUpload,
-              createdReport.id,
-            );
-          } catch (e2) {
-            debugPrint('Parallel upload fallback failed: $e2');
-            if (mounted) {
-              AppToast.warning(
-                context,
-                'Your report was submitted, but we could not upload photos. You can add them later.',
-              );
-            }
-          }
-        }
-      }
-
-      // Reset the form and navigate back
-      ref.read(newReportControllerProvider.notifier).reset();
-
-      // Invalidate reports to refresh the Home screen list
-      ref.invalidate(reportsControllerProvider);
-
-      // Increment the refresh trigger so MyReportsScreen auto-reloads
-      // its local list without requiring a manual pull-to-refresh.
-      ref.read(myReportsRefreshProvider.notifier).increment();
-
-      if (mounted) {
-        // Pop all the way back to the main navigation
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
+      createdReport = await reportsRepo.createReport(request);
     } catch (e) {
       final message = ErrorMapper.userMessage(ErrorMapper.mapException(e));
-      setState(() {
-        _isSubmitting = false;
-        _statusMessage = '';
-      });
       if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+          _statusMessage = '';
+        });
         AppToast.error(context, message);
       }
-    }
-  }
-
-  /// Try to compress the file on-device; returns new File or null to indicate no change
-  Future<File?> _maybeCompressFile(File original) async {
-    try {
-      final compressed = await ImageUtils.maybeCompressFile(original);
-      return compressed;
-    } catch (e) {
-      debugPrint('Compression failed for ${original.path}: $e');
-      return null;
-    }
-  }
-
-  Future<List<File>> _compressFilesInParallel(List<File> files) async {
-    const concurrency = 3;
-    final compressed = List<File?>.filled(files.length, null);
-    final stopwatch = Stopwatch()..start();
-
-    for (var i = 0; i < files.length; i += concurrency) {
-      final batchFutures = <Future<void>>[];
-      final slice = files.skip(i).take(concurrency).toList();
-      for (var j = 0; j < slice.length; j++) {
-        final idx = i + j;
-        final file = slice[j];
-        batchFutures.add(
-          _maybeCompressFile(file).then((value) {
-            compressed[idx] = value ?? file;
-            if (mounted) {
-              setState(() {
-                _statusMessage =
-                    'Preparing photos ${idx + 1} of ${files.length}...';
-              });
-            }
-          }),
-        );
-      }
-      await Future.wait(batchFutures);
-    }
-
-    stopwatch.stop();
-    debugPrint(
-      'Compression for ${files.length} images took ${stopwatch.elapsedMilliseconds} ms',
-    );
-    return compressed.map((file) => file!).toList();
-  }
-
-  void _onBulkUploadProgress(int sent, int total) {
-    if (!mounted || total <= 0) {
       return;
     }
-    final pct = ((sent / total) * 100).clamp(0, 100).toStringAsFixed(0);
-    setState(() {
-      _statusMessage = 'Uploading photos... $pct%';
-    });
-  }
 
-  /// Parallel upload with limited concurrency (3)
-  Future<void> _parallelUploadFallback(
-    ImagesRepository imagesRepo,
-    List<File> files,
-    String reportId,
-  ) async {
-    const concurrency = 3;
-    final stopwatch = Stopwatch()..start();
-
-    for (var i = 0; i < files.length; i += concurrency) {
-      final batch = <Future<void>>[];
-      final slice = files.skip(i).take(concurrency).toList();
-      for (var j = 0; j < slice.length; j++) {
-        final fileIndex = i + j;
-        final file = slice[j];
-        if (mounted)
-          setState(
-            () => _statusMessage =
-                'Uploading photo ${fileIndex + 1} of ${files.length}...',
-          );
-        final future = imagesRepo
-            .uploadImage(
-              imageFile: file,
-              reportId: reportId,
-              isPrimary: fileIndex == 0,
-              onSendProgress: (sent, total) {
-                if (!mounted || total <= 0) {
-                  return;
-                }
-                final pct = ((sent / total) * 100)
-                    .clamp(0, 100)
-                    .toStringAsFixed(0);
-                setState(() {
-                  _statusMessage =
-                      'Uploading photo ${fileIndex + 1}/${files.length}... $pct%';
-                });
-              },
-            )
-            .then((_) {})
-            .catchError((e) {
-              debugPrint('Upload failed for ${file.path}: $e');
-            });
-        batch.add(future);
+    var evidenceState = EvidenceUploadState.pending;
+    try {
+      final intents = await uploadQueue.enqueue(
+        userId: userId,
+        reportId: createdReport.id,
+        files: state.selectedImages,
+      );
+      if (intents.any(
+        (intent) => intent.state == EvidenceUploadState.missingLocalFile,
+      )) {
+        evidenceState = EvidenceUploadState.missingLocalFile;
+      } else {
+        unawaited(uploadQueue.resume(userId));
       }
-      await Future.wait(batch);
+    } catch (_) {
+      evidenceState = EvidenceUploadState.failed;
     }
 
-    stopwatch.stop();
-    debugPrint(
-      'Parallel upload of ${files.length} images took ${stopwatch.elapsedMilliseconds} ms',
-    );
+    if (!mounted) return;
+    ref.read(newReportControllerProvider.notifier).reset();
+    ref.invalidate(reportsControllerProvider);
+    ref.read(myReportsRefreshProvider.notifier).increment();
+    if (evidenceState == EvidenceUploadState.pending) {
+      AppToast.success(context, 'Report submitted. Evidence upload pending.');
+    } else {
+      AppToast.warning(
+        context,
+        'Report submitted, but evidence upload needs attention.',
+      );
+    }
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
@@ -443,10 +288,10 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: AppColors.primary.withOpacity(0.3),
+                        color: AppColors.primary.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
@@ -542,7 +387,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                       margin: const EdgeInsets.only(top: 8),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.alertMedium.withOpacity(0.1),
+                        color: AppColors.alertMedium.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(

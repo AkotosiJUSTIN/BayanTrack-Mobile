@@ -61,9 +61,7 @@ class AuthController extends _$AuthController {
 
       result.when(
         success: (user) {
-          debugPrint(
-            '[AuthController] checkAuth success. User: ${user?.email}',
-          );
+          debugPrint('[AuthController] checkAuth success');
           if (user != null) {
             state = AuthSuccess('Session restored', user);
           } else {
@@ -86,7 +84,7 @@ class AuthController extends _$AuthController {
 
   /// Login user
   Future<bool> login(String email, String password) async {
-    debugPrint('[AuthController] login() starting for: $email');
+    debugPrint('[AuthController] login() starting');
     state = const AuthLoading();
 
     final loginUseCase = ref.read(loginUseCaseProvider);
@@ -94,7 +92,7 @@ class AuthController extends _$AuthController {
 
     return result.when(
       success: (user) {
-        debugPrint('[AuthController] login success: ${user.email}');
+        debugPrint('[AuthController] login success');
         // Fetch KYC status after successful login
         try {
           ref.invalidate(kycStatusControllerProvider);

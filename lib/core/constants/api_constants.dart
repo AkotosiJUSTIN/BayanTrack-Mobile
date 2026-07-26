@@ -77,7 +77,6 @@ class ApiConstants {
   // Images Endpoints
   static const String images = '/images/';
   static const String imageUpload = '/images/upload/';
-  static const String imageBulkUpload = '/images/bulk-upload/';
   static String imageById(String id) => '/images/$id/';
 
   // Notifications Endpoints

@@ -11,8 +11,10 @@ import '../../notifications/local_notification_service.dart';
 import '../../notifications/presentation/notifications_controller.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/providers/connectivity_provider.dart';
 import '../../../core/realtime/realtime_contract.dart';
 import '../../../core/realtime/realtime_service.dart';
+import '../../images/data/evidence_upload_queue_provider.dart';
 import '../auth_di.dart';
 import '../../reports/presentation/report_detail_screen.dart';
 import '../../reports/presentation/report_detail_controller.dart';
@@ -32,6 +34,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   RealtimeService? _realtimeService;
   String? _realtimeUserId;
   bool _realtimeStarting = false;
+  String? _evidenceSyncKey;
   @override
   void initState() {
     super.initState();
@@ -95,6 +98,25 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     _realtimeUserId = null;
   }
 
+  void _syncEvidenceQueue(String? userId, bool isOnline, {bool force = false}) {
+    final syncKey = '$userId:$isOnline';
+    if (!force && _evidenceSyncKey == syncKey) return;
+    _evidenceSyncKey = syncKey;
+    Future.microtask(() async {
+      try {
+        final queue = await ref.read(evidenceUploadQueueProvider.future);
+        if (!mounted) return;
+        if (userId != null && isOnline) {
+          await queue.resume(userId);
+        } else {
+          await queue.pause();
+        }
+      } catch (_) {
+        // Queue remains durable and retries on the next safe lifecycle signal.
+      }
+    });
+  }
+
   void _handleRealtimeEvent(RealtimeEvent event) {
     final targets = invalidationTargets(event);
     if (targets.contains(RealtimeTarget.reports)) {
@@ -124,6 +146,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
         final userId = authState.user?.id;
         if (userId != null) {
           Future.microtask(() => _startRealtime(userId, force: true));
+          _syncEvidenceQueue(userId, ref.read(isOnlineProvider), force: true);
         }
         ref.invalidate(kycStatusControllerProvider);
         ref.invalidate(profileControllerProvider);
@@ -143,6 +166,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(authControllerProvider);
+    final isOnline = ref.watch(isOnlineProvider);
     debugPrint('[AuthWrapper] AuthState changed: ${state.runtimeType}');
 
     // Initialize push service once after successful auth
@@ -205,6 +229,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     }
 
     final authenticatedUserId = state is AuthSuccess ? state.user?.id : null;
+    _syncEvidenceQueue(authenticatedUserId, isOnline);
     if (authenticatedUserId != null &&
         authenticatedUserId != _realtimeUserId &&
         !_realtimeStarting) {

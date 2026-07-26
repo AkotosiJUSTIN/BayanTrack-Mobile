@@ -5,6 +5,7 @@ import '../auth/data/user_permissions.dart';
 import '../auth/presentation/verification_widgets.dart';
 import '../auth/presentation/profile_screen.dart';
 import '../home/presentation/home_screen.dart';
+import '../images/presentation/evidence_upload_status_banner.dart';
 import '../notifications/presentation/notifications_screen.dart';
 import '../reports/presentation/my_reports_screen.dart';
 import '../reports/presentation/new_report/quick_report_screen.dart';
@@ -67,8 +68,8 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                 Text(
                   'Create report',
                   style: Theme.of(sheetContext).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -105,7 +106,9 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
     if (_isNavigatingToNewReport || !mounted) return;
 
     setState(() => _isNavigatingToNewReport = true);
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page)).whenComplete(() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => page)).whenComplete(() {
       if (mounted) {
         setState(() => _isNavigatingToNewReport = false);
       }
@@ -119,7 +122,14 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      body: Column(
+        children: [
+          const EvidenceUploadStatusBanner(),
+          Expanded(
+            child: IndexedStack(index: _currentIndex, children: _screens),
+          ),
+        ],
+      ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(top: 30),
         child: FloatingActionButton(

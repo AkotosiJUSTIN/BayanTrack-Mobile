@@ -16,9 +16,11 @@ import '../../../../core/utils/municipality_geo.dart';
 import '../../../auth/data/auth_models.dart';
 import '../../../auth/data/user_permissions.dart';
 import '../../../auth/presentation/barangays_provider.dart';
+import '../../../auth/presentation/auth_controller.dart';
+import '../../../images/data/evidence_upload_queue.dart';
+import '../../../images/data/evidence_upload_queue_provider.dart';
 import '../../data/report_models.dart' hide LocationAccuracy;
 import '../../data/reports_repository.dart';
-import '../../../images/data/images_repository.dart';
 import '../reports_controller.dart';
 import 'quick_report_geo.dart';
 
@@ -478,7 +480,6 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     await _offerPhotoUpload(result.id);
     if (!mounted) return;
     AppToast.success(context, 'Your quick report has been submitted.');
-    debugPrint('Quick report submitted: ${result.id}');
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
@@ -508,33 +509,41 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       imageQuality: 75,
     );
     if (picked == null || !mounted) return;
-    final imagesRepository = ref.read(imagesRepositoryProvider);
-
-    Object? lastError;
-    for (var attempt = 1; attempt <= 3; attempt++) {
-      try {
-        await imagesRepository
-            .uploadImage(
-              imageFile: File(picked.path),
-              reportId: reportId,
-              isPrimary: true,
-            )
-            .timeout(const Duration(seconds: 25));
-        if (mounted) AppToast.success(context, 'Photo uploaded.');
-        return;
-      } catch (e) {
-        lastError = e;
-        if (attempt < 3) {
-          await Future<void>.delayed(Duration(seconds: attempt * 2));
-          if (!mounted) return;
-        }
-      }
-    }
-    debugPrint('Quick report photo upload failed: $lastError');
-    if (mounted) {
+    final auth = ref.read(authControllerProvider);
+    final userId = auth is AuthSuccess ? auth.user?.id : null;
+    if (userId == null) {
       AppToast.warning(
         context,
-        'Report saved, but photo upload failed. You can add it later.',
+        'Report submitted. Sign in again to upload evidence.',
+      );
+      return;
+    }
+
+    try {
+      final queue = await ref.read(evidenceUploadQueueProvider.future);
+      final intents = await queue.enqueue(
+        userId: userId,
+        reportId: reportId,
+        files: [File(picked.path)],
+      );
+      if (intents.single.state == EvidenceUploadState.missingLocalFile) {
+        if (mounted) {
+          AppToast.warning(
+            context,
+            'Report submitted, but the evidence file is missing.',
+          );
+        }
+        return;
+      }
+      unawaited(queue.resume(userId));
+      if (mounted) {
+        AppToast.success(context, 'Report submitted. Evidence upload pending.');
+      }
+    } catch (_) {
+      if (!mounted) return;
+      AppToast.warning(
+        context,
+        'Report submitted, but evidence upload needs attention.',
       );
     }
   }

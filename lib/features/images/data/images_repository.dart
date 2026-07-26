@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/dio_provider.dart';
@@ -32,86 +31,33 @@ class ImagesRepository {
     required String reportId,
     bool isPrimary = false,
     String purpose = 'evidence',
+    String? idempotencyKey,
+    CancelToken? cancelToken,
     void Function(int sent, int total)? onSendProgress,
   }) async {
-    debugPrint('=== UPLOADING IMAGE ===');
-    debugPrint('File path: ${imageFile.path}');
-    debugPrint('File exists: ${await imageFile.exists()}');
-    debugPrint('Report ID: $reportId');
-    debugPrint('Is Primary: $isPrimary');
-    debugPrint('Purpose: $purpose');
-    debugPrint('Upload URL: ${ApiConstants.imageUpload}');
-
     final formData = FormData.fromMap({
       'image': await MultipartFile.fromFile(
         imageFile.path,
-        filename: imageFile.path.split('/').last,
+        filename: imageFile.uri.pathSegments.last,
       ),
       'report_id': reportId,
       'is_primary': isPrimary.toString(),
       'purpose': purpose,
+      'idempotency_key': ?idempotencyKey,
     });
 
-    try {
-      debugPrint('Sending upload request...');
-      final response = await _dio.post(
-        ApiConstants.imageUpload,
-        data: formData,
-        onSendProgress: onSendProgress,
-      );
+    final response = await _dio.post(
+      ApiConstants.imageUpload,
+      data: formData,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+    );
 
-      debugPrint('=== UPLOAD SUCCESS ===');
-      debugPrint('Response: ${response.data}');
-
-      // Backend returns the image directly or wrapped in response
-      if (response.data is Map && response.data.containsKey('image')) {
-        return UploadedImage.fromJson(response.data['image']);
-      }
-      return UploadedImage.fromJson(response.data);
-    } on DioException catch (e) {
-      debugPrint('Single image upload error: ${e.response?.statusCode}');
-      debugPrint('Error data: ${e.response?.data}');
-      rethrow;
+    // Backend returns the image directly or wrapped in response.
+    if (response.data is Map && response.data.containsKey('image')) {
+      return UploadedImage.fromJson(response.data['image']);
     }
-  }
-
-  /// Bulk upload multiple images for a report
-  Future<List<UploadedImage>> bulkUploadImages({
-    required List<File> imageFiles,
-    required String reportId,
-    void Function(int sent, int total)? onSendProgress,
-  }) async {
-    final formData = FormData();
-
-    for (final file in imageFiles) {
-      formData.files.add(
-        MapEntry(
-          'images',
-          await MultipartFile.fromFile(
-            file.path,
-            filename: file.path.split('/').last,
-          ),
-        ),
-      );
-    }
-    formData.fields.add(MapEntry('report_id', reportId));
-
-    try {
-      final response = await _dio.post(
-        ApiConstants.imageBulkUpload,
-        data: formData,
-        onSendProgress: onSendProgress,
-        // Don't set contentType manually - Dio handles multipart/form-data automatically
-      );
-
-      final List<dynamic> imagesJson = response.data['images'] ?? [];
-      return imagesJson.map((json) => UploadedImage.fromJson(json)).toList();
-    } on DioException catch (e) {
-      // Log only the error response for debugging (remove in production)
-      debugPrint('Image upload error: ${e.response?.statusCode}');
-      debugPrint('Error data: ${e.response?.data}');
-      rethrow;
-    }
+    return UploadedImage.fromJson(response.data);
   }
 
   // ==================== LIST ====================

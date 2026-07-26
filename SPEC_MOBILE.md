@@ -16,7 +16,7 @@
 3.  **Data (Infrastructure)**: 
     *   **Repository Implementations**: Implement domain interfaces.
     *   **Mappers**: Convert between DTOs and Domain Entities.
-    *   **Data Sources**: API Clients (Dio), Local Storage (SecureStorage).
+    *   **Data Sources**: API Clients (Dio), secure token storage, preferences, and app-owned staged files.
     *   **DTOs**: Data Transfer Objects with JSON serialization.
 4.  **Core**: Shared utilities, constants, and dependency injection setup.
 
@@ -26,7 +26,7 @@
 *   **Code Generation**: `build_runner`, `freezed` (immutable state), `json_serializable`.
 *   **Networking**: Dio (HTTP Client) with centralized `AuthInterceptor` and `ErrorMapper`.
 *   **Error Handling**: Functional `Result<T>` pattern (`Success` or `Failure`).
-*   **Local Storage**: `flutter_secure_storage` (Auth tokens).
+*   **Local Storage**: `flutter_secure_storage` for auth tokens; `shared_preferences` plus app-owned files for non-secret durable upload intents.
 
 ## 3. Feature Specifications
 
@@ -50,7 +50,10 @@
 
 ### 3.4 Reports (Incident Tracking)
 *   **Entities**: `Report` entity with rich metadata (severity, location, images).
-*   **Flow**: Create Report -> Upload Images -> Submit Metadata.
+*   **Flow**: Create the report once, then persist and upload each evidence item against the returned report ID.
+*   **Durable Evidence Uploads**: After report creation succeeds, each item is copied to app-owned storage and recorded as an owner-scoped intent with a stable idempotency key. Intents use `pending`, `uploading`, `retry waiting`, `completed`, `failed`, `missing local file`, and `dismissed` states.
+*   **Recovery**: Matching authenticated users resume eligible intents on startup, app resume, and safe reconnect. Automatic retries use bounded backoff; failed items also support manual retry. Logout and account changes pause, rather than transfer, another user's intents.
+*   **Safety**: Evidence retry replays only the existing upload endpoint and stable idempotency key; it never recreates the report. Staged files are removed only after upload completion or explicit dismissal.
 *   **State**: `ReportsController` manages fetching, filtering, and pagination.
 
 ## 4. State Management Strategy (Riverpod)

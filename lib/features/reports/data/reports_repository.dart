@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/dio_provider.dart';
@@ -103,9 +102,6 @@ class ReportsRepository {
       ...request.toJson(),
       if (isQuickReport) 'is_quick_report': true,
     };
-    // Debug: Print the request payload
-    debugPrint('CreateReport request payload: $jsonData');
-
     final response = await _dio.post(ApiConstants.reports, data: jsonData);
     // Backend returns {report: {...}, message: "..."}
     final data = response.data;
