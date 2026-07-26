@@ -49,6 +49,10 @@
 		<string>This app needs your location to create accurate reports about incidents in your area.</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 		<string>This app needs your location to create accurate reports about incidents in your area.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Choose a photo to use as your profile picture or report evidence.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Take a photo for your profile picture or report evidence.</string>
 		<key>NSAppTransportSecurity</key>
 		<dict>
 			<key>NSAllowsArbitraryLoads</key>

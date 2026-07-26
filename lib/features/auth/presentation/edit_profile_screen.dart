@@ -13,8 +13,12 @@ import '../../../core/utils/validators.dart';
 import '../data/auth_models.dart';
 import 'profile_controller.dart';
 
+enum _AvatarOperation { uploading, removing }
+
 class EditProfileScreen extends ConsumerStatefulWidget {
-  const EditProfileScreen({super.key});
+  const EditProfileScreen({super.key, this.pickImage});
+
+  final Future<XFile?> Function(ImageSource source)? pickImage;
 
   @override
   ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -29,10 +33,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _seeded = false;
   bool _seeding = false;
   bool _isLoading = false;
-  bool _isAvatarUploading = false;
+  _AvatarOperation? _avatarOperation;
   bool _hasChanges = false;
   double _uploadProgress = 0;
   File? _selectedImage;
+  Uint8List? _selectedImageBytes;
+
+  bool get _isBusy => _isLoading || _avatarOperation != null;
 
   @override
   void initState() {
@@ -70,6 +77,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _showImagePickerOptions() async {
+    if (_isBusy) return;
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       builder: (context) => SafeArea(
@@ -91,22 +99,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     );
     if (source == null || !mounted) return;
 
-    final picked = await ImagePicker().pickImage(
-      source: source,
-      imageQuality: 90,
-      maxWidth: 2048,
-      maxHeight: 2048,
-    );
+    final picked = widget.pickImage != null
+        ? await widget.pickImage!(source)
+        : await ImagePicker().pickImage(
+            source: source,
+            imageQuality: 90,
+            maxWidth: 2048,
+            maxHeight: 2048,
+          );
     if (picked == null || !mounted) return;
 
     final file = File(picked.path);
-    if (await file.length() > 5 * 1024 * 1024) {
+    if (file.lengthSync() > 5 * 1024 * 1024) {
       await _deleteFile(file);
       if (mounted) {
         AppToast.error(context, 'Choose an image smaller than 5 MB.');
       }
       return;
     }
+    final bytes = file.readAsBytesSync();
 
     await _deleteTemporaryAvatar();
     if (!mounted) {
@@ -115,6 +126,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
     setState(() {
       _selectedImage = file;
+      _selectedImageBytes = bytes;
       _uploadProgress = 0;
     });
     await _uploadSelectedAvatar();
@@ -122,19 +134,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _uploadSelectedAvatar() async {
     final file = _selectedImage;
-    if (file == null || _isAvatarUploading) return;
+    if (file == null || _isBusy) return;
     setState(() {
-      _isAvatarUploading = true;
+      _avatarOperation = _AvatarOperation.uploading;
       _uploadProgress = 0;
     });
     try {
-      await ref.read(profileControllerProvider.notifier).uploadAvatar(
-        file,
-        onSendProgress: (sent, total) {
-          if (!mounted || total <= 0) return;
-          setState(() => _uploadProgress = sent / total);
-        },
-      );
+      await ref
+          .read(profileControllerProvider.notifier)
+          .uploadAvatar(
+            file,
+            onSendProgress: (sent, total) {
+              if (!mounted || total <= 0) return;
+              setState(() => _uploadProgress = sent / total);
+            },
+          );
       await _deleteTemporaryAvatar();
       if (!mounted) return;
       AppToast.success(context, 'Profile picture updated.');
@@ -145,13 +159,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         'Upload failed. Keep this preview and tap Retry when ready.',
       );
     } finally {
-      if (mounted) setState(() => _isAvatarUploading = false);
+      if (mounted) setState(() => _avatarOperation = null);
     }
   }
 
   Future<void> _removeAvatar() async {
-    if (_isAvatarUploading) return;
-    setState(() => _isAvatarUploading = true);
+    if (_isBusy) return;
+    setState(() => _avatarOperation = _AvatarOperation.removing);
     try {
       await ref.read(profileControllerProvider.notifier).removeAvatar();
       await _deleteTemporaryAvatar();
@@ -161,37 +175,54 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         AppToast.error(context, 'Unable to remove the profile picture.');
       }
     } finally {
-      if (mounted) setState(() => _isAvatarUploading = false);
+      if (mounted) setState(() => _avatarOperation = null);
     }
   }
 
   Future<void> _deleteTemporaryAvatar() async {
     final file = _selectedImage;
-    _selectedImage = null;
-    if (file != null) await _deleteFile(file);
+    if (file == null) return;
+    if (mounted) {
+      setState(() {
+        _selectedImage = null;
+        _selectedImageBytes = null;
+      });
+      await WidgetsBinding.instance.endOfFrame;
+    } else {
+      _selectedImage = null;
+      _selectedImageBytes = null;
+    }
+    await _deleteFile(file);
   }
 
   Future<void> _deleteFile(File file) async {
-    try {
-      if (await file.exists()) await file.delete();
-    } on FileSystemException {
-      // The picker cache may already have been cleared by the platform.
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        if (file.existsSync()) file.deleteSync();
+        return;
+      } on FileSystemException {
+        if (attempt == 2) return;
+        await Future<void>.delayed(const Duration(milliseconds: 25));
+      }
     }
   }
 
   Future<void> _submit(UserProfile profile) async {
+    if (_isBusy) return;
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     try {
       final digits = _phoneController.text;
-      await ref.read(profileControllerProvider.notifier).updateProfile(
-        ProfileUpdateRequest(
-          firstName: _firstNameController.text.trim(),
-          lastName: _lastNameController.text.trim(),
-          phone: digits.isEmpty ? null : '+63$digits',
-          expectedRevision: profile.profileRevision,
-        ),
-      );
+      await ref
+          .read(profileControllerProvider.notifier)
+          .updateProfile(
+            ProfileUpdateRequest(
+              firstName: _firstNameController.text.trim(),
+              lastName: _lastNameController.text.trim(),
+              phone: digits.isEmpty ? null : '+63$digits',
+              expectedRevision: profile.profileRevision,
+            ),
+          );
       if (!mounted) return;
       _hasChanges = false;
       AppToast.success(context, 'Your profile has been updated.');
@@ -241,7 +272,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       controller.dispose();
     }
     final temporary = _selectedImage;
-    if (temporary != null) unawaited(_deleteFile(temporary));
+    if (temporary != null) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => unawaited(_deleteFile(temporary)),
+      );
+    }
     super.dispose();
   }
 
@@ -257,14 +292,39 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         if (didPop || !await _confirmDiscard() || !mounted) return;
         _hasChanges = false;
         await _deleteTemporaryAvatar();
-        if (mounted) Navigator.pop(context, result);
+        if (mounted) Navigator.pop(this.context, result);
       },
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         appBar: AppBar(title: const Text('Edit Profile')),
         body: SafeArea(
           child: profile == null
-              ? const Center(child: CircularProgressIndicator())
+              ? profileState.when(
+                  data: (_) => const SizedBox.shrink(),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (_, _) => Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'Unable to load your profile.',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton.icon(
+                            onPressed: () =>
+                                ref.invalidate(profileControllerProvider),
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
               : SingleChildScrollView(
                   padding: EdgeInsets.fromLTRB(
                     16,
@@ -281,7 +341,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         _AvatarEditor(
                           profile: profile,
                           selectedImage: _selectedImage,
-                          isUploading: _isAvatarUploading,
+                          selectedImageBytes: _selectedImageBytes,
+                          operation: _avatarOperation,
+                          isBusy: _isBusy,
                           progress: _uploadProgress,
                           onChoose: _showImagePickerOptions,
                           onRetry: _uploadSelectedAvatar,
@@ -331,7 +393,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           decoration: const InputDecoration(
                             labelText: 'Phone number',
                             prefixText: '+63 ',
-                            helperText: 'Enter 10 digits, for example 9123456789.',
+                            helperText:
+                                'Enter 10 digits, for example 9123456789.',
                           ),
                           keyboardType: TextInputType.phone,
                           textInputAction: TextInputAction.done,
@@ -347,14 +410,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             }
                             return null;
                           },
-                          onFieldSubmitted: (_) => _submit(profile),
+                          onFieldSubmitted: (_) {
+                            if (_hasChanges && !_isBusy) _submit(profile);
+                          },
                         ),
                         const SizedBox(height: 24),
                         FilledButton(
-                          onPressed:
-                              !_hasChanges ||
-                                  _isLoading ||
-                                  _isAvatarUploading
+                          onPressed: !_hasChanges || _isBusy
                               ? null
                               : () => _submit(profile),
                           child: _isLoading
@@ -380,7 +442,9 @@ class _AvatarEditor extends StatelessWidget {
   const _AvatarEditor({
     required this.profile,
     required this.selectedImage,
-    required this.isUploading,
+    required this.selectedImageBytes,
+    required this.operation,
+    required this.isBusy,
     required this.progress,
     required this.onChoose,
     required this.onRetry,
@@ -389,7 +453,9 @@ class _AvatarEditor extends StatelessWidget {
 
   final UserProfile profile;
   final File? selectedImage;
-  final bool isUploading;
+  final Uint8List? selectedImageBytes;
+  final _AvatarOperation? operation;
+  final bool isBusy;
   final double progress;
   final VoidCallback onChoose;
   final VoidCallback onRetry;
@@ -399,8 +465,8 @@ class _AvatarEditor extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = '${profile.firstName} ${profile.lastName}'.trim();
     final remoteAvatar = profile.avatarUrl;
-    final image = selectedImage != null
-        ? FileImage(selectedImage!) as ImageProvider
+    final image = selectedImageBytes != null
+        ? MemoryImage(selectedImageBytes!) as ImageProvider
         : remoteAvatar != null && remoteAvatar.isNotEmpty
         ? NetworkImage(ApiConstants.getImageUrl(remoteAvatar))
         : null;
@@ -433,10 +499,18 @@ class _AvatarEditor extends StatelessWidget {
                 : null,
           ),
           const SizedBox(height: 12),
-          if (isUploading) ...[
-            LinearProgressIndicator(value: progress == 0 ? null : progress),
+          if (operation != null) ...[
+            LinearProgressIndicator(
+              value: operation == _AvatarOperation.uploading && progress > 0
+                  ? progress
+                  : null,
+            ),
             const SizedBox(height: 8),
-            Text('Uploading ${(progress * 100).round()}%'),
+            Text(
+              operation == _AvatarOperation.removing
+                  ? 'Removing profile picture…'
+                  : 'Uploading ${(progress * 100).round()}%',
+            ),
           ],
           if (profile.avatarStorageStatus == 'degraded') ...[
             const SizedBox(height: 8),
@@ -452,11 +526,11 @@ class _AvatarEditor extends StatelessWidget {
             runSpacing: 8,
             children: [
               OutlinedButton.icon(
-                onPressed: isUploading ? null : onChoose,
+                onPressed: isBusy ? null : onChoose,
                 icon: const Icon(Icons.photo_camera_outlined),
                 label: Text(image == null ? 'Add picture' : 'Replace'),
               ),
-              if (selectedImage != null && !isUploading)
+              if (selectedImage != null && !isBusy)
                 OutlinedButton.icon(
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh),
@@ -464,7 +538,7 @@ class _AvatarEditor extends StatelessWidget {
                 ),
               if (image != null)
                 TextButton.icon(
-                  onPressed: isUploading ? null : onRemove,
+                  onPressed: isBusy ? null : onRemove,
                   icon: const Icon(Icons.delete_outline),
                   label: const Text('Remove'),
                 ),

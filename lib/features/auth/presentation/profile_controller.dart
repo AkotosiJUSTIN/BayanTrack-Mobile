@@ -25,18 +25,21 @@ class ProfileController extends _$ProfileController {
   }
 
   Future<void> updateProfile(ProfileUpdateRequest request) async {
-    state = const AsyncLoading<UserProfile>().copyWithPrevious(state);
-    final result = await ref.read(authRepositoryProvider).updateProfile(
-      firstName: request.firstName,
-      lastName: request.lastName,
-      phone: request.phone,
-      expectedRevision: request.expectedRevision,
-    );
+    final previous = state;
+    final result = await ref
+        .read(authRepositoryProvider)
+        .updateProfile(
+          firstName: request.firstName,
+          lastName: request.lastName,
+          phone: request.phone,
+          expectedRevision: request.expectedRevision,
+        );
+    if (!ref.mounted) return;
     result.when(
       success: (user) => state = AsyncData(_profileFromUser(user)),
       failure: (failure) {
         final error = Exception(failure.message);
-        state = AsyncError(error, StackTrace.current);
+        state = previous;
         throw error;
       },
     );
@@ -49,6 +52,7 @@ class ProfileController extends _$ProfileController {
     final result = await ref
         .read(authRepositoryProvider)
         .uploadAvatar(imageFile, onSendProgress: onSendProgress);
+    if (!ref.mounted) return;
     result.when(
       success: (user) => state = AsyncData(_profileFromUser(user)),
       failure: (failure) {
@@ -60,6 +64,7 @@ class ProfileController extends _$ProfileController {
 
   Future<void> removeAvatar() async {
     final result = await ref.read(authRepositoryProvider).removeAvatar();
+    if (!ref.mounted) return;
     result.when(
       success: (user) => state = AsyncData(_profileFromUser(user)),
       failure: (failure) {

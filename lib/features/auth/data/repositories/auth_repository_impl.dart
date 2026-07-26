@@ -154,14 +154,10 @@ class AuthRepositoryImpl implements AuthRepository {
     void Function(int sent, int total)? onSendProgress,
   }) async {
     try {
+      final avatar = await _avatarMultipartFile(imageFile);
       final response = await _dio.post(
         ApiConstants.profileAvatar,
-        data: FormData.fromMap({
-          'avatar': await MultipartFile.fromFile(
-            imageFile.path,
-            filename: 'avatar',
-          ),
-        }),
+        data: FormData.fromMap({'avatar': avatar}),
         onSendProgress: onSendProgress,
       );
       final userData = response.data['user'] ?? response.data;
@@ -171,6 +167,38 @@ class AuthRepositoryImpl implements AuthRepository {
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));
     }
+  }
+
+  Future<MultipartFile> _avatarMultipartFile(File file) async {
+    final header = await file.openRead(0, 12).first;
+    final (extension, contentType) =
+        header.length >= 3 &&
+            header[0] == 0xff &&
+            header[1] == 0xd8 &&
+            header[2] == 0xff
+        ? ('jpg', DioMediaType('image', 'jpeg'))
+        : header.length >= 8 &&
+              header[0] == 0x89 &&
+              header[1] == 0x50 &&
+              header[2] == 0x4e &&
+              header[3] == 0x47
+        ? ('png', DioMediaType('image', 'png'))
+        : header.length >= 12 &&
+              header[0] == 0x52 &&
+              header[1] == 0x49 &&
+              header[2] == 0x46 &&
+              header[3] == 0x46 &&
+              header[8] == 0x57 &&
+              header[9] == 0x45 &&
+              header[10] == 0x42 &&
+              header[11] == 0x50
+        ? ('webp', DioMediaType('image', 'webp'))
+        : ('bin', DioMediaType('application', 'octet-stream'));
+    return MultipartFile.fromFile(
+      file.path,
+      filename: 'avatar.$extension',
+      contentType: contentType,
+    );
   }
 
   @override

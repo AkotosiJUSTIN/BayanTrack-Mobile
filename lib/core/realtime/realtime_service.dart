@@ -21,7 +21,7 @@ class RealtimeService {
         if (event != null) onEvent(event);
       });
     }
-    if (onConnect != null) socket.onConnect(onConnect);
+    if (onConnect != null) socket.onConnect((_) => onConnect());
     socket.connect();
   }
 

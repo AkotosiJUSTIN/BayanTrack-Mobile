@@ -21,6 +21,55 @@ void main() {
     );
   });
 
+  test('accepts only compact profile and avatar revision metadata', () {
+    final parsed = RealtimeEvent.tryParse({
+      ...event('user_directory.changed'),
+      'entity': {'kind': 'user', 'id': 'USR-1'},
+      'revisions': {'profile': 7, 'avatar': 3},
+    });
+
+    expect(parsed?.profileRevision, 7);
+    expect(parsed?.avatarRevision, 3);
+    expect(
+      RealtimeEvent.tryParse({
+        ...event('user_directory.changed', eventId: 'event-private'),
+        'entity': {'kind': 'user', 'id': 'USR-1'},
+        'phone': '+639123456789',
+      }),
+      isNull,
+    );
+    expect(
+      RealtimeEvent.tryParse({
+        ...event('user_directory.changed', eventId: 'event-cid'),
+        'entity': {'kind': 'user', 'id': 'USR-1', 'cid': 'private-cid'},
+      }),
+      isNull,
+    );
+    expect(
+      RealtimeEvent.tryParse({
+        ...event('user_directory.changed', eventId: 'event-provider'),
+        'entity': {'kind': 'user', 'id': 'USR-1'},
+        'revisions': {'profile': 7, 'gateway': 'provider.example'},
+      }),
+      isNull,
+    );
+    expect(
+      RealtimeEvent.tryParse({
+        ...event('user_directory.changed', eventId: 'event-partial-revisions'),
+        'entity': {'kind': 'user', 'id': 'USR-1'},
+        'revisions': {'profile': 7},
+      }),
+      isNull,
+    );
+    expect(
+      RealtimeEvent.tryParse({
+        ...event('report.status_changed', eventId: 'event-report-revision'),
+        'revisions': {'profile': 7},
+      }),
+      isNull,
+    );
+  });
+
   test('deduplicates repeated events across reconnect delivery', () {
     final router = RealtimeEventRouter();
     expect(router.consume(event('queue.changed')), isNotNull);
