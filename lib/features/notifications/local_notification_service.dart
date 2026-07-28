@@ -11,7 +11,9 @@ class LocalNotificationService {
   static Future<void> initialize() async {
     if (_initialized) return;
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/bayantrack_logo',
+    );
     const settings = InitializationSettings(android: androidSettings);
 
     await _plugin.initialize(settings);
@@ -23,8 +25,10 @@ class LocalNotificationService {
       importance: Importance.high,
     );
 
-    final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     await androidPlugin?.createNotificationChannel(androidChannel);
     await androidPlugin?.requestNotificationsPermission();
 
@@ -45,10 +49,11 @@ class LocalNotificationService {
     final androidDetails = const AndroidNotificationDetails(
       'bayantrack_general',
       'BayanTrack Notifications',
-      channelDescription: 'General notifications for report and account updates.',
+      channelDescription:
+          'General notifications for report and account updates.',
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@mipmap/bayantrack_logo',
     );
 
     final payload = message.data['report_id']?.toString();

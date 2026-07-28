@@ -9,6 +9,21 @@ import '../../auth/presentation/auth_wrapper.dart';
 abstract final class _OnboardingColors {
   static const deepBlue = Color(0xFF064BEE);
   static const richOrange = Color(0xFFF86A05);
+
+  static bool isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  static Color brandBlue(BuildContext context) =>
+      isDark(context) ? AppColors.primaryLight : deepBlue;
+
+  static Color background(BuildContext context) =>
+      isDark(context) ? AppColors.darkBackground : AppColors.lightSurface;
+
+  static Color text(BuildContext context) =>
+      isDark(context) ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
+
+  static Color border(BuildContext context) =>
+      isDark(context) ? AppColors.darkBorder : AppColors.lightBorder;
 }
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -96,7 +111,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final isLastPage = _currentPage == _contents.length - 1;
 
     return Scaffold(
-      backgroundColor: AppColors.lightSurface,
+      key: const ValueKey('onboarding-scaffold'),
+      backgroundColor: _OnboardingColors.background(context),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -252,6 +268,11 @@ class _OnboardingHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final brandBlue = _OnboardingColors.brandBlue(context);
+    final logoSize = compact ? 42.0 : 48.0;
+    final wordmarkTextScale = MediaQuery.textScalerOf(
+      context,
+    ).scale(1).clamp(1.0, 1.5).toDouble();
 
     return Column(
       key: const ValueKey('onboarding-header'),
@@ -260,24 +281,43 @@ class _OnboardingHeader extends StatelessWidget {
           header: true,
           label: 'BayanTrack',
           child: ExcludeSemantics(
-            child: Text.rich(
-              key: const ValueKey('onboarding-wordmark'),
-              TextSpan(
-                style: theme.textTheme.headlineLarge?.copyWith(
-                  fontSize: compact ? 24 : 28,
-                  fontWeight: FontWeight.w800,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox.square(
+                  dimension: logoSize,
+                  child: Image.asset(
+                    'assets/images/BayanTrack-Logo-NoTxt.png',
+                    key: const ValueKey('onboarding-header-logo'),
+                    excludeFromSemantics: true,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                  ),
                 ),
-                children: const [
-                  TextSpan(
-                    text: 'Bayan',
-                    style: TextStyle(color: _OnboardingColors.deepBlue),
+                SizedBox(width: compact ? 6 : 8),
+                Flexible(
+                  child: Text.rich(
+                    key: const ValueKey('onboarding-wordmark'),
+                    textScaler: TextScaler.linear(wordmarkTextScale),
+                    TextSpan(
+                      style: theme.textTheme.headlineLarge?.copyWith(
+                        fontSize: compact ? 24 : 28,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: 'Bayan',
+                          style: TextStyle(color: brandBlue),
+                        ),
+                        const TextSpan(
+                          text: 'Track',
+                          style: TextStyle(color: _OnboardingColors.richOrange),
+                        ),
+                      ],
+                    ),
                   ),
-                  TextSpan(
-                    text: 'Track',
-                    style: TextStyle(color: _OnboardingColors.richOrange),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -287,7 +327,7 @@ class _OnboardingHeader extends StatelessWidget {
           key: const ValueKey('onboarding-tagline'),
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: _OnboardingColors.deepBlue,
+            color: brandBlue,
             fontWeight: FontWeight.w600,
             height: 1.3,
           ),
@@ -315,6 +355,7 @@ class _OnboardingBodyText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final brandBlue = _OnboardingColors.brandBlue(context);
     final underlineWidth = (width * 0.36).clamp(92.0, 124.0).toDouble();
 
     return SizedBox(
@@ -328,7 +369,7 @@ class _OnboardingBodyText extends StatelessWidget {
             key: ValueKey('onboarding-title-$pageIndex'),
             textAlign: TextAlign.center,
             style: theme.textTheme.headlineLarge?.copyWith(
-              color: _OnboardingColors.deepBlue,
+              color: brandBlue,
               fontSize: compact ? 28 : 30,
               fontWeight: FontWeight.w800,
               height: 1.12,
@@ -356,7 +397,7 @@ class _OnboardingBodyText extends StatelessWidget {
             key: ValueKey('onboarding-description-$pageIndex'),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: AppColors.lightTextPrimary,
+              color: _OnboardingColors.text(context),
               fontSize: compact ? 16 : 17,
               fontWeight: FontWeight.w500,
               height: 1.42,
@@ -386,6 +427,7 @@ class _OnboardingFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textScale = MediaQuery.textScalerOf(context).scale(1);
+    final brandBlue = _OnboardingColors.brandBlue(context);
     final stackActions =
         textScale > 1.3 ||
         (MediaQuery.sizeOf(context).width <= 360 && textScale > 1.1);
@@ -420,7 +462,8 @@ class _OnboardingFooter extends StatelessWidget {
     );
 
     return ColoredBox(
-      color: AppColors.lightSurface,
+      key: const ValueKey('onboarding-footer'),
+      color: _OnboardingColors.background(context),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
         child: Column(
@@ -443,8 +486,8 @@ class _OnboardingFooter extends StatelessWidget {
                       width: isActive ? 28 : 8,
                       decoration: BoxDecoration(
                         color: isActive
-                            ? _OnboardingColors.deepBlue
-                            : AppColors.lightBorder,
+                            ? brandBlue
+                            : _OnboardingColors.border(context),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),

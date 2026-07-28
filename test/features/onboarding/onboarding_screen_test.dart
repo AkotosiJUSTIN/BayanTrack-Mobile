@@ -7,7 +7,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _deepBlue = Color(0xFF064BEE);
+const _darkModeBlue = Color(0xFF3B82F6);
 const _richOrange = Color(0xFFF86A05);
+const _lightBackground = Color(0xFFF8FAFC);
+const _darkBackground = Color(0xFF0F172A);
+const _lightText = Color(0xFF0F172A);
+const _darkText = Color(0xFFF8FAFC);
+const _lightBorder = Color(0xFFCBD5E1);
+const _darkBorder = Color(0xFF475569);
+const _logoAsset = 'assets/images/BayanTrack-Logo-NoTxt.png';
 const _tagline = 'Watching over communities, supporting local action.';
 const _titles = [
   'Report Issues in Your Community',
@@ -149,22 +157,25 @@ void main() {
 
   for (var pageIndex = 0; pageIndex < _titles.length; pageIndex++) {
     for (final configuration in [
-      for (final size in [
-        const Size(320, 568),
-        const Size(360, 800),
-        const Size(390, 844),
-      ])
-        for (final textScale in [1.0, 1.5, 2.0])
-          (size: size, textScale: textScale),
+      for (final brightness in [Brightness.light, Brightness.dark])
+        for (final size in [
+          const Size(320, 568),
+          const Size(360, 800),
+          const Size(390, 844),
+        ])
+          for (final textScale in [1.0, 1.5, 2.0])
+            (brightness: brightness, size: size, textScale: textScale),
     ]) {
       testWidgets('Page ${pageIndex + 1} has no overflow at '
           '${configuration.size.width.toInt()}x'
           '${configuration.size.height.toInt()} with '
-          '${configuration.textScale}x text', (tester) async {
+          '${configuration.textScale}x text in '
+          '${configuration.brightness.name} mode', (tester) async {
         await _pumpOnboarding(
           tester,
           configuration.size,
           textScale: configuration.textScale,
+          brightness: configuration.brightness,
         );
         await _goToPage(tester, pageIndex);
 
@@ -173,6 +184,7 @@ void main() {
           tester,
           pageIndex: pageIndex,
           activeIndicator: pageIndex,
+          brightness: configuration.brightness,
         );
         _expectCenteredBody(
           tester,
@@ -194,6 +206,12 @@ void _expectPage(WidgetTester tester, {required int pageIndex}) {
   expect(find.text(_titles[pageIndex]), findsOneWidget);
   expect(find.text(_descriptions[pageIndex]), findsOneWidget);
   expect(find.text(_tagline), findsOneWidget);
+  final logo = tester.widget<Image>(
+    find.byKey(const ValueKey('onboarding-header-logo')),
+  );
+  expect((logo.image as AssetImage).assetName, _logoAsset);
+  expect(logo.fit, BoxFit.contain);
+  expect(logo.excludeFromSemantics, isTrue);
   _expectArtwork(tester, pageIndex: pageIndex, assetName: _artwork[pageIndex]);
 }
 
@@ -279,19 +297,49 @@ void _expectOnboardingColors(
   WidgetTester tester, {
   required int pageIndex,
   required int activeIndicator,
+  Brightness brightness = Brightness.light,
 }) {
+  final isDark = brightness == Brightness.dark;
+  final expectedBlue = isDark ? _darkModeBlue : _deepBlue;
+  final expectedBackground = isDark ? _darkBackground : _lightBackground;
+  final expectedText = isDark ? _darkText : _lightText;
+  final expectedBorder = isDark ? _darkBorder : _lightBorder;
+
+  expect(
+    tester
+        .widget<Scaffold>(find.byKey(const ValueKey('onboarding-scaffold')))
+        .backgroundColor,
+    expectedBackground,
+  );
+  expect(
+    tester
+        .widget<ColoredBox>(find.byKey(const ValueKey('onboarding-footer')))
+        .color,
+    expectedBackground,
+  );
+
   final wordmark = tester.widget<Text>(
     find.byKey(const ValueKey('onboarding-wordmark')),
   );
   final wordmarkSpan = wordmark.textSpan! as TextSpan;
   final wordmarkChildren = wordmarkSpan.children!.cast<TextSpan>();
-  expect(wordmarkChildren[0].style?.color, _deepBlue);
+  expect(wordmarkChildren[0].style?.color, expectedBlue);
   expect(wordmarkChildren[1].style?.color, _richOrange);
+
+  final tagline = tester.widget<Text>(
+    find.byKey(const ValueKey('onboarding-tagline')),
+  );
+  expect(tagline.style?.color, expectedBlue);
 
   final title = tester.widget<Text>(
     find.byKey(ValueKey('onboarding-title-$pageIndex')),
   );
-  expect(title.style?.color, _deepBlue);
+  expect(title.style?.color, expectedBlue);
+
+  final description = tester.widget<Text>(
+    find.byKey(ValueKey('onboarding-description-$pageIndex')),
+  );
+  expect(description.style?.color, expectedText);
 
   final underline = tester.widget<SvgPicture>(
     find.descendant(
@@ -318,7 +366,12 @@ void _expectOnboardingColors(
   final indicator = tester.widget<AnimatedContainer>(
     find.byKey(ValueKey('onboarding-indicator-$activeIndicator')),
   );
-  expect((indicator.decoration as BoxDecoration).color, _deepBlue);
+  expect((indicator.decoration as BoxDecoration).color, expectedBlue);
+
+  final inactiveIndicator = tester.widget<AnimatedContainer>(
+    find.byKey(ValueKey('onboarding-indicator-${(activeIndicator + 1) % 3}')),
+  );
+  expect((inactiveIndicator.decoration as BoxDecoration).color, expectedBorder);
 }
 
 void _expectSharedTypography(WidgetTester tester, {required int pageIndex}) {
@@ -355,6 +408,7 @@ Future<void> _pumpOnboarding(
   WidgetTester tester,
   Size size, {
   double textScale = 1,
+  Brightness brightness = Brightness.light,
   NavigatorObserver? navigatorObserver,
 }) async {
   tester.view.physicalSize = size;
@@ -366,6 +420,17 @@ Future<void> _pumpOnboarding(
     ProviderScope(
       child: MaterialApp(
         navigatorObservers: [?navigatorObserver],
+        theme: ThemeData(
+          brightness: Brightness.light,
+          scaffoldBackgroundColor: _lightBackground,
+        ),
+        darkTheme: ThemeData(
+          brightness: Brightness.dark,
+          scaffoldBackgroundColor: _darkBackground,
+        ),
+        themeMode: brightness == Brightness.dark
+            ? ThemeMode.dark
+            : ThemeMode.light,
         builder: (context, child) {
           return MediaQuery(
             data: MediaQuery.of(

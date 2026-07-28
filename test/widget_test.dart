@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:bayantrack_mobile/core/providers/theme_provider.dart';
+import 'package:bayantrack_mobile/features/splash/presentation/splash_screen.dart';
 import 'package:bayantrack_mobile/main.dart';
 
 void main() {
@@ -23,7 +24,12 @@ void main() {
       ),
     );
 
-    // Verify that the app renders (LoginScreen should be displayed).
+    expect(find.byType(SplashScreen), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 1500));
+    await tester.pumpAndSettle();
+
+    // Verify that the app renders and completes its startup transition.
     expect(find.byType(MaterialApp), findsOneWidget);
   });
 }
