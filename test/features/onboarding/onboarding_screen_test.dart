@@ -109,6 +109,44 @@ void main() {
     }
   });
 
+  testWidgets('keeps the shared header stationary while page bodies swipe', (
+    tester,
+  ) async {
+    await _pumpOnboarding(tester, const Size(390, 844));
+
+    final header = find.byKey(const ValueKey('onboarding-header'));
+    expect(header, findsOneWidget);
+
+    final headerElement = tester.element(header);
+    final headerRect = tester.getRect(header);
+
+    expect(
+      find.descendant(of: find.byType(PageView), matching: header),
+      findsNothing,
+    );
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(PageView)),
+    );
+    await gesture.moveBy(const Offset(-140, 0));
+    await tester.pump();
+
+    expect(tester.element(header), same(headerElement));
+    expect(tester.getRect(header), headerRect);
+    expect(find.text(_tagline), findsOneWidget);
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+
+    expect(tester.element(header), same(headerElement));
+    expect(tester.getRect(header), headerRect);
+
+    await _tapAndFinishPageAnimation(tester, 'Continue');
+
+    expect(tester.element(header), same(headerElement));
+    expect(tester.getRect(header), headerRect);
+  });
+
   for (var pageIndex = 0; pageIndex < _titles.length; pageIndex++) {
     for (final configuration in [
       for (final size in [
@@ -155,7 +193,7 @@ void main() {
 void _expectPage(WidgetTester tester, {required int pageIndex}) {
   expect(find.text(_titles[pageIndex]), findsOneWidget);
   expect(find.text(_descriptions[pageIndex]), findsOneWidget);
-  expect(find.text(_tagline), findsWidgets);
+  expect(find.text(_tagline), findsOneWidget);
   _expectArtwork(tester, pageIndex: pageIndex, assetName: _artwork[pageIndex]);
 }
 
@@ -168,7 +206,7 @@ void _expectBalancedLayout(
     find.byKey(ValueKey('onboarding-scroll-$pageIndex')),
   );
   final headerRect = tester.getRect(
-    find.byKey(ValueKey('onboarding-header-$pageIndex')),
+    find.byKey(const ValueKey('onboarding-header')),
   );
   final mainRect = tester.getRect(
     find.byKey(ValueKey('onboarding-main-$pageIndex')),
@@ -243,7 +281,7 @@ void _expectOnboardingColors(
   required int activeIndicator,
 }) {
   final wordmark = tester.widget<Text>(
-    find.byKey(ValueKey('onboarding-wordmark-$pageIndex')),
+    find.byKey(const ValueKey('onboarding-wordmark')),
   );
   final wordmarkSpan = wordmark.textSpan! as TextSpan;
   final wordmarkChildren = wordmarkSpan.children!.cast<TextSpan>();

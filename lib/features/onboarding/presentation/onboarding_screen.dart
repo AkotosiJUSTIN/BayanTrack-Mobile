@@ -98,33 +98,50 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     return Scaffold(
       backgroundColor: AppColors.lightSurface,
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                physics: const BouncingScrollPhysics(),
-                onPageChanged: (index) {
-                  setState(() => _currentPage = index);
-                },
-                itemCount: _contents.length,
-                itemBuilder: (context, index) {
-                  return _OnboardingPage(
-                    key: ValueKey('onboarding-page-$index'),
-                    pageIndex: index,
-                    content: _contents[index],
-                  );
-                },
-              ),
-            ),
-            _OnboardingFooter(
-              currentPage: _currentPage,
-              pageCount: _contents.length,
-              primaryLabel: isLastPage ? 'Get Started' : 'Continue',
-              onBackOrSkip: _currentPage > 0 ? _onBack : _finishOnboarding,
-              onNext: _onNext,
-            ),
-          ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxHeight < 620;
+            final horizontalPadding = constraints.maxWidth < 360 ? 20.0 : 24.0;
+
+            return Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    compact ? 8 : 16,
+                    horizontalPadding,
+                    0,
+                  ),
+                  child: _OnboardingHeader(compact: compact),
+                ),
+                SizedBox(height: compact ? 4 : 8),
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    physics: const BouncingScrollPhysics(),
+                    onPageChanged: (index) {
+                      setState(() => _currentPage = index);
+                    },
+                    itemCount: _contents.length,
+                    itemBuilder: (context, index) {
+                      return _OnboardingPage(
+                        key: ValueKey('onboarding-page-$index'),
+                        pageIndex: index,
+                        content: _contents[index],
+                      );
+                    },
+                  ),
+                ),
+                _OnboardingFooter(
+                  currentPage: _currentPage,
+                  pageCount: _contents.length,
+                  primaryLabel: isLastPage ? 'Get Started' : 'Continue',
+                  onBackOrSkip: _currentPage > 0 ? _onBack : _finishOnboarding,
+                  onNext: _onNext,
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -160,10 +177,6 @@ class _OnboardingPage extends StatelessWidget {
             .toDouble();
         final topPadding = compact ? 8.0 : 16.0;
         const bottomPadding = 8.0;
-        final header = _OnboardingHeader(
-          pageIndex: pageIndex,
-          compact: compact,
-        );
         final mainContent = Column(
           key: ValueKey('onboarding-main-$pageIndex'),
           mainAxisSize: MainAxisSize.min,
@@ -201,9 +214,7 @@ class _OnboardingPage extends StatelessWidget {
               horizontalPadding,
               bottomPadding,
             ),
-            child: Column(
-              children: [header, const SizedBox(height: 4), mainContent],
-            ),
+            child: mainContent,
           );
         }
 
@@ -214,26 +225,18 @@ class _OnboardingPage extends StatelessWidget {
             horizontalPadding,
             bottomPadding,
           ),
-          child: Column(
-            children: [
-              header,
-              SizedBox(height: compact ? 4 : 8),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, mainConstraints) {
-                    return SingleChildScrollView(
-                      key: ValueKey('onboarding-scroll-$pageIndex'),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: mainConstraints.maxHeight,
-                        ),
-                        child: Center(child: mainContent),
-                      ),
-                    );
-                  },
+          child: LayoutBuilder(
+            builder: (context, mainConstraints) {
+              return SingleChildScrollView(
+                key: ValueKey('onboarding-scroll-$pageIndex'),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: mainConstraints.maxHeight,
+                  ),
+                  child: Center(child: mainContent),
                 ),
-              ),
-            ],
+              );
+            },
           ),
         );
       },
@@ -242,9 +245,8 @@ class _OnboardingPage extends StatelessWidget {
 }
 
 class _OnboardingHeader extends StatelessWidget {
-  const _OnboardingHeader({required this.pageIndex, required this.compact});
+  const _OnboardingHeader({required this.compact});
 
-  final int pageIndex;
   final bool compact;
 
   @override
@@ -252,14 +254,14 @@ class _OnboardingHeader extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Column(
-      key: ValueKey('onboarding-header-$pageIndex'),
+      key: const ValueKey('onboarding-header'),
       children: [
         Semantics(
           header: true,
           label: 'BayanTrack',
           child: ExcludeSemantics(
             child: Text.rich(
-              key: ValueKey('onboarding-wordmark-$pageIndex'),
+              key: const ValueKey('onboarding-wordmark'),
               TextSpan(
                 style: theme.textTheme.headlineLarge?.copyWith(
                   fontSize: compact ? 24 : 28,
@@ -282,7 +284,7 @@ class _OnboardingHeader extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           'Watching over communities, supporting local action.',
-          key: ValueKey('onboarding-tagline-$pageIndex'),
+          key: const ValueKey('onboarding-tagline'),
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(
             color: _OnboardingColors.deepBlue,
