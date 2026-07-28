@@ -97,7 +97,7 @@ flutter:
     - assets/onboarding/Mascot1_thumbs_up_full.png
     - assets/onboarding/Mascot2_headset_full.png
     - assets/onboarding/Mascot3_megaphone_full.png
-    - assets/onboarding/scenery/
+    - assets/onboarding/doodles/title_underline.svg
     - assets/boundaries/0105546000.geojson
 
   # An image asset can refer to one or more resolution-specific "variants", see
