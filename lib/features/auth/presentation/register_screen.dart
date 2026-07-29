@@ -1,8 +1,7 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+
 import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/presentation/widgets/password_strength_indicator.dart';
 import '../../../core/theme/app_colors.dart';
@@ -10,8 +9,10 @@ import '../../../core/utils/validators.dart';
 import 'auth_controller.dart';
 import 'barangays_provider.dart';
 
-/// Register screen matching the BayanTrack design mockup.
-/// Features: Full name, email, phone (optional), password with confirmation.
+const _brandBlue = Color(0xFF064BEE);
+const _brandOrange = Color(0xFFF86A05);
+
+/// Registration form with compact Bantay artwork.
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -118,6 +119,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isLoading = authState is AuthLoading;
+    final mediaQuery = MediaQuery.of(context);
+    final usableHeight =
+        mediaQuery.size.height -
+        mediaQuery.padding.vertical -
+        mediaQuery.viewInsets.bottom;
+    final compact = usableHeight < 700;
+    final horizontalPadding = mediaQuery.size.width < 360 ? 20.0 : 24.0;
+    final brandBlue = isDark ? AppColors.primaryLight : _brandBlue;
 
     // Show error snackbar when auth fails
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
@@ -127,45 +136,58 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     });
 
     return Scaffold(
+      key: const ValueKey('register-scaffold'),
+      backgroundColor: isDark
+          ? AppColors.darkBackground
+          : AppColors.lightBackground,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          key: const ValueKey('register-scroll'),
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            4,
+            horizontalPadding,
+            24,
+          ),
           child: Form(
             key: _formKey,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 32),
-
-                // Logo
-                Center(
-                  child: SvgPicture.asset(
-                    'assets/images/BayanTrack-Logo.svg',
-                    height: 60,
-                    placeholderBuilder: (_) => Icon(
-                      Icons.location_on,
-                      size: 60,
-                      color: AppColors.accent,
-                    ),
-                    errorBuilder: (_, _, _) => Icon(
-                      Icons.location_on,
-                      size: 60,
-                      color: AppColors.accent,
-                    ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    key: const ValueKey('register-back-button'),
+                    tooltip: 'Back',
+                    onPressed: isLoading ? null : _navigateToLogin,
+                    icon: const Icon(Icons.arrow_back_rounded),
                   ),
                 ),
-                const SizedBox(height: 24),
-
-                // Header text
+                SizedBox(
+                  height: compact ? 112 : 136,
+                  child: Image.asset(
+                    'assets/images/Mascot4_waving_register.png',
+                    key: const ValueKey('register-illustration'),
+                    semanticLabel: 'Bantay waving',
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.high,
+                  ),
+                ),
+                SizedBox(height: compact ? 8 : 12),
                 Text(
                   'Create Account',
-                  style: theme.textTheme.displayMedium,
+                  key: const ValueKey('register-title'),
+                  style: theme.textTheme.displayMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   'Join the community of civic reporters',
+                  key: const ValueKey('register-subtitle'),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: isDark
                         ? AppColors.darkTextSecondary
@@ -173,99 +195,137 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 10),
+                Center(
+                  child: Container(
+                    key: const ValueKey('register-accent'),
+                    width: 36,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: _brandOrange,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                SizedBox(height: compact ? 16 : 20),
 
                 // First Name field
                 Text('First Name', style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
-                TextFormField(
-                  controller: _firstNameController,
-                  textInputAction: TextInputAction.next,
-                  textCapitalization: TextCapitalization.words,
-                  enabled: !isLoading,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                      RegExp(r"[A-Za-z\s\-'`]"),
+                Semantics(
+                  label: 'First Name',
+                  textField: true,
+                  child: TextFormField(
+                    key: const ValueKey('register-first-name-field'),
+                    controller: _firstNameController,
+                    textInputAction: TextInputAction.next,
+                    textCapitalization: TextCapitalization.words,
+                    enabled: !isLoading,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r"[A-Za-z\s\-'`]"),
+                      ),
+                      LengthLimitingTextInputFormatter(100),
+                    ],
+                    onChanged: (_) => _formKey.currentState?.validate(),
+                    decoration: const InputDecoration(
+                      hintText: 'Enter your first name',
+                      prefixIcon: Icon(Icons.person_outline),
                     ),
-                    LengthLimitingTextInputFormatter(100),
-                  ],
-                  onChanged: (_) => _formKey.currentState?.validate(),
-                  decoration: const InputDecoration(
-                    hintText: 'Enter your first name',
-                    prefixIcon: Icon(Icons.person_outline),
+                    validator: (value) =>
+                        Validators.lettersOnly(value, fieldName: 'First name'),
                   ),
-                  validator: (value) =>
-                      Validators.lettersOnly(value, fieldName: 'First name'),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
                 // Last Name field
                 Text('Last Name', style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
-                TextFormField(
-                  controller: _lastNameController,
-                  textInputAction: TextInputAction.next,
-                  textCapitalization: TextCapitalization.words,
-                  enabled: !isLoading,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                      RegExp(r"[A-Za-z\s\-'`]"),
+                Semantics(
+                  label: 'Last Name',
+                  textField: true,
+                  child: TextFormField(
+                    key: const ValueKey('register-last-name-field'),
+                    controller: _lastNameController,
+                    textInputAction: TextInputAction.next,
+                    textCapitalization: TextCapitalization.words,
+                    enabled: !isLoading,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r"[A-Za-z\s\-'`]"),
+                      ),
+                      LengthLimitingTextInputFormatter(100),
+                    ],
+                    onChanged: (_) => _formKey.currentState?.validate(),
+                    decoration: const InputDecoration(
+                      hintText: 'Enter your last name',
+                      prefixIcon: Icon(Icons.person_outline),
                     ),
-                    LengthLimitingTextInputFormatter(100),
-                  ],
-                  onChanged: (_) => _formKey.currentState?.validate(),
-                  decoration: const InputDecoration(
-                    hintText: 'Enter your last name',
-                    prefixIcon: Icon(Icons.person_outline),
+                    validator: (value) =>
+                        Validators.lettersOnly(value, fieldName: 'Last name'),
                   ),
-                  validator: (value) =>
-                      Validators.lettersOnly(value, fieldName: 'Last name'),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
                 // Email field
                 Text('Email', style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  enabled: !isLoading,
-                  onChanged: (_) => _formKey.currentState?.validate(),
-                  decoration: const InputDecoration(
-                    hintText: 'Enter your email',
-                    prefixIcon: Icon(Icons.email_outlined),
+                Semantics(
+                  label: 'Email',
+                  textField: true,
+                  child: TextFormField(
+                    key: const ValueKey('register-email-field'),
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    enabled: !isLoading,
+                    onChanged: (_) => _formKey.currentState?.validate(),
+                    decoration: const InputDecoration(
+                      hintText: 'Enter your email',
+                      prefixIcon: Icon(Icons.email_outlined),
+                    ),
+                    validator: Validators.email,
                   ),
-                  validator: Validators.email,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
                 // Password field
                 Text('Password', style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.next,
-                  enabled: !isLoading,
-                  onChanged: (_) => _formKey.currentState?.validate(),
-                  decoration: InputDecoration(
-                    hintText: 'Create a password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
+                Semantics(
+                  label: 'Password',
+                  textField: true,
+                  child: TextFormField(
+                    key: const ValueKey('register-password-field'),
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.next,
+                    enabled: !isLoading,
+                    onChanged: (_) => _formKey.currentState?.validate(),
+                    decoration: InputDecoration(
+                      hintText: 'Create a password',
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        key: const ValueKey('register-password-toggle'),
+                        tooltip: _obscurePassword
+                            ? 'Show password'
+                            : 'Hide password',
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                        onPressed: isLoading
+                            ? null
+                            : () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
                     ),
+                    validator: Validators.password,
                   ),
-                  validator: Validators.password,
                 ),
                 ValueListenableBuilder<TextEditingValue>(
                   valueListenable: _passwordController,
@@ -277,140 +337,181 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     );
                   },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
                 // Confirm Password field
                 Text('Confirm Password', style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmPassword,
-                  textInputAction: TextInputAction.done,
-                  enabled: !isLoading,
-                  onChanged: (_) => _formKey.currentState?.validate(),
-                  onFieldSubmitted: (_) => _handleRegister(),
-                  decoration: InputDecoration(
-                    hintText: 'Confirm your password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
+                Semantics(
+                  label: 'Confirm Password',
+                  textField: true,
+                  child: TextFormField(
+                    key: const ValueKey('register-confirm-password-field'),
+                    controller: _confirmPasswordController,
+                    obscureText: _obscureConfirmPassword,
+                    textInputAction: TextInputAction.done,
+                    enabled: !isLoading,
+                    onChanged: (_) => _formKey.currentState?.validate(),
+                    onFieldSubmitted: (_) => _handleRegister(),
+                    decoration: InputDecoration(
+                      hintText: 'Confirm your password',
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        key: const ValueKey('register-confirm-password-toggle'),
+                        tooltip: _obscureConfirmPassword
+                            ? 'Show confirm password'
+                            : 'Hide confirm password',
+                        icon: Icon(
+                          _obscureConfirmPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                        onPressed: isLoading
+                            ? null
+                            : () {
+                                setState(() {
+                                  _obscureConfirmPassword =
+                                      !_obscureConfirmPassword;
+                                });
+                              },
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
-                      },
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please confirm your password';
+                      }
+                      if (value != _passwordController.text) {
+                        return 'Passwords do not match';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
                 // Barangay field
                 Text('Barangay', style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
-                ref.watch(barangaysProvider).when(
-                  loading: () => const LinearProgressIndicator(),
-                  error: (_, __) => Text(
-                    'Failed to load barangays. Please restart the app.',
-                    style: TextStyle(color: theme.colorScheme.error),
-                  ),
-                  data: (barangays) => DropdownButtonFormField<String>(
-                    value: _selectedBarangayId,
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      hintText: 'Select your barangay',
-                      prefixIcon: Icon(Icons.location_city_outlined),
+                ref
+                    .watch(barangaysProvider)
+                    .when(
+                      loading: () => const LinearProgressIndicator(),
+                      error: (_, _) => Text(
+                        'Failed to load barangays. Please restart the app.',
+                        style: TextStyle(color: theme.colorScheme.error),
+                      ),
+                      data: (barangays) => DropdownButtonFormField<String>(
+                        key: const ValueKey('register-barangay-field'),
+                        initialValue: _selectedBarangayId,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          hintText: 'Select your barangay',
+                          prefixIcon: Icon(Icons.location_city_outlined),
+                        ),
+                        items: barangays
+                            .map(
+                              (b) => DropdownMenuItem(
+                                value: b.id,
+                                child: Text(b.name),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: isLoading
+                            ? null
+                            : (value) =>
+                                  setState(() => _selectedBarangayId = value),
+                        validator: (_) => _selectedBarangayId == null
+                            ? 'Please select your barangay'
+                            : null,
+                      ),
                     ),
-                    items: barangays
-                        .map((b) => DropdownMenuItem(
-                              value: b.id,
-                              child: Text(b.name),
-                            ))
-                        .toList(),
-                    onChanged: isLoading
-                        ? null
-                        : (value) => setState(() => _selectedBarangayId = value),
-                    validator: (_) => _selectedBarangayId == null
-                        ? 'Please select your barangay'
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Terms & Conditions and Privacy Policy checkbox
                 Row(
+                  key: const ValueKey('register-terms-row'),
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Checkbox(value: _agreeToTerms, onChanged: null),
+                    Checkbox(
+                      key: const ValueKey('register-terms-checkbox'),
+                      value: _agreeToTerms,
+                      onChanged: null,
+                    ),
                     Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: RichText(
-                          text: TextSpan(
+                      child: Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            'I agree to the',
                             style: theme.textTheme.bodyMedium,
-                            children: [
-                              const TextSpan(text: 'I agree to the '),
-                              TextSpan(
-                                text: 'Terms & Conditions and Privacy Policy',
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = _showTermsAndPrivacyPolicy,
-                              ),
-                            ],
                           ),
-                        ),
+                          TextButton(
+                            key: const ValueKey('register-terms-button'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: brandBlue,
+                              minimumSize: const Size(44, 44),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                            ),
+                            onPressed: isLoading
+                                ? null
+                                : _showTermsAndPrivacyPolicy,
+                            child: const Text(
+                              'Terms & Conditions and Privacy Policy',
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // Register button
-                if (isLoading)
-                  const Center(child: CircularProgressIndicator())
-                else
-                  ElevatedButton(
-                    onPressed: _handleRegister,
-                    child: const Text('Create Account'),
+                ElevatedButton(
+                  key: const ValueKey('register-submit-button'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _brandBlue,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(52),
                   ),
-                const SizedBox(height: 32),
+                  onPressed: isLoading ? null : _handleRegister,
+                  child: isLoading
+                      ? const SizedBox.square(
+                          dimension: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                            semanticsLabel: 'Creating account',
+                          ),
+                        )
+                      : const Text('Create Account'),
+                ),
+                const SizedBox(height: 16),
 
                 // Login link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
-                      'Already have an account? ',
+                      'Already have an account?',
+                      key: const ValueKey('register-login-prompt'),
                       style: theme.textTheme.bodyMedium,
                     ),
-                    GestureDetector(
-                      onTap: isLoading ? null : _navigateToLogin,
-                      child: Text(
-                        'Login',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    TextButton(
+                      key: const ValueKey('register-login-button'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: brandBlue,
+                        minimumSize: const Size(44, 44),
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
                       ),
+                      onPressed: isLoading ? null : _navigateToLogin,
+                      child: const Text('Login'),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
               ],
             ),
           ),
