@@ -92,7 +92,7 @@ class NotificationPreferencesController
     );
 
     result.when(
-      success: (_) => ref.invalidateSelf(),
+      success: (preferences) => state = AsyncData(preferences),
       failure: (failure) => throw Exception(failure.message),
     );
   }

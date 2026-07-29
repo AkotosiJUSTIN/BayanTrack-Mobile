@@ -3,42 +3,76 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/entities/notification_preferences.dart';
 import 'notifications_controller.dart';
 
-class NotificationSettingsScreen extends ConsumerWidget {
+class NotificationSettingsScreen extends ConsumerStatefulWidget {
   const NotificationSettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NotificationSettingsScreen> createState() =>
+      _NotificationSettingsScreenState();
+}
+
+class _NotificationSettingsScreenState
+    extends ConsumerState<NotificationSettingsScreen> {
+  bool _isSaving = false;
+  String? _saveError;
+  Future<void> Function()? _retrySave;
+
+  @override
+  Widget build(BuildContext context) {
     final prefsAsync = ref.watch(notificationPreferencesControllerProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Notification Settings')),
       body: prefsAsync.when(
-        data: (prefs) => _buildSettingsList(context, ref, prefs),
+        data: (prefs) => _buildSettingsList(context, prefs),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(child: Text('Error loading settings: $err')),
+        error: (err, _) => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Error loading settings: $err'),
+              TextButton(
+                onPressed: () =>
+                    ref.invalidate(notificationPreferencesControllerProvider),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildSettingsList(
     BuildContext context,
-    WidgetRef ref,
     NotificationPreferences prefs,
   ) {
     return ListView(
       children: [
+        if (_isSaving) const LinearProgressIndicator(),
+        if (_saveError != null)
+          ListTile(
+            title: Text(
+              _saveError!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+            trailing: TextButton(
+              onPressed: _isSaving ? null : _retrySave,
+              child: const Text('Retry'),
+            ),
+          ),
         _buildSectionHeader(context, 'Channels'),
         SwitchListTile(
           title: const Text('Email Notifications'),
           subtitle: const Text('Receive updates via email'),
           value: prefs.emailEnabled,
-          onChanged: (val) => _update(ref, prefs, emailEnabled: val),
+          onChanged: _isSaving ? null : (val) => _update(emailEnabled: val),
         ),
         SwitchListTile(
           title: const Text('Push Notifications'),
           subtitle: const Text('Receive updates on this device'),
           value: prefs.pushEnabled,
-          onChanged: (val) => _update(ref, prefs, pushEnabled: val),
+          onChanged: _isSaving ? null : (val) => _update(pushEnabled: val),
         ),
         const Divider(),
         _buildSectionHeader(context, 'Events'),
@@ -46,19 +80,23 @@ class NotificationSettingsScreen extends ConsumerWidget {
           title: const Text('Status Changes'),
           subtitle: const Text('When report status changes'),
           value: prefs.notifyOnStatusChange,
-          onChanged: (val) => _update(ref, prefs, notifyOnStatusChange: val),
+          onChanged: _isSaving
+              ? null
+              : (val) => _update(notifyOnStatusChange: val),
         ),
         SwitchListTile(
           title: const Text('Comments'),
           subtitle: const Text('When someone comments on your report'),
           value: prefs.notifyOnComment,
-          onChanged: (val) => _update(ref, prefs, notifyOnComment: val),
+          onChanged: _isSaving ? null : (val) => _update(notifyOnComment: val),
         ),
         SwitchListTile(
           title: const Text('Assignments'),
           subtitle: const Text('When a report is assigned'),
           value: prefs.notifyOnAssignment,
-          onChanged: (val) => _update(ref, prefs, notifyOnAssignment: val),
+          onChanged: _isSaving
+              ? null
+              : (val) => _update(notifyOnAssignment: val),
         ),
       ],
     );
@@ -77,24 +115,47 @@ class NotificationSettingsScreen extends ConsumerWidget {
     );
   }
 
-  void _update(
-    WidgetRef ref,
-    NotificationPreferences current, {
+  Future<void> _update({
     bool? emailEnabled,
     bool? pushEnabled,
     bool? notifyOnStatusChange,
     bool? notifyOnComment,
     bool? notifyOnAssignment,
-  }) {
-    ref
-        .read(notificationPreferencesControllerProvider.notifier)
-        .updatePreferences(
-          emailEnabled: emailEnabled ?? current.emailEnabled,
-          pushEnabled: pushEnabled ?? current.pushEnabled,
-          notifyOnStatusChange:
-              notifyOnStatusChange ?? current.notifyOnStatusChange,
-          notifyOnComment: notifyOnComment ?? current.notifyOnComment,
-          notifyOnAssignment: notifyOnAssignment ?? current.notifyOnAssignment,
-        );
+  }) async {
+    setState(() {
+      _isSaving = true;
+      _saveError = null;
+      _retrySave = () => _update(
+        emailEnabled: emailEnabled,
+        pushEnabled: pushEnabled,
+        notifyOnStatusChange: notifyOnStatusChange,
+        notifyOnComment: notifyOnComment,
+        notifyOnAssignment: notifyOnAssignment,
+      );
+    });
+    try {
+      await ref
+          .read(notificationPreferencesControllerProvider.notifier)
+          .updatePreferences(
+            emailEnabled: emailEnabled,
+            pushEnabled: pushEnabled,
+            notifyOnStatusChange: notifyOnStatusChange,
+            notifyOnComment: notifyOnComment,
+            notifyOnAssignment: notifyOnAssignment,
+          );
+      if (mounted) {
+        setState(() => _retrySave = null);
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _saveError = error.toString().replaceFirst('Exception: ', '');
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
   }
 }
