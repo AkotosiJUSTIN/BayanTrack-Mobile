@@ -168,7 +168,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 SizedBox(
                   height: compact ? 112 : 136,
                   child: Image.asset(
-                    'assets/images/Mascot4_waving_register.png',
+                    'assets/images/auth/register_mascot.webp',
                     key: const ValueKey('register-illustration'),
                     semanticLabel: 'Bantay waving',
                     fit: BoxFit.contain,

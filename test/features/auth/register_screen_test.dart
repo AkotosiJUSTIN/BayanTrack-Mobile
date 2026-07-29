@@ -18,7 +18,7 @@ import 'package:mocktail/mocktail.dart';
 
 const _brandBlue = Color(0xFF064BEE);
 const _brandOrange = Color(0xFFF86A05);
-const _mascotAsset = 'assets/images/Mascot4_waving_register.png';
+const _mascotAsset = 'assets/images/auth/register_mascot.webp';
 
 class _TestBarangays extends Barangays {
   @override

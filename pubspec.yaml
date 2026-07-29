@@ -93,10 +93,9 @@ flutter:
 
   # Assets
   assets:
-    - assets/images/
-    - assets/onboarding/Mascot1_thumbs_up_full.png
-    - assets/onboarding/Mascot2_headset_full.png
-    - assets/onboarding/Mascot3_megaphone_full.png
+    - assets/images/branding/
+    - assets/images/auth/
+    - assets/images/onboarding/
     - assets/onboarding/doodles/title_underline.svg
     - assets/boundaries/0105546000.geojson
 
@@ -129,8 +128,8 @@ flutter:
 flutter_native_splash:
   color: "#F8FAFC"
   color_dark: "#0F172A"
-  image: assets/images/BayanTrack-Logo-NoTxt.png
-  image_dark: assets/images/BayanTrack-Logo-NoTxt.png
+  image: design-assets/masters/branding/bt_logo_mark.png
+  image_dark: design-assets/masters/branding/bt_logo_mark.png
   android: true
   ios: false
   web: false
@@ -138,5 +137,5 @@ flutter_native_splash:
   android_12:
     color: "#F8FAFC"
     color_dark: "#0F172A"
-    image: assets/images/BayanTrack-Splash-Android12.png
-    image_dark: assets/images/BayanTrack-Splash-Android12.png
+    image: design-assets/masters/branding/bt_splash_android12_master.png
+    image_dark: design-assets/masters/branding/bt_splash_android12_master.png

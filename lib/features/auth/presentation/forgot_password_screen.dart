@@ -202,7 +202,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     SizedBox(
                       height: compact ? 145 : 190,
                       child: Image.asset(
-                        'assets/images/Mascot4_forgot_password.png',
+                        'assets/images/auth/forgot_password_mascot.webp',
                         key: const ValueKey('forgot-password-illustration'),
                         fit: BoxFit.contain,
                         filterQuality: FilterQuality.high,
@@ -409,8 +409,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         height: compact ? 145 : 190,
                         child: Image.asset(
                           isOtpStep
-                              ? 'assets/images/Mascot4_check_otp.png'
-                              : 'assets/images/Mascot4_change_pass.png',
+                              ? 'assets/images/auth/check_otp_mascot.webp'
+                              : 'assets/images/auth/change_password_mascot.webp',
                           key: ValueKey(
                             isOtpStep
                                 ? 'forgot-password-otp-illustration'

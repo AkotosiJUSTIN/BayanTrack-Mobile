@@ -13,9 +13,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-const _mascotAsset = 'assets/images/Mascot4_forgot_password.png';
-const _otpMascotAsset = 'assets/images/Mascot4_check_otp.png';
-const _passwordMascotAsset = 'assets/images/Mascot4_change_pass.png';
+const _mascotAsset = 'assets/images/auth/forgot_password_mascot.webp';
+const _otpMascotAsset = 'assets/images/auth/check_otp_mascot.webp';
+const _passwordMascotAsset = 'assets/images/auth/change_password_mascot.webp';
 
 class _AuthRepositoryMock extends Mock implements AuthRepository {}
 

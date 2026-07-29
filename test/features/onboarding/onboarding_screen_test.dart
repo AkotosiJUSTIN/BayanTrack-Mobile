@@ -15,7 +15,7 @@ const _lightText = Color(0xFF0F172A);
 const _darkText = Color(0xFFF8FAFC);
 const _lightBorder = Color(0xFFCBD5E1);
 const _darkBorder = Color(0xFF475569);
-const _logoAsset = 'assets/images/BayanTrack-Logo-NoTxt.png';
+const _logoAsset = 'assets/images/branding/bt_logo_mark.webp';
 const _tagline = 'Watching over communities, supporting local action.';
 const _titles = [
   'Report Issues in Your Community',
@@ -28,9 +28,9 @@ const _descriptions = [
   'Receive important updates and safety alerts for your community.',
 ];
 const _artwork = [
-  'assets/onboarding/Mascot1_thumbs_up_full.png',
-  'assets/onboarding/Mascot2_headset_full.png',
-  'assets/onboarding/Mascot3_megaphone_full.png',
+  'assets/images/onboarding/step_1.webp',
+  'assets/images/onboarding/step_2.webp',
+  'assets/images/onboarding/step_3.webp',
 ];
 
 void main() {

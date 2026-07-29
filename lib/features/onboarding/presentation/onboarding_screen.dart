@@ -40,19 +40,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   static const List<OnboardingContent> _contents = [
     OnboardingContent(
-      mascot: 'assets/onboarding/Mascot1_thumbs_up_full.png',
+      mascot: 'assets/images/onboarding/step_1.webp',
       title: 'Report Issues in Your Community',
       description:
           'Quickly report floods, potholes, broken streetlights, garbage, and other local concerns directly to the LGU.',
     ),
     OnboardingContent(
-      mascot: 'assets/onboarding/Mascot2_headset_full.png',
+      mascot: 'assets/images/onboarding/step_2.webp',
       title: 'Track Your Report’s Progress',
       description:
           'Follow your report’s status and receive updates as it moves toward resolution.',
     ),
     OnboardingContent(
-      mascot: 'assets/onboarding/Mascot3_megaphone_full.png',
+      mascot: 'assets/images/onboarding/step_3.webp',
       title: 'Stay Informed',
       description:
           'Receive important updates and safety alerts for your community.',
@@ -287,7 +287,7 @@ class _OnboardingHeader extends StatelessWidget {
                 SizedBox.square(
                   dimension: logoSize,
                   child: Image.asset(
-                    'assets/images/BayanTrack-Logo-NoTxt.png',
+                    'assets/images/branding/bt_logo_mark.webp',
                     key: const ValueKey('onboarding-header-logo'),
                     excludeFromSemantics: true,
                     fit: BoxFit.contain,

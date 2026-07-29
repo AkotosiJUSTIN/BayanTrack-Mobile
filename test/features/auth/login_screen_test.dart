@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _brandBlue = Color(0xFF064BEE);
-const _mascotAsset = 'assets/images/Mascot4_waving_login.png';
+const _mascotAsset = 'assets/images/auth/login_mascot.webp';
 
 void main() {
   testWidgets('shows Login-only Bantay layout in required order', (

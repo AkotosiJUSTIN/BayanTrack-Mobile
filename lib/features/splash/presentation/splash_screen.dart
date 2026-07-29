@@ -103,7 +103,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Image.asset(
-                    'assets/images/BayanTrack-Logo-NoTxt.png',
+                    'assets/images/branding/bt_logo_mark.webp',
                     key: const ValueKey('splash-logo'),
                     width: logoWidth,
                     fit: BoxFit.contain,

@@ -9,7 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 const _deepBlue = Color(0xFF064BEE);
 const _darkModeBlue = Color(0xFF3B82F6);
 const _richOrange = Color(0xFFF86A05);
-const _logoAsset = 'assets/images/BayanTrack-Logo-NoTxt.png';
+const _logoAsset = 'assets/images/branding/bt_logo_mark.webp';
 
 void main() {
   testWidgets('shows the branded light-mode startup content', (tester) async {

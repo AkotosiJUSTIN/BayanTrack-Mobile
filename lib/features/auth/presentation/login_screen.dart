@@ -102,7 +102,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         SizedBox(
                           height: compact ? 170 : 230,
                           child: Image.asset(
-                            'assets/images/Mascot4_waving_login.png',
+                            'assets/images/auth/login_mascot.webp',
                             key: const ValueKey('login-illustration'),
                             semanticLabel: 'Bantay waving',
                             fit: BoxFit.contain,
