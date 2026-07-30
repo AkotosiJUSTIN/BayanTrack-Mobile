@@ -45,7 +45,7 @@
 ### 3.3 Notifications
 *   **Structure**: Paginated list of notifications (`PaginatedNotifications`).
 *   **Types**: Strongly typed `NotificationType` enum (system, report_update, account).
-*   **Preferences**: Toggleable settings for push/email/sms notifications.
+*   **Preferences**: Server-owned email, push, status-change, comment, and assignment settings. Partial saves retain the last confirmed state on failure, expose retry, and reload for the authenticated account after logout/account changes.
 *   **Clean Architecture**: Mapper converts raw JSON API response to Domain Entities.
 
 ### 3.4 Reports (Incident Tracking)

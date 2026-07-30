@@ -1,4 +1,4 @@
-# Mobile Prioritization Integration Guide
+﻿# Mobile Prioritization Integration Guide
 
 ## Overview
 
@@ -532,7 +532,8 @@ flutter analyze
 ## 📚 Related Documentation
 
 - **Backend Integration:** See `BayanTrack-Backend/DJANGO_PRIORITIZATION_INTEGRATION.md`
-- **AI Service:** See `BayanTrack-Backend/citizen-report-ai/PRIORITIZATION_GUIDE.md`
+- **AI Service:** See
+  `BayanTrack-Backend/ai-triage/prioritization/README.md`
 - **API Docs:** See prioritization endpoints in API collection
 
 ## 🎓 Code Examples
