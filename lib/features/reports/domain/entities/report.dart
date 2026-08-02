@@ -13,6 +13,9 @@ class Report extends Equatable {
 
   // Report Details
   final ReportCategory? category;
+  final String? categoryKey;
+  final String? categoryDisplay;
+  final String? taxonomyVersion;
   final String? incidentType;
   final String? title;
   final String description;
@@ -44,6 +47,14 @@ class Report extends Equatable {
 
   // AI Fields
   final double? categoryConfidence;
+  final String? modelVersion;
+  final String? categorySource;
+  final double? modelProbability;
+  final double? top2Gap;
+  final bool needsCategoryReview;
+  final List<String> reviewReasons;
+  final bool isMultiIssue;
+  final List<String> rulesApplied;
   final String? priority;
   final int? priorityScore;
   final PriorityLevel? priorityLevel;
@@ -90,6 +101,9 @@ class Report extends Equatable {
     this.reportId,
     this.userId,
     this.category,
+    this.categoryKey,
+    this.categoryDisplay,
+    this.taxonomyVersion,
     this.incidentType,
     this.title,
     required this.description,
@@ -113,6 +127,14 @@ class Report extends Equatable {
     this.assignedDepartment,
     this.adminRemarks,
     this.categoryConfidence,
+    this.modelVersion,
+    this.categorySource,
+    this.modelProbability,
+    this.top2Gap,
+    this.needsCategoryReview = false,
+    this.reviewReasons = const [],
+    this.isMultiIssue = false,
+    this.rulesApplied = const [],
     this.priority,
     this.priorityScore,
     this.priorityLevel,
@@ -197,6 +219,9 @@ class Report extends Equatable {
     reportId,
     userId,
     category,
+    categoryKey,
+    categoryDisplay,
+    taxonomyVersion,
     title,
     description,
     status,
@@ -214,5 +239,5 @@ class Report extends Equatable {
 
   @override
   String toString() =>
-      'Report($id, ${category?.displayName ?? 'uncategorized'}, ${status.displayName})';
+      'Report($id, ${categoryDisplay ?? category?.displayName ?? 'uncategorized'}, ${status.displayName})';
 }

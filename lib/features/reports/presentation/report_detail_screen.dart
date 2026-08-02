@@ -255,7 +255,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               _buildStatusBadge(report.status),
-              if (report.category != null)
+              if (report.categoryDisplay != null || report.category != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -268,7 +268,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
-                    report.category!.displayName,
+                    report.categoryDisplay ?? report.category!.displayName,
                     style: theme.textTheme.labelSmall,
                   ),
                 ),
@@ -453,7 +453,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           ],
 
           // AI Analysis (if available)
-          if (report.category != null || report.priority != null) ...[
+          if (report.categoryDisplay != null ||
+              report.category != null ||
+              report.priority != null) ...[
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -480,10 +482,10 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  if (report.category != null)
+                  if (report.categoryDisplay != null || report.category != null)
                     _buildInfoRow(
                       'Category',
-                      report.category!.displayName,
+                      report.categoryDisplay ?? report.category!.displayName,
                       theme,
                     ),
                   if (report.categoryConfidence != null)

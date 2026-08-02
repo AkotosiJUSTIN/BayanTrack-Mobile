@@ -46,6 +46,10 @@ _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
   reportId: json['report_id'] as String?,
   userId: json['user_id'] as String?,
   category: json['category'] as String?,
+  categoryKey: json['category_key'] as String?,
+  categoryDisplay: json['category_display'] as String?,
+  categoryLabelSnapshot: json['category_label_snapshot'] as String?,
+  taxonomyVersion: json['taxonomy_version'] as String?,
   incidentType: json['incident_type'] as String?,
   title: json['title'] as String?,
   description: json['description'] as String,
@@ -72,6 +76,22 @@ _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
   assignedDepartment: json['assigned_department'] as String?,
   adminRemarks: json['admin_remarks'] as String?,
   categoryConfidence: (json['category_confidence'] as num?)?.toDouble(),
+  modelVersion: json['model_version'] as String?,
+  categorySource: json['category_source'] as String?,
+  modelProbability: (json['model_probability'] as num?)?.toDouble(),
+  top2Gap: (json['top2_gap'] as num?)?.toDouble(),
+  needsCategoryReview: json['needs_category_review'] as bool?,
+  reviewReasons:
+      (json['review_reasons'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
+  isMultiIssue: json['is_multi_issue'] as bool? ?? false,
+  rulesApplied:
+      (json['rules_applied'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
   priority: json['priority'] as String?,
   priorityScore: const NullableIntConverter().fromJson(json['priority_score']),
   priorityLevel: json['priority_level'] as String?,
@@ -128,6 +148,10 @@ Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
   'report_id': instance.reportId,
   'user_id': instance.userId,
   'category': instance.category,
+  'category_key': instance.categoryKey,
+  'category_display': instance.categoryDisplay,
+  'category_label_snapshot': instance.categoryLabelSnapshot,
+  'taxonomy_version': instance.taxonomyVersion,
   'incident_type': instance.incidentType,
   'title': instance.title,
   'description': instance.description,
@@ -153,6 +177,14 @@ Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
   'assigned_department': instance.assignedDepartment,
   'admin_remarks': instance.adminRemarks,
   'category_confidence': instance.categoryConfidence,
+  'model_version': instance.modelVersion,
+  'category_source': instance.categorySource,
+  'model_probability': instance.modelProbability,
+  'top2_gap': instance.top2Gap,
+  'needs_category_review': instance.needsCategoryReview,
+  'review_reasons': instance.reviewReasons,
+  'is_multi_issue': instance.isMultiIssue,
+  'rules_applied': instance.rulesApplied,
   'priority': instance.priority,
   'priority_score': const NullableIntConverter().toJson(instance.priorityScore),
   'priority_level': instance.priorityLevel,
@@ -343,9 +375,8 @@ Map<String, dynamic> _$ReportStatsToJson(_ReportStats instance) =>
 
 _ReportFormOptions _$ReportFormOptionsFromJson(Map<String, dynamic> json) =>
     _ReportFormOptions(
-      categories: (json['categories'] as List<dynamic>)
-          .map((e) => e as Map<String, dynamic>)
-          .toList(),
+      taxonomyVersion: json['taxonomy_version'] as String? ?? 'taxonomy_v1',
+      categories: _categoryOptionsFromJson(json['categories'] as List),
       statuses: (json['statuses'] as List<dynamic>)
           .map((e) => e as Map<String, dynamic>)
           .toList(),
@@ -356,7 +387,8 @@ _ReportFormOptions _$ReportFormOptionsFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$ReportFormOptionsToJson(_ReportFormOptions instance) =>
     <String, dynamic>{
-      'categories': instance.categories,
+      'taxonomy_version': instance.taxonomyVersion,
+      'categories': _categoryOptionsToJson(instance.categories),
       'statuses': instance.statuses,
       'severity_levels': instance.severityLevels,
     };

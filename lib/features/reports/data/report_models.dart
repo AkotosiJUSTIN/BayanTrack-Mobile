@@ -42,7 +42,7 @@ class NullableIntConverter implements JsonConverter<int?, dynamic> {
 
 // ==================== REPORT CATEGORIES ====================
 
-/// Report categories aligned with Urdaneta City office routing (V23 XLM-RoBERTa)
+/// Offline compatibility categories for the provisional taxonomy_v1 manifest.
 enum ReportCategory {
   @JsonValue('Municipal Engineering & Infrastructure')
   engineeringInfrastructure,
@@ -69,6 +69,14 @@ enum ReportCategory {
     wasteEnvironment => 'Solid Waste & Environmental Management',
     publicSafety => 'Public Safety & Order',
     publicUtilities => 'Public Utilities & Service',
+  };
+
+  String get taxonomyKey => switch (this) {
+    engineeringInfrastructure => 'engineering_infrastructure',
+    floodDisaster => 'flood_disaster',
+    wasteEnvironment => 'waste_environment',
+    publicSafety => 'public_safety',
+    publicUtilities => 'public_utilities',
   };
 }
 
@@ -238,6 +246,10 @@ sealed class Report with _$Report {
 
     // Report Details
     String? category,
+    @JsonKey(name: 'category_key') String? categoryKey,
+    @JsonKey(name: 'category_display') String? categoryDisplay,
+    @JsonKey(name: 'category_label_snapshot') String? categoryLabelSnapshot,
+    @JsonKey(name: 'taxonomy_version') String? taxonomyVersion,
     @JsonKey(name: 'incident_type') String? incidentType,
     String? title,
     required String description,
@@ -277,6 +289,14 @@ sealed class Report with _$Report {
 
     // AI Fields
     @JsonKey(name: 'category_confidence') double? categoryConfidence,
+    @JsonKey(name: 'model_version') String? modelVersion,
+    @JsonKey(name: 'category_source') String? categorySource,
+    @JsonKey(name: 'model_probability') double? modelProbability,
+    @JsonKey(name: 'top2_gap') double? top2Gap,
+    @JsonKey(name: 'needs_category_review') bool? needsCategoryReview,
+    @JsonKey(name: 'review_reasons') @Default([]) List<String> reviewReasons,
+    @JsonKey(name: 'is_multi_issue') @Default(false) bool isMultiIssue,
+    @JsonKey(name: 'rules_applied') @Default([]) List<String> rulesApplied,
     String? priority,
     @JsonKey(name: 'priority_score') @NullableIntConverter() int? priorityScore,
     @JsonKey(name: 'priority_level') String? priorityLevel,
@@ -452,10 +472,67 @@ sealed class ReportStats with _$ReportStats {
 
 // ==================== FORM OPTIONS ====================
 
+class ReportCategoryOption {
+  final String key;
+  final String label;
+  final String taxonomyVersion;
+  final bool active;
+
+  const ReportCategoryOption({
+    required this.key,
+    required this.label,
+    required this.taxonomyVersion,
+    required this.active,
+  });
+
+  factory ReportCategoryOption.fromJson(
+    dynamic json, {
+    String fallbackVersion = 'taxonomy_v1',
+  }) {
+    if (json is String) {
+      final known = ReportCategory.values.where((item) => item.value == json);
+      final category = known.isEmpty ? null : known.first;
+      return ReportCategoryOption(
+        key: category?.taxonomyKey ?? json,
+        label: json,
+        taxonomyVersion: fallbackVersion,
+        active: true,
+      );
+    }
+    final value = json as Map<String, dynamic>;
+    return ReportCategoryOption(
+      key: value['key']?.toString() ?? '',
+      label: value['label']?.toString() ?? value['key']?.toString() ?? '',
+      taxonomyVersion: value['taxonomy_version']?.toString() ?? fallbackVersion,
+      active: value['active'] != false,
+    );
+  }
+}
+
+List<ReportCategoryOption> _categoryOptionsFromJson(List<dynamic> values) =>
+    values.map(ReportCategoryOption.fromJson).toList();
+
+List<Map<String, dynamic>> _categoryOptionsToJson(
+  List<ReportCategoryOption> values,
+) => values
+    .map(
+      (item) => {
+        'key': item.key,
+        'label': item.label,
+        'taxonomy_version': item.taxonomyVersion,
+        'active': item.active,
+      },
+    )
+    .toList();
+
 @freezed
 sealed class ReportFormOptions with _$ReportFormOptions {
   const factory ReportFormOptions({
-    required List<Map<String, dynamic>> categories,
+    @JsonKey(name: 'taxonomy_version')
+    @Default('taxonomy_v1')
+    String taxonomyVersion,
+    @JsonKey(fromJson: _categoryOptionsFromJson, toJson: _categoryOptionsToJson)
+    required List<ReportCategoryOption> categories,
     required List<Map<String, dynamic>> statuses,
     @JsonKey(name: 'severity_levels')
     required List<Map<String, dynamic>> severityLevels,

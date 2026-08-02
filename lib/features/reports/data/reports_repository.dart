@@ -154,13 +154,58 @@ class ReportsRepository {
       return _cachedFormOptions!;
     }
 
-    final response = await _dio.get(ApiConstants.reportFormOptions);
-    final parsed = ReportFormOptions.fromJson(response.data);
-    _cachedFormOptions = parsed;
-    _formOptionsCachedAt = now;
-    return parsed;
+    try {
+      final response = await _dio.get(ApiConstants.reportFormOptions);
+      final parsed = ReportFormOptions.fromJson(response.data);
+      _cachedFormOptions = parsed;
+      _formOptionsCachedAt = now;
+      return parsed;
+    } on DioException {
+      // Offline compatibility only; the backend remains authoritative online.
+      _cachedFormOptions = offlineReportFormOptions;
+      _formOptionsCachedAt = now;
+      return offlineReportFormOptions;
+    }
   }
 }
+
+const offlineReportFormOptions = ReportFormOptions(
+  taxonomyVersion: 'taxonomy_v1',
+  categories: [
+    ReportCategoryOption(
+      key: 'engineering_infrastructure',
+      label: 'Municipal Engineering & Infrastructure',
+      taxonomyVersion: 'taxonomy_v1',
+      active: true,
+    ),
+    ReportCategoryOption(
+      key: 'flood_disaster',
+      label: 'Flood & Disaster Response',
+      taxonomyVersion: 'taxonomy_v1',
+      active: true,
+    ),
+    ReportCategoryOption(
+      key: 'waste_environment',
+      label: 'Solid Waste & Environmental Management',
+      taxonomyVersion: 'taxonomy_v1',
+      active: true,
+    ),
+    ReportCategoryOption(
+      key: 'public_safety',
+      label: 'Public Safety & Order',
+      taxonomyVersion: 'taxonomy_v1',
+      active: true,
+    ),
+    ReportCategoryOption(
+      key: 'public_utilities',
+      label: 'Public Utilities & Service',
+      taxonomyVersion: 'taxonomy_v1',
+      active: true,
+    ),
+  ],
+  statuses: [],
+  severityLevels: [],
+);
 
 class NearbyReport {
   final String category;
