@@ -97,7 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         // Filter out closed and rejected reports
         final filteredReports = data.results.where((report) {
           return report.status != ReportStatus.closed &&
-                 report.status != ReportStatus.rejected;
+              report.status != ReportStatus.rejected;
         }).toList();
 
         setState(() {
@@ -137,13 +137,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       success: (data) {
         final existingIds = _reports.map((r) => r.id).toSet();
         // Filter out closed and rejected reports, and duplicates
-        final newReports = data.results
-            .where((report) {
-              return report.status != ReportStatus.closed &&
-                     report.status != ReportStatus.rejected &&
-                     !existingIds.contains(report.id);
-            })
-            .toList();
+        final newReports = data.results.where((report) {
+          return report.status != ReportStatus.closed &&
+              report.status != ReportStatus.rejected &&
+              !existingIds.contains(report.id);
+        }).toList();
 
         setState(() {
           _reports.addAll(newReports);
@@ -282,8 +280,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           : (isDark
                                 ? AppColors.darkTextPrimary
                                 : AppColors.lightTextPrimary),
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                     side: BorderSide(
                       color: isSelected
@@ -307,9 +306,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: _onRefresh,
-              child: _isMapView
-                  ? _buildMapView(theme)
-                  : _buildListView(theme),
+              child: _isMapView ? _buildMapView(theme) : _buildListView(theme),
             ),
           ),
         ],
@@ -396,7 +393,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ? municipalityIds.single
         : defaultMunicipalityId;
     final municipalities = ref.watch(municipalitiesProvider).asData?.value;
-    final municipality = findMunicipalityMetadata(
+    final municipality =
+        findMunicipalityMetadata(
           municipalities ?? const [bundledUrdanetaMunicipality],
           municipalityId,
         ) ??
@@ -418,7 +416,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   MapPlaceholder(
                     reports: mapReports,
                     municipality: municipality,
-                    onMarkerTap: (report) => _openReportDetail(report.id, report),
+                    onMarkerTap: (report) =>
+                        _openReportDetail(report.id, report),
                   ),
                   Positioned(
                     left: 16,
@@ -574,12 +573,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final sorted = [...reports];
     sorted.sort((a, b) {
-      final aIdx = a.priorityLevel == null
+      final aIdx = a.queuePriorityLevel == null
           ? order.length
-          : order.indexOf(a.priorityLevel!);
-      final bIdx = b.priorityLevel == null
+          : order.indexOf(a.queuePriorityLevel!);
+      final bIdx = b.queuePriorityLevel == null
           ? order.length
-          : order.indexOf(b.priorityLevel!);
+          : order.indexOf(b.queuePriorityLevel!);
       return aIdx.compareTo(bIdx);
     });
 
@@ -588,7 +587,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     bool unscored = false;
 
     for (final report in sorted) {
-      final level = report.priorityLevel;
+      final level = report.queuePriorityLevel;
       if (level != previousLevel || (level == null && !unscored)) {
         final label = level != null
             ? 'Level ${5 - order.indexOf(level)} — ${level.displayName}'

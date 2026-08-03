@@ -95,6 +95,41 @@ _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
   priority: json['priority'] as String?,
   priorityScore: const NullableIntConverter().fromJson(json['priority_score']),
   priorityLevel: json['priority_level'] as String?,
+  suggestedPriorityScore: (json['suggested_priority_score'] as num?)
+      ?.toDouble(),
+  suggestedPriorityLevel: json['suggested_priority_level'] as String?,
+  queuePriorityScore: (json['queue_priority_score'] as num?)?.toDouble(),
+  queuePriorityLevel: json['queue_priority_level'] as String?,
+  queuePriorityRank: const NullableIntConverter().fromJson(
+    json['queue_priority_rank'],
+  ),
+  staffPriorityLevel: json['staff_priority_level'] as String?,
+  prioritySource: json['priority_source'] as String?,
+  priorityIsAdvisory: json['priority_is_advisory'] as bool? ?? true,
+  needsPriorityReview: json['needs_priority_review'] as bool? ?? true,
+  priorityReviewReasons:
+      (json['priority_review_reasons'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
+  linkedReportCount: (json['linked_report_count'] as num?)?.toInt() ?? 1,
+  linkedUrgencyBoost: (json['linked_urgency_boost'] as num?)?.toInt() ?? 0,
+  isIncidentRepresentative: json['is_incident_representative'] as bool? ?? true,
+  priorityModelVersion: json['priority_model_version'] as String?,
+  priorityModelValidated: json['priority_model_validated'] as bool? ?? false,
+  priorityCalibrationVersion: json['priority_calibration_version'] as String?,
+  emergencyProbability: (json['emergency_probability'] as num?)?.toDouble(),
+  priorityComponents:
+      (json['priority_components'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, (e as num).toDouble()),
+      ) ??
+      const {},
+  priorityPolicyVersion: json['priority_policy_version'] as String?,
+  priorityRulesApplied:
+      (json['priority_rules_applied'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
   priorityReasons: (json['priority_reasons'] as List<dynamic>?)
       ?.map((e) => e as String)
       .toList(),
@@ -188,6 +223,28 @@ Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
   'priority': instance.priority,
   'priority_score': const NullableIntConverter().toJson(instance.priorityScore),
   'priority_level': instance.priorityLevel,
+  'suggested_priority_score': instance.suggestedPriorityScore,
+  'suggested_priority_level': instance.suggestedPriorityLevel,
+  'queue_priority_score': instance.queuePriorityScore,
+  'queue_priority_level': instance.queuePriorityLevel,
+  'queue_priority_rank': const NullableIntConverter().toJson(
+    instance.queuePriorityRank,
+  ),
+  'staff_priority_level': instance.staffPriorityLevel,
+  'priority_source': instance.prioritySource,
+  'priority_is_advisory': instance.priorityIsAdvisory,
+  'needs_priority_review': instance.needsPriorityReview,
+  'priority_review_reasons': instance.priorityReviewReasons,
+  'linked_report_count': instance.linkedReportCount,
+  'linked_urgency_boost': instance.linkedUrgencyBoost,
+  'is_incident_representative': instance.isIncidentRepresentative,
+  'priority_model_version': instance.priorityModelVersion,
+  'priority_model_validated': instance.priorityModelValidated,
+  'priority_calibration_version': instance.priorityCalibrationVersion,
+  'emergency_probability': instance.emergencyProbability,
+  'priority_components': instance.priorityComponents,
+  'priority_policy_version': instance.priorityPolicyVersion,
+  'priority_rules_applied': instance.priorityRulesApplied,
   'priority_reasons': instance.priorityReasons,
   'base_score': const NullableIntConverter().toJson(instance.baseScore),
   'hotspot_score': const NullableIntConverter().toJson(instance.hotspotScore),

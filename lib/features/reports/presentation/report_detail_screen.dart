@@ -243,6 +243,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
         (report.municipalityId == defaultMunicipalityId
             ? bundledUrdanetaMunicipality
             : null);
+    final linkedReportCount = report.linkedReportCount;
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -273,9 +274,23 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   ),
                 ),
               PriorityBadge(
-                priorityLevel: report.priorityLevel,
+                priorityLevel: report.displayPriorityLevel,
                 showScores: false, // Simplified view for citizens
               ),
+              if (report.displayPriorityLevel != null)
+                Chip(
+                  visualDensity: VisualDensity.compact,
+                  label: Text(
+                    report.priorityIsAdvisory
+                        ? 'AI suggestion — staff review pending'
+                        : 'Operational priority',
+                  ),
+                ),
+              if (linkedReportCount > 1 && report.isIncidentRepresentative)
+                Chip(
+                  visualDensity: VisualDensity.compact,
+                  label: Text('$linkedReportCount confirmed linked reports'),
+                ),
               if (report.credibilityScore != null)
                 Chip(
                   visualDensity: VisualDensity.compact,

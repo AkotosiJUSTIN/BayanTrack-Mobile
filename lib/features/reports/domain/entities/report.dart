@@ -58,6 +58,26 @@ class Report extends Equatable {
   final String? priority;
   final int? priorityScore;
   final PriorityLevel? priorityLevel;
+  final double? suggestedPriorityScore;
+  final PriorityLevel? suggestedPriorityLevel;
+  final double? queuePriorityScore;
+  final PriorityLevel? queuePriorityLevel;
+  final int queuePriorityRank;
+  final PriorityLevel? staffPriorityLevel;
+  final String? prioritySource;
+  final bool priorityIsAdvisory;
+  final bool needsPriorityReview;
+  final List<String> priorityReviewReasons;
+  final int linkedReportCount;
+  final int linkedUrgencyBoost;
+  final bool isIncidentRepresentative;
+  final String? priorityModelVersion;
+  final bool priorityModelValidated;
+  final String? priorityCalibrationVersion;
+  final double? emergencyProbability;
+  final Map<String, double> priorityComponents;
+  final String? priorityPolicyVersion;
+  final List<String> priorityRulesApplied;
   final List<String> priorityReasons;
   final int? baseScore;
   final int? hotspotScore;
@@ -138,6 +158,26 @@ class Report extends Equatable {
     this.priority,
     this.priorityScore,
     this.priorityLevel,
+    this.suggestedPriorityScore,
+    this.suggestedPriorityLevel,
+    this.queuePriorityScore,
+    this.queuePriorityLevel,
+    this.queuePriorityRank = 0,
+    this.staffPriorityLevel,
+    this.prioritySource,
+    this.priorityIsAdvisory = true,
+    this.needsPriorityReview = true,
+    this.priorityReviewReasons = const [],
+    this.linkedReportCount = 1,
+    this.linkedUrgencyBoost = 0,
+    this.isIncidentRepresentative = true,
+    this.priorityModelVersion,
+    this.priorityModelValidated = false,
+    this.priorityCalibrationVersion,
+    this.emergencyProbability,
+    this.priorityComponents = const {},
+    this.priorityPolicyVersion,
+    this.priorityRulesApplied = const [],
     this.priorityReasons = const [],
     this.baseScore,
     this.hotspotScore,
@@ -180,6 +220,9 @@ class Report extends Equatable {
 
   /// Check if report has GPS coordinates
   bool get hasCoordinates => latitude != null && longitude != null;
+
+  PriorityLevel? get displayPriorityLevel =>
+      queuePriorityLevel ?? suggestedPriorityLevel ?? priorityLevel;
 
   Set<String> get _supplementalImageIds => {
     ...resolvedProofImageIds,

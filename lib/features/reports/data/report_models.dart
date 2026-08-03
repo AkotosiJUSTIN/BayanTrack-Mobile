@@ -300,6 +300,43 @@ sealed class Report with _$Report {
     String? priority,
     @JsonKey(name: 'priority_score') @NullableIntConverter() int? priorityScore,
     @JsonKey(name: 'priority_level') String? priorityLevel,
+    @JsonKey(name: 'suggested_priority_score') double? suggestedPriorityScore,
+    @JsonKey(name: 'suggested_priority_level') String? suggestedPriorityLevel,
+    @JsonKey(name: 'queue_priority_score') double? queuePriorityScore,
+    @JsonKey(name: 'queue_priority_level') String? queuePriorityLevel,
+    @JsonKey(name: 'queue_priority_rank')
+    @NullableIntConverter()
+    int? queuePriorityRank,
+    @JsonKey(name: 'staff_priority_level') String? staffPriorityLevel,
+    @JsonKey(name: 'priority_source') String? prioritySource,
+    @JsonKey(name: 'priority_is_advisory')
+    @Default(true)
+    bool priorityIsAdvisory,
+    @JsonKey(name: 'needs_priority_review')
+    @Default(true)
+    bool needsPriorityReview,
+    @JsonKey(name: 'priority_review_reasons')
+    @Default([])
+    List<String> priorityReviewReasons,
+    @JsonKey(name: 'linked_report_count') @Default(1) int linkedReportCount,
+    @JsonKey(name: 'linked_urgency_boost') @Default(0) int linkedUrgencyBoost,
+    @JsonKey(name: 'is_incident_representative')
+    @Default(true)
+    bool isIncidentRepresentative,
+    @JsonKey(name: 'priority_model_version') String? priorityModelVersion,
+    @JsonKey(name: 'priority_model_validated')
+    @Default(false)
+    bool priorityModelValidated,
+    @JsonKey(name: 'priority_calibration_version')
+    String? priorityCalibrationVersion,
+    @JsonKey(name: 'emergency_probability') double? emergencyProbability,
+    @JsonKey(name: 'priority_components')
+    @Default({})
+    Map<String, double> priorityComponents,
+    @JsonKey(name: 'priority_policy_version') String? priorityPolicyVersion,
+    @JsonKey(name: 'priority_rules_applied')
+    @Default([])
+    List<String> priorityRulesApplied,
     @JsonKey(name: 'priority_reasons') List<String>? priorityReasons,
     @JsonKey(name: 'base_score') @NullableIntConverter() int? baseScore,
     @JsonKey(name: 'hotspot_score') @NullableIntConverter() int? hotspotScore,

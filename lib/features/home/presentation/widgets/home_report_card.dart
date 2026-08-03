@@ -18,6 +18,7 @@ class HomeReportCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final linkedReportCount = report.linkedReportCount;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -62,7 +63,8 @@ class HomeReportCard extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            (report.category?.displayName ?? 'UNCATEGORIZED').toUpperCase(),
+                            (report.category?.displayName ?? 'UNCATEGORIZED')
+                                .toUpperCase(),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -77,13 +79,37 @@ class HomeReportCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    
+
                     // Priority badge (if available)
-                    if (report.priorityLevel != null) ...[
-                      PriorityBadge(
-                        priorityLevel: report.priorityLevel,
-                        fontSize: 10,
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    if (report.displayPriorityLevel != null) ...[
+                      Row(
+                        children: [
+                          PriorityBadge(
+                            priorityLevel: report.displayPriorityLevel,
+                            fontSize: 10,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 3,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            report.priorityIsAdvisory
+                                ? 'AI suggestion'
+                                : 'Queue priority',
+                            style: theme.textTheme.labelSmall,
+                          ),
+                          if (linkedReportCount > 1 &&
+                              report.isIncidentRepresentative) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              '$linkedReportCount linked',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 4),
                     ],

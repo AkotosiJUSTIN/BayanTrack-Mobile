@@ -326,8 +326,8 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
         final bDay = DateTime(bDate.year, bDate.month, bDate.day);
         final dateCmp = bDay.compareTo(aDay);
         if (dateCmp != 0) return dateCmp;
-        final aPriority = a.priorityLevel?.index ?? -1;
-        final bPriority = b.priorityLevel?.index ?? -1;
+        final aPriority = a.queuePriorityLevel?.index ?? -1;
+        final bPriority = b.queuePriorityLevel?.index ?? -1;
         return bPriority.compareTo(aPriority);
       });
 
