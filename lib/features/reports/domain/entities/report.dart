@@ -2,6 +2,21 @@ import 'package:equatable/equatable.dart';
 import 'report_enums.dart';
 import 'report_image.dart';
 
+class DepartmentSuggestion extends Equatable {
+  final String key;
+  final String label;
+  final double? probability;
+
+  const DepartmentSuggestion({
+    required this.key,
+    required this.label,
+    this.probability,
+  });
+
+  @override
+  List<Object?> get props => [key, label, probability];
+}
+
 /// Domain entity representing a citizen report.
 ///
 /// This is a pure Dart class with no JSON annotations.
@@ -88,6 +103,21 @@ class Report extends Equatable {
   final double? departmentConfidence;
   final List<String> routingReasons;
   final bool needsDepartmentReview;
+  final String? departmentKey;
+  final String? departmentDisplay;
+  final double? departmentProbability;
+  final double? departmentTop2Gap;
+  final List<DepartmentSuggestion> suggestedDepartments;
+  final String? assignedDepartmentKey;
+  final String? departmentSource;
+  final bool departmentIsAdvisory;
+  final List<String> departmentReviewReasons;
+  final String? departmentModelVersion;
+  final bool departmentModelValidated;
+  final String? departmentCalibrationVersion;
+  final String? departmentRegistryVersion;
+  final String? departmentPolicyVersion;
+  final List<String> departmentRulesApplied;
   final String? incidentGroupId;
   final double? sentimentScore;
   final String? autoCategorySuggestion;
@@ -187,6 +217,21 @@ class Report extends Equatable {
     this.departmentConfidence,
     this.routingReasons = const [],
     this.needsDepartmentReview = false,
+    this.departmentKey,
+    this.departmentDisplay,
+    this.departmentProbability,
+    this.departmentTop2Gap,
+    this.suggestedDepartments = const [],
+    this.assignedDepartmentKey,
+    this.departmentSource,
+    this.departmentIsAdvisory = true,
+    this.departmentReviewReasons = const [],
+    this.departmentModelVersion,
+    this.departmentModelValidated = false,
+    this.departmentCalibrationVersion,
+    this.departmentRegistryVersion,
+    this.departmentPolicyVersion,
+    this.departmentRulesApplied = const [],
     this.incidentGroupId,
     this.sentimentScore,
     this.autoCategorySuggestion,

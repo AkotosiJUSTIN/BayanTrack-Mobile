@@ -174,8 +174,17 @@ enum LocationAccuracy {
 
 // ==================== ROUTING / DEPARTMENT METADATA ====================
 
-/// Department routing metadata provided by the AI routing flow
-/// These fields are persisted on the report and surfaced to mobile clients.
+@freezed
+sealed class DepartmentSuggestion with _$DepartmentSuggestion {
+  const factory DepartmentSuggestion({
+    required String key,
+    required String label,
+    double? probability,
+  }) = _DepartmentSuggestion;
+
+  factory DepartmentSuggestion.fromJson(Map<String, dynamic> json) =>
+      _$DepartmentSuggestionFromJson(json);
+}
 
 // ==================== PRIORITY LEVEL ====================
 
@@ -345,6 +354,33 @@ sealed class Report with _$Report {
     @JsonKey(name: 'department_confidence') double? departmentConfidence,
     @JsonKey(name: 'routing_reasons') List<String>? routingReasons,
     @JsonKey(name: 'needs_department_review') bool? needsDepartmentReview,
+    @JsonKey(name: 'department_key') String? departmentKey,
+    @JsonKey(name: 'department_display') String? departmentDisplay,
+    @JsonKey(name: 'department_probability') double? departmentProbability,
+    @JsonKey(name: 'department_top2_gap') double? departmentTop2Gap,
+    @JsonKey(name: 'suggested_departments')
+    @Default([])
+    List<DepartmentSuggestion> suggestedDepartments,
+    @JsonKey(name: 'assigned_department_key') String? assignedDepartmentKey,
+    @JsonKey(name: 'department_source') String? departmentSource,
+    @JsonKey(name: 'department_is_advisory')
+    @Default(true)
+    bool departmentIsAdvisory,
+    @JsonKey(name: 'department_review_reasons')
+    @Default([])
+    List<String> departmentReviewReasons,
+    @JsonKey(name: 'department_model_version') String? departmentModelVersion,
+    @JsonKey(name: 'department_model_validated')
+    @Default(false)
+    bool departmentModelValidated,
+    @JsonKey(name: 'department_calibration_version')
+    String? departmentCalibrationVersion,
+    @JsonKey(name: 'department_registry_version')
+    String? departmentRegistryVersion,
+    @JsonKey(name: 'department_policy_version') String? departmentPolicyVersion,
+    @JsonKey(name: 'department_rules_applied')
+    @Default([])
+    List<String> departmentRulesApplied,
     @JsonKey(name: 'credibility_score') double? credibilityScore,
     @JsonKey(name: 'incident_group_id') String? incidentGroupId,
     @JsonKey(name: 'sentiment_score') double? sentimentScore,

@@ -6,6 +6,22 @@ part of 'report_models.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+_DepartmentSuggestion _$DepartmentSuggestionFromJson(
+  Map<String, dynamic> json,
+) => _DepartmentSuggestion(
+  key: json['key'] as String,
+  label: json['label'] as String,
+  probability: (json['probability'] as num?)?.toDouble(),
+);
+
+Map<String, dynamic> _$DepartmentSuggestionToJson(
+  _DepartmentSuggestion instance,
+) => <String, dynamic>{
+  'key': instance.key,
+  'label': instance.label,
+  'probability': instance.probability,
+};
+
 _ReportImage _$ReportImageFromJson(Map<String, dynamic> json) => _ReportImage(
   id: json['id'] as String,
   reportId: json['report_id'] as String?,
@@ -142,6 +158,35 @@ _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
       ?.map((e) => e as String)
       .toList(),
   needsDepartmentReview: json['needs_department_review'] as bool?,
+  departmentKey: json['department_key'] as String?,
+  departmentDisplay: json['department_display'] as String?,
+  departmentProbability: (json['department_probability'] as num?)?.toDouble(),
+  departmentTop2Gap: (json['department_top2_gap'] as num?)?.toDouble(),
+  suggestedDepartments:
+      (json['suggested_departments'] as List<dynamic>?)
+          ?.map((e) => DepartmentSuggestion.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+  assignedDepartmentKey: json['assigned_department_key'] as String?,
+  departmentSource: json['department_source'] as String?,
+  departmentIsAdvisory: json['department_is_advisory'] as bool? ?? true,
+  departmentReviewReasons:
+      (json['department_review_reasons'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
+  departmentModelVersion: json['department_model_version'] as String?,
+  departmentModelValidated:
+      json['department_model_validated'] as bool? ?? false,
+  departmentCalibrationVersion:
+      json['department_calibration_version'] as String?,
+  departmentRegistryVersion: json['department_registry_version'] as String?,
+  departmentPolicyVersion: json['department_policy_version'] as String?,
+  departmentRulesApplied:
+      (json['department_rules_applied'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
   credibilityScore: (json['credibility_score'] as num?)?.toDouble(),
   incidentGroupId: json['incident_group_id'] as String?,
   sentimentScore: (json['sentiment_score'] as num?)?.toDouble(),
@@ -253,6 +298,21 @@ Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
   'department_confidence': instance.departmentConfidence,
   'routing_reasons': instance.routingReasons,
   'needs_department_review': instance.needsDepartmentReview,
+  'department_key': instance.departmentKey,
+  'department_display': instance.departmentDisplay,
+  'department_probability': instance.departmentProbability,
+  'department_top2_gap': instance.departmentTop2Gap,
+  'suggested_departments': instance.suggestedDepartments,
+  'assigned_department_key': instance.assignedDepartmentKey,
+  'department_source': instance.departmentSource,
+  'department_is_advisory': instance.departmentIsAdvisory,
+  'department_review_reasons': instance.departmentReviewReasons,
+  'department_model_version': instance.departmentModelVersion,
+  'department_model_validated': instance.departmentModelValidated,
+  'department_calibration_version': instance.departmentCalibrationVersion,
+  'department_registry_version': instance.departmentRegistryVersion,
+  'department_policy_version': instance.departmentPolicyVersion,
+  'department_rules_applied': instance.departmentRulesApplied,
   'credibility_score': instance.credibilityScore,
   'incident_group_id': instance.incidentGroupId,
   'sentiment_score': instance.sentimentScore,

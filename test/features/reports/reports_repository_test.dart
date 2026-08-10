@@ -32,6 +32,32 @@ void main() {
               'longitude': '120.9842',
               'recommended_department': 'Engineering',
               'department_confidence': 0.91,
+              'department_key': 'municipal_engineering',
+              'department_display': 'Municipal Engineering Office',
+              'department_probability': 0.91,
+              'department_top2_gap': 0.72,
+              'suggested_departments': [
+                {
+                  'key': 'municipal_engineering',
+                  'label': 'Municipal Engineering Office',
+                  'probability': 0.91,
+                },
+                {
+                  'key': 'general_services',
+                  'label': 'General Services Office',
+                  'probability': null,
+                },
+              ],
+              'department_source': 'ai_advisory',
+              'department_is_advisory': true,
+              'needs_department_review': true,
+              'department_review_reasons': [
+                'department_probability_below_threshold',
+              ],
+              'department_model_version': 'department-test',
+              'department_model_validated': false,
+              'department_registry_version': 'department_registry_v1',
+              'department_policy_version': 'department_policy_v1',
               'credibility_score': 72.5,
               'images': [],
               'created_at': '2026-01-15T00:00:00Z',
@@ -76,6 +102,28 @@ void main() {
         expect(result.results.first.status, 'submitted');
         expect(result.results.first.recommendedDepartment, 'Engineering');
         expect(result.results.first.departmentConfidence, 0.91);
+        expect(result.results.first.departmentKey, 'municipal_engineering');
+        expect(
+          result.results.first.departmentDisplay,
+          'Municipal Engineering Office',
+        );
+        expect(result.results.first.departmentProbability, 0.91);
+        expect(result.results.first.departmentTop2Gap, 0.72);
+        expect(result.results.first.suggestedDepartments, hasLength(2));
+        expect(
+          result.results.first.suggestedDepartments.last.key,
+          'general_services',
+        );
+        expect(
+          result.results.first.suggestedDepartments.last.probability,
+          isNull,
+        );
+        expect(result.results.first.departmentIsAdvisory, isTrue);
+        expect(result.results.first.needsDepartmentReview, isTrue);
+        expect(
+          result.results.first.departmentRegistryVersion,
+          'department_registry_v1',
+        );
         expect(result.results.first.credibilityScore, 72.5);
         expect(result.results[1].status, 'in_progress');
       });

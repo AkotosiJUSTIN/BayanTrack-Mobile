@@ -470,7 +470,10 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           // AI Analysis (if available)
           if (report.categoryDisplay != null ||
               report.category != null ||
-              report.priority != null) ...[
+              report.priority != null ||
+              report.departmentDisplay != null ||
+              report.recommendedDepartment != null ||
+              report.assignedDepartment != null) ...[
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -505,8 +508,31 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                     ),
                   if (report.categoryConfidence != null)
                     _buildInfoRow(
-                      'Confidence',
+                      'Category confidence',
                       '${(report.categoryConfidence! * 100).toStringAsFixed(1)}%',
+                      theme,
+                    ),
+                  if (report.departmentDisplay != null ||
+                      report.recommendedDepartment != null)
+                    _buildInfoRow(
+                      'AI department suggestion',
+                      '${report.departmentDisplay ?? report.recommendedDepartment}'
+                          '${report.departmentProbability != null ? ' (${(report.departmentProbability! * 100).toStringAsFixed(1)}%)' : ''}',
+                      theme,
+                    ),
+                  if (report.assignedDepartment != null)
+                    _buildInfoRow(
+                      'Current handler',
+                      report.assignedDepartment!,
+                      theme,
+                    )
+                  else if (report.departmentDisplay != null ||
+                      report.recommendedDepartment != null)
+                    _buildInfoRow(
+                      'Routing status',
+                      report.needsDepartmentReview
+                          ? 'Awaiting staff confirmation'
+                          : 'Routing policy applied',
                       theme,
                     ),
                 ],

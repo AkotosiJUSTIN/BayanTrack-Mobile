@@ -91,6 +91,31 @@ class ReportMapper {
       departmentConfidence: dtoReport.departmentConfidence,
       routingReasons: dtoReport.routingReasons ?? [],
       needsDepartmentReview: dtoReport.needsDepartmentReview ?? false,
+      departmentKey: dtoReport.departmentKey,
+      departmentDisplay:
+          dtoReport.departmentDisplay ?? dtoReport.recommendedDepartment,
+      departmentProbability:
+          dtoReport.departmentProbability ?? dtoReport.departmentConfidence,
+      departmentTop2Gap: dtoReport.departmentTop2Gap,
+      suggestedDepartments: dtoReport.suggestedDepartments
+          .map(
+            (suggestion) => DepartmentSuggestion(
+              key: suggestion.key,
+              label: suggestion.label,
+              probability: suggestion.probability,
+            ),
+          )
+          .toList(growable: false),
+      assignedDepartmentKey: dtoReport.assignedDepartmentKey,
+      departmentSource: dtoReport.departmentSource,
+      departmentIsAdvisory: dtoReport.departmentIsAdvisory,
+      departmentReviewReasons: dtoReport.departmentReviewReasons,
+      departmentModelVersion: dtoReport.departmentModelVersion,
+      departmentModelValidated: dtoReport.departmentModelValidated,
+      departmentCalibrationVersion: dtoReport.departmentCalibrationVersion,
+      departmentRegistryVersion: dtoReport.departmentRegistryVersion,
+      departmentPolicyVersion: dtoReport.departmentPolicyVersion,
+      departmentRulesApplied: dtoReport.departmentRulesApplied,
       credibilityScore: dtoReport.credibilityScore,
       incidentGroupId: dtoReport.incidentGroupId,
       sentimentScore: dtoReport.sentimentScore,
