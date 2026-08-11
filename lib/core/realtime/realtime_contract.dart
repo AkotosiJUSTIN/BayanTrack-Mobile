@@ -8,11 +8,14 @@ const realtimeEventNames = <String>{
   'linked_case.changed',
   'incident_group.changed',
   'notification.created',
+  'verification.submitted',
+  'verification.changed',
+  'verification.queue_changed',
   'integrity.changed',
   'user_directory.changed',
 };
 
-enum RealtimeTarget { reports, notifications, integrity, profile }
+enum RealtimeTarget { reports, notifications, verification, integrity, profile }
 
 class RealtimeEvent {
   const RealtimeEvent({
@@ -134,6 +137,9 @@ Set<RealtimeTarget> invalidationTargets(RealtimeEvent event) {
   }
   if (event.name == 'notification.created') {
     return {RealtimeTarget.notifications};
+  }
+  if (event.name.startsWith('verification.')) {
+    return {RealtimeTarget.verification};
   }
   return {
     RealtimeTarget.reports,

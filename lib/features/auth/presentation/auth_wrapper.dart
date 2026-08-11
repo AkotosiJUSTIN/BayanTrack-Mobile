@@ -130,6 +130,9 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     if (targets.contains(RealtimeTarget.notifications)) {
       ref.invalidate(notificationsControllerProvider);
     }
+    if (targets.contains(RealtimeTarget.verification)) {
+      ref.invalidate(kycStatusControllerProvider);
+    }
     if (targets.contains(RealtimeTarget.profile) &&
         event.entityId == _realtimeUserId) {
       ref.invalidate(profileControllerProvider);

@@ -101,6 +101,15 @@ void main() {
       ),
       {RealtimeTarget.profile},
     );
+    for (final name in const {
+      'verification.submitted',
+      'verification.changed',
+      'verification.queue_changed',
+    }) {
+      expect(invalidationTargets(RealtimeEvent.tryParse(event(name))!), {
+        RealtimeTarget.verification,
+      });
+    }
   });
 
   test('uses one fresh socket and bounded reconnect attempts', () {
