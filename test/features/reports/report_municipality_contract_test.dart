@@ -59,6 +59,26 @@ void main() {
     expect(json['city_municipality'], 'Other City');
   });
 
+  test('Bactad East report sends the canonical Urdaneta location pair', () {
+    const state = NewReportState(
+      description: 'agik disgrasya',
+      municipalityId: 'urdaneta',
+      barangayId: 'bactad_east',
+      barangay: 'Bactad East',
+      zone: 'Bactad East',
+      cityMunicipality: 'Urdaneta',
+      province: 'Pangasinan',
+      latitude: 15.981394,
+      longitude: 120.628478,
+    );
+
+    final json = state.toCreateRequest().toJson();
+    expect(json['municipality_id'], 'urdaneta');
+    expect(json['barangay_id'], 'bactad_east');
+    expect(json['barangay'], 'Bactad East');
+    expect(json['zone'], 'Bactad East');
+  });
+
   test('clearLocation removes every stale location and barangay field', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
