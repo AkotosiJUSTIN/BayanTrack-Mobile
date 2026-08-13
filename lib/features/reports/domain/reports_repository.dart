@@ -48,8 +48,10 @@ abstract interface class ReportsRepository {
     String? longitude,
     String locationAccuracy = 'approximate',
     String? location,
+    String? barangay,
     bool declarationConfirmed = true,
     bool dataProcessingConsent = true,
+    bool isQuickReport = false,
   });
 
   /// Update a report

@@ -27,7 +27,7 @@ class ProfileController extends _$ProfileController {
   Future<void> updateProfile(ProfileUpdateRequest request) async {
     final previous = state;
     final result = await ref
-        .read(authRepositoryProvider)
+        .read(profileMutationUseCaseProvider)
         .updateProfile(
           firstName: request.firstName,
           lastName: request.lastName,
@@ -50,7 +50,7 @@ class ProfileController extends _$ProfileController {
     void Function(int sent, int total)? onSendProgress,
   }) async {
     final result = await ref
-        .read(authRepositoryProvider)
+        .read(profileMutationUseCaseProvider)
         .uploadAvatar(imageFile, onSendProgress: onSendProgress);
     if (!ref.mounted) return;
     result.when(
@@ -63,7 +63,9 @@ class ProfileController extends _$ProfileController {
   }
 
   Future<void> removeAvatar() async {
-    final result = await ref.read(authRepositoryProvider).removeAvatar();
+    final result = await ref
+        .read(profileMutationUseCaseProvider)
+        .removeAvatar();
     if (!ref.mounted) return;
     result.when(
       success: (user) => state = AsyncData(_profileFromUser(user)),
@@ -75,8 +77,8 @@ class ProfileController extends _$ProfileController {
   }
 
   Future<void> changePassword(ChangePasswordRequest request) async {
-    final authRepository = ref.read(authRepositoryProvider);
-    final result = await authRepository.changePassword(
+    final profileMutation = ref.read(profileMutationUseCaseProvider);
+    final result = await profileMutation.changePassword(
       currentPassword: request.currentPassword,
       newPassword: request.newPassword,
       newPasswordConfirm: request.newPasswordConfirm,

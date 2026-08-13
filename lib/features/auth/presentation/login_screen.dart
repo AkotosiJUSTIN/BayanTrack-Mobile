@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import 'auth_controller.dart';
@@ -58,13 +57,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isLoading = authState is AuthLoading;
-
-    // Show error snackbar when auth fails
-    ref.listen<AuthState>(authControllerProvider, (previous, next) {
-      if (next is AuthError) {
-        AppToast.error(context, next.message);
-      }
-    });
 
     return Scaffold(
       key: const ValueKey('login-scaffold'),
@@ -130,6 +122,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           textAlign: TextAlign.center,
                         ),
+                        if (authState case AuthError(:final message)) ...[
+                          const SizedBox(height: 16),
+                          Semantics(
+                            liveRegion: true,
+                            child: Container(
+                              key: const ValueKey('login-error-message'),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.errorContainer,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                message,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onErrorContainer,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ],
                         Expanded(
                           child: Center(
                             child: ConstrainedBox(

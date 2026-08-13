@@ -10,15 +10,10 @@ import '../../notifications/push_service.dart';
 import '../../notifications/local_notification_service.dart';
 import '../../notifications/presentation/notifications_controller.dart';
 import '../../../core/network/dio_provider.dart';
-import '../../../core/constants/api_constants.dart';
 import '../../../core/providers/connectivity_provider.dart';
-import '../../../core/realtime/realtime_contract.dart';
-import '../../../core/realtime/realtime_service.dart';
 import '../../images/data/evidence_upload_queue_provider.dart';
-import '../auth_di.dart';
 import '../../reports/presentation/report_detail_screen.dart';
-import '../../reports/presentation/report_detail_controller.dart';
-import '../../reports/presentation/reports_controller.dart';
+import 'auth_realtime_controller.dart';
 import 'profile_controller.dart';
 
 class AuthWrapper extends ConsumerStatefulWidget {
@@ -31,9 +26,6 @@ class AuthWrapper extends ConsumerStatefulWidget {
 class _AuthWrapperState extends ConsumerState<AuthWrapper>
     with WidgetsBindingObserver {
   bool _pushInitialized = false;
-  RealtimeService? _realtimeService;
-  String? _realtimeUserId;
-  bool _realtimeStarting = false;
   String? _evidenceSyncKey;
   @override
   void initState() {
@@ -58,44 +50,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _realtimeService?.dispose();
     super.dispose();
-  }
-
-  Future<void> _startRealtime(String userId, {bool force = false}) async {
-    if (_realtimeStarting || (!force && _realtimeUserId == userId)) return;
-    _realtimeStarting = true;
-    try {
-      final token = await ref
-          .read(authSessionRepositoryProvider)
-          .getAccessToken();
-      final current = ref.read(authControllerProvider);
-      if (!mounted ||
-          token == null ||
-          token.isEmpty ||
-          current is! AuthSuccess ||
-          current.user?.id != userId) {
-        return;
-      }
-      final service = _realtimeService ??= RealtimeService();
-      service.connect(
-        serverUrl: ApiConstants.mediaBaseUrl,
-        token: token,
-        onEvent: _handleRealtimeEvent,
-        onConnect: () {
-          if (mounted) ref.invalidate(profileControllerProvider);
-        },
-      );
-      _realtimeUserId = userId;
-    } finally {
-      _realtimeStarting = false;
-    }
-  }
-
-  void _stopRealtime() {
-    _realtimeService?.dispose();
-    _realtimeService = null;
-    _realtimeUserId = null;
   }
 
   void _syncEvidenceQueue(String? userId, bool isOnline, {bool force = false}) {
@@ -117,28 +72,6 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     });
   }
 
-  void _handleRealtimeEvent(RealtimeEvent event) {
-    final targets = invalidationTargets(event);
-    if (targets.contains(RealtimeTarget.reports)) {
-      ref.invalidate(reportsControllerProvider);
-      ref.invalidate(myReportsControllerProvider);
-      ref.read(myReportsRefreshProvider.notifier).increment();
-      if (event.entityKind == 'report') {
-        ref.invalidate(reportDetailControllerProvider(event.entityId));
-      }
-    }
-    if (targets.contains(RealtimeTarget.notifications)) {
-      ref.invalidate(notificationsControllerProvider);
-    }
-    if (targets.contains(RealtimeTarget.verification)) {
-      ref.invalidate(kycStatusControllerProvider);
-    }
-    if (targets.contains(RealtimeTarget.profile) &&
-        event.entityId == _realtimeUserId) {
-      ref.invalidate(profileControllerProvider);
-    }
-  }
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Refresh KYC status when app comes back to foreground
@@ -148,7 +81,11 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
       if (authState is AuthSuccess) {
         final userId = authState.user?.id;
         if (userId != null) {
-          Future.microtask(() => _startRealtime(userId, force: true));
+          Future.microtask(
+            () => ref
+                .read(authRealtimeControllerProvider)
+                .start(userId, force: true),
+          );
           _syncEvidenceQueue(userId, ref.read(isOnlineProvider), force: true);
         }
         ref.invalidate(kycStatusControllerProvider);
@@ -233,12 +170,11 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
 
     final authenticatedUserId = state is AuthSuccess ? state.user?.id : null;
     _syncEvidenceQueue(authenticatedUserId, isOnline);
-    if (authenticatedUserId != null &&
-        authenticatedUserId != _realtimeUserId &&
-        !_realtimeStarting) {
-      Future.microtask(() => _startRealtime(authenticatedUserId));
-    } else if (authenticatedUserId == null && _realtimeService != null) {
-      _stopRealtime();
+    final realtime = ref.read(authRealtimeControllerProvider);
+    if (authenticatedUserId != null) {
+      Future.microtask(() => realtime.start(authenticatedUserId));
+    } else {
+      realtime.stop();
     }
 
     return switch (state) {

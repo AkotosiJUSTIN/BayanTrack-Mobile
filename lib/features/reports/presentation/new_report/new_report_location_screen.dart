@@ -454,7 +454,7 @@ class _NewReportLocationScreenState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Select a municipality, then use phone GPS or a manual pin within its boundary.',
+                  'Select a city, then use phone GPS or a manual pin within its boundary.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: isDark
                         ? AppColors.darkTextSecondary
@@ -471,7 +471,7 @@ class _NewReportLocationScreenState
                         ? state.municipalityId
                         : _selectedMunicipality.id,
                     decoration: const InputDecoration(
-                      labelText: 'Municipality',
+                      labelText: 'City',
                       prefixIcon: Icon(Icons.location_city),
                       border: OutlineInputBorder(),
                     ),
@@ -492,7 +492,7 @@ class _NewReportLocationScreenState
                   ),
                   loading: () => const LinearProgressIndicator(),
                   error: (error, stack) => Text(
-                    'Municipality metadata is unavailable.',
+                    'City metadata is unavailable.',
                     style: TextStyle(color: theme.colorScheme.error),
                   ),
                 ),
@@ -638,7 +638,7 @@ class _NewReportLocationScreenState
             right: 12,
             bottom: 12,
             child: IconButton.filledTonal(
-              tooltip: 'Recenter to municipality',
+              tooltip: 'Recenter to city',
               onPressed: () => MunicipalityMapCamera.recenter(
                 _mapController,
                 _selectedMunicipality,

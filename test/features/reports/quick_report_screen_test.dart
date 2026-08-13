@@ -1,13 +1,20 @@
 import 'dart:async';
 
 import 'package:bayantrack_mobile/core/constants/urdaneta_barangays.dart';
+import 'package:bayantrack_mobile/core/domain/failures.dart';
+import 'package:bayantrack_mobile/core/domain/result.dart';
 import 'package:bayantrack_mobile/core/theme/app_theme.dart';
 import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
-import 'package:bayantrack_mobile/features/reports/data/report_models.dart';
 import 'package:bayantrack_mobile/features/reports/data/reports_repository.dart';
+import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart'
+    as domain_report;
+import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dart'
+    as domain_repository;
+import 'package:bayantrack_mobile/features/reports/domain/usecases/create_report_usecase.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/new_report/quick_report_screen.dart';
+import 'package:bayantrack_mobile/features/reports/reports_di.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,6 +37,47 @@ class _TestMunicipalityBarangays extends MunicipalityBarangays {
 }
 
 class _ReportsRepositoryMock extends Mock implements ReportsRepository {}
+
+class _UnusedDomainReportsRepository extends Mock
+    implements domain_repository.ReportsRepository {}
+
+class _TestCreateReportUseCase extends CreateReportUseCase {
+  _TestCreateReportUseCase(this._submit)
+    : super(repository: _UnusedDomainReportsRepository());
+
+  final Future<Result<domain_report.Report>> Function(bool isQuickReport)
+  _submit;
+  int callCount = 0;
+  bool? lastIsQuickReport;
+
+  @override
+  Future<Result<domain_report.Report>> call({
+    String? category,
+    String? incidentType,
+    String? title,
+    required String description,
+    String? incidentDatetime,
+    bool isHappeningNow = false,
+    String? zone,
+    String? streetLandmark,
+    String municipalityId = 'urdaneta',
+    String? barangayId,
+    String? cityMunicipality,
+    String? province,
+    String? latitude,
+    String? longitude,
+    String locationAccuracy = 'approximate',
+    String? location,
+    String? barangay,
+    bool declarationConfirmed = true,
+    bool dataProcessingConsent = true,
+    bool isQuickReport = false,
+  }) {
+    callCount++;
+    lastIsQuickReport = isQuickReport;
+    return _submit(isQuickReport);
+  }
+}
 
 class _CountingNavigatorObserver extends NavigatorObserver {
   int popCount = 0;
@@ -60,6 +108,7 @@ Future<void> _pumpQuickReport(
   Size size = const Size(360, 800),
   double textScale = 1,
   ReportsRepository? reportsRepository,
+  CreateReportUseCase? createReportUseCase,
   NavigatorObserver? navigatorObserver,
   bool pushFromRoot = false,
 }) async {
@@ -84,6 +133,8 @@ Future<void> _pumpQuickReport(
         ),
         if (reportsRepository != null)
           reportsRepositoryProvider.overrideWithValue(reportsRepository),
+        if (createReportUseCase != null)
+          createReportUseCaseProvider.overrideWithValue(createReportUseCase),
       ],
       child: MaterialApp(
         navigatorKey: navigatorKey,
@@ -113,12 +164,6 @@ Future<void> _pumpQuickReport(
 void main() {
   final inside = _position(15.979204, 120.622210);
   final outside = _position(14.5995, 120.9842);
-
-  setUpAll(() {
-    registerFallbackValue(
-      const CreateReportRequest(description: 'fallback report'),
-    );
-  });
 
   testWidgets('verification notice is compact and does not gate reporting', (
     tester,
@@ -336,7 +381,7 @@ void main() {
             find.byKey(const Key('quick-report-recenter-municipality')),
           )
           .tooltip,
-      'Recenter municipality',
+      'Recenter city',
     );
     expect(
       find.ancestor(
@@ -379,6 +424,14 @@ void main() {
     tester,
   ) async {
     final reports = _ReportsRepositoryMock();
+    final createReport = _TestCreateReportUseCase(
+      (_) async => const Success(
+        domain_report.Report(
+          id: 'quick-report-123',
+          description: 'A fallen tree is blocking both lanes.',
+        ),
+      ),
+    );
     final observer = _CountingNavigatorObserver();
     when(
       () => reports.getNearbyReports(
@@ -387,21 +440,11 @@ void main() {
         municipalityId: any(named: 'municipalityId'),
       ),
     ).thenAnswer((_) async => const []);
-    when(
-      () => reports.createReport(
-        any(),
-        isQuickReport: any(named: 'isQuickReport'),
-      ),
-    ).thenAnswer(
-      (_) async => const Report(
-        id: 'quick-report-123',
-        description: 'A fallen tree is blocking both lanes.',
-      ),
-    );
     await _pumpQuickReport(
       tester,
       locate: () async => inside,
       reportsRepository: reports,
+      createReportUseCase: createReport,
       navigatorObserver: observer,
       pushFromRoot: true,
     );
@@ -420,7 +463,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('Report submitted'), findsOneWidget);
-    verify(() => reports.createReport(any(), isQuickReport: true)).called(1);
+    expect(createReport.callCount, 1);
+    expect(createReport.lastIsQuickReport, isTrue);
 
     await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
@@ -437,7 +481,8 @@ void main() {
     tester,
   ) async {
     final reports = _ReportsRepositoryMock();
-    final pending = Completer<Report>();
+    final pending = Completer<Result<domain_report.Report>>();
+    final createReport = _TestCreateReportUseCase((_) => pending.future);
     when(
       () => reports.getNearbyReports(
         latitude: any(named: 'latitude'),
@@ -445,16 +490,11 @@ void main() {
         municipalityId: any(named: 'municipalityId'),
       ),
     ).thenAnswer((_) async => const []);
-    when(
-      () => reports.createReport(
-        any(),
-        isQuickReport: any(named: 'isQuickReport'),
-      ),
-    ).thenAnswer((_) => pending.future);
     await _pumpQuickReport(
       tester,
       locate: () async => inside,
       reportsRepository: reports,
+      createReportUseCase: createReport,
     );
     await tester.enterText(
       find.byKey(const Key('quick-report-description')),
@@ -466,14 +506,17 @@ void main() {
 
     await tester.pumpWidget(const SizedBox.shrink());
     pending.complete(
-      const Report(
-        id: 'quick-report-123',
-        description: 'A fallen tree is blocking both lanes.',
+      const Success(
+        domain_report.Report(
+          id: 'quick-report-123',
+          description: 'A fallen tree is blocking both lanes.',
+        ),
       ),
     );
     await tester.pump();
 
-    verify(() => reports.createReport(any(), isQuickReport: true)).called(1);
+    expect(createReport.callCount, 1);
+    expect(createReport.lastIsQuickReport, isTrue);
     expect(tester.takeException(), isNull);
   });
 
@@ -481,6 +524,9 @@ void main() {
     tester,
   ) async {
     final reports = _ReportsRepositoryMock();
+    final createReport = _TestCreateReportUseCase(
+      (_) async => const Err(UnknownFailure('Submission failed')),
+    );
     when(
       () => reports.getNearbyReports(
         latitude: any(named: 'latitude'),
@@ -488,16 +534,11 @@ void main() {
         municipalityId: any(named: 'municipalityId'),
       ),
     ).thenAnswer((_) async => const []);
-    when(
-      () => reports.createReport(
-        any(),
-        isQuickReport: any(named: 'isQuickReport'),
-      ),
-    ).thenThrow(StateError('Submission failed'));
     await _pumpQuickReport(
       tester,
       locate: () async => inside,
       reportsRepository: reports,
+      createReportUseCase: createReport,
     );
     await tester.enterText(
       find.byKey(const Key('quick-report-description')),
@@ -508,10 +549,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(
-      find.textContaining('Bad state: Submission failed'),
-      findsAtLeastNWidgets(1),
-    );
+    expect(find.textContaining('Submission failed'), findsAtLeastNWidgets(1));
     expect(find.byKey(const Key('quick-report-submit-error')), findsOneWidget);
     expect(
       tester

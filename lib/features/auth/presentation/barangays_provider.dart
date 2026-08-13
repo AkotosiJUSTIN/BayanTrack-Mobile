@@ -32,8 +32,7 @@ class MunicipalityMetadataUnavailable implements Exception {
   const MunicipalityMetadataUnavailable(this.municipalityId);
 
   @override
-  String toString() =>
-      'Municipality metadata is unavailable for $municipalityId.';
+  String toString() => 'City metadata is unavailable for $municipalityId.';
 }
 
 List<MunicipalityModel>? validateMunicipalities(

@@ -229,7 +229,7 @@ class _NewReportDetailsScreenState
                     ),
                     const SizedBox(height: 12),
 
-                    _buildSectionLabel(theme, 'Municipality *'),
+                    _buildSectionLabel(theme, 'City *'),
                     const SizedBox(height: 8),
                     ref
                         .watch(municipalitiesProvider)
@@ -242,7 +242,7 @@ class _NewReportDetailsScreenState
                                 ? state.municipalityId
                                 : null,
                             decoration: InputDecoration(
-                              hintText: 'Select municipality',
+                              hintText: 'Select city',
                               prefixIcon: const Icon(Icons.location_city),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -272,19 +272,18 @@ class _NewReportDetailsScreenState
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
-                                    'Place a location pin for the selected municipality.',
+                                    'Place a location pin for the selected city.',
                                   ),
                                 ),
                               );
                               Navigator.of(context).pop();
                             },
-                            validator: (value) => value == null
-                                ? 'Please select a municipality'
-                                : null,
+                            validator: (value) =>
+                                value == null ? 'Please select a city' : null,
                           ),
                           loading: () => const LinearProgressIndicator(),
                           error: (error, stack) => Text(
-                            'Municipality metadata is unavailable.',
+                            'City metadata is unavailable.',
                             style: TextStyle(color: theme.colorScheme.error),
                           ),
                         ),
@@ -350,25 +349,27 @@ class _NewReportDetailsScreenState
                             items: const [],
                             onChanged: null,
                           ),
-                          error: (error, stack) => DropdownButtonFormField<String>(
-                            decoration: InputDecoration(
-                              hintText:
-                                  state.municipalityId == defaultMunicipalityId
-                                  ? 'Using bundled Urdaneta barangays'
-                                  : 'Barangays unavailable for this municipality',
-                              prefixIcon: const Icon(
-                                Icons.location_city_outlined,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: theme.colorScheme.error,
+                          error: (error, stack) =>
+                              DropdownButtonFormField<String>(
+                                decoration: InputDecoration(
+                                  hintText:
+                                      state.municipalityId ==
+                                          defaultMunicipalityId
+                                      ? 'Using bundled Urdaneta barangays'
+                                      : 'Barangays unavailable for this city',
+                                  prefixIcon: const Icon(
+                                    Icons.location_city_outlined,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: theme.colorScheme.error,
+                                    ),
+                                  ),
                                 ),
+                                items: const [],
+                                onChanged: null,
                               ),
-                            ),
-                            items: const [],
-                            onChanged: null,
-                          ),
                         );
                       },
                     ),

@@ -361,19 +361,7 @@ class KycFormController extends _$KycFormController {
     state = state.copyWith(isSubmitting: true, error: null);
 
     try {
-      final domainRepo = ref.read(kycDomainRepositoryProvider);
       final submitKycUseCase = ref.read(submitKycUseCaseProvider);
-
-      // Validate image sizes using domain repository
-      final validationErrors = domainRepo.validateImages(
-        idFrontImagePath: state.idFrontImagePath!,
-        idBackImagePath: state.idBackImagePath,
-        selfieImagePath: state.selfieImagePath!,
-        selfieWithIdImagePath: state.selfieWithIdImagePath,
-      );
-      if (validationErrors.isNotEmpty) {
-        throw Exception(validationErrors.join('\n'));
-      }
 
       // Create domain params
       final params = SubmitKycParams(
@@ -432,19 +420,7 @@ class KycFormController extends _$KycFormController {
     state = state.copyWith(isSubmitting: true, error: null);
 
     try {
-      final domainRepo = ref.read(kycDomainRepositoryProvider);
       final resubmitKycUseCase = ref.read(resubmitKycUseCaseProvider);
-
-      // Validate image sizes using domain repository
-      final validationErrors = domainRepo.validateImages(
-        idFrontImagePath: state.idFrontImagePath!,
-        idBackImagePath: state.idBackImagePath,
-        selfieImagePath: state.selfieImagePath!,
-        selfieWithIdImagePath: state.selfieWithIdImagePath,
-      );
-      if (validationErrors.isNotEmpty) {
-        throw Exception(validationErrors.join('\n'));
-      }
 
       // Create domain params
       final params = SubmitKycParams(

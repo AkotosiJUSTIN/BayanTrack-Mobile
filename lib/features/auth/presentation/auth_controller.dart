@@ -154,8 +154,8 @@ class AuthController extends _$AuthController {
   Future<bool> forgotPassword(String email) async {
     state = const AuthLoading();
 
-    final authRepository = ref.read(authRepositoryProvider);
-    final result = await authRepository.forgotPassword(email);
+    final passwordRecovery = ref.read(passwordRecoveryUseCaseProvider);
+    final result = await passwordRecovery.requestReset(email);
 
     return result.when(
       success: (_) {
@@ -178,8 +178,8 @@ class AuthController extends _$AuthController {
   }) async {
     state = const AuthLoading();
 
-    final authRepository = ref.read(authRepositoryProvider);
-    final result = await authRepository.verifyResetOtp(email: email, otp: otp);
+    final passwordRecovery = ref.read(passwordRecoveryUseCaseProvider);
+    final result = await passwordRecovery.verifyOtp(email: email, otp: otp);
 
     return result.when(
       success: (resetToken) {
@@ -203,8 +203,8 @@ class AuthController extends _$AuthController {
   }) async {
     state = const AuthLoading();
 
-    final authRepository = ref.read(authRepositoryProvider);
-    final result = await authRepository.resetPassword(
+    final passwordRecovery = ref.read(passwordRecoveryUseCaseProvider);
+    final result = await passwordRecovery.resetPassword(
       resetToken: resetToken,
       newPassword: newPassword,
       newPasswordConfirm: newPasswordConfirm,

@@ -73,12 +73,15 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     _nationalityController.text = existing.nationality ?? '';
     _emailController.text = existing.email ?? '';
     _mobileNumberController.text = existing.mobileNumber ?? '';
-    
+
     final fullAddress = existing.streetBarangay ?? '';
     if (fullAddress.contains(',')) {
       final parts = fullAddress.split(',');
       _selectedBarangayName = parts.last.trim();
-      _streetBarangayController.text = parts.sublist(0, parts.length - 1).join(',').trim();
+      _streetBarangayController.text = parts
+          .sublist(0, parts.length - 1)
+          .join(',')
+          .trim();
     } else {
       _streetBarangayController.text = fullAddress;
     }
@@ -205,12 +208,15 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     if (Validators.email(email) != null) {
       return 1;
     }
-    if (mobile.isEmpty || mobile.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(mobile)) {
+    if (mobile.isEmpty ||
+        mobile.length != 10 ||
+        !RegExp(r'^[0-9]+$').hasMatch(mobile)) {
       return 1;
     }
 
     // Check Address (Step 2)
-    if (_streetBarangayController.text.trim().isEmpty || _selectedBarangayName == null ||
+    if (_streetBarangayController.text.trim().isEmpty ||
+        _selectedBarangayName == null ||
         _cityMunicipalityController.text.trim().isEmpty ||
         _provinceController.text.trim().isEmpty) {
       return 2;
@@ -245,7 +251,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         }
         return 'Please enter a valid mobile number (exactly 10 digits)';
       case 2:
-        return 'Please complete Address: House No./Street, Barangay, City/Municipality, and Province are required';
+        return 'Please complete Address: House No./Street, Barangay, City, and Province are required';
       case 3:
         return 'Please select an ID type and enter ID number';
       case 4:
@@ -257,6 +263,17 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       default:
         return 'Please complete all required fields';
     }
+  }
+
+  void _continueStep() {
+    final errorStep = _findStepWithErrors();
+    if (errorStep != null && errorStep <= _currentStep) {
+      _formKey.currentState?.validate();
+      AppToast.error(context, _getStepErrorMessage(errorStep));
+      return;
+    }
+
+    setState(() => _currentStep++);
   }
 
   Future<void> _submitForm() async {
@@ -339,7 +356,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           currentStep: _currentStep,
           onStepContinue: () {
             if (_currentStep < 6) {
-              setState(() => _currentStep++);
+              _continueStep();
             } else {
               _submitForm();
             }
@@ -743,49 +760,54 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         const SizedBox(height: 16),
 
         // Barangay Dropdown *
-        ref.watch(barangaysProvider).when(
-          loading: () => const LinearProgressIndicator(),
-          error: (_, __) => Text(
-            'Failed to load barangays',
-            style: TextStyle(color: theme.colorScheme.error),
-          ),
-          data: (barangays) {
-            final validBarangay = barangays.any((b) => b.name == _selectedBarangayName) 
-                ? _selectedBarangayName 
-                : null;
-            
-            return DropdownButtonFormField<String>(
-              value: validBarangay,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Barangay *',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.location_city_outlined),
-                hintText: 'Select your barangay',
+        ref
+            .watch(barangaysProvider)
+            .when(
+              loading: () => const LinearProgressIndicator(),
+              error: (_, __) => Text(
+                'Failed to load barangays',
+                style: TextStyle(color: theme.colorScheme.error),
               ),
-              items: barangays
-                  .map((b) => DropdownMenuItem(
-                        value: b.name,
-                        child: Text(b.name),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() => _selectedBarangayName = value);
-                updateStreetBarangay();
+              data: (barangays) {
+                final validBarangay =
+                    barangays.any((b) => b.name == _selectedBarangayName)
+                    ? _selectedBarangayName
+                    : null;
+
+                return DropdownButtonFormField<String>(
+                  value: validBarangay,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Barangay *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.location_city_outlined),
+                    hintText: 'Select your barangay',
+                  ),
+                  items: barangays
+                      .map(
+                        (b) => DropdownMenuItem(
+                          value: b.name,
+                          child: Text(b.name),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() => _selectedBarangayName = value);
+                    updateStreetBarangay();
+                  },
+                  validator: (_) => _selectedBarangayName == null
+                      ? 'Please select your barangay'
+                      : null,
+                );
               },
-              validator: (_) => _selectedBarangayName == null
-                  ? 'Please select your barangay'
-                  : null,
-            );
-          },
-        ),
+            ),
         const SizedBox(height: 16),
 
-        // City / Municipality *
+        // City *
         TextFormField(
           controller: _cityMunicipalityController,
           decoration: const InputDecoration(
-            labelText: 'City / Municipality *',
+            labelText: 'City *',
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.location_city),
           ),
@@ -798,9 +820,8 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             controller.setCityMunicipality(v);
             _validateLive();
           },
-          validator: (v) => v == null || v.trim().isEmpty
-              ? 'City/Municipality is required'
-              : null,
+          validator: (v) =>
+              v == null || v.trim().isEmpty ? 'City is required' : null,
         ),
         const SizedBox(height: 16),
 

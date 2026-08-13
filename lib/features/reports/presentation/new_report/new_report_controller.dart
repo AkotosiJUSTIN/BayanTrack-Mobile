@@ -2,8 +2,16 @@ import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/constants/urdaneta_geo.dart';
 import '../../data/report_models.dart';
+import '../../domain/entities/report.dart' as domain;
+import '../../reports_di.dart';
 
 part 'new_report_controller.g.dart';
+
+class ReportSubmissionFailure implements Exception {
+  const ReportSubmissionFailure(this.message);
+
+  final String message;
+}
 
 /// State for the new report flow - comprehensive fields matching backend
 class NewReportState {
@@ -134,36 +142,6 @@ class NewReportState {
   bool get hasDetails => description.trim().isNotEmpty;
 
   bool get hasConsent => declarationConfirmed && dataProcessingConsent;
-
-  /// Build CreateReportRequest from current state
-  CreateReportRequest toCreateRequest() {
-    return CreateReportRequest(
-      category: category?.value,
-      title: title,
-      description: description,
-      incidentDatetime: incidentDatetime?.toIso8601String(),
-      isHappeningNow: isHappeningNow,
-      zone: zone,
-      streetLandmark: streetLandmark,
-      municipalityId: municipalityId,
-      barangayId: barangayId,
-      cityMunicipality: cityMunicipality,
-      province: province,
-      latitude: _formatCoordinate(latitude),
-      longitude: _formatCoordinate(longitude),
-      locationAccuracy: locationAccuracy.name,
-      location: streetLandmark ?? location,
-      barangay: barangay ?? zone,
-      declarationConfirmed: declarationConfirmed,
-      dataProcessingConsent: dataProcessingConsent,
-    );
-  }
-
-  String? _formatCoordinate(double? value) {
-    if (value == null) return null;
-    // Backend expects up to 10 decimal places for coordinates.
-    return value.toStringAsFixed(10);
-  }
 }
 
 /// Controller for managing new report flow state
@@ -289,14 +267,85 @@ class NewReportController extends _$NewReportController {
     state = state.copyWith(dataProcessingConsent: value);
   }
 
-  // ==================== FORM STATE ====================
-
-  void setSubmitting(bool isSubmitting) {
-    state = state.copyWith(isSubmitting: isSubmitting);
+  Future<domain.Report> submit() async {
+    if (!state.canSubmit) {
+      throw const ReportSubmissionFailure(
+        'Please complete all required report fields.',
+      );
+    }
+    state = state.copyWith(isSubmitting: true, error: null);
+    try {
+      final useCase = ref.read(createReportUseCaseProvider);
+      final result = await useCase(
+        category: state.category?.value,
+        title: state.title,
+        description: state.description,
+        incidentDatetime: state.incidentDatetime?.toIso8601String(),
+        isHappeningNow: state.isHappeningNow,
+        zone: state.zone,
+        streetLandmark: state.streetLandmark,
+        municipalityId: state.municipalityId,
+        barangayId: state.barangayId,
+        cityMunicipality: state.cityMunicipality,
+        province: state.province,
+        latitude: _formatCoordinate(state.latitude),
+        longitude: _formatCoordinate(state.longitude),
+        locationAccuracy: state.locationAccuracy.name,
+        location: state.streetLandmark ?? state.location,
+        barangay: state.barangay ?? state.zone,
+        declarationConfirmed: state.declarationConfirmed,
+        dataProcessingConsent: state.dataProcessingConsent,
+      );
+      return result.when(
+        success: (report) => report,
+        failure: (failure) => throw ReportSubmissionFailure(failure.message),
+      );
+    } on ReportSubmissionFailure catch (error) {
+      if (ref.mounted) state = state.copyWith(error: error.message);
+      rethrow;
+    } finally {
+      if (ref.mounted) state = state.copyWith(isSubmitting: false);
+    }
   }
 
-  void setError(String? error) {
-    state = state.copyWith(error: error);
+  Future<domain.Report> submitQuickReport({
+    required String description,
+    required String municipalityId,
+    String? barangayId,
+    String? barangay,
+    required String cityMunicipality,
+    required String province,
+    required double latitude,
+    required double longitude,
+    String? location,
+  }) async {
+    final useCase = ref.read(createReportUseCaseProvider);
+    final result = await useCase(
+      description: description,
+      isHappeningNow: true,
+      zone: barangay,
+      municipalityId: municipalityId,
+      barangayId: barangayId,
+      barangay: barangay,
+      cityMunicipality: cityMunicipality,
+      province: province,
+      latitude: _formatCoordinate(latitude),
+      longitude: _formatCoordinate(longitude),
+      locationAccuracy: LocationAccuracy.exact.name,
+      location: location,
+      declarationConfirmed: true,
+      dataProcessingConsent: true,
+      isQuickReport: true,
+    );
+    return result.when(
+      success: (report) => report,
+      failure: (failure) => throw ReportSubmissionFailure(failure.message),
+    );
+  }
+
+  String? _formatCoordinate(double? value) {
+    if (value == null) return null;
+    return value.toStringAsFixed(10);
   }
 
   /// Reset the entire form

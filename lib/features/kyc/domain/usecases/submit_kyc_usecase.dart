@@ -1,3 +1,4 @@
+import '../../../../core/domain/failures.dart';
 import '../../../../core/domain/result.dart';
 import '../entities/kyc_status.dart';
 import '../kyc_repository.dart';
@@ -49,6 +50,15 @@ class SubmitKycParams {
     this.selfieWithIdImagePath,
     this.declarationAccepted = true,
   });
+
+  List<String> validateImages(KycRepository repository) {
+    return repository.validateImages(
+      idFrontImagePath: idFrontImagePath,
+      idBackImagePath: idBackImagePath,
+      selfieImagePath: selfieImagePath,
+      selfieWithIdImagePath: selfieWithIdImagePath,
+    );
+  }
 }
 
 /// Use case for initial KYC document submission.
@@ -62,6 +72,10 @@ class SubmitKycUseCase {
   ///
   /// Returns [KycStatusEntity] on success, or a [Failure] on error.
   Future<Result<KycStatusEntity>> call(SubmitKycParams params) {
+    final validationErrors = params.validateImages(_repository);
+    if (validationErrors.isNotEmpty) {
+      return Future.value(Err(ValidationFailure(validationErrors.join('\n'))));
+    }
     return _repository.submitKyc(
       firstName: params.firstName,
       middleName: params.middleName,

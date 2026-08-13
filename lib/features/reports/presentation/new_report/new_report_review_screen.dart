@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/network/error_mapper.dart';
 import '../../../../core/presentation/widgets/app_toast.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/municipality_geo.dart';
@@ -11,8 +10,6 @@ import '../../../auth/presentation/barangays_provider.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../images/data/evidence_upload_queue.dart';
 import '../../../images/data/evidence_upload_queue_provider.dart';
-import '../../data/report_models.dart' show Report;
-import '../../data/reports_repository.dart';
 import '../reports_controller.dart';
 import 'new_report_controller.dart';
 
@@ -50,7 +47,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
             !municipality.hasUsableBounds)) {
       AppToast.warning(
         context,
-        'Municipality metadata is unavailable. Refresh it before submitting.',
+        'City metadata is unavailable. Refresh it before submitting.',
       );
       return;
     }
@@ -87,15 +84,18 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     });
 
     late final EvidenceUploadQueue uploadQueue;
-    late final Report createdReport;
+    late final String createdReportId;
     try {
       uploadQueue = await ref.read(evidenceUploadQueueProvider.future);
       if (!mounted) return;
-      final reportsRepo = ref.read(reportsRepositoryProvider);
-      final request = state.toCreateRequest();
-      createdReport = await reportsRepo.createReport(request);
+      final report = await ref
+          .read(newReportControllerProvider.notifier)
+          .submit();
+      createdReportId = report.id;
     } catch (e) {
-      final message = ErrorMapper.userMessage(ErrorMapper.mapException(e));
+      final message = e is ReportSubmissionFailure
+          ? e.message
+          : 'Unable to submit the report. Please try again.';
       if (mounted) {
         setState(() {
           _isSubmitting = false;
@@ -110,7 +110,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     try {
       final intents = await uploadQueue.enqueue(
         userId: userId,
-        reportId: createdReport.id,
+        reportId: createdReportId,
         files: state.selectedImages,
       );
       if (intents.any(

@@ -9,7 +9,6 @@ import 'package:latlong2/latlong.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/maps/municipality_map.dart';
-import '../../../../core/network/error_mapper.dart';
 import '../../../../core/presentation/widgets/app_toast.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/municipality_geo.dart';
@@ -19,9 +18,9 @@ import '../../../auth/presentation/barangays_provider.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../images/data/evidence_upload_queue.dart';
 import '../../../images/data/evidence_upload_queue_provider.dart';
-import '../../data/report_models.dart' hide LocationAccuracy;
 import '../../data/reports_repository.dart';
 import '../reports_controller.dart';
+import 'new_report_controller.dart';
 import 'quick_report_geo.dart';
 
 enum _QuickLocationInputMode { phone, manual }
@@ -436,35 +435,31 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
     if (!mounted) return;
 
-    final reportsRepo = ref.read(reportsRepositoryProvider);
     final nearestBarangay = _resolveNearestBarangay(
       point.latitude,
       point.longitude,
     );
-    late final Report result;
+    late final String reportId;
     try {
-      result = await reportsRepo.createReport(
-        CreateReportRequest(
-          description: description,
-          isHappeningNow: true,
-          zone: nearestBarangay?.name,
-          municipalityId: _selectedMunicipality.id,
-          barangayId: nearestBarangay?.id,
-          barangay: nearestBarangay?.name,
-          cityMunicipality: _selectedMunicipality.name,
-          province: _selectedMunicipality.province,
-          latitude: point.latitude.toStringAsFixed(10),
-          longitude: point.longitude.toStringAsFixed(10),
-          locationAccuracy: 'exact',
-          location: _locationLabel,
-          declarationConfirmed: true,
-          dataProcessingConsent: true,
-        ),
-        isQuickReport: true,
-      );
+      final report = await ref
+          .read(newReportControllerProvider.notifier)
+          .submitQuickReport(
+            description: description,
+            municipalityId: _selectedMunicipality.id,
+            barangayId: nearestBarangay?.id,
+            barangay: nearestBarangay?.name,
+            cityMunicipality: _selectedMunicipality.name,
+            province: _selectedMunicipality.province,
+            latitude: point.latitude,
+            longitude: point.longitude,
+            location: _locationLabel,
+          );
+      reportId = report.id;
     } catch (e) {
       if (!mounted) return;
-      final message = ErrorMapper.userMessage(ErrorMapper.mapException(e));
+      final message = e is ReportSubmissionFailure
+          ? e.message
+          : 'Unable to submit the report. Please try again.';
       setState(() {
         _isSubmitting = false;
         _submissionError = message;
@@ -477,7 +472,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     ref.invalidate(reportsControllerProvider);
     ref.read(myReportsRefreshProvider.notifier).increment();
 
-    await _offerPhotoUpload(result.id);
+    await _offerPhotoUpload(reportId);
     if (!mounted) return;
     AppToast.success(context, 'Your quick report has been submitted.');
     Navigator.of(context).popUntil((route) => route.isFirst);
@@ -907,7 +902,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                           if (municipalities.length == 1)
                             Semantics(
                               label:
-                                  '${_selectedMunicipality.name} municipality boundary',
+                                  '${_selectedMunicipality.name} city boundary',
                               child: Row(
                                 children: [
                                   Icon(
@@ -935,7 +930,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                               initialValue: _selectedMunicipality.id,
                               isExpanded: true,
                               decoration: const InputDecoration(
-                                labelText: 'Municipality boundary',
+                                labelText: 'City boundary',
                                 prefixIcon: Icon(Icons.location_city_outlined),
                                 isDense: true,
                               ),
@@ -1127,8 +1122,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                                 key: const Key(
                                                   'quick-report-recenter-municipality',
                                                 ),
-                                                tooltip:
-                                                    'Recenter municipality',
+                                                tooltip: 'Recenter city',
                                                 constraints:
                                                     const BoxConstraints.tightFor(
                                                       width: 48,

@@ -1,3 +1,4 @@
+import '../../../../core/domain/failures.dart';
 import '../../../../core/domain/result.dart';
 import '../entities/kyc_status.dart';
 import '../kyc_repository.dart';
@@ -14,6 +15,10 @@ class ResubmitKycUseCase {
   ///
   /// Returns [KycStatusEntity] on success, or a [Failure] on error.
   Future<Result<KycStatusEntity>> call(SubmitKycParams params) {
+    final validationErrors = params.validateImages(_repository);
+    if (validationErrors.isNotEmpty) {
+      return Future.value(Err(ValidationFailure(validationErrors.join('\n'))));
+    }
     return _repository.resubmitKyc(
       firstName: params.firstName,
       middleName: params.middleName,

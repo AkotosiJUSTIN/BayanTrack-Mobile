@@ -18,14 +18,18 @@ class CreateReportUseCase {
     bool isHappeningNow = false,
     String? zone,
     String? streetLandmark,
+    String municipalityId = 'urdaneta',
+    String? barangayId,
     String? cityMunicipality,
     String? province,
     String? latitude,
     String? longitude,
     String locationAccuracy = 'approximate',
     String? location,
+    String? barangay,
     bool declarationConfirmed = true,
     bool dataProcessingConsent = true,
+    bool isQuickReport = false,
   }) {
     return _repository.createReport(
       category: category,
@@ -36,14 +40,18 @@ class CreateReportUseCase {
       isHappeningNow: isHappeningNow,
       zone: zone,
       streetLandmark: streetLandmark,
+      municipalityId: municipalityId,
+      barangayId: barangayId,
       cityMunicipality: cityMunicipality,
       province: province,
       latitude: latitude,
       longitude: longitude,
       locationAccuracy: locationAccuracy,
       location: location,
+      barangay: barangay,
       declarationConfirmed: declarationConfirmed,
       dataProcessingConsent: dataProcessingConsent,
+      isQuickReport: isQuickReport,
     );
   }
 }

@@ -236,6 +236,19 @@ void main() {
     );
     expect(find.bySemanticsLabel('Logging in'), findsOneWidget);
   });
+
+  testWidgets('shows the current authentication error after remount', (
+    tester,
+  ) async {
+    await _pumpLogin(
+      tester,
+      const Size(390, 844),
+      authState: const AuthError('Invalid email or password.'),
+    );
+
+    expect(find.byKey(const ValueKey('login-error-message')), findsOneWidget);
+    expect(find.text('Invalid email or password.'), findsOneWidget);
+  });
 }
 
 Future<void> _pumpLogin(

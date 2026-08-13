@@ -12,5 +12,5 @@ bool municipalityContains(
 
 String municipalityUnavailableMessage(MunicipalityModel municipality) =>
     municipality.hasUsableBoundary
-        ? 'The selected location is outside ${municipality.name}, ${municipality.province}.'
-        : 'Verified boundaries for ${municipality.name} are unavailable. Refresh municipality data before submitting.';
+    ? 'The selected location is outside ${municipality.name}, ${municipality.province}.'
+    : 'Verified boundaries for ${municipality.name} are unavailable. Refresh city data before submitting.';

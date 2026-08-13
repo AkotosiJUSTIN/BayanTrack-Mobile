@@ -1,8 +1,61 @@
+import 'dart:io';
+
+import 'package:bayantrack_mobile/core/domain/result.dart';
 import 'package:bayantrack_mobile/features/reports/data/report_models.dart'
     as dto;
+import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart';
+import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dart';
+import 'package:bayantrack_mobile/features/reports/domain/usecases/create_report_usecase.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/new_report/new_report_controller.dart';
+import 'package:bayantrack_mobile/features/reports/reports_di.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+class _UnusedReportsRepository extends Mock implements ReportsRepository {}
+
+class _RecordingCreateReportUseCase extends CreateReportUseCase {
+  _RecordingCreateReportUseCase()
+    : super(repository: _UnusedReportsRepository());
+
+  Map<String, Object?>? arguments;
+
+  @override
+  Future<Result<Report>> call({
+    String? category,
+    String? incidentType,
+    String? title,
+    required String description,
+    String? incidentDatetime,
+    bool isHappeningNow = false,
+    String? zone,
+    String? streetLandmark,
+    String municipalityId = 'urdaneta',
+    String? barangayId,
+    String? cityMunicipality,
+    String? province,
+    String? latitude,
+    String? longitude,
+    String locationAccuracy = 'approximate',
+    String? location,
+    String? barangay,
+    bool declarationConfirmed = true,
+    bool dataProcessingConsent = true,
+    bool isQuickReport = false,
+  }) async {
+    arguments = {
+      'municipality_id': municipalityId,
+      'barangay_id': barangayId,
+      'barangay': barangay,
+      'zone': zone,
+      'city_municipality': cityMunicipality,
+      'latitude': latitude,
+      'longitude': longitude,
+      'is_quick_report': isQuickReport,
+    };
+    return Success(Report(id: 'created', description: description));
+  }
+}
 
 void main() {
   test('legacy report DTO defaults Urdaneta and derives barangay ID', () {
@@ -41,42 +94,63 @@ void main() {
     expect(request.municipalityId, 'urdaneta');
   });
 
-  test('new report state sends IDs plus legacy labels', () {
-    const state = NewReportState(
-      description: 'Scoped report',
-      municipalityId: 'other_city',
-      barangayId: 'other_city:barangay_a',
-      barangay: 'Barangay A',
-      zone: 'Barangay A',
-      cityMunicipality: 'Other City',
-      province: 'Pangasinan',
+  test(
+    'new report controller sends IDs plus legacy labels to use case',
+    () async {
+      final useCase = _RecordingCreateReportUseCase();
+      final container = ProviderContainer(
+        overrides: [createReportUseCaseProvider.overrideWithValue(useCase)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(newReportControllerProvider.notifier);
+
+      controller
+        ..setDescription('Scoped report')
+        ..setMunicipality(
+          id: 'other_city',
+          name: 'Other City',
+          province: 'Pangasinan',
+        )
+        ..setBarangay(id: 'other_city:barangay_a', name: 'Barangay A')
+        ..setLocation(latitude: 15.9, longitude: 120.6)
+        ..setDeclarationConfirmed(true)
+        ..setDataProcessingConsent(true)
+        ..addImage(File('unused-test-image.jpg'));
+
+      await controller.submit();
+
+      expect(useCase.arguments?['municipality_id'], 'other_city');
+      expect(useCase.arguments?['barangay_id'], 'other_city:barangay_a');
+      expect(useCase.arguments?['barangay'], 'Barangay A');
+      expect(useCase.arguments?['city_municipality'], 'Other City');
+      expect(useCase.arguments?['is_quick_report'], isFalse);
+    },
+  );
+
+  test('quick report sends the canonical Urdaneta location pair', () async {
+    final useCase = _RecordingCreateReportUseCase();
+    final container = ProviderContainer(
+      overrides: [createReportUseCaseProvider.overrideWithValue(useCase)],
     );
+    addTearDown(container.dispose);
+    final controller = container.read(newReportControllerProvider.notifier);
 
-    final json = state.toCreateRequest().toJson();
-    expect(json['municipality_id'], 'other_city');
-    expect(json['barangay_id'], 'other_city:barangay_a');
-    expect(json['barangay'], 'Barangay A');
-    expect(json['city_municipality'], 'Other City');
-  });
-
-  test('Bactad East report sends the canonical Urdaneta location pair', () {
-    const state = NewReportState(
+    await controller.submitQuickReport(
       description: 'agik disgrasya',
       municipalityId: 'urdaneta',
       barangayId: 'bactad_east',
       barangay: 'Bactad East',
-      zone: 'Bactad East',
       cityMunicipality: 'Urdaneta',
       province: 'Pangasinan',
       latitude: 15.981394,
       longitude: 120.628478,
     );
 
-    final json = state.toCreateRequest().toJson();
-    expect(json['municipality_id'], 'urdaneta');
-    expect(json['barangay_id'], 'bactad_east');
-    expect(json['barangay'], 'Bactad East');
-    expect(json['zone'], 'Bactad East');
+    expect(useCase.arguments?['municipality_id'], 'urdaneta');
+    expect(useCase.arguments?['barangay_id'], 'bactad_east');
+    expect(useCase.arguments?['barangay'], 'Bactad East');
+    expect(useCase.arguments?['zone'], 'Bactad East');
+    expect(useCase.arguments?['is_quick_report'], isTrue);
   });
 
   test('clearLocation removes every stale location and barangay field', () {

@@ -151,8 +151,10 @@ class ReportsRepositoryImpl implements ReportsRepository {
     String? longitude,
     String locationAccuracy = 'approximate',
     String? location,
+    String? barangay,
     bool declarationConfirmed = true,
     bool dataProcessingConsent = true,
+    bool isQuickReport = false,
   }) async {
     try {
       final request = dto.CreateReportRequest(
@@ -172,13 +174,14 @@ class ReportsRepositoryImpl implements ReportsRepository {
         longitude: longitude,
         locationAccuracy: locationAccuracy,
         location: location,
+        barangay: barangay,
         declarationConfirmed: declarationConfirmed,
         dataProcessingConsent: dataProcessingConsent,
       );
 
       final response = await _dio.post(
         ApiConstants.reports,
-        data: request.toJson(),
+        data: {...request.toJson(), if (isQuickReport) 'is_quick_report': true},
       );
 
       // Backend returns {report: {...}, message: "..."}
