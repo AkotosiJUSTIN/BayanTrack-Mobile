@@ -12,6 +12,7 @@ import '../../../../core/maps/municipality_map.dart';
 import '../../../../core/presentation/widgets/app_toast.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/municipality_geo.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/data/auth_models.dart';
 import '../../../auth/data/user_permissions.dart';
 import '../../../auth/presentation/barangays_provider.dart';
@@ -19,7 +20,9 @@ import '../../../auth/presentation/auth_controller.dart';
 import '../../../images/data/evidence_upload_queue.dart';
 import '../../../images/data/evidence_upload_queue_provider.dart';
 import '../../data/reports_repository.dart';
+import '../../domain/entities/report_enums.dart' hide LocationAccuracy;
 import '../reports_controller.dart';
+import '../report_labels.dart';
 import 'new_report_controller.dart';
 import 'quick_report_geo.dart';
 
@@ -109,12 +112,12 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   }
 
   void _setSelectedPoint(LatLng point, {required String locationLabel}) {
+    final l10n = AppLocalizations.of(context);
     if (!_contains(point)) {
       setState(() {
         _selectedPoint = null;
         _locationLabel = null;
-        _locationError =
-            'Incident pin must be inside ${_selectedMunicipality.name}.';
+        _locationError = l10n.incidentPinInside(_selectedMunicipality.name);
       });
       return;
     }
@@ -158,6 +161,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
   Future<void> _getCurrentLocation() async {
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
 
     setState(() {
       _isLoadingLocation = true;
@@ -178,7 +182,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         setState(() {
           _isLoadingLocation = false;
           _locationError =
-              'Could not get device location. Refresh or use Manual Pin.';
+              '${l10n.error}: ${l10n.refreshLocation} / ${l10n.manualPin}';
         });
       }
       return;
@@ -190,7 +194,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         if (!mounted) return;
         setState(() {
           _locationError =
-              'Device location is off. Enable GPS or use Manual Pin.';
+              '${l10n.locationServicesDisabled} ${l10n.manualPin}';
           _isLoadingLocation = false;
         });
         return;
@@ -203,7 +207,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
           if (!mounted) return;
           setState(() {
             _locationError =
-                'Location permission denied. Allow access or use Manual Pin.';
+                '${l10n.locationPermissionDenied}. ${l10n.manualPin}';
             _isLoadingLocation = false;
           });
           return;
@@ -214,7 +218,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         if (!mounted) return;
         setState(() {
           _locationError =
-              'Location permission is blocked. Enable it in Settings or use Manual Pin.';
+            '${l10n.locationPermissionSettings} ${l10n.manualPin}';
           _isLoadingLocation = false;
         });
         return;
@@ -235,7 +239,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       if (!mounted) return;
       setState(() {
         _locationError =
-            'Could not get device location. Refresh or use Manual Pin.';
+            '${l10n.error}: ${l10n.refreshLocation} / ${l10n.manualPin}';
         _isLoadingLocation = false;
       });
     }
@@ -244,6 +248,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   Future<void> _getPreciseLocationInBackground(
     Position? fallbackPosition,
   ) async {
+    final l10n = AppLocalizations.of(context);
     try {
       final position =
           await Geolocator.getCurrentPosition(
@@ -252,9 +257,9 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
               distanceFilter: 10,
               forceLocationManager: false,
               intervalDuration: const Duration(seconds: 5),
-              foregroundNotificationConfig: const ForegroundNotificationConfig(
-                notificationTitle: 'Getting location',
-                notificationText: 'BayanTrack is getting your location',
+              foregroundNotificationConfig: ForegroundNotificationConfig(
+                notificationTitle: l10n.gettingLocation,
+                notificationText: l10n.gettingLocationNotification,
                 enableWakeLock: false,
               ),
             ),
@@ -280,7 +285,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         _isLoadingLocation = false;
         if (_currentPosition == null) {
           _locationError =
-              'Location request timed out. Refresh or use Manual Pin.';
+              '${l10n.locationRequestTimedOut} ${l10n.manualPin}';
         }
       });
     } catch (e) {
@@ -290,7 +295,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         _isLoadingLocation = false;
         if (_currentPosition == null) {
           _locationError =
-              'Could not get precise location. Refresh or use Manual Pin.';
+              '${l10n.error}: ${l10n.refreshLocation} / ${l10n.manualPin}';
         }
       });
     }
@@ -355,9 +360,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
   Future<void> _submitQuickReport() async {
     if (_isSubmitting) return;
+    final l10n = AppLocalizations.of(context);
 
     final description = _descriptionController.text.trim();
-    final descriptionError = quickReportDescriptionError(description);
+    final descriptionError = quickReportDescriptionError(description, l10n: l10n);
     if (descriptionError != null) {
       AppToast.warning(context, descriptionError);
       return;
@@ -365,7 +371,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
     final point = _selectedPoint;
     if (point == null) {
-      AppToast.warning(context, 'Please wait for your location to load.');
+      AppToast.warning(context, l10n.waitingIncidentLocation);
       return;
     }
 
@@ -394,7 +400,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         final submitAnyway = await showDialog<bool>(
           context: context,
           builder: (dialogContext) => AlertDialog(
-            title: const Text('Reports already nearby'),
+            title: Text(l10n.reportsAlreadyNearby),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: nearby
@@ -403,10 +409,17 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                     (report) => ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.near_me_outlined),
-                      title: Text(report.category),
+                      title: Text(
+                        localizedReportCategory(
+                          ReportCategory.fromString(report.category),
+                          l10n,
+                          fallback: report.category,
+                        ),
+                      ),
                       subtitle: Text(
-                        '${report.distanceMeters} m away - ${report.status.replaceAll('_', ' ')}'
-                        '${report.isGrouped ? ' - grouped incident' : ''}',
+                        '${l10n.distanceAway(report.distanceMeters)} - '
+                        '${localizedReportStatus(ReportStatus.fromString(report.status), l10n)}'
+                        '${report.isGrouped ? ' - ${l10n.groupedIncident}' : ''}',
                       ),
                     ),
                   )
@@ -415,11 +428,11 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text('Review mine'),
+                child: Text(l10n.reviewMine),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text('Submit anyway'),
+                child: Text(l10n.submitAnyway),
               ),
             ],
           ),
@@ -459,7 +472,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       if (!mounted) return;
       final message = e is ReportSubmissionFailure
           ? e.message
-          : 'Unable to submit the report. Please try again.';
+          : l10n.unableSubmitReport;
       setState(() {
         _isSubmitting = false;
         _submissionError = message;
@@ -474,25 +487,26 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
     await _offerPhotoUpload(reportId);
     if (!mounted) return;
-    AppToast.success(context, 'Your quick report has been submitted.');
+    AppToast.success(context, l10n.reportSubmitted);
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   Future<void> _offerPhotoUpload(String reportId) async {
+    final l10n = AppLocalizations.of(context);
     final addPhoto = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Report submitted'),
-        content: const Text('Add an optional photo as evidence?'),
+        title: Text(l10n.reportSubmitted),
+        content: Text(l10n.addOptionalPhoto),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Done'),
+            child: Text(l10n.done),
           ),
           FilledButton.icon(
             onPressed: () => Navigator.pop(dialogContext, true),
             icon: const Icon(Icons.add_a_photo_outlined),
-            label: const Text('Add photo'),
+            label: Text(l10n.addPhoto),
           ),
         ],
       ),
@@ -509,7 +523,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     if (userId == null) {
       AppToast.warning(
         context,
-        'Report submitted. Sign in again to upload evidence.',
+        '${l10n.reportSubmitted} ${l10n.signInAgain}',
       );
       return;
     }
@@ -525,39 +539,40 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         if (mounted) {
           AppToast.warning(
             context,
-            'Report submitted, but the evidence file is missing.',
+            l10n.evidenceFileMissing,
           );
         }
         return;
       }
       unawaited(queue.resume(userId));
       if (mounted) {
-        AppToast.success(context, 'Report submitted. Evidence upload pending.');
+        AppToast.success(context, l10n.evidenceUploadsPending(1));
       }
     } catch (_) {
       if (!mounted) return;
       AppToast.warning(
         context,
-        'Report submitted, but evidence upload needs attention.',
+        l10n.evidenceUploadFailed,
       );
     }
   }
 
   String? _submitDisabledReason(String description) {
+    final l10n = AppLocalizations.of(context);
     final point = _selectedPoint;
     if (point == null || !_contains(point)) {
       if (_deviceLocationOutside &&
           _locationInputMode == _QuickLocationInputMode.phone) {
-        return 'Switch to Manual Pin and choose an incident location inside ${_selectedMunicipality.name}.';
+        return '${l10n.switchManualPin} ${l10n.selectIncidentInside(_selectedMunicipality.name)}';
       }
       if (_isLoadingLocation || _isGettingPreciseLocation) {
-        return 'Waiting for an incident location…';
+        return l10n.waitingIncidentLocation;
       }
       return _locationInputMode == _QuickLocationInputMode.manual
-          ? 'Tap the map to choose an incident location.'
-          : 'Choose an incident location to continue.';
+          ? l10n.tapMapIncident
+          : l10n.chooseIncidentLocation;
     }
-    return quickReportDescriptionError(description);
+    return quickReportDescriptionError(description, l10n: l10n);
   }
 
   Widget _buildVerificationNotice(
@@ -565,11 +580,11 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     ThemeData theme,
   ) {
     if (permissions.isVerified) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
     final scheme = theme.colorScheme;
     return Semantics(
       container: true,
-      label:
-          'Verification notice. You can report now. Verification improves trust and unlocks account features.',
+      label: l10n.verificationNotice,
       child: Container(
         key: const Key('quick-report-verification-notice'),
         margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
@@ -586,7 +601,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'You can report now. Verification improves trust and unlocks account features.',
+                l10n.verificationNotice,
                 style: theme.textTheme.bodyMedium?.copyWith(height: 1.3),
               ),
             ),
@@ -598,12 +613,13 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
   Widget _buildLocationFeedback(ThemeData theme) {
     final scheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
     final error = _locationError;
     if (error != null) {
       return Semantics(
         container: true,
         liveRegion: true,
-        label: 'Location error. $error',
+        label: '${l10n.error}. $error',
         child: Container(
           key: const Key('quick-report-location-error'),
           padding: const EdgeInsets.all(12),
@@ -644,8 +660,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         container: true,
         liveRegion: true,
         label: manualSelected
-            ? 'Incident location selected inside Urdaneta. Device location is outside Urdaneta.'
-            : 'Device location is outside Urdaneta. You can still select an incident inside Urdaneta.',
+            ? l10n.incidentLocationSelected
+            : l10n.locationOutsideCity(_selectedMunicipality.name),
         child: Container(
           key: const Key('quick-report-outside-location'),
           padding: const EdgeInsets.all(12),
@@ -667,8 +683,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                       children: [
                         Text(
                           manualSelected
-                              ? 'Incident location selected'
-                              : 'Location is outside ${_selectedMunicipality.name}',
+                              ? l10n.incidentLocationSelected
+                              : l10n.locationOutsideCity(
+                                  _selectedMunicipality.name,
+                                ),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: foreground,
                             fontWeight: FontWeight.w700,
@@ -677,8 +695,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                         const SizedBox(height: 2),
                         Text(
                           manualSelected
-                              ? 'Your phone may be outside the city; the incident pin is inside the boundary.'
-                              : 'You do not need to be in the city. Select the incident inside ${_selectedMunicipality.name}.',
+                              ? l10n.phoneOutsideBoundary
+                              : l10n.selectIncidentInside(
+                                  _selectedMunicipality.name,
+                                ),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: foreground,
                             height: 1.3,
@@ -696,7 +716,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                   onPressed: () =>
                       _switchLocationMode(_QuickLocationInputMode.manual),
                   icon: const Icon(Icons.add_location_alt_outlined),
-                  label: const Text('Switch to Manual Pin'),
+                  label: Text(l10n.switchManualPin),
                 ),
               ],
             ],
@@ -708,14 +728,14 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     final isLoading = _isLoadingLocation || _isGettingPreciseLocation;
     final hasLocation = _selectedPoint != null;
     final status = isLoading
-        ? 'Locating…'
+        ? l10n.locating
         : _locationInputMode == _QuickLocationInputMode.manual
         ? hasLocation
-              ? 'Incident location selected'
-              : 'Tap the map to place the incident pin'
+              ? l10n.incidentLocationSelected
+              : l10n.tapMapPlaceIncident
         : hasLocation
-        ? 'GPS location found'
-        : 'Choose an incident location';
+        ? l10n.gpsLocationFound
+        : l10n.chooseIncidentLocationShort;
     return Semantics(
       liveRegion: true,
       label: status,
@@ -754,6 +774,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
   Widget _buildSubmitBar(ThemeData theme) {
     final scheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
     return Material(
       key: const Key('quick-report-submit-bar'),
       color: theme.scaffoldBackgroundColor,
@@ -773,7 +794,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                 if (submitError != null) ...[
                   Semantics(
                     liveRegion: true,
-                    label: 'Submission error. $submitError',
+                    label: l10n.submissionError(submitError),
                     child: Text(
                       submitError,
                       key: const Key('quick-report-submit-error'),
@@ -787,7 +808,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                 ] else if (!_isSubmitting && disabledReason != null) ...[
                   Semantics(
                     liveRegion: true,
-                    label: 'Submit disabled. $disabledReason',
+                    label: l10n.submitDisabled(disabledReason),
                     child: Text(
                       disabledReason,
                       key: const Key('quick-report-disabled-reason'),
@@ -803,8 +824,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                   enabled: canSubmit,
                   liveRegion: _isSubmitting,
                   label: _isSubmitting
-                      ? 'Submitting Quick Report'
-                      : 'Submit Quick Report',
+                      ? l10n.submittingQuickReport
+                      : l10n.submitQuickReport,
                   hint: disabledReason,
                   child: ElevatedButton(
                     key: const Key('quick-report-submit'),
@@ -828,12 +849,12 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                 ),
                               ),
                               const SizedBox(width: 10),
-                              const Flexible(
-                                child: Text('Submitting Quick Report…'),
+                              Flexible(
+                                child: Text(l10n.submittingQuickReport),
                               ),
                             ],
                           )
-                        : const Text('Submit Quick Report'),
+                        : Text(l10n.submitQuickReport),
                   ),
                 ),
               ],
@@ -848,6 +869,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   Widget build(BuildContext context) {
     final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final scheme = theme.colorScheme;
     final municipalityBounds = _selectedMunicipality.bounds!;
     final mapCenter =
@@ -867,9 +889,9 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Quick Report'),
+        title: Text(l10n.quickReport),
         leading: IconButton(
-          tooltip: 'Close Quick Report',
+          tooltip: l10n.closeQuickReport,
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -893,7 +915,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Location',
+                            l10n.reportLocation,
                             style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w700,
                             ),
@@ -902,7 +924,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                           if (municipalities.length == 1)
                             Semantics(
                               label:
-                                  '${_selectedMunicipality.name} city boundary',
+                                  '${_selectedMunicipality.name} ${l10n.cityBoundary}',
                               child: Row(
                                 children: [
                                   Icon(
@@ -913,7 +935,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                   const SizedBox(width: 6),
                                   Flexible(
                                     child: Text(
-                                      '${_selectedMunicipality.name}, ${_selectedMunicipality.province} boundary',
+                                      '${_selectedMunicipality.name}, ${_selectedMunicipality.province} · ${l10n.cityBoundary}',
                                       style: theme.textTheme.bodyMedium
                                           ?.copyWith(
                                             color: scheme.onSurface.withValues(
@@ -929,8 +951,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                             DropdownButtonFormField<String>(
                               initialValue: _selectedMunicipality.id,
                               isExpanded: true,
-                              decoration: const InputDecoration(
-                                labelText: 'City boundary',
+                              decoration: InputDecoration(
+                                labelText: l10n.cityBoundary,
                                 prefixIcon: Icon(Icons.location_city_outlined),
                                 isDense: true,
                               ),
@@ -958,19 +980,19 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                           const SizedBox(height: 10),
                           Semantics(
                             container: true,
-                            label: 'Incident location method',
+                            label: l10n.incidentLocationMethod,
                             child: SegmentedButton<_QuickLocationInputMode>(
                               key: const Key('quick-report-location-mode'),
                               expandedInsets: EdgeInsets.zero,
                               showSelectedIcon: false,
-                              segments: const [
+                              segments: [
                                 ButtonSegment(
                                   value: _QuickLocationInputMode.phone,
-                                  label: Text('Phone GPS'),
+                                  label: Text(l10n.phoneGps),
                                 ),
                                 ButtonSegment(
                                   value: _QuickLocationInputMode.manual,
-                                  label: Text('Manual Pin'),
+                                  label: Text(l10n.manualPin),
                                 ),
                               ],
                               selected: {_locationInputMode},
@@ -1000,13 +1022,12 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                             children: [
                               Semantics(
                                 container: true,
-                                label:
-                                    '${_selectedMunicipality.name} incident location map',
+                                label: l10n.incidentLocationMap,
                                 hint:
                                     _locationInputMode ==
                                         _QuickLocationInputMode.manual
-                                    ? 'Tap inside the boundary to place the incident pin.'
-                                    : 'Shows device and selected incident locations.',
+                                    ? l10n.tapInsideBoundary
+                                    : l10n.showsDeviceLocations,
                                 child: SizedBox(
                                   key: const Key('quick-report-map'),
                                   height: 210,
@@ -1101,8 +1122,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                                 key: const Key(
                                                   'quick-report-refresh-location',
                                                 ),
-                                                tooltip:
-                                                    'Refresh device location',
+                                                tooltip: l10n.refreshDeviceLocation,
                                                 constraints:
                                                     const BoxConstraints.tightFor(
                                                       width: 48,
@@ -1122,7 +1142,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                                 key: const Key(
                                                   'quick-report-recenter-municipality',
                                                 ),
-                                                tooltip: 'Recenter city',
+                                                tooltip: l10n.recenterCity,
                                                 constraints:
                                                     const BoxConstraints.tightFor(
                                                       width: 48,
@@ -1164,7 +1184,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                             color: scheme.primary,
                                           ),
                                         ),
-                                        const TextSpan(text: ' Device GPS'),
+                                        TextSpan(text: ' ${l10n.phoneGps}'),
                                       ],
                                     ),
                                     style: theme.textTheme.bodySmall,
@@ -1181,7 +1201,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                             color: scheme.secondary,
                                           ),
                                         ),
-                                        const TextSpan(text: ' Incident pin'),
+                                        TextSpan(text: ' ${l10n.incidentLocationSelected}'),
                                       ],
                                     ),
                                     style: theme.textTheme.bodySmall,
@@ -1198,7 +1218,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                             color: scheme.primary,
                                           ),
                                         ),
-                                        const TextSpan(text: ' City boundary'),
+                                        TextSpan(text: ' ${l10n.cityBoundary}'),
                                       ],
                                     ),
                                     style: theme.textTheme.bodySmall,
@@ -1219,14 +1239,14 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Short description',
+                            l10n.shortDescription,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Describe what is happening. 500 characters maximum.',
+                            l10n.shortDescriptionHint,
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: scheme.onSurface.withValues(alpha: 0.72),
                             ),
@@ -1234,9 +1254,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                           const SizedBox(height: 8),
                           Semantics(
                             container: true,
-                            label: 'Short description',
-                            hint:
-                                'Describe what is happening in 500 characters or fewer.',
+                            label: l10n.shortDescription,
+                            hint: l10n.shortDescriptionSemantics,
                             child: TextField(
                               key: const Key('quick-report-description'),
                               controller: _descriptionController,
@@ -1249,8 +1268,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                   setState(() => _submissionError = null);
                                 }
                               },
-                              decoration: const InputDecoration(
-                                hintText: 'What is happening?',
+                              decoration: InputDecoration(
+                                hintText: l10n.whatIsHappening,
                                 alignLabelWithHint: true,
                               ),
                             ),

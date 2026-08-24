@@ -8,6 +8,7 @@ import 'package:bayantrack_mobile/features/auth/auth_di.dart';
 import 'package:bayantrack_mobile/features/auth/domain/auth_repository.dart';
 import 'package:bayantrack_mobile/features/auth/domain/entities/user.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/edit_profile_screen.dart';
+import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -44,7 +45,11 @@ Widget _app(
   required Future<XFile?> Function(ImageSource source) pickImage,
 }) => ProviderScope(
   overrides: [authRepositoryProvider.overrideWithValue(repository)],
-  child: MaterialApp(home: EditProfileScreen(pickImage: pickImage)),
+  child: MaterialApp(
+    supportedLocales: AppLocalizations.supportedLocales,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    home: EditProfileScreen(pickImage: pickImage),
+  ),
 );
 
 void main() {

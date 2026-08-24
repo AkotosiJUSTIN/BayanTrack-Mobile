@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/presentation/widgets/empty_content_placeholder.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/barangays_provider.dart';
 import '../../auth/presentation/verification_widgets.dart';
@@ -9,6 +10,7 @@ import '../../kyc/presentation/kyc_controller.dart';
 import '../../reports/domain/entities/report.dart';
 import '../../reports/domain/entities/report_enums.dart';
 import '../../reports/presentation/report_detail_screen.dart';
+import '../../reports/presentation/report_labels.dart';
 import '../../reports/presentation/reports_controller.dart';
 import '../../reports/reports_di.dart';
 import 'widgets/home_report_card.dart';
@@ -38,17 +40,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _listScrollController = ScrollController();
   final List<Report> _reports = [];
 
-  final List<({String label, String? status})> _statusFilters = const [
-    (label: 'All', status: null),
-    (label: 'Submitted', status: 'submitted'),
-    (label: 'Under Review', status: 'under_review'),
-    (label: 'In Progress', status: 'in_progress'),
-    (label: 'Resolved', status: 'resolved'),
-    (label: 'Escalated', status: 'escalated'),
+  final List<String?> _statusFilters = const [
+    null,
+    'submitted',
+    'under_review',
+    'in_progress',
+    'resolved',
+    'escalated',
   ];
 
   String? get _selectedStatus =>
-      _statusFilters[_selectedStatusFilterIndex].status;
+      _statusFilters[_selectedStatusFilterIndex];
   String _selectedSort = 'date';
   bool get _hasNextPage => _currentPage < _totalPages;
 
@@ -191,6 +193,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     // Auto-refresh when a new report is created
     ref.listen<int>(myReportsRefreshProvider, (previous, next) {
@@ -200,7 +203,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Home')),
+      appBar: AppBar(title: Text(l10n.home)),
       body: Column(
         children: [
           VerificationBanner(permissions: permissions),
@@ -208,9 +211,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: TextField(
               controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Search reports...',
-                prefixIcon: Icon(Icons.search),
+              decoration: InputDecoration(
+                hintText: l10n.searchReports,
+                prefixIcon: const Icon(Icons.search),
                 contentPadding: EdgeInsets.symmetric(vertical: 12),
               ),
             ),
@@ -235,13 +238,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _buildToggleButton(
-                        label: 'Map',
+                        label: l10n.map,
                         icon: Icons.map_outlined,
                         isSelected: _isMapView,
                         onTap: () => setState(() => _isMapView = true),
                       ),
                       _buildToggleButton(
-                        label: 'List',
+                        label: l10n.list,
                         icon: Icons.list,
                         isSelected: !_isMapView,
                         onTap: () => setState(() => _isMapView = false),
@@ -251,7 +254,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 const Spacer(),
                 Text(
-                  '$_totalReports ${_totalReports == 1 ? 'report' : 'reports'}',
+                  l10n.reportCount(_totalReports),
                   style: theme.textTheme.bodySmall,
                 ),
               ],
@@ -269,7 +272,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
                     selected: isSelected,
-                    label: Text(_statusFilters[index].label),
+                    label: Text(
+                      _statusFilterLabel(_statusFilters[index], l10n),
+                    ),
                     selectedColor: AppColors.primary,
                     backgroundColor: isDark
                         ? AppColors.darkSurface
@@ -370,7 +375,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  String _statusFilterLabel(String? status, AppLocalizations l10n) {
+    return switch (status) {
+      null => l10n.all,
+      'submitted' => l10n.submitted,
+      'under_review' => l10n.underReview,
+      'in_progress' => l10n.inProgress,
+      'resolved' => l10n.resolvedStatus,
+      'escalated' => l10n.escalated,
+      _ => l10n.status,
+    };
+  }
+
   Widget _buildMapView(ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
+
     if (_isInitialLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -437,13 +456,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         spacing: 12,
                         runSpacing: 8,
                         children: [
-                          _buildLegendItem('Submitted', AppColors.alertMedium),
+                          _buildLegendItem(l10n.submitted, AppColors.alertMedium),
                           _buildLegendItem(
-                            'In Progress',
+                            l10n.inProgress,
                             const Color(0xFF3B82F6),
                           ),
-                          _buildLegendItem('Escalated', AppColors.alertHigh),
-                          _buildLegendItem('Resolved', AppColors.success),
+                          _buildLegendItem(l10n.escalated, AppColors.alertHigh),
+                          _buildLegendItem(l10n.resolvedStatus, AppColors.success),
                         ],
                       ),
                     ),
@@ -530,7 +549,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: CircularProgressIndicator(strokeWidth: 2.5),
               )
             : Text(
-                _hasNextPage ? 'Scroll to load more' : 'No more reports',
+                _hasNextPage ? AppLocalizations.of(context)!.scrollLoadMore : AppLocalizations.of(context)!.noMoreReports,
                 style: theme.textTheme.bodySmall,
               ),
       ),
@@ -589,9 +608,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     for (final report in sorted) {
       final level = report.queuePriorityLevel;
       if (level != previousLevel || (level == null && !unscored)) {
+        final l10n = AppLocalizations.of(context)!;
         final label = level != null
-            ? 'Level ${5 - order.indexOf(level)} — ${level.displayName}'
-            : 'Unscored';
+            ? l10n.priorityLevel(
+                5 - order.indexOf(level),
+                localizedPriorityLabel(level, l10n),
+              )
+            : AppLocalizations.of(context)!.unscored;
         items.add(_ReportSectionItem.header(label));
         previousLevel = level;
         if (level == null) unscored = true;
@@ -603,14 +626,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   String _sectionLabelForDate(DateTime? date) {
-    if (date == null) return 'Unknown Date';
+    final l10n = AppLocalizations.of(context)!;
+    if (date == null) return l10n.unknownDate;
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
 
-    if (date == today) return 'Today';
-    if (date == yesterday) return 'Yesterday';
+    if (date == today) return l10n.today;
+    if (date == yesterday) return l10n.yesterday;
 
     return MaterialLocalizations.of(context).formatMediumDate(date);
   }
@@ -618,8 +642,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildEmptyState(ThemeData theme) {
     return EmptyContentPlaceholder(
       icon: Icons.location_off_outlined,
-      title: 'No reports found',
-      message: 'No reports match the selected filters.',
+      title: AppLocalizations.of(context)!.noReportsFound,
+      message: AppLocalizations.of(context)!.noReportsMatch,
       onRetry: _onRefresh,
     );
   }
@@ -631,12 +655,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           Icon(Icons.error_outline, size: 64, color: AppColors.alertHigh),
           const SizedBox(height: 16),
-          Text('Unable to Load Reports', style: theme.textTheme.titleMedium),
+          Text(AppLocalizations.of(context)!.unableLoadReports, style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              'We\'re having trouble loading reports. Please check your internet connection and try again.',
+              AppLocalizations.of(context)!.reportsNetworkError,
               style: theme.textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),

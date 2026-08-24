@@ -4,6 +4,7 @@ import '../../auth/presentation/auth_wrapper.dart';
 import '../../onboarding/presentation/onboarding_screen.dart';
 import '../../../core/providers/app_preferences_provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 
 const _deepBlue = Color(0xFF064BEE);
 const _richOrange = Color(0xFFF86A05);
@@ -85,6 +86,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final isDark = theme.brightness == Brightness.dark;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final brandBlue = isDark ? AppColors.primaryLight : _deepBlue;
+    final l10n = AppLocalizations.of(context)!;
 
     Widget content = LayoutBuilder(
       builder: (context, constraints) {
@@ -142,7 +144,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Report. Track. Resolve.',
+                    l10n.reportTrackResolve,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: isDark
@@ -163,8 +165,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       backgroundColor: brandBlue.withValues(alpha: 0.14),
                       strokeWidth: 3,
                       strokeCap: StrokeCap.round,
-                      semanticsLabel: 'Loading BayanTrack',
-                      semanticsValue: 'Preparing the app',
+                      semanticsLabel: '${l10n.loading} ${l10n.appName}',
+                      semanticsValue: l10n.loading,
                     ),
                   ),
                 ],

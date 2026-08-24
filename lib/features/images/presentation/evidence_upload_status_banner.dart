@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../l10n/app_localizations.dart';
 
 import '../../auth/presentation/auth_controller.dart';
 import '../data/evidence_upload_queue.dart';
@@ -64,6 +65,7 @@ class _Banner extends StatelessWidget {
     }
 
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final hasMissing = failed.any(
       (item) => item.state == EvidenceUploadState.missingLocalFile,
     );
@@ -71,19 +73,19 @@ class _Banner extends StatelessWidget {
         ? (
             Icons.error_outline,
             hasMissing
-                ? 'Report submitted. Evidence file is missing.'
-                : 'Report submitted. Evidence upload failed.',
+                ? l10n.evidenceFileMissing
+                : l10n.evidenceUploadFailed,
             scheme.errorContainer,
           )
         : pending.isNotEmpty
         ? (
             Icons.cloud_upload_outlined,
-            'Report submitted. ${pending.length} evidence upload${pending.length == 1 ? '' : 's'} pending.',
+            l10n.evidenceUploadsPending(pending.length),
             scheme.secondaryContainer,
           )
         : (
             Icons.cloud_done_outlined,
-            'Evidence upload completed.',
+            l10n.evidenceUploadCompleted,
             scheme.primaryContainer,
           );
 
@@ -99,11 +101,11 @@ class _Banner extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(child: Text(message)),
               if (failed.isNotEmpty)
-                TextButton(onPressed: queue.retry, child: const Text('Retry')),
+                TextButton(onPressed: queue.retry, child: Text(l10n.retry)),
               if (failed.isNotEmpty || completed.isNotEmpty)
                 TextButton(
                   onPressed: queue.dismissTerminal,
-                  child: const Text('Dismiss'),
+                  child: Text(l10n.dismiss),
                 ),
             ],
           ),

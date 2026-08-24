@@ -7,6 +7,7 @@ import 'package:signature/signature.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/string_utils.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../images/data/images_repository.dart';
 import '../domain/entities/report.dart';
 import 'report_detail_controller.dart';
@@ -64,7 +65,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
   String get _resolutionNote {
     final rawText = widget.report.adminRemarks?.isNotEmpty == true
         ? widget.report.adminRemarks!
-        : 'The barangay has marked this report as resolved.';
+        : AppLocalizations.of(context).resolvedDefaultNote;
     return StringUtils.unescapeHtml(rawText);
   }
 
@@ -89,12 +90,16 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
   // ── Actions ────────────────────────────────────────────────────────────────
 
   Future<void> _submit({required bool satisfied}) async {
+    final l10n = AppLocalizations.of(context);
     if (!_nameValid) {
-      _showSnackBar('Please enter your registered full name ($_userFullName).', error: true);
+      _showSnackBar(
+        '${l10n.registeredNameRequired} ($_userFullName)',
+        error: true,
+      );
       return;
     }
     if (!_canvasValid) {
-      _showSnackBar('Please draw your signature on the canvas.', error: true);
+      _showSnackBar(l10n.signatureRequired, error: true);
       return;
     }
 
@@ -153,8 +158,8 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
 
       final message = result['message'] as String? ??
           (satisfied
-              ? 'Report confirmed as resolved.'
-              : 'Report has been re-opened and escalated.');
+              ? l10n.reportConfirmedResolved
+              : l10n.reportReopenedEscalated);
 
       _showSnackBar(message);
 
@@ -185,12 +190,13 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     // Guard: already reviewed — show read-only confirmation, no form
     if (widget.report.citizenVerifiedAt != null) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Review Resolution'),
+          title: Text(l10n.reviewResolution),
           centerTitle: true,
         ),
         body: Center(
@@ -213,7 +219,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Review Already Submitted',
+                  l10n.reviewAlreadySubmitted,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -221,7 +227,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'You have already submitted your review and digital signature for this report. No further action is needed.',
+                  l10n.reviewNoFurtherAction,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
@@ -232,7 +238,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                   width: double.infinity,
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text('Go Back'),
+                    child: Text(l10n.back),
                   ),
                 ),
               ],
@@ -244,7 +250,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Review Resolution'),
+        title: Text(l10n.reviewResolution),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -273,6 +279,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
   // ── Sub-widgets ────────────────────────────────────────────────────────────
 
   Widget _buildHeader(ThemeData theme, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -296,7 +303,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Report Resolved',
+                    l10n.reportResolved,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -316,9 +323,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
         ),
         const SizedBox(height: 12),
         Text(
-          'The barangay has marked your report as resolved. '
-          'Please review their action and confirm whether the issue '
-          'was properly addressed.',
+          l10n.resolvedReviewDescription,
           style: theme.textTheme.bodyMedium,
         ),
       ],
@@ -326,6 +331,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
   }
 
   Widget _buildResolutionCard(ThemeData theme, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -350,7 +356,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
               ),
               const SizedBox(width: 6),
               Text(
-                'Resolution Summary',
+                l10n.resolutionSummary,
                 style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: isDark
@@ -371,11 +377,12 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
   }
 
   Widget _buildRatingSection(ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Rate the Response  (optional)',
+          l10n.rateResponse,
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w600,
           ),
@@ -406,7 +413,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
         if (_rating > 0) ...[
           const SizedBox(height: 6),
           Text(
-            _ratingLabel(_rating),
+            _ratingLabel(_rating, l10n),
             style: theme.textTheme.bodySmall?.copyWith(
               color: Colors.amber.shade700,
             ),
@@ -416,21 +423,22 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
     );
   }
 
-  String _ratingLabel(int rating) => switch (rating) {
-        1 => 'Very Dissatisfied',
-        2 => 'Dissatisfied',
-        3 => 'Neutral',
-        4 => 'Satisfied',
-        5 => 'Very Satisfied',
+  String _ratingLabel(int rating, AppLocalizations l10n) => switch (rating) {
+        1 => l10n.veryDissatisfied,
+        2 => l10n.dissatisfied,
+        3 => l10n.neutral,
+        4 => l10n.satisfied,
+        5 => l10n.verySatisfied,
         _ => '',
       };
 
   Widget _buildNoteSection(ThemeData theme, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Additional Comments  (optional)',
+          l10n.additionalComments,
           style: theme.textTheme.titleSmall?.copyWith(
             fontWeight: FontWeight.w600,
           ),
@@ -442,7 +450,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           maxLength: 500,
           decoration: InputDecoration(
             hintText:
-                'Describe how the issue was resolved or any remaining concerns…',
+                l10n.resolutionCommentsHint,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             filled: true,
             fillColor:
@@ -454,6 +462,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
   }
 
   Widget _buildSignatureSection(ThemeData theme, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     final canvasBorder = _canvasValid
         ? AppColors.success
         : (isDark ? AppColors.darkBorder : Colors.grey.shade300);
@@ -467,7 +476,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
             Icon(Icons.draw_outlined, size: 18, color: AppColors.primary),
             const SizedBox(width: 6),
             Text(
-              'Digital Signature',
+              l10n.digitalSignature,
               style: theme.textTheme.titleSmall
                   ?.copyWith(fontWeight: FontWeight.w600),
             ),
@@ -476,8 +485,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Draw your signature in the box below, then type your full name '
-          'to confirm your identity and authenticate this review.',
+          l10n.signatureInstructions,
           style: theme.textTheme.bodySmall?.copyWith(
             color: isDark
                 ? AppColors.darkTextSecondary
@@ -508,7 +516,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                     child: IgnorePointer(
                       child: Center(
                         child: Text(
-                          'Sign here',
+                          l10n.signHere,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: Colors.grey.shade400,
                             fontStyle: FontStyle.italic,
@@ -545,7 +553,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              'Please draw your signature above.',
+              l10n.signatureRequired,
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: AppColors.alertHigh),
             ),
@@ -559,8 +567,8 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           onChanged: (_) => setState(() {}),
           textCapitalization: TextCapitalization.words,
           decoration: InputDecoration(
-            labelText: 'Full Name',
-            hintText: 'e.g. Juan dela Cruz',
+            labelText: l10n.fullName,
+            hintText: l10n.fullNameHint,
             prefixIcon: const Icon(Icons.person_outline),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             filled: true,
@@ -574,7 +582,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              'Please enter your registered full name.',
+              l10n.registeredNameRequired,
               style: theme.textTheme.bodySmall
                   ?.copyWith(color: AppColors.alertHigh),
             ),
@@ -584,6 +592,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
   }
 
   Widget _buildActionButtons(ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -600,7 +609,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                   ),
                 )
               : const Icon(Icons.check_circle_outline),
-          label: const Text('Confirm — Issue is Resolved'),
+          label: Text(l10n.confirmResolved),
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.success,
             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -612,7 +621,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
         OutlinedButton.icon(
           onPressed: _isSubmitting ? null : () => _confirmReopen(theme),
           icon: const Icon(Icons.report_problem_outlined),
-          label: const Text('Dispute — Issue is Not Resolved'),
+          label: Text(l10n.disputeUnresolved),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.alertHigh,
             side: BorderSide(color: AppColors.alertHigh),
@@ -622,8 +631,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
 
         const SizedBox(height: 12),
         Text(
-          'Disputing will re-escalate the report to the municipal office '
-          'for further action.',
+          l10n.disputeNotice,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(
             color: AppColors.lightTextSecondary,
@@ -634,25 +642,23 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
   }
 
   Future<void> _confirmReopen(ThemeData theme) async {
+    final l10n = AppLocalizations.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Dispute Resolution?'),
-        content: const Text(
-          'Are you sure you want to dispute this resolution? '
-          'The report will be escalated back to the municipal office.',
-        ),
+        title: Text(l10n.disputeResolution),
+        content: Text(l10n.disputeConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.alertHigh,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Yes, Dispute'),
+            child: Text(l10n.yesDispute),
           ),
         ],
       ),

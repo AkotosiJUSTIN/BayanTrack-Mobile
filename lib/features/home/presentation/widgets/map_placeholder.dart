@@ -6,6 +6,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../auth/data/auth_models.dart';
 import '../../../reports/domain/entities/report.dart';
 import '../../../reports/domain/entities/report_enums.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../reports/presentation/report_labels.dart';
 
 /// OpenStreetMap widget that renders report pins from fetched coordinates.
 class MapPlaceholder extends StatefulWidget {
@@ -36,6 +38,7 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
   @override
   Widget build(BuildContext context) {
     final reportsWithCoordinates = _reportsWithCoordinates(widget.reports);
+    final l10n = AppLocalizations.of(context);
     final initialCenter = _initialCenterFor(reportsWithCoordinates);
     final markers = reportsWithCoordinates
         .map(
@@ -44,7 +47,7 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
             width: 40,
             height: 40,
             child: Tooltip(
-              message: _buildTooltipMessage(report),
+              message: _buildTooltipMessage(report, l10n),
               waitDuration: const Duration(milliseconds: 150),
               showDuration: const Duration(seconds: 3),
               preferBelow: false,
@@ -95,7 +98,7 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
           top: markers.isEmpty ? 76 : 12,
           child: IconButton.filledTonal(
             constraints: const BoxConstraints.tightFor(width: 48, height: 48),
-            tooltip: 'Recenter to ${widget.municipality.name}',
+            tooltip: l10n.recenterToMunicipality(widget.municipality.name),
             onPressed: () => MunicipalityMapCamera.recenter(
               _mapController,
               widget.municipality,
@@ -151,6 +154,7 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
 
   Widget _buildNoCoordinatesBanner(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
@@ -168,7 +172,7 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'No report coordinates available yet.',
+              l10n.noReportsYet,
               style: theme.textTheme.bodySmall,
             ),
           ),
@@ -192,16 +196,27 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
     };
   }
 
-  String _buildTooltipMessage(Report report) {
+  String _buildTooltipMessage(Report report, AppLocalizations l10n) {
     final title = (report.title?.trim().isNotEmpty ?? false)
         ? report.title!.trim()
-        : 'Untitled report';
+        : l10n.reportTitle;
     final location = report.displayLocation;
 
     return '$title\n'
-        '${report.status.displayName} - ${report.severity.displayName}\n'
+        '${_statusLabel(report.status, l10n)} - ${_severityLabel(report.severity, l10n)}\n'
         '$location';
   }
+
+  String _statusLabel(ReportStatus status, AppLocalizations l10n) =>
+      localizedReportStatus(status, l10n);
+
+  String _severityLabel(SeverityLevel severity, AppLocalizations l10n) =>
+      switch (severity) {
+        SeverityLevel.low => l10n.priorityLow,
+        SeverityLevel.medium => l10n.medium,
+        SeverityLevel.high => l10n.priorityHigh,
+        SeverityLevel.critical => l10n.priorityCritical,
+      };
 
   Widget _buildMarker(Color color) {
     return Container(

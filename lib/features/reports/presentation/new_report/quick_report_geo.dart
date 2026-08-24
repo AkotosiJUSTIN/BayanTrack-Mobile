@@ -1,14 +1,21 @@
 import 'dart:math' as math;
 
 import '../../../auth/data/auth_models.dart';
+import '../../../../l10n/app_localizations.dart';
 
 const quickReportDescriptionMaxLength = 500;
 
-String? quickReportDescriptionError(String value) {
+String? quickReportDescriptionError(
+  String value, {
+  AppLocalizations? l10n,
+}) {
   final description = value.trim();
-  if (description.isEmpty) return 'Add a short description to continue.';
+  if (description.isEmpty) {
+    return l10n?.shortDescriptionRequired ?? 'Add a short description to continue.';
+  }
   if (description.length > quickReportDescriptionMaxLength) {
-    return 'Description must be $quickReportDescriptionMaxLength characters or fewer.';
+    return l10n?.descriptionMaxLength(quickReportDescriptionMaxLength) ??
+        'Description must be $quickReportDescriptionMaxLength characters or fewer.';
   }
   return null;
 }

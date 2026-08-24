@@ -1,4 +1,7 @@
 import 'package:bayantrack_mobile/features/auth/presentation/auth_wrapper.dart';
+import 'package:bayantrack_mobile/core/providers/locale_provider.dart';
+import 'package:bayantrack_mobile/core/providers/theme_provider.dart';
+import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:bayantrack_mobile/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,7 +41,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('preserves three-page navigation and completes onboarding once', (
+  testWidgets('selects a language and completes onboarding once', (
     tester,
   ) async {
     final observer = _CountingNavigatorObserver();
@@ -48,9 +51,9 @@ void main() {
       navigatorObserver: observer,
     );
 
-    _expectPage(tester, pageIndex: 0);
-    _expectOnboardingColors(tester, pageIndex: 0, activeIndicator: 0);
-    _expectSharedTypography(tester, pageIndex: 0);
+    expect(find.text('Choose your language'), findsOneWidget);
+    expect(find.text('English'), findsOneWidget);
+    expect(find.text('Filipino'), findsOneWidget);
     expect(find.text('Skip'), findsOneWidget);
     expect(find.text('Continue'), findsOneWidget);
 
@@ -60,17 +63,21 @@ void main() {
     pageOneSemantics.dispose();
 
     await _tapAndFinishPageAnimation(tester, 'Continue');
-    _expectPage(tester, pageIndex: 1);
-    _expectOnboardingColors(tester, pageIndex: 1, activeIndicator: 1);
-    _expectSharedTypography(tester, pageIndex: 1);
+    _expectPage(tester, pageIndex: 0);
+    _expectOnboardingColors(tester, pageIndex: 0, activeIndicator: 1);
+    _expectSharedTypography(tester, pageIndex: 0);
 
     await _tapAndFinishPageAnimation(tester, 'Back');
-    expect(find.text(_titles[0]).hitTestable(), findsOneWidget);
+    expect(find.text('Choose your language').hitTestable(), findsOneWidget);
 
     await _tapAndFinishPageAnimation(tester, 'Continue');
     await _tapAndFinishPageAnimation(tester, 'Continue');
+    _expectPage(tester, pageIndex: 1);
+    _expectOnboardingColors(tester, pageIndex: 1, activeIndicator: 2);
+    _expectSharedTypography(tester, pageIndex: 1);
+    await _tapAndFinishPageAnimation(tester, 'Continue');
     _expectPage(tester, pageIndex: 2);
-    _expectOnboardingColors(tester, pageIndex: 2, activeIndicator: 2);
+    _expectOnboardingColors(tester, pageIndex: 2, activeIndicator: 3);
     _expectSharedTypography(tester, pageIndex: 2);
     expect(find.text('Back'), findsOneWidget);
     expect(find.text('Get Started'), findsOneWidget);
@@ -103,15 +110,54 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('switches onboarding UI to Filipino immediately', (tester) async {
+    await _pumpOnboarding(tester, const Size(390, 844));
+
+    await tester.tap(
+      find.byKey(const ValueKey('onboarding-language-filipino')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Piliin ang wika'), findsOneWidget);
+    expect(find.text('Magpatuloy'), findsOneWidget);
+    expect(find.text('Maaari mo itong baguhin anumang oras sa Profile.'), findsOneWidget);
+
+    await _tapAndFinishPageAnimation(tester, 'Magpatuloy');
+    expect(find.text(_titles[0]), findsNothing);
+    expect(find.text('Mag-ulat ng mga Isyu sa Komunidad'), findsOneWidget);
+
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getString('app_locale'), 'fil');
+  });
+
+  testWidgets('keeps Filipino onboarding usable on a small screen with large text', (
+    tester,
+  ) async {
+    await _pumpOnboarding(
+      tester,
+      const Size(320, 568),
+      textScale: 1.5,
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey('onboarding-language-filipino')),
+    );
+    await tester.pumpAndSettle();
+
+    for (var page = 0; page < _titles.length; page++) {
+      expect(tester.takeException(), isNull);
+      await _tapAndFinishPageAnimation(tester, 'Magpatuloy');
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('centers every main group between shared header and footer', (
     tester,
   ) async {
     await _pumpOnboarding(tester, const Size(390, 844));
 
     for (var pageIndex = 0; pageIndex < _titles.length; pageIndex++) {
-      if (pageIndex > 0) {
-        await _tapAndFinishPageAnimation(tester, 'Continue');
-      }
+      await _tapAndFinishPageAnimation(tester, 'Continue');
 
       _expectBalancedLayout(tester, pageIndex: pageIndex, viewportWidth: 390);
     }
@@ -183,7 +229,7 @@ void main() {
         _expectOnboardingColors(
           tester,
           pageIndex: pageIndex,
-          activeIndicator: pageIndex,
+          activeIndicator: pageIndex + 1,
           brightness: configuration.brightness,
         );
         _expectCenteredBody(
@@ -220,14 +266,15 @@ void _expectBalancedLayout(
   required int pageIndex,
   required double viewportWidth,
 }) {
+  final screenPageIndex = pageIndex + 1;
   final mainViewportRect = tester.getRect(
-    find.byKey(ValueKey('onboarding-scroll-$pageIndex')),
+    find.byKey(ValueKey('onboarding-scroll-$screenPageIndex')),
   );
   final headerRect = tester.getRect(
     find.byKey(const ValueKey('onboarding-header')),
   );
   final mainRect = tester.getRect(
-    find.byKey(ValueKey('onboarding-main-$pageIndex')),
+    find.byKey(ValueKey('onboarding-main-$screenPageIndex')),
   );
   final indicatorGroupRect = tester.getRect(
     find.byKey(const ValueKey('onboarding-indicator-group')),
@@ -237,7 +284,7 @@ void _expectBalancedLayout(
 
   expect(
     find.descendant(
-      of: find.byKey(ValueKey('onboarding-page-$pageIndex')),
+      of: find.byKey(ValueKey('onboarding-page-$screenPageIndex')),
       matching: find.byType(SingleChildScrollView),
     ),
     findsOneWidget,
@@ -256,12 +303,15 @@ void _expectCenteredBody(
   required int pageIndex,
   required double viewportWidth,
 }) {
-  final body = find.byKey(ValueKey('onboarding-body-$pageIndex'));
-  final title = find.byKey(ValueKey('onboarding-title-$pageIndex'));
+  final screenPageIndex = pageIndex + 1;
+  final body = find.byKey(ValueKey('onboarding-body-$screenPageIndex'));
+  final title = find.byKey(ValueKey('onboarding-title-$screenPageIndex'));
   final underline = find.byKey(
-    ValueKey('onboarding-title-underline-$pageIndex'),
+    ValueKey('onboarding-title-underline-$screenPageIndex'),
   );
-  final description = find.byKey(ValueKey('onboarding-description-$pageIndex'));
+  final description = find.byKey(
+    ValueKey('onboarding-description-$screenPageIndex'),
+  );
   final indicator = find.byKey(const ValueKey('onboarding-indicator-group'));
   final centerX = viewportWidth / 2;
 
@@ -280,7 +330,7 @@ void _expectArtwork(
   required int pageIndex,
   required String assetName,
 }) {
-  final page = find.byKey(ValueKey('onboarding-page-$pageIndex'));
+  final page = find.byKey(ValueKey('onboarding-page-${pageIndex + 1}'));
   final imageFinder = find.descendant(of: page, matching: find.byType(Image));
   final image = tester.widget<Image>(imageFinder);
 
@@ -331,19 +381,20 @@ void _expectOnboardingColors(
   );
   expect(tagline.style?.color, expectedBlue);
 
+  final screenPageIndex = pageIndex + 1;
   final title = tester.widget<Text>(
-    find.byKey(ValueKey('onboarding-title-$pageIndex')),
+    find.byKey(ValueKey('onboarding-title-$screenPageIndex')),
   );
   expect(title.style?.color, expectedBlue);
 
   final description = tester.widget<Text>(
-    find.byKey(ValueKey('onboarding-description-$pageIndex')),
+    find.byKey(ValueKey('onboarding-description-$screenPageIndex')),
   );
   expect(description.style?.color, expectedText);
 
   final underline = tester.widget<SvgPicture>(
     find.descendant(
-      of: find.byKey(ValueKey('onboarding-title-underline-$pageIndex')),
+      of: find.byKey(ValueKey('onboarding-title-underline-$screenPageIndex')),
       matching: find.byType(SvgPicture),
     ),
   );
@@ -369,17 +420,18 @@ void _expectOnboardingColors(
   expect((indicator.decoration as BoxDecoration).color, expectedBlue);
 
   final inactiveIndicator = tester.widget<AnimatedContainer>(
-    find.byKey(ValueKey('onboarding-indicator-${(activeIndicator + 1) % 3}')),
+    find.byKey(ValueKey('onboarding-indicator-${(activeIndicator + 1) % 4}')),
   );
   expect((inactiveIndicator.decoration as BoxDecoration).color, expectedBorder);
 }
 
 void _expectSharedTypography(WidgetTester tester, {required int pageIndex}) {
+  final screenPageIndex = pageIndex + 1;
   final title = tester.widget<Text>(
-    find.byKey(ValueKey('onboarding-title-$pageIndex')),
+    find.byKey(ValueKey('onboarding-title-$screenPageIndex')),
   );
   final description = tester.widget<Text>(
-    find.byKey(ValueKey('onboarding-description-$pageIndex')),
+    find.byKey(ValueKey('onboarding-description-$screenPageIndex')),
   );
 
   expect(title.style?.fontSize, 30);
@@ -415,31 +467,40 @@ Future<void> _pumpOnboarding(
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
+  final prefs = await SharedPreferences.getInstance();
 
   await tester.pumpWidget(
     ProviderScope(
-      child: MaterialApp(
-        navigatorObservers: [?navigatorObserver],
-        theme: ThemeData(
-          brightness: Brightness.light,
-          scaffoldBackgroundColor: _lightBackground,
+      overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
+      child: Consumer(
+        builder: (context, ref, _) => MaterialApp(
+          locale: ref.watch(appLocaleProvider),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          navigatorObservers: [
+            if (navigatorObserver != null) navigatorObserver,
+          ],
+          theme: ThemeData(
+            brightness: Brightness.light,
+            scaffoldBackgroundColor: _lightBackground,
+          ),
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            scaffoldBackgroundColor: _darkBackground,
+          ),
+          themeMode: brightness == Brightness.dark
+              ? ThemeMode.dark
+              : ThemeMode.light,
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(textScale)),
+              child: child!,
+            );
+          },
+          home: const OnboardingScreen(),
         ),
-        darkTheme: ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: _darkBackground,
-        ),
-        themeMode: brightness == Brightness.dark
-            ? ThemeMode.dark
-            : ThemeMode.light,
-        builder: (context, child) {
-          return MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(textScaler: TextScaler.linear(textScale)),
-            child: child!,
-          );
-        },
-        home: const OnboardingScreen(),
       ),
     ),
   );
@@ -447,7 +508,7 @@ Future<void> _pumpOnboarding(
 }
 
 Future<void> _goToPage(WidgetTester tester, int pageIndex) async {
-  for (var index = 0; index < pageIndex; index++) {
+  for (var index = 0; index <= pageIndex; index++) {
     await _tapAndFinishPageAnimation(tester, 'Continue');
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
+import '../../../l10n/app_localizations.dart';
 import 'auth_controller.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
@@ -57,6 +58,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isLoading = authState is AuthLoading;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       key: const ValueKey('login-scaffold'),
@@ -96,14 +98,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: Image.asset(
                             'assets/images/auth/login_mascot.webp',
                             key: const ValueKey('login-illustration'),
-                            semanticLabel: 'Bantay waving',
+                            semanticLabel: l10n.bantayWaving,
                             fit: BoxFit.contain,
                             filterQuality: FilterQuality.high,
                           ),
                         ),
                         SizedBox(height: compact ? 8 : 12),
                         Text(
-                          'Welcome Back!',
+                          l10n.welcomeBack,
                           key: const ValueKey('login-welcome'),
                           style: theme.textTheme.displayMedium?.copyWith(
                             fontSize: compact ? 28 : 30,
@@ -113,7 +115,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Sign in to continue',
+                          l10n.signInToContinue,
                           key: const ValueKey('login-subtitle'),
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: isDark
@@ -158,12 +160,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       CrossAxisAlignment.stretch,
                                   children: [
                                     Text(
-                                      'Email',
+                                      l10n.email,
                                       style: theme.textTheme.titleMedium,
                                     ),
                                     const SizedBox(height: 8),
                                     Semantics(
-                                      label: 'Email',
+                                      label: l10n.email,
                                       textField: true,
                                       child: TextFormField(
                                         key: const ValueKey(
@@ -176,23 +178,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         enabled: !isLoading,
                                         onChanged: (_) =>
                                             _formKey.currentState?.validate(),
-                                        decoration: const InputDecoration(
-                                          hintText: 'Enter your email',
-                                          prefixIcon: Icon(
+                                        decoration: InputDecoration(
+                                          hintText: l10n.enterYourEmail,
+                                          prefixIcon: const Icon(
                                             Icons.email_outlined,
                                           ),
                                         ),
-                                        validator: Validators.email,
+                                        validator: (value) =>
+                                            Validators.email(value, l10n: l10n),
                                       ),
                                     ),
                                     const SizedBox(height: 16),
                                     Text(
-                                      'Password',
+                                      l10n.password,
                                       style: theme.textTheme.titleMedium,
                                     ),
                                     const SizedBox(height: 8),
                                     Semantics(
-                                      label: 'Password',
+                                      label: l10n.password,
                                       textField: true,
                                       child: TextFormField(
                                         key: const ValueKey(
@@ -206,7 +209,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                             _formKey.currentState?.validate(),
                                         onFieldSubmitted: (_) => _handleLogin(),
                                         decoration: InputDecoration(
-                                          hintText: 'Enter your password',
+                                          hintText: l10n.enterYourPassword,
                                           prefixIcon: const Icon(
                                             Icons.lock_outline,
                                           ),
@@ -215,8 +218,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                               'login-password-toggle',
                                             ),
                                             tooltip: _obscurePassword
-                                                ? 'Show password'
-                                                : 'Hide password',
+                                                ? l10n.showPassword
+                                                : l10n.hidePassword,
                                             icon: Icon(
                                               _obscurePassword
                                                   ? Icons.visibility_outlined
@@ -236,7 +239,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         validator: (value) =>
                                             Validators.required(
                                               value,
-                                              'Password',
+                                              l10n.password,
+                                              l10n,
                                             ),
                                       ),
                                     ),
@@ -254,7 +258,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         onPressed: isLoading
                                             ? null
                                             : _navigateToForgotPassword,
-                                        child: const Text('Forgot Password?'),
+                                        child: Text(l10n.forgotPassword),
                                       ),
                                     ),
                                     const SizedBox(height: 12),
@@ -271,15 +275,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                           ? null
                                           : _handleLogin,
                                       child: isLoading
-                                          ? const SizedBox.square(
+                                          ? SizedBox.square(
                                               dimension: 22,
                                               child: CircularProgressIndicator(
                                                 strokeWidth: 2.5,
                                                 color: Colors.white,
-                                                semanticsLabel: 'Logging in',
+                                                semanticsLabel: l10n.loggingIn,
                                               ),
                                             )
-                                          : const Text('Login'),
+                                          : Text(l10n.login),
                                     ),
                                     const SizedBox(height: 20),
                                     Wrap(
@@ -288,7 +292,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                           WrapCrossAlignment.center,
                                       children: [
                                         Text(
-                                          "Don't have an account?",
+                                          l10n.dontHaveAccount,
                                           key: const ValueKey(
                                             'login-register-prompt',
                                           ),
@@ -308,7 +312,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                           onPressed: isLoading
                                               ? null
                                               : _navigateToRegister,
-                                          child: const Text('Register'),
+                                          child: Text(l10n.register),
                                         ),
                                       ],
                                     ),

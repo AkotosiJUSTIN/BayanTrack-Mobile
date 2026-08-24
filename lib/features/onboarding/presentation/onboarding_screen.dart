@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../../../core/providers/locale_provider.dart';
 import '../../../core/providers/app_preferences_provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../auth/presentation/auth_wrapper.dart';
 
 abstract final class _OnboardingColors {
@@ -37,25 +39,32 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   bool _pageTransitionInProgress = false;
+  late Locale _selectedLocale;
 
-  static const List<OnboardingContent> _contents = [
+  static const _contentCount = 3;
+  static const _pageCount = _contentCount + 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedLocale = ref.read(appLocaleProvider);
+  }
+
+  List<OnboardingContent> _contents(AppLocalizations l10n) => [
     OnboardingContent(
       mascot: 'assets/images/onboarding/step_1.webp',
-      title: 'Report Issues in Your Community',
-      description:
-          'Quickly report floods, potholes, broken streetlights, garbage, and other local concerns directly to the LGU.',
+      title: l10n.onboardingReportTitle,
+      description: l10n.onboardingReportDescription,
     ),
     OnboardingContent(
       mascot: 'assets/images/onboarding/step_2.webp',
-      title: 'Track Your Report’s Progress',
-      description:
-          'Follow your report’s status and receive updates as it moves toward resolution.',
+      title: l10n.onboardingTrackTitle,
+      description: l10n.onboardingTrackDescription,
     ),
     OnboardingContent(
       mascot: 'assets/images/onboarding/step_3.webp',
-      title: 'Stay Informed',
-      description:
-          'Receive important updates and safety alerts for your community.',
+      title: l10n.onboardingStayInformedTitle,
+      description: l10n.onboardingStayInformedDescription,
     ),
   ];
 
@@ -70,7 +79,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     _pageTransitionInProgress = true;
     try {
-      if (_currentPage < _contents.length - 1) {
+      if (_currentPage < _pageCount - 1) {
         await _pageController.nextPage(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
@@ -81,6 +90,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     } finally {
       _pageTransitionInProgress = false;
     }
+  }
+
+  Future<void> _selectLocale(Locale locale) async {
+    setState(() => _selectedLocale = locale);
+    await ref.read(appLocaleProvider.notifier).setLocale(locale);
   }
 
   Future<void> _onBack() async {
@@ -108,7 +122,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isLastPage = _currentPage == _contents.length - 1;
+    final l10n = AppLocalizations.of(context)!;
+    final contents = _contents(l10n);
+    final isLastPage = _currentPage == _pageCount - 1;
 
     return Scaffold(
       key: const ValueKey('onboarding-scaffold'),
@@ -138,26 +154,129 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     onPageChanged: (index) {
                       setState(() => _currentPage = index);
                     },
-                    itemCount: _contents.length,
+                    itemCount: _pageCount,
                     itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return _LanguageSelectionPage(
+                          selectedLocale: _selectedLocale,
+                          onSelected: _selectLocale,
+                        );
+                      }
+
+                      final content = contents[index - 1];
                       return _OnboardingPage(
                         key: ValueKey('onboarding-page-$index'),
                         pageIndex: index,
-                        content: _contents[index],
+                        content: content,
                       );
                     },
                   ),
                 ),
                 _OnboardingFooter(
                   currentPage: _currentPage,
-                  pageCount: _contents.length,
-                  primaryLabel: isLastPage ? 'Get Started' : 'Continue',
+                  pageCount: _pageCount,
+                  primaryLabel: isLastPage ? l10n.getStarted : l10n.continueLabel,
                   onBackOrSkip: _currentPage > 0 ? _onBack : _finishOnboarding,
                   onNext: _onNext,
                 ),
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _LanguageSelectionPage extends StatelessWidget {
+  const _LanguageSelectionPage({
+    required this.selectedLocale,
+    required this.onSelected,
+  });
+
+  final Locale selectedLocale;
+  final ValueChanged<Locale> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final brandBlue = _OnboardingColors.brandBlue(context);
+    final options = [
+      (const Locale('en'), l10n.english),
+      (const Locale('fil'), l10n.filipino),
+    ];
+
+    return SingleChildScrollView(
+      key: const ValueKey('onboarding-language-scroll'),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 360),
+        child: Column(
+          key: const ValueKey('onboarding-language-page'),
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.translate, size: 56, color: brandBlue),
+            const SizedBox(height: 24),
+            Text(
+              l10n.chooseLanguage,
+              key: const ValueKey('onboarding-language-title'),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.headlineMedium?.copyWith(
+                color: brandBlue,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.chooseLanguageSubtitle,
+              key: const ValueKey('onboarding-language-subtitle'),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge,
+            ),
+            const SizedBox(height: 28),
+            ...options.map((option) {
+              final (locale, label) = option;
+              final selected = selectedLocale.languageCode == locale.languageCode;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Semantics(
+                  selected: selected,
+                  button: true,
+                  label: label,
+                  child: OutlinedButton(
+                    key: ValueKey('onboarding-language-${locale.languageCode}'),
+                    onPressed: () => onSelected(locale),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(56),
+                      side: BorderSide(
+                        color: selected ? brandBlue : _OnboardingColors.border(context),
+                        width: selected ? 2 : 1,
+                      ),
+                      backgroundColor: selected
+                          ? brandBlue.withValues(alpha: 0.08)
+                          : null,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            label,
+                            textAlign: TextAlign.left,
+                            style: TextStyle(
+                              color: selected ? brandBlue : null,
+                              fontWeight: selected ? FontWeight.w700 : null,
+                            ),
+                          ),
+                        ),
+                        if (selected) Icon(Icons.check_circle, color: brandBlue),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ],
         ),
       ),
     );
@@ -323,7 +442,7 @@ class _OnboardingHeader extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          'Watching over communities, supporting local action.',
+          AppLocalizations.of(context)!.brandTagline,
           key: const ValueKey('onboarding-tagline'),
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(
@@ -440,7 +559,11 @@ class _OnboardingFooter extends StatelessWidget {
         minimumSize: const Size(88, 48),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
-      child: Text(currentPage > 0 ? 'Back' : 'Skip'),
+      child: Text(
+        currentPage > 0
+            ? AppLocalizations.of(context)!.back
+            : AppLocalizations.of(context)!.skip,
+      ),
     );
     final primaryButton = ElevatedButton(
       key: const ValueKey('onboarding-primary-button'),
@@ -475,7 +598,10 @@ class _OnboardingFooter extends StatelessWidget {
               children: List.generate(pageCount, (index) {
                 final isActive = currentPage == index;
                 return Semantics(
-                  label: 'Page ${index + 1} of $pageCount',
+                  label: AppLocalizations.of(context)!.pageOf(
+                    index + 1,
+                    pageCount,
+                  ),
                   selected: isActive,
                   child: ExcludeSemantics(
                     child: AnimatedContainer(

@@ -3,7 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:timeago/timeago.dart' as timeago;
+import '../../../l10n/app_localizations.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/maps/municipality_map.dart';
 import '../../../core/theme/app_colors.dart';
@@ -15,6 +15,7 @@ import '../domain/entities/report_enums.dart';
 import 'citizen_review_screen.dart';
 import 'report_detail_controller.dart';
 import 'widgets/priority_badge.dart';
+import 'report_labels.dart';
 
 /// Report Detail Screen showing full report with images and details
 class ReportDetailScreen extends ConsumerStatefulWidget {
@@ -147,7 +148,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'No images',
+                AppLocalizations.of(context).noImages,
                 style: TextStyle(
                   color: isDark
                       ? AppColors.darkTextSecondary
@@ -209,16 +210,17 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   }
 
   Widget _buildErrorState(ThemeData theme, String error) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Column(
         children: [
           Icon(Icons.error_outline, size: 64, color: AppColors.alertHigh),
           const SizedBox(height: 16),
-          Text('Unable to Load Report', style: theme.textTheme.titleMedium),
+          Text(l10n.unableLoadReports, style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
-            'We\'re having trouble loading this report. Please check your internet connection and try again.',
+            l10n.reportsNetworkError,
             style: theme.textTheme.bodySmall,
             textAlign: TextAlign.center,
           ),
@@ -226,7 +228,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           ElevatedButton(
             onPressed: () =>
                 ref.invalidate(reportDetailControllerProvider(widget.reportId)),
-            child: const Text('Retry'),
+            child: Text(l10n.retry),
           ),
         ],
       ),
@@ -234,6 +236,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   }
 
   Widget _buildReportContent(ThemeData theme, bool isDark, Report report) {
+    final l10n = AppLocalizations.of(context);
     final municipalities = ref.watch(municipalitiesProvider).asData?.value;
     final municipality =
         findMunicipalityMetadata(
@@ -255,7 +258,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              _buildStatusBadge(report.status),
+              _buildStatusBadge(context, report.status),
               if (report.categoryDisplay != null || report.category != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -269,7 +272,11 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
-                    report.categoryDisplay ?? report.category!.displayName,
+                    localizedReportCategory(
+                      report.category,
+                      l10n,
+                      fallback: report.categoryDisplay,
+                    ),
                     style: theme.textTheme.labelSmall,
                   ),
                 ),
@@ -282,20 +289,20 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   visualDensity: VisualDensity.compact,
                   label: Text(
                     report.priorityIsAdvisory
-                        ? 'AI suggestion — staff review pending'
-                        : 'Operational priority',
+                        ? l10n.aiSuggestionPending
+                        : l10n.operationalPriority,
                   ),
                 ),
               if (linkedReportCount > 1 && report.isIncidentRepresentative)
                 Chip(
                   visualDensity: VisualDensity.compact,
-                  label: Text('$linkedReportCount confirmed linked reports'),
+                    label: Text(l10n.confirmedLinkedReports(linkedReportCount)),
                 ),
               if (report.credibilityScore != null)
                 Chip(
                   visualDensity: VisualDensity.compact,
                   label: Text(
-                    'Credibility ${report.credibilityScore!.round()}/100',
+                    l10n.credibility(report.credibilityScore!.round()),
                   ),
                 ),
               if (report.blockchainSynced)
@@ -321,7 +328,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Verified',
+                        l10n.verified,
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: AppColors.success,
                           fontWeight: FontWeight.bold,
@@ -337,7 +344,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           // Time
           if (report.createdAt != null)
             Text(
-              timeago.format(report.createdAt!),
+              localizedRelativeTime(context, report.createdAt, l10n),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: isDark
                     ? AppColors.darkTextSecondary
@@ -348,7 +355,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
           // Description
           Text(
-            'Description',
+            l10n.reportDescription,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -360,7 +367,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           // Location
           if (report.latitude != null && report.longitude != null) ...[
             Text(
-              'Location',
+              l10n.reportLocation,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -431,7 +438,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                             width: 48,
                             height: 48,
                           ),
-                          tooltip: 'Recenter to ${municipality.name}',
+                          tooltip: l10n.recenterToMunicipality(municipality.name),
                           onPressed: () => MunicipalityMapCamera.recenter(
                             _locationMapController,
                             municipality,
@@ -491,7 +498,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                       Icon(Icons.auto_awesome, color: AppColors.primaryVariant),
                       const SizedBox(width: 8),
                       Text(
-                        'AI Analysis',
+                        l10n.aiAnalysis,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: AppColors.primaryVariant,
@@ -502,37 +509,41 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   const SizedBox(height: 12),
                   if (report.categoryDisplay != null || report.category != null)
                     _buildInfoRow(
-                      'Category',
-                      report.categoryDisplay ?? report.category!.displayName,
+                      l10n.category,
+                      localizedReportCategory(
+                        report.category,
+                        l10n,
+                        fallback: report.categoryDisplay,
+                      ),
                       theme,
                     ),
                   if (report.categoryConfidence != null)
                     _buildInfoRow(
-                      'Category confidence',
+                      l10n.categoryConfidence,
                       '${(report.categoryConfidence! * 100).toStringAsFixed(1)}%',
                       theme,
                     ),
                   if (report.departmentDisplay != null ||
                       report.recommendedDepartment != null)
                     _buildInfoRow(
-                      'AI department suggestion',
+                      l10n.aiDepartmentSuggestion,
                       '${report.departmentDisplay ?? report.recommendedDepartment}'
                           '${report.departmentProbability != null ? ' (${(report.departmentProbability! * 100).toStringAsFixed(1)}%)' : ''}',
                       theme,
                     ),
                   if (report.assignedDepartment != null)
                     _buildInfoRow(
-                      'Current handler',
+                      l10n.currentHandler,
                       report.assignedDepartment!,
                       theme,
                     )
                   else if (report.departmentDisplay != null ||
                       report.recommendedDepartment != null)
                     _buildInfoRow(
-                      'Routing status',
+                      l10n.routingStatus,
                       report.needsDepartmentReview
-                          ? 'Awaiting staff confirmation'
-                          : 'Routing policy applied',
+                          ? l10n.awaitingStaffConfirmation
+                          : l10n.routingPolicyApplied,
                       theme,
                     ),
                 ],
@@ -543,7 +554,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
           // Zone info
           if (report.zone != null) ...[
-            _buildInfoRow('Zone', report.zone!, theme),
+            _buildInfoRow(l10n.zone, report.zone!, theme),
             const SizedBox(height: 8),
           ],
 
@@ -555,7 +566,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
               (report.status == ReportStatus.resolved ||
                   report.status == ReportStatus.closed)) ...[
             Text(
-              'Resolution Proof',
+              l10n.resolutionProof,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -563,8 +574,8 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             const SizedBox(height: 8),
             Text(
               report.status == ReportStatus.resolved
-                  ? 'Staff-uploaded proof for your review before final closure.'
-                  : 'Staff-uploaded proof associated with this closed report.',
+                  ? l10n.resolutionProofResolved
+                  : l10n.resolutionProofClosed,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: isDark
                     ? AppColors.darkTextSecondary
@@ -624,6 +635,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     bool isDark,
     Report report,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (report.status != ReportStatus.resolved) return const SizedBox.shrink();
 
     // Only show to the report owner
@@ -651,7 +663,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'You have already submitted your review. Thank you!',
+                  l10n.alreadyReviewed,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.success,
                     fontWeight: FontWeight.w500,
@@ -689,7 +701,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Your report has been resolved!',
+                    l10n.reportResolved,
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.success,
@@ -700,9 +712,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'The barangay has addressed your report. '
-              'Please review their action and confirm whether the issue '
-              'was properly resolved.',
+              l10n.resolvedReviewDescription,
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 14),
@@ -721,7 +731,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   }
                 },
                 icon: const Icon(Icons.rate_review_outlined),
-                label: const Text('Review & Sign Off'),
+                label: Text(l10n.reviewSignOff),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.success,
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -735,6 +745,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   }
 
   Widget _buildBlockchainSection(ThemeData theme, bool isDark, Report report) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -765,7 +776,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Blockchain Verification',
+                    l10n.blockchainVerification,
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -787,7 +798,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                       ? null
                       : () => _handleVerification(report.id),
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Verify Now'),
+                  label: Text(l10n.verifyNow),
                   style: TextButton.styleFrom(
                     visualDensity: VisualDensity.compact,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -803,26 +814,26 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             _buildVerificationStatus(theme),
             const Divider(height: 24),
             Text(
-              'Audit History',
+              l10n.auditHistory,
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
             if (_verificationResult!.auditHistory.isEmpty)
-              Text('No audit entries found.', style: theme.textTheme.bodySmall)
+              Text(l10n.noAuditEntries, style: theme.textTheme.bodySmall)
             else
               ..._verificationResult!.auditHistory.map(
                 (entry) => _buildAuditEntry(theme, entry, isDark),
               ),
           ] else if (report.blockchainSynced)
             Text(
-              'This report is anchored on the blockchain. Click verify to perform a live integrity check.',
+              l10n.blockchainAnchored,
               style: theme.textTheme.bodySmall,
             )
           else
             Text(
-              'This report is pending blockchain synchronization.',
+              l10n.blockchainPending,
               style: theme.textTheme.bodySmall,
             ),
         ],
@@ -831,6 +842,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   }
 
   Widget _buildVerificationStatus(ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
     final result = _verificationResult!;
 
     // `verified` = content hash intact. `statusVerified` = on-chain status enum
@@ -855,28 +867,28 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     if (isHealthy && !isStatusPending) {
       statusColor = AppColors.success;
       statusIcon = Icons.check_circle;
-      title = 'Integrity Verified';
+      title = l10n.integrityVerified;
     } else if (isStatusPending) {
       // Content is intact; only the on-chain status enum lags behind
       statusColor = AppColors.alertMedium;
       statusIcon = Icons.sync_rounded;
-      title = 'Content Verified';
+      title = l10n.contentVerified;
     } else if (isNotAnchored) {
       statusColor = AppColors.alertMedium;
       statusIcon = Icons.hourglass_empty;
-      title = 'Not Yet Anchored';
+      title = l10n.notYetAnchored;
     } else if (isNotFound) {
       statusColor = AppColors.alertMedium;
       statusIcon = Icons.search_off;
-      title = 'Record Not Found';
+      title = l10n.recordNotFound;
     } else if (isConnectionError) {
       statusColor = AppColors.alertMedium;
       statusIcon = Icons.cloud_off;
-      title = 'Blockchain Unavailable';
+      title = l10n.blockchainUnavailable;
     } else {
       statusColor = AppColors.alertHigh;
       statusIcon = Icons.warning;
-      title = 'Integrity Breach Detected';
+      title = l10n.integrityBreach;
     }
 
     return Container(
@@ -921,6 +933,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     BlockchainAuditEntry entry,
     bool isDark,
   ) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -969,12 +982,14 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   ],
                 ),
                 Text(
-                  'By ${entry.actor.substring(0, 6)}...${entry.actor.substring(entry.actor.length - 4)}',
+                  l10n.byActor(
+                    '${entry.actor.substring(0, 6)}...${entry.actor.substring(entry.actor.length - 4)}',
+                  ),
                   style: theme.textTheme.bodySmall,
                 ),
                 if (entry.oldStatus != entry.newStatus)
                   Text(
-                    'Status: ${entry.oldStatus} → ${entry.newStatus}',
+                    l10n.statusTransition(entry.oldStatus, entry.newStatus),
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontStyle: FontStyle.italic,
                     ),
@@ -991,6 +1006,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       AuditActionType.fromInt(type).displayLabel;
 
   Future<void> _handleVerification(String reportId) async {
+    final l10n = AppLocalizations.of(context);
     setState(() => _isVerifying = true);
 
     final controller = ref.read(
@@ -1006,46 +1022,47 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
       if (result == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Verification failed. Please try again later.'),
+          SnackBar(
+            content: Text(l10n.verificationFailed),
           ),
         );
       }
     }
   }
 
-  Widget _buildStatusBadge(ReportStatus status) {
+  Widget _buildStatusBadge(BuildContext context, ReportStatus status) {
+    final l10n = AppLocalizations.of(context);
     final (color, label) = switch (status) {
-      ReportStatus.submitted => (const Color(0xFFF59E0B), 'Submitted'), // Amber
+      ReportStatus.submitted => (const Color(0xFFF59E0B), l10n.submitted), // Amber
       ReportStatus.underReview => (
         const Color(0xFF8B5CF6),
-        'Under Review',
+        l10n.underReview,
       ), // Violet
       ReportStatus.inProgress => (
         const Color(0xFF2563EB),
-        'In Progress',
+        l10n.inProgress,
       ), // Blue
       ReportStatus.escalated => (
         const Color(0xFF8B5CF6),
-        'Under Review',
+        l10n.underReview,
       ), // Violet
       ReportStatus.endorsed => (
         const Color(0xFF8B5CF6),
-        'Under Review',
+        l10n.underReview,
       ), // Violet
-      ReportStatus.resolved => (const Color(0xFF22C55E), 'Resolved'), // Green
-      ReportStatus.closed => (const Color(0xFF64748B), 'Closed'), // Gray
+      ReportStatus.resolved => (const Color(0xFF22C55E), l10n.resolvedStatus), // Green
+      ReportStatus.closed => (const Color(0xFF64748B), l10n.closed), // Gray
       ReportStatus.rejected => (
         const Color(0xFFEF4444),
-        'Rejected',
+        l10n.rejected,
       ), // Light Red
       ReportStatus.verified => (
         const Color(0xFF8B5CF6),
-        'Under Review',
+        l10n.underReview,
       ), // Violet
       ReportStatus.assigned => (
         const Color(0xFF8B5CF6),
-        'Under Review',
+        l10n.underReview,
       ), // Violet
     };
 

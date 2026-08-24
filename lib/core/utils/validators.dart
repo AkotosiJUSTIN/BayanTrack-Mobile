@@ -1,3 +1,5 @@
+import '../../l10n/app_localizations.dart';
+
 /// Centralized validation utilities for consistent form validation
 /// across all screens.
 ///
@@ -18,55 +20,75 @@ class Validators {
   static final _specialCharRegex = RegExp(r'[!@#$%^&*(),.?":{}|<>]');
 
   /// Validates email address using RFC 5322 compliant regex.
-  static String? email(String? value) {
+  static String? email(String? value, {AppLocalizations? l10n}) {
     if (value == null || value.isEmpty) {
-      return 'Email is required';
+      return l10n == null
+          ? 'Email is required'
+          : l10n.fieldRequired(l10n.email);
     }
     if (!_emailRegex.hasMatch(value)) {
-      return 'Please enter a valid email';
+      return l10n?.invalidEmail ?? 'Please enter a valid email';
     }
     return null;
   }
 
   /// Validates password with minimum length and complexity requirements.
-  static String? password(String? value, {int minLength = 8}) {
+  static String? password(
+    String? value, {
+    int minLength = 8,
+    AppLocalizations? l10n,
+  }) {
     if (value == null || value.isEmpty) {
-      return 'Password is required';
+      return l10n == null
+          ? 'Password is required'
+          : l10n.fieldRequired(l10n.password);
     }
     if (value.length < minLength) {
-      return 'Password must be at least $minLength characters';
+      return l10n?.passwordMinLength(minLength) ??
+          'Password must be at least $minLength characters';
     }
     if (!value.contains(RegExp(r'[A-Z]'))) {
-      return 'Password must contain at least one uppercase letter';
+      return l10n?.passwordUppercase ??
+          'Password must contain at least one uppercase letter';
     }
     if (!value.contains(RegExp(r'[a-z]'))) {
-      return 'Password must contain at least one lowercase letter';
+      return l10n?.passwordLowercase ??
+          'Password must contain at least one lowercase letter';
     }
     if (!value.contains(RegExp(r'[0-9]'))) {
-      return 'Password must contain at least one number';
+      return l10n?.passwordNumber ??
+          'Password must contain at least one number';
     }
     if (!_specialCharRegex.hasMatch(value)) {
-      return 'Password must contain at least one special character';
+      return l10n?.passwordSpecial ??
+          'Password must contain at least one special character';
     }
     return null;
   }
 
   /// Validates Philippine mobile phone number format.
   /// Accepts: 09XXXXXXXXX or +639XXXXXXXXX
-  static String? phoneNumber(String? value) {
+  static String? phoneNumber(String? value, {AppLocalizations? l10n}) {
     if (value == null || value.isEmpty) {
-      return 'Phone number is required';
+      return l10n == null
+          ? 'Phone number is required'
+          : l10n.fieldRequired(l10n.phoneNumber);
     }
     if (!RegExp(r'^(09|\+639)\d{9}$').hasMatch(value)) {
-      return 'Please enter a valid Philippine mobile number';
+      return l10n?.invalidPhone ??
+          'Please enter a valid Philippine mobile number';
     }
     return null;
   }
 
   /// Validates that the field is not empty.
-  static String? required(String? value, [String fieldName = 'This field']) {
+  static String? required(
+    String? value, [
+    String fieldName = 'This field',
+    AppLocalizations? l10n,
+  ]) {
     if (value == null || value.trim().isEmpty) {
-      return '$fieldName is required';
+      return l10n?.fieldRequired(fieldName) ?? '$fieldName is required';
     }
     return null;
   }
@@ -76,44 +98,53 @@ class Validators {
     String? value, {
     String fieldName = 'This field',
     int maxLength = 100,
+    AppLocalizations? l10n,
   }) {
     if (value == null || value.trim().isEmpty) {
-      return '$fieldName is required';
+      return l10n?.fieldRequired(fieldName) ?? '$fieldName is required';
     }
 
     final trimmed = value.trim();
     if (trimmed.length > maxLength) {
-      return '$fieldName must be at most $maxLength characters';
+      return l10n?.fieldMaxLength(fieldName, maxLength) ??
+          '$fieldName must be at most $maxLength characters';
     }
 
     if (!_lettersOnlyRegex.hasMatch(trimmed)) {
-      return '$fieldName must contain letters only';
+      return l10n?.lettersOnly(fieldName) ?? '$fieldName must contain letters only';
     }
 
     return null;
   }
 
   /// Validates password confirmation matches original.
-  static String? Function(String?) confirmPassword(String originalPassword) {
+  static String? Function(String?) confirmPassword(
+    String originalPassword, {
+    AppLocalizations? l10n,
+  }) {
     return (String? value) {
       if (value == null || value.isEmpty) {
-        return 'Please confirm your password';
+        return l10n?.confirmPasswordPrompt ?? 'Please confirm your password';
       }
       if (value != originalPassword) {
-        return 'Passwords do not match';
+        return l10n?.passwordsDoNotMatch ?? 'Passwords do not match';
       }
       return null;
     };
   }
 
   /// Validates minimum string length.
-  static String? Function(String?) minLength(int min, [String? fieldName]) {
+  static String? Function(String?) minLength(
+    int min, [String? fieldName, AppLocalizations? l10n]) {
     return (String? value) {
       if (value == null || value.isEmpty) {
-        return '${fieldName ?? 'This field'} is required';
+        final name = fieldName ?? 'This field';
+        return l10n?.fieldRequired(name) ?? '$name is required';
       }
       if (value.length < min) {
-        return '${fieldName ?? 'This field'} must be at least $min characters';
+        final name = fieldName ?? 'This field';
+        return l10n?.passwordMinLength(min) ??
+            '$name must be at least $min characters';
       }
       return null;
     };
@@ -129,9 +160,15 @@ class Validators {
   /// - Excessive special characters
   /// 
   /// Returns null if text is valid, error message otherwise.
-  static String? reportText(String? value, {bool isRequired = true}) {
+  static String? reportText(
+    String? value, {
+    bool isRequired = true,
+    AppLocalizations? l10n,
+  }) {
     if (value == null || value.trim().isEmpty) {
-      return isRequired ? 'This field is required' : null;
+      return isRequired
+          ? l10n?.fieldRequired('This field') ?? 'This field is required'
+          : null;
     }
 
     final text = value.trim();
@@ -146,34 +183,40 @@ class Validators {
           lowerText == 'test' ||
           lowerText == 'tbd' ||
           lowerText == 'todo') {
-        return 'Please provide a meaningful description of the issue instead of "$text"';
+        return l10n?.meaningfulDescription(text) ??
+            'Please provide a meaningful description of the issue instead of "$text"';
       }
-      return 'Please provide a more detailed description (at least 10 characters)';
+      return l10n?.descriptionDetailed ??
+          'Please provide a more detailed description (at least 10 characters)';
     }
 
     // Check for excessive character repetition (e.g., "aaaaaaa", "hahahaha")
     if (_hasExcessiveRepetition(text)) {
-      return 'Please enter a meaningful description without excessive repetition';
+      return l10n?.descriptionNoRepetition ??
+          'Please enter a meaningful description without excessive repetition';
     }
 
     // Check for keyboard mashing patterns
     if (_isKeyboardMashing(text)) {
-      return 'Please enter a valid description (keyboard mashing detected)';
+      return l10n?.descriptionKeyboardMashing ??
+          'Please enter a valid description (keyboard mashing detected)';
     }
 
     // Check for excessive consecutive consonants or vowels
     if (_hasExcessiveConsonantsOrVowels(text)) {
-      return 'Please enter a coherent description';
+      return l10n?.descriptionCoherent ?? 'Please enter a coherent description';
     }
 
     // Check if text has reasonable word structure
     if (!_hasReasonableWordStructure(text)) {
-      return 'Please provide a meaningful description with proper words';
+      return l10n?.descriptionProperWords ??
+          'Please provide a meaningful description with proper words';
     }
 
     // Check for excessive special characters or numbers
     if (_hasExcessiveNonAlphabetic(text)) {
-      return 'Please reduce the use of special characters and numbers';
+      return l10n?.descriptionSpecialCharacters ??
+          'Please reduce the use of special characters and numbers';
     }
 
     return null;

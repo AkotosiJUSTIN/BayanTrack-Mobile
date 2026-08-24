@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../features/reports/domain/entities/report_enums.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Data model for report card display
 class ReportData {
@@ -36,7 +37,6 @@ class ReportCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -87,7 +87,7 @@ class ReportCard extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        _buildStatusBadge(isDark),
+                        _buildStatusBadge(context, isDark),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -151,57 +151,58 @@ class ReportCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusBadge(bool isDark) {
+  Widget _buildStatusBadge(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     final (bgColor, textColor, label) = switch (report.status) {
       ReportStatus.submitted => (
         isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
         isDark ? AppColors.pendingTextDark : AppColors.pendingText,
-        'Submitted',
+        l10n.submitted,
       ),
       ReportStatus.underReview => (
         isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
         isDark ? AppColors.pendingTextDark : AppColors.pendingText,
-        'Under Review',
+        l10n.underReview,
       ),
       ReportStatus.inProgress => (
         isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
         isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
-        'In Progress',
+        l10n.inProgress,
       ),
       ReportStatus.escalated => (
         isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
         isDark ? AppColors.pendingTextDark : AppColors.pendingText,
-        'Under Review',
+        l10n.underReview,
       ),
       ReportStatus.endorsed => (
         isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
         isDark ? AppColors.pendingTextDark : AppColors.pendingText,
-        'Under Review',
+        l10n.underReview,
       ),
       ReportStatus.resolved => (
         isDark ? AppColors.resolvedBgDark : AppColors.resolvedBg,
         isDark ? AppColors.resolvedTextDark : AppColors.resolvedText,
-        'Resolved',
+        l10n.resolvedStatus,
       ),
       ReportStatus.closed => (
         isDark ? AppColors.resolvedBgDark : AppColors.resolvedBg,
         isDark ? AppColors.resolvedTextDark : AppColors.resolvedText,
-        'Closed',
+        l10n.closed,
       ),
       ReportStatus.rejected => (
         isDark ? AppColors.rejectedBgDark : AppColors.rejectedBg,
         isDark ? AppColors.rejectedTextDark : AppColors.rejectedText,
-        'Rejected',
+        l10n.rejected,
       ),
       ReportStatus.verified => (
         isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
         isDark ? AppColors.pendingTextDark : AppColors.pendingText,
-        'Under Review',
+        l10n.underReview,
       ),
       ReportStatus.assigned => (
         isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
         isDark ? AppColors.pendingTextDark : AppColors.pendingText,
-        'Under Review',
+        l10n.underReview,
       ),
     };
 

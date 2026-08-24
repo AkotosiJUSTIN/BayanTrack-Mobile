@@ -10,6 +10,7 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/auth_models.dart';
 import 'profile_controller.dart';
 
@@ -85,12 +86,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('Choose from gallery'),
+              title: Text(AppLocalizations.of(context)!.chooseFromGallery),
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: const Text('Take a photo'),
+              title: Text(AppLocalizations.of(context)!.takePhoto),
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
           ],
@@ -113,7 +114,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (file.lengthSync() > 5 * 1024 * 1024) {
       await _deleteFile(file);
       if (mounted) {
-        AppToast.error(context, 'Choose an image smaller than 5 MB.');
+        AppToast.error(context, AppLocalizations.of(context)!.imageTooLarge);
       }
       return;
     }
@@ -151,12 +152,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           );
       await _deleteTemporaryAvatar();
       if (!mounted) return;
-      AppToast.success(context, 'Profile picture updated.');
+      AppToast.success(context, AppLocalizations.of(context)!.profilePictureUpdated);
     } catch (_) {
       if (!mounted) return;
       AppToast.error(
         context,
-        'Upload failed. Keep this preview and tap Retry when ready.',
+        AppLocalizations.of(context)!.avatarUploadFailed,
       );
     } finally {
       if (mounted) setState(() => _avatarOperation = null);
@@ -169,10 +170,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     try {
       await ref.read(profileControllerProvider.notifier).removeAvatar();
       await _deleteTemporaryAvatar();
-      if (mounted) AppToast.success(context, 'Profile picture removed.');
+      if (mounted) AppToast.success(context, AppLocalizations.of(context)!.profilePictureRemoved);
     } catch (_) {
       if (mounted) {
-        AppToast.error(context, 'Unable to remove the profile picture.');
+        AppToast.error(context, AppLocalizations.of(context)!.removePictureFailed);
       }
     } finally {
       if (mounted) setState(() => _avatarOperation = null);
@@ -225,13 +226,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           );
       if (!mounted) return;
       _hasChanges = false;
-      AppToast.success(context, 'Your profile has been updated.');
+      AppToast.success(context, AppLocalizations.of(context)!.profileUpdated);
       Navigator.pop(context);
     } catch (_) {
       if (mounted) {
         AppToast.error(
           context,
-          'Unable to save. Refresh the profile and try again.',
+          AppLocalizations.of(context)!.saveProfileFailed,
         );
       }
     } finally {
@@ -244,16 +245,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Discard changes?'),
-            content: const Text('Your unsaved profile changes will be lost.'),
+            title: Text(AppLocalizations.of(context)!.discardChanges),
+            content: Text(AppLocalizations.of(context)!.unsavedProfileChanges),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Keep editing'),
+                child: Text(AppLocalizations.of(context)!.keepEditing),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: const Text('Discard'),
+                child: Text(AppLocalizations.of(context)!.discard),
               ),
             ],
           ),
@@ -284,6 +285,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget build(BuildContext context) {
     final profileState = ref.watch(profileControllerProvider);
     final profile = profileState.value;
+    final l10n = AppLocalizations.of(context)!;
     if (profile != null) _seedForm(profile);
 
     return PopScope(
@@ -296,7 +298,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       },
       child: Scaffold(
         resizeToAvoidBottomInset: true,
-        appBar: AppBar(title: const Text('Edit Profile')),
+        appBar: AppBar(title: Text(l10n.editProfile)),
         body: SafeArea(
           child: profile == null
               ? profileState.when(
@@ -309,8 +311,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
-                            'Unable to load your profile.',
+                          Text(
+                            l10n.profileLoadFailed,
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 12),
@@ -318,7 +320,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             onPressed: () =>
                                 ref.invalidate(profileControllerProvider),
                             icon: const Icon(Icons.refresh),
-                            label: const Text('Retry'),
+                            label: Text(l10n.retry),
                           ),
                         ],
                       ),
@@ -352,8 +354,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         const SizedBox(height: 24),
                         TextFormField(
                           controller: _firstNameController,
-                          decoration: const InputDecoration(
-                            labelText: 'First name',
+                          decoration: InputDecoration(
+                            labelText: l10n.firstName,
                           ),
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.givenName],
@@ -365,14 +367,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           ],
                           validator: (value) => Validators.lettersOnly(
                             value,
-                            fieldName: 'First name',
+                            fieldName: l10n.firstName,
+                            l10n: l10n,
                           ),
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _lastNameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Last name',
+                          decoration: InputDecoration(
+                            labelText: l10n.lastName,
                           ),
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.familyName],
@@ -384,17 +387,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           ],
                           validator: (value) => Validators.lettersOnly(
                             value,
-                            fieldName: 'Last name',
+                            fieldName: l10n.lastName,
+                            l10n: l10n,
                           ),
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _phoneController,
-                          decoration: const InputDecoration(
-                            labelText: 'Phone number',
+                          decoration: InputDecoration(
+                            labelText: l10n.phoneNumber,
                             prefixText: '+63 ',
                             helperText:
-                                'Enter 10 digits, for example 9123456789.',
+                                l10n.phoneHelper,
                           ),
                           keyboardType: TextInputType.phone,
                           textInputAction: TextInputAction.done,
@@ -406,7 +410,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           validator: (value) {
                             if (value == null || value.isEmpty) return null;
                             if (value.length != 10 || !value.startsWith('9')) {
-                              return 'Enter a valid 10-digit Philippine mobile number.';
+                              return l10n.invalidPhone;
                             }
                             return null;
                           },
@@ -426,7 +430,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Text('Save changes'),
+                              : Text(l10n.saveChanges),
                         ),
                       ],
                     ),
@@ -463,6 +467,7 @@ class _AvatarEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final name = '${profile.firstName} ${profile.lastName}'.trim();
     final remoteAvatar = profile.avatarUrl;
     final image = selectedImageBytes != null
@@ -479,7 +484,7 @@ class _AvatarEditor extends StatelessWidget {
         : 'U';
 
     return Semantics(
-      label: name.isEmpty ? 'Profile picture' : '$name profile picture',
+      label: name.isEmpty ? l10n.profilePicture : '$name ${l10n.profilePicture}',
       image: true,
       child: Column(
         children: [
@@ -508,14 +513,14 @@ class _AvatarEditor extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               operation == _AvatarOperation.removing
-                  ? 'Removing profile picture…'
-                  : 'Uploading ${(progress * 100).round()}%',
+                  ? l10n.removingProfilePicture
+                  : l10n.uploadingPercent((progress * 100).round()),
             ),
           ],
           if (profile.avatarStorageStatus == 'degraded') ...[
             const SizedBox(height: 8),
-            const Text(
-              'Profile picture available; backup replication is pending.',
+            Text(
+              l10n.profilePictureReplicationPending,
               textAlign: TextAlign.center,
             ),
           ],
@@ -528,25 +533,25 @@ class _AvatarEditor extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: isBusy ? null : onChoose,
                 icon: const Icon(Icons.photo_camera_outlined),
-                label: Text(image == null ? 'Add picture' : 'Replace'),
+                label: Text(image == null ? l10n.addPicture : l10n.replace),
               ),
               if (selectedImage != null && !isBusy)
                 OutlinedButton.icon(
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
+                  label: Text(l10n.retry),
                 ),
               if (image != null)
                 TextButton.icon(
                   onPressed: isBusy ? null : onRemove,
                   icon: const Icon(Icons.delete_outline),
-                  label: const Text('Remove'),
+                  label: Text(l10n.remove),
                 ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            'JPEG, PNG, or WebP. Maximum 5 MB.',
+            l10n.imageFormats,
             style: Theme.of(context).textTheme.bodySmall,
             textAlign: TextAlign.center,
           ),

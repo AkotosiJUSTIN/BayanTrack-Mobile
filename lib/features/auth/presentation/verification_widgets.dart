@@ -1,11 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../kyc/domain/entities/kyc_enums.dart';
 import '../../kyc/presentation/kyc_controller.dart';
 import '../../kyc/presentation/kyc_form_screen.dart';
 import '../../kyc/presentation/kyc_status_screen.dart';
 import '../data/user_permissions.dart';
+
+String localizedVerificationStatusMessage(
+  UserPermissions permissions,
+  AppLocalizations l10n,
+) {
+  return switch (permissions.currentStatus) {
+    null || KycVerificationStatus.unverified => l10n.kycUnverified,
+    KycVerificationStatus.pending => l10n.kycPending,
+    KycVerificationStatus.verified => l10n.kycVerified,
+    KycVerificationStatus.rejected => l10n.kycRejected,
+    KycVerificationStatus.resubmitRequested => l10n.kycResubmitRequested,
+    KycVerificationStatus.suspended => l10n.kycSuspended,
+  };
+}
+
+String localizedVerificationActionLabel(
+  UserPermissions permissions,
+  AppLocalizations l10n,
+) {
+  if (permissions.canSubmitKyc) return l10n.verifyIdentity;
+  if (permissions.canResubmitKyc) return l10n.resubmitDocuments;
+  if (permissions.isSuspended) return l10n.contactSupport;
+  return l10n.viewStatus;
+}
 
 /// Show verification required dialog
 Future<void> showVerificationRequiredDialog(
@@ -33,14 +58,15 @@ class VerificationRequiredDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final actionLabel = permissions.getActionButtonText();
+    final l10n = AppLocalizations.of(context);
+    final actionLabel = localizedVerificationActionLabel(permissions, l10n);
 
     return AlertDialog(
-      title: const Row(
+      title: Row(
         children: [
           Icon(Icons.verified_user, color: AppColors.primary),
           SizedBox(width: 8),
-          Text('Verification Required'),
+          Text(l10n.verificationRequired),
         ],
       ),
       content: Column(
@@ -48,7 +74,7 @@ class VerificationRequiredDialog extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'You need to verify your identity to $action.',
+            l10n.verifyIdentityTo(action),
             style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 16),
@@ -62,7 +88,7 @@ class VerificationRequiredDialog extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  permissions.getStatusMessage(),
+                  localizedVerificationStatusMessage(permissions, l10n),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -91,7 +117,7 @@ class VerificationRequiredDialog extends ConsumerWidget {
             width: double.infinity,
             child: OutlinedButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
           ),
         ],
@@ -154,7 +180,8 @@ class VerificationBanner extends ConsumerWidget {
     final statusColor = _getStatusColor(permissions.currentStatus);
 
     final theme = Theme.of(context);
-    final actionLabel = permissions.getActionButtonText();
+    final l10n = AppLocalizations.of(context);
+    final actionLabel = localizedVerificationActionLabel(permissions, l10n);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
@@ -194,7 +221,7 @@ class VerificationBanner extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'User Verification',
+                            l10n.userVerification,
                             style: theme.textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: theme.colorScheme.onSurface,
@@ -202,7 +229,7 @@ class VerificationBanner extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            permissions.getStatusMessage(),
+                            localizedVerificationStatusMessage(permissions, l10n),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurface.withValues(
                                 alpha: 0.78,
@@ -338,6 +365,7 @@ class InlineVerificationPrompt extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -355,13 +383,13 @@ class InlineVerificationPrompt extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Verify your identity to $feature',
+            l10n.verifyIdentityTo(feature),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
           Text(
-            permissions.getStatusMessage(),
+            localizedVerificationStatusMessage(permissions, l10n),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -376,7 +404,7 @@ class InlineVerificationPrompt extends ConsumerWidget {
               foregroundColor: Colors.white,
             ),
             icon: const Icon(Icons.verified_user),
-            label: Text(permissions.getActionButtonText()),
+            label: Text(localizedVerificationActionLabel(permissions, l10n)),
           ),
         ],
       ),

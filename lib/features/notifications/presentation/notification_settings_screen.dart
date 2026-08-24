@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/entities/notification_preferences.dart';
 import 'notifications_controller.dart';
+import '../../../l10n/app_localizations.dart';
 
 class NotificationSettingsScreen extends ConsumerStatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -20,9 +21,10 @@ class _NotificationSettingsScreenState
   @override
   Widget build(BuildContext context) {
     final prefsAsync = ref.watch(notificationPreferencesControllerProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Notification Settings')),
+      appBar: AppBar(title: Text(l10n.notificationSettings)),
       body: prefsAsync.when(
         data: (prefs) => _buildSettingsList(context, prefs),
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -30,11 +32,11 @@ class _NotificationSettingsScreenState
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Error loading settings: $err'),
+              Text('${l10n.error}: $err'),
               TextButton(
                 onPressed: () =>
                     ref.invalidate(notificationPreferencesControllerProvider),
-                child: const Text('Retry'),
+                child: Text(l10n.retry),
               ),
             ],
           ),
@@ -58,41 +60,41 @@ class _NotificationSettingsScreenState
             ),
             trailing: TextButton(
               onPressed: _isSaving ? null : _retrySave,
-              child: const Text('Retry'),
+              child: Text(AppLocalizations.of(context)!.retry),
             ),
           ),
-        _buildSectionHeader(context, 'Channels'),
+        _buildSectionHeader(context, AppLocalizations.of(context)!.channels),
         SwitchListTile(
-          title: const Text('Email Notifications'),
-          subtitle: const Text('Receive updates via email'),
+          title: Text(AppLocalizations.of(context)!.notificationsEmail),
+          subtitle: Text(AppLocalizations.of(context)!.emailUpdates),
           value: prefs.emailEnabled,
           onChanged: _isSaving ? null : (val) => _update(emailEnabled: val),
         ),
         SwitchListTile(
-          title: const Text('Push Notifications'),
-          subtitle: const Text('Receive updates on this device'),
+          title: Text(AppLocalizations.of(context)!.notificationsPush),
+          subtitle: Text(AppLocalizations.of(context)!.pushUpdates),
           value: prefs.pushEnabled,
           onChanged: _isSaving ? null : (val) => _update(pushEnabled: val),
         ),
         const Divider(),
-        _buildSectionHeader(context, 'Events'),
+        _buildSectionHeader(context, AppLocalizations.of(context)!.events),
         SwitchListTile(
-          title: const Text('Status Changes'),
-          subtitle: const Text('When report status changes'),
+          title: Text(AppLocalizations.of(context)!.notifyStatusChange),
+          subtitle: Text(AppLocalizations.of(context)!.statusChangeUpdates),
           value: prefs.notifyOnStatusChange,
           onChanged: _isSaving
               ? null
               : (val) => _update(notifyOnStatusChange: val),
         ),
         SwitchListTile(
-          title: const Text('Comments'),
-          subtitle: const Text('When someone comments on your report'),
+          title: Text(AppLocalizations.of(context)!.notifyComment),
+          subtitle: Text(AppLocalizations.of(context)!.commentUpdates),
           value: prefs.notifyOnComment,
           onChanged: _isSaving ? null : (val) => _update(notifyOnComment: val),
         ),
         SwitchListTile(
-          title: const Text('Assignments'),
-          subtitle: const Text('When a report is assigned'),
+          title: Text(AppLocalizations.of(context)!.notifyAssignment),
+          subtitle: Text(AppLocalizations.of(context)!.assignmentUpdates),
           value: prefs.notifyOnAssignment,
           onChanged: _isSaving
               ? null

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/presentation/widgets/app_toast.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/municipality_geo.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/barangays_provider.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../images/data/evidence_upload_queue.dart';
@@ -31,6 +32,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
       return;
     }
 
+    final l10n = AppLocalizations.of(context);
     final state = ref.read(newReportControllerProvider);
     final municipalities =
         ref.read(municipalitiesProvider).asData?.value ??
@@ -47,7 +49,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
             !municipality.hasUsableBounds)) {
       AppToast.warning(
         context,
-        'City metadata is unavailable. Refresh it before submitting.',
+        l10n.cityMetadataUnavailable,
       );
       return;
     }
@@ -66,7 +68,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     if (!state.canSubmit) {
       AppToast.warning(
         context,
-        'Please complete all required fields and accept the declaration',
+        l10n.consentRequired,
       );
       return;
     }
@@ -74,13 +76,13 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     final auth = ref.read(authControllerProvider);
     final userId = auth is AuthSuccess ? auth.user?.id : null;
     if (userId == null) {
-      AppToast.warning(context, 'Please sign in again before submitting.');
+      AppToast.warning(context, l10n.signInAgain);
       return;
     }
 
     setState(() {
       _isSubmitting = true;
-      _statusMessage = 'Submitting your report...';
+      _statusMessage = l10n.submittingReport;
     });
 
     late final EvidenceUploadQueue uploadQueue;
@@ -95,7 +97,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     } catch (e) {
       final message = e is ReportSubmissionFailure
           ? e.message
-          : 'Unable to submit the report. Please try again.';
+          : l10n.unableSubmitReport;
       if (mounted) {
         setState(() {
           _isSubmitting = false;
@@ -129,11 +131,11 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     ref.invalidate(reportsControllerProvider);
     ref.read(myReportsRefreshProvider.notifier).increment();
     if (evidenceState == EvidenceUploadState.pending) {
-      AppToast.success(context, 'Report submitted. Evidence upload pending.');
+      AppToast.success(context, l10n.evidenceUploadsPending(state.selectedImages.length));
     } else {
       AppToast.warning(
         context,
-        'Report submitted, but evidence upload needs attention.',
+        l10n.evidenceUploadFailed,
       );
     }
     Navigator.of(context).popUntil((route) => route.isFirst);
@@ -143,11 +145,12 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(newReportControllerProvider);
     final controller = ref.read(newReportControllerProvider.notifier);
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New Report')),
+      appBar: AppBar(title: Text(l10n.newReport)),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -168,7 +171,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                 children: [
                   // Step title
                   Text(
-                    'Step 4 of 4',
+                    l10n.stepOf(4, 4),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
@@ -176,14 +179,14 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Review & Submit',
+                    l10n.reviewSubmit,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Review your report and confirm submission',
+                    l10n.reviewSubmissionDescription,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: isDark
                           ? AppColors.darkTextSecondary
@@ -197,8 +200,8 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                     theme: theme,
                     isDark: isDark,
                     icon: Icons.photo_library,
-                    title: 'Photos',
-                    trailing: '${state.selectedImages.length} photo(s)',
+                    title: l10n.photos,
+                    trailing: l10n.photoCount(state.selectedImages.length),
                     content: SizedBox(
                       height: 80,
                       child: ListView.separated(
@@ -227,9 +230,9 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                       theme: theme,
                       isDark: isDark,
                       icon: Icons.title,
-                      title: 'Title',
+                      title: l10n.reportTitle,
                       trailing: null,
-                      content: _buildInfoRow('Title', state.title!),
+                      content: _buildInfoRow(l10n.reportTitle, state.title!),
                     ),
                   if (state.title != null && state.title!.isNotEmpty)
                     const SizedBox(height: 16),
@@ -239,25 +242,27 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                     theme: theme,
                     isDark: isDark,
                     icon: Icons.location_on,
-                    title: 'Location',
-                    trailing: state.hasLocation ? 'Set' : 'Not set',
+                    title: l10n.reportLocation,
+                    trailing: state.hasLocation
+                        ? l10n.locationSet
+                        : l10n.locationNotSet,
                     content: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (state.zone != null && state.zone!.isNotEmpty)
-                          _buildInfoRow('Zone', state.zone!),
+                          _buildInfoRow(l10n.zone, state.zone!),
                         if (state.streetLandmark != null &&
                             state.streetLandmark!.isNotEmpty)
                           _buildInfoRow(
-                            'Street/Landmark',
+                            l10n.streetLandmark,
                             state.streetLandmark!,
                           ),
                         if (state.location != null &&
                             state.location!.isNotEmpty)
-                          _buildInfoRow('Address', state.location!),
+                          _buildInfoRow(l10n.address, state.location!),
                         if (state.latitude != null && state.longitude != null)
                           _buildInfoRow(
-                            'GPS',
+                            l10n.gps,
                             '${state.latitude!.toStringAsFixed(6)}, ${state.longitude!.toStringAsFixed(6)}',
                           ),
                       ],
@@ -270,14 +275,14 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                     theme: theme,
                     isDark: isDark,
                     icon: Icons.schedule,
-                    title: 'Report Timing',
+                    title: l10n.reportTiming,
                     trailing: null,
                     content: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildInfoRow(
-                          'Is Happening Now',
-                          state.isHappeningNow ? 'Yes' : 'No',
+                          l10n.isHappeningNow,
+                          state.isHappeningNow ? l10n.yes : l10n.no,
                         ),
                       ],
                     ),
@@ -304,7 +309,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'AI will automatically detect category, severity, and urgency',
+                            l10n.aiDetectCategory,
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: isDark
                                   ? AppColors.darkTextPrimary
@@ -322,7 +327,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                     theme: theme,
                     isDark: isDark,
                     icon: Icons.description,
-                    title: 'Description',
+                    title: l10n.reportDescription,
                     trailing: null,
                     content: Text(
                       state.description,
@@ -335,7 +340,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
 
                   // ===== CONSENT SECTION =====
                   Text(
-                    'Declaration & Consent',
+                    l10n.declarationConsent,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -347,9 +352,9 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                     value: state.declarationConfirmed,
                     onChanged: (v) =>
                         controller.setDeclarationConfirmed(v ?? false),
-                    title: const Text('I confirm the information is accurate'),
+                    title: Text(l10n.confirmAccurate),
                     subtitle: Text(
-                      'I declare that all information provided is true and accurate to the best of my knowledge.',
+                      l10n.declarationText,
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark
@@ -367,9 +372,9 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                     value: state.dataProcessingConsent,
                     onChanged: (v) =>
                         controller.setDataProcessingConsent(v ?? false),
-                    title: const Text('I consent to data processing'),
+                    title: Text(l10n.consentDataProcessing),
                     subtitle: Text(
-                      'I consent to the processing of my personal data for the purpose of handling this report.',
+                      l10n.consentText,
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark
@@ -400,7 +405,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'You must confirm the declaration and consent to submit',
+                              l10n.consentRequired,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: AppColors.alertMedium,
@@ -438,7 +443,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                   )
                 : ElevatedButton(
                     onPressed: state.canSubmit ? _submitReport : null,
-                    child: const Text('Submit Report'),
+                    child: Text(l10n.submitReport),
                   ),
           ),
         ],
