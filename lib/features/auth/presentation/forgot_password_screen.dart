@@ -5,6 +5,7 @@ import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/presentation/widgets/password_strength_indicator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
+import '../../../l10n/app_localizations.dart';
 import 'auth_controller.dart';
 import 'auth_wrapper.dart';
 
@@ -58,7 +59,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       _otpController.clear();
     });
 
-    AppToast.success(context, 'OTP sent. Please check your email.');
+    AppToast.success(context, AppLocalizations.of(context)!.otpSent);
   }
 
   Future<void> _handleVerifyOtp() async {
@@ -91,7 +92,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       });
       AppToast.error(
         context,
-        'Your session expired. Please verify the OTP again.',
+        AppLocalizations.of(context)!.sessionExpiredVerifyOtp,
       );
       return;
     }
@@ -106,7 +107,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
     if (!mounted || !success) return;
 
-    AppToast.success(context, 'Password reset successful. Please log in.');
+    AppToast.success(context, AppLocalizations.of(context)!.passwordResetSuccessful);
 
     Navigator.of(
       context,
@@ -120,7 +121,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
     if (!mounted || !success) return;
 
-    AppToast.info(context, 'OTP resent. Please check your email.');
+    AppToast.info(context, AppLocalizations.of(context)!.otpResent);
   }
 
   void _handleBack() {
@@ -151,19 +152,20 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   String _title() {
+    final l10n = AppLocalizations.of(context)!;
     return switch (_step) {
-      _ResetStep.email => 'Forgot Password?',
-      _ResetStep.otp => 'Enter OTP',
-      _ResetStep.password => 'Set New Password',
+      _ResetStep.email => l10n.forgotPasswordTitle,
+      _ResetStep.otp => l10n.enterOtp,
+      _ResetStep.password => l10n.resetPassword,
     };
   }
 
   String _subtitle() {
+    final l10n = AppLocalizations.of(context)!;
     return switch (_step) {
-      _ResetStep.email =>
-        'Enter your email and we’ll send you a 6-digit OTP code.',
-      _ResetStep.otp => 'Enter the OTP sent to ${_emailController.text.trim()}',
-      _ResetStep.password => 'Create your new password.',
+      _ResetStep.email => l10n.forgotPasswordSubtitle,
+      _ResetStep.otp => l10n.otpSentTo(_emailController.text.trim()),
+      _ResetStep.password => l10n.createNewPassword,
     };
   }
 
@@ -174,6 +176,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final l10n = AppLocalizations.of(context)!;
         final compact = constraints.maxHeight < 620;
         final horizontalPadding = constraints.maxWidth < 360 ? 20.0 : 24.0;
         final topPadding = compact ? 4.0 : 8.0;
@@ -243,7 +246,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Semantics(
-                                  label: 'Email',
+                                  label: l10n.email,
                                   textField: true,
                                   child: TextFormField(
                                     key: const ValueKey(
@@ -256,18 +259,18 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                     onChanged: (_) =>
                                         _emailFormKey.currentState?.validate(),
                                     onFieldSubmitted: (_) => _handleSendOtp(),
-                                    decoration: const InputDecoration(
-                                      hintText: 'Enter your email',
-                                      prefixIcon: Icon(Icons.email_outlined),
+                                    decoration: InputDecoration(
+                                      hintText: l10n.enterYourEmail,
+                                      prefixIcon: const Icon(Icons.email_outlined),
                                     ),
-                                    validator: Validators.email,
+                                    validator: (value) => Validators.email(value, l10n: l10n),
                                   ),
                                 ),
                                 const SizedBox(height: 20),
                                 if (isLoading)
-                                  const Center(
+                                  Center(
                                     child: CircularProgressIndicator(
-                                      semanticsLabel: 'Sending OTP',
+                                      semanticsLabel: l10n.sending,
                                     ),
                                   )
                                 else
@@ -276,7 +279,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                       'forgot-password-submit-button',
                                     ),
                                     onPressed: _handleSendOtp,
-                                    child: const Text('Send OTP'),
+                                    child: Text(l10n.sendCode),
                                   ),
                                 const SizedBox(height: 18),
                                 Wrap(
@@ -284,7 +287,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                   crossAxisAlignment: WrapCrossAlignment.center,
                                   children: [
                                     Text(
-                                      'Remember your password?',
+                                      l10n.rememberPassword,
                                       key: const ValueKey(
                                         'forgot-password-login-prompt',
                                       ),
@@ -304,7 +307,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                       onPressed: isLoading
                                           ? null
                                           : _handleLogin,
-                                      child: const Text('Login'),
+                                      child: Text(l10n.login),
                                     ),
                                   ],
                                 ),
@@ -346,7 +349,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         appBar: AppBar(
           leading: IconButton(
             key: const ValueKey('forgot-password-back-button'),
-            tooltip: 'Back',
+            tooltip: AppLocalizations.of(context)!.back,
             icon: const Icon(Icons.arrow_back),
             onPressed: _handleBack,
           ),
@@ -372,7 +375,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       appBar: AppBar(
         leading: IconButton(
           key: const ValueKey('forgot-password-recovery-back-button'),
-          tooltip: 'Back',
+          tooltip: AppLocalizations.of(context)!.back,
           icon: const Icon(Icons.arrow_back),
           onPressed: _handleBack,
         ),
@@ -380,6 +383,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
+            final l10n = AppLocalizations.of(context)!;
             final compact = constraints.maxHeight < 620;
             final horizontalPadding = constraints.maxWidth < 360 ? 20.0 : 24.0;
             final topPadding = compact ? 4.0 : 8.0;
@@ -468,7 +472,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                       autovalidateMode:
                                           AutovalidateMode.onUserInteraction,
                                       child: Semantics(
-                                        label: 'OTP code',
+                                        label: l10n.verificationCode,
                                         textField: true,
                                         child: TextFormField(
                                           key: const ValueKey(
@@ -488,9 +492,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                               ?.validate(),
                                           onFieldSubmitted: (_) =>
                                               _handleVerifyOtp(),
-                                          decoration: const InputDecoration(
-                                            hintText: 'Enter 6-digit OTP',
-                                            prefixIcon: Icon(
+                                          decoration: InputDecoration(
+                                            hintText: l10n.enterVerificationCode,
+                                            prefixIcon: const Icon(
                                               Icons
                                                   .confirmation_number_outlined,
                                             ),
@@ -498,12 +502,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                           validator: (value) {
                                             final otp = value?.trim() ?? '';
                                             if (otp.isEmpty) {
-                                              return 'OTP is required';
+                                              return l10n.otpRequired;
                                             }
                                             if (!RegExp(
                                               r'^\d{6}$',
                                             ).hasMatch(otp)) {
-                                              return 'OTP must be 6 digits';
+                                              return l10n.otpSixDigits;
                                             }
                                             return null;
                                           },
@@ -520,7 +524,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                             CrossAxisAlignment.stretch,
                                         children: [
                                           Semantics(
-                                            label: 'New password',
+                                            label: l10n.newPassword,
                                             textField: true,
                                             child: TextFormField(
                                               key: const ValueKey(
@@ -536,7 +540,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                                   .currentState
                                                   ?.validate(),
                                               decoration: InputDecoration(
-                                                hintText: 'New password',
+                                                hintText: l10n.newPassword,
                                                 prefixIcon: const Icon(
                                                   Icons.lock_outline,
                                                 ),
@@ -545,8 +549,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                                     'forgot-password-new-password-toggle',
                                                   ),
                                                   tooltip: _obscureNewPassword
-                                                      ? 'Show new password'
-                                                      : 'Hide new password',
+                                                      ? l10n.showPassword
+                                                      : l10n.hidePassword,
                                                   onPressed: isLoading
                                                       ? null
                                                       : () {
@@ -562,7 +566,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                                   ),
                                                 ),
                                               ),
-                                              validator: Validators.password,
+                                              validator: (value) => Validators.password(value, l10n: l10n),
                                             ),
                                           ),
                                           ValueListenableBuilder<
@@ -590,7 +594,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                           ),
                                           const SizedBox(height: 12),
                                           Semantics(
-                                            label: 'Confirm new password',
+                                            label: l10n.confirmNewPassword,
                                             textField: true,
                                             child: TextFormField(
                                               key: const ValueKey(
@@ -609,7 +613,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                               onFieldSubmitted: (_) =>
                                                   _handleResetPassword(),
                                               decoration: InputDecoration(
-                                                hintText: 'Confirm password',
+                                                hintText: l10n.confirmYourPassword,
                                                 prefixIcon: const Icon(
                                                   Icons.lock_outline,
                                                 ),
@@ -619,8 +623,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                                   ),
                                                   tooltip:
                                                       _obscureConfirmPassword
-                                                      ? 'Show confirmed password'
-                                                      : 'Hide confirmed password',
+                                                      ? l10n.showPassword
+                                                      : l10n.hidePassword,
                                                   onPressed: isLoading
                                                       ? null
                                                       : () {
@@ -639,6 +643,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                               validator: (value) =>
                                                   Validators.confirmPassword(
                                                     _newPasswordController.text,
+                                                    l10n: l10n,
                                                   )(value),
                                             ),
                                           ),
@@ -652,8 +657,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                       child: Center(
                                         child: CircularProgressIndicator(
                                           semanticsLabel: isOtpStep
-                                              ? 'Verifying OTP'
-                                              : 'Changing password',
+                                              ? l10n.verifyCode
+                                              : l10n.changePassword,
                                         ),
                                       ),
                                     )
@@ -669,8 +674,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                           : _handleResetPassword,
                                       child: Text(
                                         isOtpStep
-                                            ? 'Verify OTP'
-                                            : 'Reset Password',
+                                            ? l10n.verifyCode
+                                            : l10n.resetPassword,
                                       ),
                                     ),
                                   if (isOtpStep && !isLoading) ...[
@@ -680,7 +685,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                         'forgot-password-resend-button',
                                       ),
                                       onPressed: _handleResendOtp,
-                                      child: const Text('Resend OTP'),
+                                      child: Text(l10n.resendCode),
                                     ),
                                   ],
                                   const SizedBox(height: 18),
@@ -690,7 +695,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                         WrapCrossAlignment.center,
                                     children: [
                                       Text(
-                                        'Remember your password?',
+                                        l10n.rememberPassword,
                                         key: const ValueKey(
                                           'forgot-password-recovery-login-prompt',
                                         ),
@@ -708,7 +713,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                           ),
                                         ),
                                         onPressed: _handleLogin,
-                                        child: const Text('Login'),
+                                        child: Text(l10n.login),
                                       ),
                                     ],
                                   ),

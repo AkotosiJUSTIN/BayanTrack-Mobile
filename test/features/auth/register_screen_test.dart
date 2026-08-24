@@ -11,6 +11,7 @@ import 'package:bayantrack_mobile/features/auth/domain/usecases/register_usecase
 import 'package:bayantrack_mobile/features/auth/presentation/auth_controller.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/register_screen.dart';
+import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -353,6 +354,8 @@ Future<void> _pumpRegister(
       ],
       child: MaterialApp(
         navigatorKey: navigatorKey,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
         themeMode: brightness == Brightness.dark

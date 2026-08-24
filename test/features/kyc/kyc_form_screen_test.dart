@@ -4,6 +4,7 @@ import 'package:bayantrack_mobile/core/constants/urdaneta_barangays.dart';
 import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
 import 'package:bayantrack_mobile/features/kyc/presentation/kyc_form_screen.dart';
+import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,7 +25,11 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [barangaysProvider.overrideWith(_TestBarangays.new)],
-        child: const MaterialApp(home: KycFormScreen()),
+        child: MaterialApp(
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: const KycFormScreen(),
+        ),
       ),
     );
     await tester.pump();

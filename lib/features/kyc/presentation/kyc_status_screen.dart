@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../domain/entities/kyc_enums.dart';
 import '../domain/entities/kyc_status.dart';
 import 'kyc_controller.dart';
@@ -12,11 +13,12 @@ class KycStatusScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final kycStatusAsync = ref.watch(kycStatusControllerProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('User Verification'),
+        title: Text(l10n.userVerification),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -42,13 +44,13 @@ class KycStatusScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
-              Text('Error: $error'),
+              Text('${l10n.error}: $error'),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () {
                   ref.read(kycStatusControllerProvider.notifier).refresh();
                 },
-                child: const Text('Retry'),
+                child: Text(l10n.retry),
               ),
             ],
           ),
@@ -58,6 +60,7 @@ class KycStatusScreen extends ConsumerWidget {
   }
 
   Widget _buildNoKycView(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -70,13 +73,13 @@ class KycStatusScreen extends ConsumerWidget {
               color: Theme.of(context).colorScheme.outline,
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Identity Verification',
+            Text(
+              l10n.kyc,
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Text(
-              'Verify your identity to unlock all features and increase your account security.',
+              l10n.kycUnverified,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -98,7 +101,7 @@ class KycStatusScreen extends ConsumerWidget {
                 }
               },
               icon: const Icon(Icons.assignment),
-              label: const Text('Verify Identity'),
+              label: Text(l10n.verifyIdentity),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,
@@ -119,6 +122,7 @@ class KycStatusScreen extends ConsumerWidget {
     WidgetRef ref,
     KycStatusEntity kycStatus,
   ) {
+    final l10n = AppLocalizations.of(context);
     final statusColor = _getStatusColor(kycStatus.status);
 
     return SingleChildScrollView(
@@ -146,7 +150,7 @@ class KycStatusScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              kycStatus.status.displayName,
+                              _statusLabel(kycStatus.status, l10n),
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -155,7 +159,7 @@ class KycStatusScreen extends ConsumerWidget {
                             ),
                             if (kycStatus.submittedAt != null)
                               Text(
-                                'Submitted: ${_formatDateTime(kycStatus.submittedAt!)}',
+                                '${l10n.submitted}: ${_formatDateTime(kycStatus.submittedAt!)}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Theme.of(context).colorScheme.outline,
@@ -168,7 +172,7 @@ class KycStatusScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    _getStatusMessage(kycStatus.status),
+                    _getStatusMessage(kycStatus.status, l10n),
                     style: TextStyle(
                       fontSize: 16,
                       height: 1.4,
@@ -232,8 +236,8 @@ class KycStatusScreen extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Application Rejected',
+                              Text(
+                                l10n.kycRejected,
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -242,7 +246,7 @@ class KycStatusScreen extends ConsumerWidget {
                               ),
                               if (kycStatus.resubmissionCount > 0)
                                 Text(
-                                  'Attempt ${kycStatus.resubmissionCount + 1} - Please review feedback',
+                                  '${l10n.retry} ${kycStatus.resubmissionCount + 1} - ${l10n.reviewDetails}',
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: AppColors.darkTextSecondary,
@@ -262,7 +266,7 @@ class KycStatusScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Admin Feedback',
+                          l10n.adminFeedback,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -306,7 +310,7 @@ class KycStatusScreen extends ConsumerWidget {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  'Review the feedback and resubmit with corrected documents',
+                                  l10n.reviewAndResubmit,
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: AppColors.primary,
@@ -352,7 +356,7 @@ class KycStatusScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Quality Check Notes',
+                          l10n.qualityCheckNotes,
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
@@ -374,8 +378,8 @@ class KycStatusScreen extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // Submitted Information
-          const Text(
-            'Submitted Information',
+          Text(
+            l10n.submittedInformation,
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
@@ -384,24 +388,24 @@ class KycStatusScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  _buildInfoRow('Full Name', kycStatus.fullName, context),
+                  _buildInfoRow(l10n.fullName, kycStatus.fullName, context),
                   if (kycStatus.idType != null)
                     _buildInfoRow(
-                      'ID Type',
-                      kycStatus.idType!.displayName,
+                      l10n.idType,
+                      _idTypeLabel(kycStatus.idType!, l10n),
                       context,
                     ),
                   if (kycStatus.idNumber != null)
-                    _buildInfoRow('ID Number', kycStatus.idNumber!, context),
+                    _buildInfoRow(l10n.idNumber, kycStatus.idNumber!, context),
                   if (kycStatus.dateOfBirth != null)
                     _buildInfoRow(
-                      'Date of Birth',
+                      l10n.dateOfBirth,
                       _formatDateTime(kycStatus.dateOfBirth!),
                       context,
                     ),
                   if (kycStatus.resubmissionCount > 0)
                     _buildInfoRow(
-                      'Resubmissions',
+                      l10n.resubmissions,
                       kycStatus.resubmissionCount.toString(),
                       context,
                     ),
@@ -436,8 +440,8 @@ class KycStatusScreen extends ConsumerWidget {
                 icon: const Icon(Icons.refresh_rounded),
                 label: Text(
                   kycStatus.resubmissionCount > 0
-                      ? 'Resubmit Documents (Attempt ${kycStatus.resubmissionCount + 1})'
-                      : 'Resubmit Documents',
+                      ? '${l10n.resubmitDocuments} (${l10n.retry} ${kycStatus.resubmissionCount + 1})'
+                      : l10n.resubmitDocuments,
                 ),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -467,7 +471,7 @@ class KycStatusScreen extends ConsumerWidget {
                   }
                 },
                 icon: const Icon(Icons.verified_user),
-                label: const Text('Verify Identity'),
+                label: Text(l10n.verifyIdentity),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: AppColors.alertMedium,
@@ -551,22 +555,48 @@ class KycStatusScreen extends ConsumerWidget {
     }
   }
 
-  String _getStatusMessage(KycVerificationStatus status) {
+  String _getStatusMessage(
+    KycVerificationStatus status,
+    AppLocalizations l10n,
+  ) {
     switch (status) {
       case KycVerificationStatus.verified:
-        return 'Your identity has been verified successfully!';
+        return l10n.kycVerified;
       case KycVerificationStatus.pending:
-        return 'Your documents are being reviewed. This usually takes 1-3 business days.';
+        return l10n.kycPending;
       case KycVerificationStatus.rejected:
-        return 'Your submission was rejected. Please review the reason and resubmit.';
+        return l10n.kycRejected;
       case KycVerificationStatus.resubmitRequested:
-        return 'Additional information is required. Please resubmit your documents.';
+        return l10n.kycResubmitRequested;
       case KycVerificationStatus.suspended:
-        return 'Your account verification has been suspended. Please contact support.';
+        return l10n.kycSuspended;
       case KycVerificationStatus.unverified:
-        return 'Please submit your documents for verification.';
+        return l10n.kycUnverified;
     }
   }
+
+  String _statusLabel(
+    KycVerificationStatus status,
+    AppLocalizations l10n,
+  ) => switch (status) {
+    KycVerificationStatus.unverified => l10n.unverifiedLabel,
+    KycVerificationStatus.pending => l10n.pendingReview,
+    KycVerificationStatus.verified => l10n.kycVerified,
+    KycVerificationStatus.rejected => l10n.rejected,
+    KycVerificationStatus.resubmitRequested => l10n.resubmitRequestedLabel,
+    KycVerificationStatus.suspended => l10n.suspendedLabel,
+  };
+
+  String _idTypeLabel(IdType value, AppLocalizations l10n) => switch (value) {
+    IdType.passport => l10n.idPassport,
+    IdType.nationalId => l10n.idNational,
+    IdType.driversLicense => l10n.idDriversLicense,
+    IdType.philsys => l10n.idPhilsys,
+    IdType.sss => l10n.idSss,
+    IdType.umid => l10n.idUmid,
+    IdType.postal => l10n.idPostal,
+    IdType.voters => l10n.idVoters,
+  };
 
   String _formatDateTime(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';

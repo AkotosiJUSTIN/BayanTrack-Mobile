@@ -11,6 +11,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/municipality_geo.dart';
 import '../../../auth/data/auth_models.dart';
 import '../../../auth/presentation/barangays_provider.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'new_report_controller.dart';
 import 'new_report_details_screen.dart';
 
@@ -152,6 +153,7 @@ class _NewReportLocationScreenState
 
   Future<void> _getCurrentLocation() async {
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
 
     setState(() {
       _isLoading = true;
@@ -163,7 +165,7 @@ class _NewReportLocationScreenState
       if (!serviceEnabled) {
         if (!mounted) return;
         setState(() {
-          _error = 'Location services are disabled. Please enable GPS.';
+          _error = l10n.locationServicesDisabled;
           _isLoading = false;
         });
         return;
@@ -175,7 +177,7 @@ class _NewReportLocationScreenState
         if (permission == LocationPermission.denied) {
           if (!mounted) return;
           setState(() {
-            _error = 'Location permission denied';
+            _error = l10n.locationPermissionDenied;
             _isLoading = false;
           });
           return;
@@ -185,8 +187,7 @@ class _NewReportLocationScreenState
       if (permission == LocationPermission.deniedForever) {
         if (!mounted) return;
         setState(() {
-          _error =
-              'Location permissions are permanently denied. Enable them in Settings.';
+          _error = l10n.locationPermissionSettings;
           _isLoading = false;
         });
         return;
@@ -206,7 +207,7 @@ class _NewReportLocationScreenState
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Failed to get location: ${e.toString()}';
+        _error = '${l10n.error}: ${e.toString()}';
         _isLoading = false;
       });
     }
@@ -215,6 +216,7 @@ class _NewReportLocationScreenState
   Future<void> _getPreciseLocationInBackground(
     Position? fallbackPosition,
   ) async {
+    final l10n = AppLocalizations.of(context);
     try {
       final position =
           await Geolocator.getCurrentPosition(
@@ -223,9 +225,9 @@ class _NewReportLocationScreenState
               distanceFilter: 10,
               forceLocationManager: false,
               intervalDuration: const Duration(seconds: 5),
-              foregroundNotificationConfig: const ForegroundNotificationConfig(
-                notificationTitle: 'Getting location',
-                notificationText: 'BayanTrack is getting your location',
+              foregroundNotificationConfig: ForegroundNotificationConfig(
+                notificationTitle: l10n.gettingLocation,
+                notificationText: l10n.gettingLocationNotification,
                 enableWakeLock: false,
               ),
             ),
@@ -250,7 +252,7 @@ class _NewReportLocationScreenState
         _isGettingPreciseLocation = false;
         _isLoading = false;
         if (_currentPosition == null) {
-          _error = 'Location request timed out. Please try again.';
+          _error = l10n.locationRequestTimedOut;
         }
       });
     } catch (e) {
@@ -259,7 +261,7 @@ class _NewReportLocationScreenState
         _isGettingPreciseLocation = false;
         _isLoading = false;
         if (_currentPosition == null) {
-          _error = 'Failed to get precise location: ${e.toString()}';
+          _error = '${l10n.error}: ${e.toString()}';
         }
       });
     }
@@ -412,6 +414,7 @@ class _NewReportLocationScreenState
       });
     }
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final bounds = _selectedMunicipality.bounds!;
     final selectedPoint =
@@ -422,7 +425,7 @@ class _NewReportLocationScreenState
         );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New Report')),
+      appBar: AppBar(title: Text(l10n.newReport)),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -439,7 +442,7 @@ class _NewReportLocationScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Step 2 of 4',
+                  l10n.stepOf(2, 4),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,
@@ -447,14 +450,14 @@ class _NewReportLocationScreenState
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Location',
+                  l10n.reportLocation,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Select a city, then use phone GPS or a manual pin within its boundary.',
+                  l10n.selectLocationDescription,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: isDark
                         ? AppColors.darkTextSecondary
@@ -470,8 +473,8 @@ class _NewReportLocationScreenState
                         )
                         ? state.municipalityId
                         : _selectedMunicipality.id,
-                    decoration: const InputDecoration(
-                      labelText: 'City',
+                    decoration: InputDecoration(
+                      labelText: l10n.selectCity,
                       prefixIcon: Icon(Icons.location_city),
                       border: OutlineInputBorder(),
                     ),
@@ -492,7 +495,7 @@ class _NewReportLocationScreenState
                   ),
                   loading: () => const LinearProgressIndicator(),
                   error: (error, stack) => Text(
-                    'City metadata is unavailable.',
+                    l10n.cityMetadataUnavailable,
                     style: TextStyle(color: theme.colorScheme.error),
                   ),
                 ),
@@ -523,7 +526,7 @@ class _NewReportLocationScreenState
               onPressed: state.hasLocation && !_isOutsideServiceArea
                   ? _navigateToDetails
                   : null,
-              child: const Text('Continue'),
+              child: Text(l10n.continueLabel),
             ),
           ),
         ],
@@ -532,11 +535,12 @@ class _NewReportLocationScreenState
   }
 
   Widget _buildModeSelector(ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         Expanded(
           child: ChoiceChip(
-            label: const Text('Use Phone Location'),
+            label: Text(l10n.usePhoneLocation),
             selected: _locationInputMode == _LocationInputMode.phone,
             onSelected: (_) => _switchMode(_LocationInputMode.phone),
           ),
@@ -544,7 +548,7 @@ class _NewReportLocationScreenState
         const SizedBox(width: 8),
         Expanded(
           child: ChoiceChip(
-            label: const Text('Manual Pin'),
+            label: Text(l10n.manualPin),
             selected: _locationInputMode == _LocationInputMode.manual,
             onSelected: (_) => _switchMode(_LocationInputMode.manual),
           ),
@@ -559,6 +563,7 @@ class _NewReportLocationScreenState
     required bool isDark,
     required NewReportState state,
   }) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurfaceVariant : AppColors.lightSurface,
@@ -638,7 +643,7 @@ class _NewReportLocationScreenState
             right: 12,
             bottom: 12,
             child: IconButton.filledTonal(
-              tooltip: 'Recenter to city',
+              tooltip: l10n.recenterToCity,
               onPressed: () => MunicipalityMapCamera.recenter(
                 _mapController,
                 _selectedMunicipality,
@@ -653,6 +658,7 @@ class _NewReportLocationScreenState
 
   Widget _buildLocationStatusCard(BuildContext context, NewReportState state) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -678,8 +684,8 @@ class _NewReportLocationScreenState
                   children: [
                     Text(
                       _locationInputMode == _LocationInputMode.manual
-                          ? 'Manual Pin'
-                          : 'Phone Location',
+                          ? l10n.manualPin
+                          : l10n.phoneLocation,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -708,13 +714,13 @@ class _NewReportLocationScreenState
           ),
           if (_locationInputMode == _LocationInputMode.phone)
             IconButton(
-              tooltip: 'Refresh location',
+              tooltip: l10n.refreshLocation,
               onPressed: _getCurrentLocation,
               icon: const Icon(Icons.refresh),
             )
           else
             IconButton(
-              tooltip: 'Use ${_selectedMunicipality.name} center',
+              tooltip: l10n.useCityCenter(_selectedMunicipality.name),
               onPressed: _useDefaultLocation,
               icon: const Icon(Icons.pin_drop_outlined),
             ),
@@ -725,6 +731,7 @@ class _NewReportLocationScreenState
 
   Widget _buildManualHint(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -733,7 +740,7 @@ class _NewReportLocationScreenState
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        'Tap the map to place your pin within ${_selectedMunicipality.name}.',
+        l10n.tapMapWithin(_selectedMunicipality.name),
         style: theme.textTheme.bodySmall,
         textAlign: TextAlign.center,
       ),

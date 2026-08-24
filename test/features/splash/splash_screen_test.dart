@@ -1,4 +1,5 @@
 import 'package:bayantrack_mobile/core/theme/app_theme.dart';
+import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:bayantrack_mobile/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:bayantrack_mobile/features/splash/presentation/splash_screen.dart';
 import 'package:flutter/material.dart';
@@ -120,7 +121,7 @@ void _expectBranding(WidgetTester tester, {required Color expectedBlue}) {
     find.byKey(const ValueKey('splash-loader')),
   );
   expect(loader.color, expectedBlue);
-  expect(loader.semanticsLabel, 'Loading BayanTrack');
+  expect(loader.semanticsLabel, 'Loading… BayanTrack');
 }
 
 Future<void> _finishSplash(
@@ -146,6 +147,8 @@ Future<void> _pumpSplash(
   await tester.pumpWidget(
     ProviderScope(
       child: MaterialApp(
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
         themeMode: brightness == Brightness.dark

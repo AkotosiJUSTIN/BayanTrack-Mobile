@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Password strength levels — mirrors the web's StrongPasswordInput.tsx
 enum _StrengthLevel { empty, weak, medium, strong, veryStrong, superStrong }
@@ -45,14 +46,14 @@ class PasswordStrengthIndicator extends StatelessWidget {
     }
   }
 
-  String get _strengthLabel {
+  String _strengthLabel(AppLocalizations l10n) {
     return switch (_level) {
       _StrengthLevel.empty => '',
-      _StrengthLevel.weak => 'Weak',
-      _StrengthLevel.medium => 'Medium',
-      _StrengthLevel.strong => 'Strong',
-      _StrengthLevel.veryStrong => 'Very Strong',
-      _StrengthLevel.superStrong => 'Super Strong',
+      _StrengthLevel.weak => l10n.weak,
+      _StrengthLevel.medium => l10n.medium,
+      _StrengthLevel.strong => l10n.strong,
+      _StrengthLevel.veryStrong => l10n.veryStrong,
+      _StrengthLevel.superStrong => l10n.superStrong,
     };
   }
 
@@ -76,6 +77,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final mutedColor = theme.colorScheme.onSurface.withValues(alpha: 0.4);
 
     return Column(
@@ -107,7 +109,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
         Row(
           children: [
             Text(
-              'Level: ',
+              '${l10n.level}: ',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: mutedColor,
                 fontWeight: FontWeight.w500,
@@ -116,8 +118,8 @@ class PasswordStrengthIndicator extends StatelessWidget {
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: Text(
-                _strengthLabel,
-                key: ValueKey(_strengthLabel),
+                _strengthLabel(l10n),
+                key: ValueKey(_strengthLabel(l10n)),
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: _strengthColor,
@@ -130,7 +132,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
 
         // ── Requirements header ────────────────────────────────────────────
         Text(
-          'Your password must contain:',
+          l10n.passwordMustContain,
           style: theme.textTheme.bodySmall?.copyWith(
             fontWeight: FontWeight.w600,
             color: mutedColor,
@@ -140,20 +142,20 @@ class PasswordStrengthIndicator extends StatelessWidget {
 
         // ── Requirements list ──────────────────────────────────────────────
         _RequirementRow(
-          text: 'Minimum number of characters is 8.',
+          text: l10n.minimumCharacters,
           isMet: _hasMinLength,
         ),
         _RequirementRow(
-          text: 'Should contain lowercase.',
+          text: l10n.lowercaseRequirement,
           isMet: _hasLowercase,
         ),
         _RequirementRow(
-          text: 'Should contain uppercase.',
+          text: l10n.uppercaseRequirement,
           isMet: _hasUppercase,
         ),
-        _RequirementRow(text: 'Should contain numbers.', isMet: _hasNumbers),
+        _RequirementRow(text: l10n.numberRequirement, isMet: _hasNumbers),
         _RequirementRow(
-          text: 'Should contain special characters.',
+          text: l10n.specialCharacterRequirement,
           isMet: _hasSpecial,
         ),
       ],

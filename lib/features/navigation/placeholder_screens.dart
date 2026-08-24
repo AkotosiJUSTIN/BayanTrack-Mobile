@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Placeholder for Notifications screen.
 /// Will be implemented in Phase 5.
@@ -9,9 +10,10 @@ class NotificationsPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppBar(title: Text(l10n.notifications)),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -22,10 +24,10 @@ class NotificationsPlaceholder extends StatelessWidget {
               color: theme.colorScheme.outline,
             ),
             const SizedBox(height: 16),
-            Text('Notifications', style: theme.textTheme.headlineSmall),
+            Text(l10n.notifications, style: theme.textTheme.headlineSmall),
             const SizedBox(height: 8),
             Text(
-              'Notifications are not available on mobile yet.',
+              l10n.notificationsUnavailable,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.outline,
               ),
@@ -39,7 +41,7 @@ class NotificationsPlaceholder extends StatelessWidget {
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
-                'Coming soon',
+                l10n.comingSoon,
                 style: theme.textTheme.labelMedium?.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w600,
@@ -61,9 +63,10 @@ class ProfilePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppBar(title: Text(l10n.profile)),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -74,10 +77,10 @@ class ProfilePlaceholder extends StatelessWidget {
               color: theme.colorScheme.outline,
             ),
             const SizedBox(height: 16),
-            Text('Profile & Settings', style: theme.textTheme.headlineSmall),
+            Text(l10n.profile, style: theme.textTheme.headlineSmall),
             const SizedBox(height: 8),
             Text(
-              'Coming in Phase 6',
+              l10n.comingSoon,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.outline,
               ),

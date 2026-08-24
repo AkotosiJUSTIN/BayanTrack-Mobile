@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_colors.dart';
 import '../auth/data/user_permissions.dart';
 import '../auth/presentation/verification_widgets.dart';
@@ -48,9 +49,10 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
     if (_isNavigatingToNewReport || !mounted) return;
 
     final permissions = ref.read(userPermissionsProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     if (!permissions.hasPermission(UserPermission.createReports)) {
-      showVerificationRequiredDialog(context, permissions, 'create reports');
+      showVerificationRequiredDialog(context, permissions, l10n.createReport);
       return;
     }
 
@@ -66,14 +68,14 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Create report',
+                  l10n.createReport,
                   style: Theme.of(sheetContext).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Choose the faster quick report or the full multi-step report.',
+                  l10n.chooseReportType,
                   style: Theme.of(sheetContext).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 16),
@@ -83,7 +85,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                     _openReportFlow(const QuickReportScreen());
                   },
                   icon: const Icon(Icons.flash_on),
-                  label: const Text('Quick Report'),
+                  label: Text(l10n.quickReport),
                 ),
                 const SizedBox(height: 10),
                 OutlinedButton.icon(
@@ -92,7 +94,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                     _openReportFlow(const NewReportPhotosScreen());
                   },
                   icon: const Icon(Icons.photo_library_outlined),
-                  label: const Text('Full Report'),
+                  label: Text(l10n.fullReport),
                 ),
               ],
             ),
@@ -120,6 +122,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
     debugPrint('[MainNavigationShell] Building with index: $_currentIndex');
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: Column(
@@ -153,26 +156,26 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                 index: 0,
                 icon: Icons.home_outlined,
                 activeIcon: Icons.home,
-                label: 'Home',
+                label: l10n.home,
               ),
               _buildNavItem(
                 index: 1,
                 icon: Icons.description_outlined,
                 activeIcon: Icons.description,
-                label: 'My Reports',
+                label: l10n.myReports,
               ),
               const SizedBox(width: 48), // Space for FAB
               _buildNavItem(
                 index: 2,
                 icon: Icons.notifications_outlined,
                 activeIcon: Icons.notifications,
-                label: 'Notifications',
+                label: l10n.notifications,
               ),
               _buildNavItem(
                 index: 3,
                 icon: Icons.person_outline,
                 activeIcon: Icons.person,
-                label: 'Profile',
+                label: l10n.profile,
               ),
             ],
           ),

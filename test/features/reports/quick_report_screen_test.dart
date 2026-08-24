@@ -15,6 +15,7 @@ import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dar
 import 'package:bayantrack_mobile/features/reports/domain/usecases/create_report_usecase.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/new_report/quick_report_screen.dart';
 import 'package:bayantrack_mobile/features/reports/reports_di.dart';
+import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -138,7 +139,9 @@ Future<void> _pumpQuickReport(
       ],
       child: MaterialApp(
         navigatorKey: navigatorKey,
-        navigatorObservers: [?navigatorObserver],
+        navigatorObservers: [if (navigatorObserver != null) navigatorObserver],
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         theme: AppTheme.light,
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(

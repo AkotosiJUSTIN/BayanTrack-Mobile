@@ -6,6 +6,7 @@ import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/presentation/widgets/password_strength_indicator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
+import '../../../l10n/app_localizations.dart';
 import 'auth_controller.dart';
 import 'barangays_provider.dart';
 
@@ -47,15 +48,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _handleRegister() async {
     if (!_agreeToTerms) {
-      AppToast.warning(
-        context,
-        'Please read and accept Terms & Conditions and Privacy Policy',
-      );
+      AppToast.warning(context, AppLocalizations.of(context)!.termsAndPrivacy);
       return;
     }
 
     if (_selectedBarangayId == null) {
-      AppToast.warning(context, 'Please select your barangay');
+      AppToast.warning(context, AppLocalizations.of(context)!.pleaseSelectBarangay);
       return;
     }
 
@@ -74,7 +72,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (success && mounted) {
         AppToast.success(
           context,
-          'Registration successful! Welcome to BayanTrack.',
+          AppLocalizations.of(context)!.registrationSuccess,
         );
         // Pop register screen so AuthWrapper (now showing MainNavigationShell
         // due to AuthSuccess state) becomes visible immediately
@@ -89,7 +87,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   void _showTermsAndPrivacyPolicy() {
     _showPolicyDialog(
-      'Terms & Conditions and Privacy Policy',
+      AppLocalizations.of(context)!.termsAndPrivacy,
       onAccepted: () {
         _termsAndPrivacyAccepted = true;
       },
@@ -127,6 +125,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final compact = usableHeight < 700;
     final horizontalPadding = mediaQuery.size.width < 360 ? 20.0 : 24.0;
     final brandBlue = isDark ? AppColors.primaryLight : _brandBlue;
+    final l10n = AppLocalizations.of(context)!;
 
     // Show error snackbar when auth fails
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
@@ -160,7 +159,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   alignment: Alignment.centerLeft,
                   child: IconButton(
                     key: const ValueKey('register-back-button'),
-                    tooltip: 'Back',
+                    tooltip: l10n.back,
                     onPressed: isLoading ? null : _navigateToLogin,
                     icon: const Icon(Icons.arrow_back_rounded),
                   ),
@@ -170,14 +169,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   child: Image.asset(
                     'assets/images/auth/register_mascot.webp',
                     key: const ValueKey('register-illustration'),
-                    semanticLabel: 'Bantay waving',
+                    semanticLabel: l10n.bantayWaving,
                     fit: BoxFit.contain,
                     filterQuality: FilterQuality.high,
                   ),
                 ),
                 SizedBox(height: compact ? 8 : 12),
                 Text(
-                  'Create Account',
+                  l10n.createAccount,
                   key: const ValueKey('register-title'),
                   style: theme.textTheme.displayMedium?.copyWith(
                     fontWeight: FontWeight.w800,
@@ -186,7 +185,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Join the community of civic reporters',
+                  l10n.joinCitizenReporters,
                   key: const ValueKey('register-subtitle'),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: isDark
@@ -210,10 +209,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 SizedBox(height: compact ? 16 : 20),
 
                 // First Name field
-                Text('First Name', style: theme.textTheme.titleMedium),
+                Text(l10n.firstName, style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
                 Semantics(
-                  label: 'First Name',
+                  label: l10n.firstName,
                   textField: true,
                   child: TextFormField(
                     key: const ValueKey('register-first-name-field'),
@@ -228,21 +227,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       LengthLimitingTextInputFormatter(100),
                     ],
                     onChanged: (_) => _formKey.currentState?.validate(),
-                    decoration: const InputDecoration(
-                      hintText: 'Enter your first name',
-                      prefixIcon: Icon(Icons.person_outline),
+                    decoration: InputDecoration(
+                      hintText: l10n.enterYourFirstName,
+                      prefixIcon: const Icon(Icons.person_outline),
                     ),
                     validator: (value) =>
-                        Validators.lettersOnly(value, fieldName: 'First name'),
+                        Validators.lettersOnly(value, fieldName: l10n.firstName, l10n: l10n),
                   ),
                 ),
                 const SizedBox(height: 16),
 
                 // Last Name field
-                Text('Last Name', style: theme.textTheme.titleMedium),
+                Text(l10n.lastName, style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
                 Semantics(
-                  label: 'Last Name',
+                  label: l10n.lastName,
                   textField: true,
                   child: TextFormField(
                     key: const ValueKey('register-last-name-field'),
@@ -257,21 +256,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       LengthLimitingTextInputFormatter(100),
                     ],
                     onChanged: (_) => _formKey.currentState?.validate(),
-                    decoration: const InputDecoration(
-                      hintText: 'Enter your last name',
-                      prefixIcon: Icon(Icons.person_outline),
+                    decoration: InputDecoration(
+                      hintText: l10n.enterYourLastName,
+                      prefixIcon: const Icon(Icons.person_outline),
                     ),
                     validator: (value) =>
-                        Validators.lettersOnly(value, fieldName: 'Last name'),
+                        Validators.lettersOnly(value, fieldName: l10n.lastName, l10n: l10n),
                   ),
                 ),
                 const SizedBox(height: 16),
 
                 // Email field
-                Text('Email', style: theme.textTheme.titleMedium),
+                Text(l10n.email, style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
                 Semantics(
-                  label: 'Email',
+                  label: l10n.email,
                   textField: true,
                   child: TextFormField(
                     key: const ValueKey('register-email-field'),
@@ -280,20 +279,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     textInputAction: TextInputAction.next,
                     enabled: !isLoading,
                     onChanged: (_) => _formKey.currentState?.validate(),
-                    decoration: const InputDecoration(
-                      hintText: 'Enter your email',
-                      prefixIcon: Icon(Icons.email_outlined),
+                    decoration: InputDecoration(
+                      hintText: l10n.enterYourEmail,
+                      prefixIcon: const Icon(Icons.email_outlined),
                     ),
-                    validator: Validators.email,
+                    validator: (value) => Validators.email(value, l10n: l10n),
                   ),
                 ),
                 const SizedBox(height: 16),
 
                 // Password field
-                Text('Password', style: theme.textTheme.titleMedium),
+                Text(l10n.password, style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
                 Semantics(
-                  label: 'Password',
+                  label: l10n.password,
                   textField: true,
                   child: TextFormField(
                     key: const ValueKey('register-password-field'),
@@ -303,13 +302,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     enabled: !isLoading,
                     onChanged: (_) => _formKey.currentState?.validate(),
                     decoration: InputDecoration(
-                      hintText: 'Create a password',
+                      hintText: l10n.createPassword,
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         key: const ValueKey('register-password-toggle'),
                         tooltip: _obscurePassword
-                            ? 'Show password'
-                            : 'Hide password',
+                            ? l10n.showPassword
+                            : l10n.hidePassword,
                         icon: Icon(
                           _obscurePassword
                               ? Icons.visibility_outlined
@@ -324,7 +323,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               },
                       ),
                     ),
-                    validator: Validators.password,
+                    validator: (value) => Validators.password(value, l10n: l10n),
                   ),
                 ),
                 ValueListenableBuilder<TextEditingValue>(
@@ -340,10 +339,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 16),
 
                 // Confirm Password field
-                Text('Confirm Password', style: theme.textTheme.titleMedium),
+                Text(l10n.confirmPassword, style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
                 Semantics(
-                  label: 'Confirm Password',
+                  label: l10n.confirmPassword,
                   textField: true,
                   child: TextFormField(
                     key: const ValueKey('register-confirm-password-field'),
@@ -354,13 +353,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     onChanged: (_) => _formKey.currentState?.validate(),
                     onFieldSubmitted: (_) => _handleRegister(),
                     decoration: InputDecoration(
-                      hintText: 'Confirm your password',
+                      hintText: l10n.confirmYourPassword,
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         key: const ValueKey('register-confirm-password-toggle'),
                         tooltip: _obscureConfirmPassword
-                            ? 'Show confirm password'
-                            : 'Hide confirm password',
+                            ? l10n.showPassword
+                            : l10n.hidePassword,
                         icon: Icon(
                           _obscureConfirmPassword
                               ? Icons.visibility_outlined
@@ -378,10 +377,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please confirm your password';
+                        return l10n.confirmPasswordPrompt;
                       }
                       if (value != _passwordController.text) {
-                        return 'Passwords do not match';
+                        return l10n.passwordsDoNotMatch;
                       }
                       return null;
                     },
@@ -390,23 +389,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: 16),
 
                 // Barangay field
-                Text('Barangay', style: theme.textTheme.titleMedium),
+                Text(l10n.barangay, style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
                 ref
                     .watch(barangaysProvider)
                     .when(
                       loading: () => const LinearProgressIndicator(),
                       error: (_, _) => Text(
-                        'Failed to load barangays. Please restart the app.',
+                        l10n.failedLoadBarangays,
                         style: TextStyle(color: theme.colorScheme.error),
                       ),
                       data: (barangays) => DropdownButtonFormField<String>(
                         key: const ValueKey('register-barangay-field'),
                         initialValue: _selectedBarangayId,
                         isExpanded: true,
-                        decoration: const InputDecoration(
-                          hintText: 'Select your barangay',
-                          prefixIcon: Icon(Icons.location_city_outlined),
+                        decoration: InputDecoration(
+                          hintText: l10n.selectYourBarangay,
+                          prefixIcon: const Icon(Icons.location_city_outlined),
                         ),
                         items: barangays
                             .map(
@@ -421,7 +420,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             : (value) =>
                                   setState(() => _selectedBarangayId = value),
                         validator: (_) => _selectedBarangayId == null
-                            ? 'Please select your barangay'
+                            ? l10n.pleaseSelectBarangay
                             : null,
                       ),
                     ),
@@ -442,7 +441,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(
-                            'I agree to the',
+                            l10n.iAgreeTo,
                             style: theme.textTheme.bodyMedium,
                           ),
                           TextButton(
@@ -457,9 +456,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             onPressed: isLoading
                                 ? null
                                 : _showTermsAndPrivacyPolicy,
-                            child: const Text(
-                              'Terms & Conditions and Privacy Policy',
-                            ),
+                            child: Text(l10n.termsAndPrivacy),
                           ),
                         ],
                       ),
@@ -478,15 +475,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   onPressed: isLoading ? null : _handleRegister,
                   child: isLoading
-                      ? const SizedBox.square(
+                      ? SizedBox.square(
                           dimension: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
                             color: Colors.white,
-                            semanticsLabel: 'Creating account',
+                            semanticsLabel: l10n.creatingAccount,
                           ),
                         )
-                      : const Text('Create Account'),
+                      : Text(l10n.createAccount),
                 ),
                 const SizedBox(height: 16),
 
@@ -496,7 +493,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
-                      'Already have an account?',
+                      l10n.alreadyHaveAccount,
                       key: const ValueKey('register-login-prompt'),
                       style: theme.textTheme.bodyMedium,
                     ),
@@ -508,7 +505,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                       ),
                       onPressed: isLoading ? null : _navigateToLogin,
-                      child: const Text('Login'),
+                      child: Text(l10n.login),
                     ),
                   ],
                 ),
@@ -533,38 +530,6 @@ class _PolicyDialog extends StatefulWidget {
 class _PolicyDialogState extends State<_PolicyDialog> {
   late final ScrollController _scrollController;
   bool _canAccept = false;
-
-  static const String _dummyContent = '''
-========================================
-TERMS & CONDITIONS
-========================================
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer in massa id massa finibus ullamcorper. Sed volutpat ullamcorper eros, et dictum augue laoreet non. Curabitur bibendum tincidunt ante, at tristique ex dignissim non.
-
-Vivamus nec justo vitae eros feugiat efficitur. Fusce interdum, justo in elementum feugiat, nisl nunc posuere mi, a hendrerit elit orci at nibh. Suspendisse potenti. Quisque lobortis mi id ipsum dignissim, non ullamcorper nisl eleifend.
-
-Mauris porttitor neque id justo egestas, et varius mi porttitor. Nunc euismod, mi in viverra viverra, augue leo convallis neque, in blandit risus justo vitae orci. Proin ultrices sapien eu sem fermentum, ac laoreet lectus pellentesque.
-
-Nulla facilisi. Pellentesque in gravida urna. Donec pretium arcu vitae leo ultricies, in euismod nibh laoreet. In in aliquam odio, in sollicitudin lectus. Cras cursus egestas sapien, sed imperdiet eros elementum ac.
-
-Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Integer tristique libero ac lacus placerat, vel ultricies est volutpat. Nunc posuere, turpis in fermentum viverra, ipsum lectus tristique justo, id convallis metus justo nec mauris.
-
-
-========================================
-PRIVACY POLICY
-========================================
-
-Aliquam erat volutpat. Etiam aliquam sapien ac odio volutpat, eu scelerisque erat bibendum. Morbi in malesuada elit. Integer tincidunt vulputate dui, in gravida purus tincidunt non. Sed sagittis commodo est, ut bibendum lorem blandit vel.
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer in massa id massa finibus ullamcorper. Sed volutpat ullamcorper eros, et dictum augue laoreet non. Curabitur bibendum tincidunt ante, at tristique ex dignissim non.
-
-Vivamus nec justo vitae eros feugiat efficitur. Fusce interdum, justo in elementum feugiat, nisl nunc posuere mi, a hendrerit elit orci at nibh. Suspendisse potenti. Quisque lobortis mi id ipsum dignissim, non ullamcorper nisl eleifend.
-
-Mauris porttitor neque id justo egestas, et varius mi porttitor. Nunc euismod, mi in viverra viverra, augue leo convallis neque, in blandit risus justo vitae orci. Proin ultrices sapien eu sem fermentum, ac laoreet lectus pellentesque.
-
-
-By tapping Accept, you acknowledge you have read and understood both the Terms & Conditions and Privacy Policy.
-''';
 
   @override
   void initState() {
@@ -595,6 +560,7 @@ By tapping Accept, you acknowledge you have read and understood both the Terms &
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
       title: Text(widget.title),
       content: SizedBox(
@@ -608,15 +574,15 @@ By tapping Accept, you acknowledge you have read and understood both the Terms &
                 thumbVisibility: true,
                 child: SingleChildScrollView(
                   controller: _scrollController,
-                  child: const Text(_dummyContent),
+                  child: Text(l10n.termsPolicyContent),
                 ),
               ),
             ),
             const SizedBox(height: 12),
             Text(
               _canAccept
-                  ? 'You can now accept.'
-                  : 'Scroll to the bottom to enable Accept.',
+                  ? l10n.policyCanAccept
+                  : l10n.policyScrollToAccept,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
@@ -625,11 +591,11 @@ By tapping Accept, you acknowledge you have read and understood both the Terms &
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Close'),
+          child: Text(l10n.close),
         ),
         ElevatedButton(
           onPressed: _canAccept ? () => Navigator.of(context).pop(true) : null,
-          child: const Text('Accept'),
+          child: Text(l10n.accept),
         ),
       ],
     );

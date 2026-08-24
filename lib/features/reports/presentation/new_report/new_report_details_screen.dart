@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../auth/presentation/barangays_provider.dart';
@@ -66,11 +67,12 @@ class _NewReportDetailsScreenState
   Widget build(BuildContext context) {
     final state = ref.watch(newReportControllerProvider);
     final controller = ref.read(newReportControllerProvider.notifier);
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New Report')),
+      appBar: AppBar(title: Text(l10n.newReport)),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -94,7 +96,7 @@ class _NewReportDetailsScreenState
                   children: [
                     // Step title
                     Text(
-                      'Step 3 of 4',
+                      l10n.stepOf(3, 4),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600,
@@ -102,14 +104,14 @@ class _NewReportDetailsScreenState
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Report Details',
+                      l10n.reportDetails,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Describe the issue you\'re reporting',
+                      l10n.describeReportIssue,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: isDark
                             ? AppColors.darkTextSecondary
@@ -138,7 +140,7 @@ class _NewReportDetailsScreenState
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'AI will automatically categorize your report',
+                              l10n.aiCategorize,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: isDark
                                     ? AppColors.darkTextPrimary
@@ -152,7 +154,10 @@ class _NewReportDetailsScreenState
                     const SizedBox(height: 16),
 
                     // ===== TITLE (OPTIONAL) =====
-                    _buildSectionLabel(theme, 'Title (Optional)'),
+                    _buildSectionLabel(
+                      theme,
+                      '${l10n.reportTitle} (${l10n.optional})',
+                    ),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _titleController,
@@ -163,7 +168,7 @@ class _NewReportDetailsScreenState
                         _checkFormValidity();
                       },
                       decoration: InputDecoration(
-                        hintText: 'Brief title for your report',
+                        hintText: l10n.briefTitle,
                         prefixIcon: const Icon(Icons.title),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -171,7 +176,7 @@ class _NewReportDetailsScreenState
                       ),
                       validator: (v) {
                         if (v != null && v.trim().isNotEmpty) {
-                          return Validators.reportText(v, isRequired: false);
+                          return Validators.reportText(v, isRequired: false, l10n: l10n);
                         }
                         return null;
                       },
@@ -179,7 +184,7 @@ class _NewReportDetailsScreenState
                     const SizedBox(height: 16),
 
                     // ===== DESCRIPTION =====
-                    _buildSectionLabel(theme, 'Description *'),
+                    _buildSectionLabel(theme, '${l10n.reportDescription} *'),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _descriptionController,
@@ -191,22 +196,21 @@ class _NewReportDetailsScreenState
                         _checkFormValidity();
                       },
                       decoration: InputDecoration(
-                        hintText:
-                            'Describe the issue in detail...\n\nInclude any relevant information that might help resolve it.',
+                        hintText: l10n.descriptionDetailed,
                         alignLabelWithHint: true,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      validator: Validators.reportText,
+                      validator: (value) => Validators.reportText(value, l10n: l10n),
                     ),
                     const SizedBox(height: 16),
 
                     // ===== IS HAPPENING NOW =====
                     SwitchListTile(
-                      title: const Text('Is this happening right now?'),
+                      title: Text(l10n.isHappeningNow),
                       subtitle: Text(
-                        'Mark if this incident is ongoing',
+                        l10n.incidentOngoingSubtitle,
                         style: TextStyle(
                           color: isDark
                               ? AppColors.darkTextSecondary
@@ -222,14 +226,14 @@ class _NewReportDetailsScreenState
 
                     // ===== LOCATION SECTION =====
                     Text(
-                      'Location Details',
+                      l10n.locationDetails,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 12),
 
-                    _buildSectionLabel(theme, 'City *'),
+                    _buildSectionLabel(theme, '${l10n.selectCity} *'),
                     const SizedBox(height: 8),
                     ref
                         .watch(municipalitiesProvider)
@@ -242,7 +246,7 @@ class _NewReportDetailsScreenState
                                 ? state.municipalityId
                                 : null,
                             decoration: InputDecoration(
-                              hintText: 'Select city',
+                              hintText: l10n.selectCity,
                               prefixIcon: const Icon(Icons.location_city),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -270,27 +274,25 @@ class _NewReportDetailsScreenState
                               );
                               _streetLandmarkController.clear();
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Place a location pin for the selected city.',
-                                  ),
+                                SnackBar(
+                                  content: Text(l10n.placeLocationPin),
                                 ),
                               );
                               Navigator.of(context).pop();
                             },
                             validator: (value) =>
-                                value == null ? 'Please select a city' : null,
+                                value == null ? l10n.pleaseSelectCity : null,
                           ),
                           loading: () => const LinearProgressIndicator(),
                           error: (error, stack) => Text(
-                            'City metadata is unavailable.',
+                            l10n.cityMetadataUnavailable,
                             style: TextStyle(color: theme.colorScheme.error),
                           ),
                         ),
                     const SizedBox(height: 16),
 
                     // Barangay Dropdown (stores the stable ID)
-                    _buildSectionLabel(theme, 'Barangay *'),
+                    _buildSectionLabel(theme, '${l10n.barangay} *'),
                     const SizedBox(height: 8),
                     Consumer(
                       builder: (context, ref, child) {
@@ -307,7 +309,7 @@ class _NewReportDetailsScreenState
                                 ? state.barangayId
                                 : null,
                             decoration: InputDecoration(
-                              hintText: 'Select barangay',
+                              hintText: l10n.selectBarangay,
                               prefixIcon: const Icon(
                                 Icons.location_city_outlined,
                               ),
@@ -333,12 +335,12 @@ class _NewReportDetailsScreenState
                               _checkFormValidity();
                             },
                             validator: (value) => value == null
-                                ? 'Please select a barangay'
+                                ? l10n.pleaseSelectBarangay
                                 : null,
                           ),
                           loading: () => DropdownButtonFormField<String>(
                             decoration: InputDecoration(
-                              hintText: 'Loading barangays...',
+                              hintText: l10n.loadingBarangays,
                               prefixIcon: const Icon(
                                 Icons.location_city_outlined,
                               ),
@@ -355,8 +357,8 @@ class _NewReportDetailsScreenState
                                   hintText:
                                       state.municipalityId ==
                                           defaultMunicipalityId
-                                      ? 'Using bundled Urdaneta barangays'
-                                      : 'Barangays unavailable for this city',
+                                      ? l10n.bundledBarangays
+                                      : l10n.barangaysUnavailable,
                                   prefixIcon: const Icon(
                                     Icons.location_city_outlined,
                                   ),
@@ -376,7 +378,7 @@ class _NewReportDetailsScreenState
                     const SizedBox(height: 16),
 
                     // Street / Landmark
-                    _buildSectionLabel(theme, 'Street / Landmark'),
+                    _buildSectionLabel(theme, l10n.streetLandmark),
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _streetLandmarkController,
@@ -391,7 +393,7 @@ class _NewReportDetailsScreenState
                         _checkFormValidity();
                       },
                       decoration: InputDecoration(
-                        hintText: 'Street address or nearby landmark',
+                        hintText: l10n.streetAddress,
                         prefixIcon: const Icon(Icons.place_outlined),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -420,7 +422,7 @@ class _NewReportDetailsScreenState
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'AI will automatically detect severity and urgency from your description',
+                              l10n.aiDetectSeverity,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: isDark
                                     ? AppColors.darkTextPrimary
@@ -444,7 +446,7 @@ class _NewReportDetailsScreenState
               onPressed: (state.hasDetails && _isFormValid)
                   ? _navigateToReview
                   : null,
-              child: const Text('Continue to Review'),
+              child: Text(l10n.continueToReview),
             ),
           ),
         ],

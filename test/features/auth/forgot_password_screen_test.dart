@@ -8,6 +8,7 @@ import 'package:bayantrack_mobile/features/auth/domain/auth_repository.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/auth_controller.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/forgot_password_screen.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/login_screen.dart';
+import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -667,6 +668,8 @@ Future<void> _pumpForgot(
       ],
       child: MaterialApp(
         navigatorKey: navigatorKey,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
         themeMode: brightness == Brightness.dark
