@@ -10,6 +10,8 @@ identity verification, notifications, and profile management.
 - Durable, owner-scoped post-submit evidence intents with restart recovery,
   bounded retry, manual retry, dismissal, and missing-file handling.
 - Report list/detail/closure flows and authenticated realtime invalidation.
+- Backend-owned five-level priority display with queue, suggestion, and legacy
+  compatibility precedence.
 - Identity-verification submission, status, and resubmission.
 - Basic profile editing, avatar upload/removal, and refresh on realtime/app
   lifecycle events.
@@ -34,8 +36,9 @@ API addressing is configured in
 - `127.0.0.1`: physical Android device using
   `adb reverse tcp:8000 tcp:8000`.
 
-See [`../Network_Deployment.md`](../Network_Deployment.md) for the current
-workspace startup and LAN guide.
+See the
+[`Network Deployment` guide](../BayanTrack-Backend/Readmes/Network_Deployment.md)
+for the current workspace startup and LAN guide.
 
 ## Quality gates
 
@@ -48,7 +51,8 @@ flutter build apk --debug
 
 ## Documentation
 
-- [`../PRD-Mobile.md`](../PRD-Mobile.md)
+- [`../SYSTEM_REFERENCE.md`](../SYSTEM_REFERENCE.md)
+- [`../docs/ai-explanations.md`](../docs/ai-explanations.md)
+- [`MOBILE_PRIORITIZATION_INTEGRATION.md`](MOBILE_PRIORITIZATION_INTEGRATION.md)
 - [`SPEC_MOBILE.md`](SPEC_MOBILE.md)
 - [`PERMISSIONS.md`](PERMISSIONS.md)
-- [`../BayanTrack-System-Docs/02-architecture/mobile-architecture.md`](../BayanTrack-System-Docs/02-architecture/mobile-architecture.md)
