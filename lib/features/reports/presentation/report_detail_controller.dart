@@ -51,6 +51,7 @@ class ReportDetailController extends _$ReportDetailController {
     required bool satisfied,
     int? rating,
     String? note,
+    String? reason,
     String? signatureImageId,
     String? signatureName,
   }) async {
@@ -62,6 +63,7 @@ class ReportDetailController extends _$ReportDetailController {
       satisfied: satisfied,
       rating: rating,
       note: note,
+      reason: reason,
       signatureImageId: signatureImageId,
       signatureName: signatureName,
     );

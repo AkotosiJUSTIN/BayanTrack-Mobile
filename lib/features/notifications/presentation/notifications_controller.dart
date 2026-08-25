@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/widget/widget_bridge.dart';
 import '../domain/entities/notification_preferences.dart';
 import '../domain/entities/paginated_notifications.dart';
 import '../notifications_di.dart';
@@ -26,7 +29,12 @@ class NotificationsController extends _$NotificationsController {
     );
 
     return result.when(
-      success: (data) => data,
+      success: (data) {
+        unawaited(
+          ref.read(widgetBridgeProvider).syncUnreadCount(data.unreadCount),
+        );
+        return data;
+      },
       failure: (failure) => throw Exception(failure.message),
     );
   }

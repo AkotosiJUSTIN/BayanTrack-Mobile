@@ -15,6 +15,7 @@ class CitizenCloseReportUseCase {
     required bool satisfied,
     int? rating,
     String? note,
+    String? reason,
     String? signatureImageId,
     String? signatureName,
   }) {
@@ -23,6 +24,7 @@ class CitizenCloseReportUseCase {
       satisfied: satisfied,
       rating: rating,
       note: note,
+      reason: reason,
       signatureImageId: signatureImageId,
       signatureName: signatureName,
     );

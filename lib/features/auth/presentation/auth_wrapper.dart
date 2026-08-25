@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../kyc/presentation/kyc_controller.dart';
@@ -9,10 +11,14 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../notifications/push_service.dart';
 import '../../notifications/local_notification_service.dart';
 import '../../notifications/presentation/notifications_controller.dart';
+import '../../notifications/presentation/notifications_screen.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/providers/connectivity_provider.dart';
+import '../../../core/providers/locale_provider.dart';
+import '../../../core/widget/widget_bridge.dart';
 import '../../images/data/evidence_upload_queue_provider.dart';
 import '../../reports/presentation/report_detail_screen.dart';
+import '../../reports/presentation/new_report/quick_report_screen.dart';
 import 'auth_realtime_controller.dart';
 import 'profile_controller.dart';
 
@@ -27,9 +33,18 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     with WidgetsBindingObserver {
   bool _pushInitialized = false;
   String? _evidenceSyncKey;
+  late final WidgetBridge _widgetBridge;
+  late final StreamSubscription<WidgetDestination>
+  _widgetDestinationSubscription;
+  bool _widgetNavigationScheduled = false;
+
   @override
   void initState() {
     super.initState();
+    _widgetBridge = ref.read(widgetBridgeProvider);
+    _widgetDestinationSubscription = _widgetBridge.destinations.listen((_) {
+      _maybeNavigateToWidgetDestination();
+    });
     WidgetsBinding.instance.addObserver(this);
     debugPrint('[AuthWrapper] Initializing...');
 
@@ -49,8 +64,53 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
 
   @override
   void dispose() {
+    unawaited(_widgetDestinationSubscription.cancel());
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _syncWidgetState(AuthState state) {
+    final locale = ref.read(appLocaleProvider);
+    unawaited(_widgetBridge.syncLocale(locale));
+    if (state is AuthSuccess) {
+      unawaited(_widgetBridge.syncAuthenticated(true));
+    } else {
+      unawaited(_widgetBridge.syncAuthenticated(false));
+    }
+  }
+
+  void _maybeNavigateToWidgetDestination() {
+    if (!mounted ||
+        _widgetNavigationScheduled ||
+        ref.read(authControllerProvider) is! AuthSuccess) {
+      return;
+    }
+
+    final destination = _widgetBridge.takePendingDestination();
+    if (destination == null) return;
+
+    _widgetNavigationScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        _widgetBridge.restoreDestination(destination);
+        _widgetNavigationScheduled = false;
+        return;
+      }
+
+      final page = switch (destination) {
+        WidgetDestination.quickReport => const QuickReportScreen(),
+        WidgetDestination.notifications => const NotificationsScreen(),
+      };
+      final navigation = Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => page));
+      unawaited(
+        navigation.then<void>((_) {
+          _widgetNavigationScheduled = false;
+          _maybeNavigateToWidgetDestination();
+        }),
+      );
+    });
   }
 
   void _syncEvidenceQueue(String? userId, bool isOnline, {bool force = false}) {
@@ -106,8 +166,12 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(authControllerProvider);
+    ref.watch(appLocaleProvider);
     final isOnline = ref.watch(isOnlineProvider);
     debugPrint('[AuthWrapper] AuthState changed: ${state.runtimeType}');
+
+    _syncWidgetState(state);
+    _maybeNavigateToWidgetDestination();
 
     // Initialize push service once after successful auth
     if (state is AuthSuccess && !_pushInitialized) {

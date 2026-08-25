@@ -302,6 +302,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
     required bool satisfied,
     int? rating,
     String? note,
+    String? reason,
     String? signatureImageId,
     String? signatureName,
   }) async {
@@ -309,6 +310,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final body = <String, dynamic>{'satisfied': satisfied};
       if (rating != null) body['rating'] = rating;
       if (note != null && note.isNotEmpty) body['note'] = note;
+      if (reason != null && reason.isNotEmpty) body['reason'] = reason;
       if (signatureImageId != null && signatureImageId.isNotEmpty) {
         body['signature_image_id'] = signatureImageId;
       }

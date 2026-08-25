@@ -1189,18 +1189,17 @@ class AppLocalizationsFil extends AppLocalizations {
   String get routingStatus => 'Status ng pag-route';
 
   @override
-  String get awaitingStaffConfirmation =>
-      'Hinihintay ang kumpirmasyon ng staff';
+  String get awaitingStaffConfirmation => 'Hinihintay ang iyong kumpirmasyon';
 
   @override
   String get routingPolicyApplied => 'Naipatupad ang patakaran sa pag-route';
 
   @override
-  String get resolutionProof => 'Katibayan ng Resolusyon';
+  String get resolutionProof => 'Katibayan ng tugon';
 
   @override
   String get resolutionProofResolved =>
-      'Katibayang ipinadala ng staff para suriin mo bago tuluyang isara.';
+      'Katibayan mula sa Departamento para masuri mo bago kumpirmahin.';
 
   @override
   String get resolutionProofClosed =>
@@ -1214,7 +1213,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get resolvedReviewDescription =>
-      'Naaksyunan ng barangay ang iyong ulat. Suriin ang ginawa nila at kumpirmahin kung maayos na nalutas ang isyu.';
+      'Suriin ang resolusyon ng Departamento. Ang pagkumpirma ay nagpapahintulot sa City na ipagpatuloy ang pinal na pagsasara; ang pag-dispute ay ibinabalik ang ulat sa City para sa pagsusuri.';
 
   @override
   String get reviewSignOff => 'Suriin at Pirmahan';
@@ -1282,7 +1281,7 @@ class AppLocalizationsFil extends AppLocalizations {
       'Naipasa mo na ang iyong pagsusuri at digital na lagda para sa ulat na ito. Wala nang kailangang gawin.';
 
   @override
-  String get resolutionSummary => 'Buod ng Resolusyon';
+  String get resolutionSummary => 'Buod ng resolusyon ng Departamento';
 
   @override
   String get rateResponse => 'I-rate ang Tugon (opsyonal)';
@@ -1333,24 +1332,39 @@ class AppLocalizationsFil extends AppLocalizations {
       'Ilagay ang iyong nakarehistrong buong pangalan.';
 
   @override
-  String get confirmResolved => 'Kumpirmahin — Nalutas ang Isyu';
+  String get confirmResolved => 'Kumpirmahin ang resolusyon';
 
   @override
-  String get disputeUnresolved => 'I-dispute — Hindi Nalutas ang Isyu';
+  String get disputeUnresolved => 'I-dispute ang resolusyon';
 
   @override
   String get disputeNotice =>
-      'Ibabalik ang ulat sa municipal office para sa karagdagang aksyon kapag nag-dispute ka.';
+      'Ang pag-dispute ay ibinabalik ang ulat sa City para sa pagsusuri.';
 
   @override
-  String get disputeResolution => 'I-dispute ang Resolusyon?';
+  String get disputeResolution => 'I-dispute ang resolusyon';
 
   @override
   String get disputeConfirmation =>
-      'Sigurado ka bang i-di-dispute ang resolusyong ito? Ibabalik ang ulat sa municipal office.';
+      'Ipaliwanag kung ano ang hindi pa nalulutas. Ibabalik ang ulat sa City para sa pagsusuri.';
 
   @override
-  String get yesDispute => 'Oo, I-dispute';
+  String get disputeReasonLabel => 'Dahilan ng dispute';
+
+  @override
+  String get disputeReasonHint =>
+      'Sabihin kung ano ang kailangan pang aksyunan';
+
+  @override
+  String get disputeReasonRequired =>
+      'Ipaliwanag kung ano ang hindi pa nalulutas.';
+
+  @override
+  String get disputeSubmitFailed =>
+      'Hindi maisumite. Suriin ang koneksyon at subukan muli.';
+
+  @override
+  String get yesDispute => 'Isumite ang dispute';
 
   @override
   String get resolvedDefaultNote =>

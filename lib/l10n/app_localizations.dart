@@ -2231,7 +2231,7 @@ abstract class AppLocalizations {
   /// No description provided for @awaitingStaffConfirmation.
   ///
   /// In en, this message translates to:
-  /// **'Awaiting staff confirmation'**
+  /// **'Awaiting your confirmation'**
   String get awaitingStaffConfirmation;
 
   /// No description provided for @routingPolicyApplied.
@@ -2243,13 +2243,13 @@ abstract class AppLocalizations {
   /// No description provided for @resolutionProof.
   ///
   /// In en, this message translates to:
-  /// **'Resolution Proof'**
+  /// **'Response evidence'**
   String get resolutionProof;
 
   /// No description provided for @resolutionProofResolved.
   ///
   /// In en, this message translates to:
-  /// **'Staff-uploaded proof for your review before final closure.'**
+  /// **'Evidence from the Department for your review before you confirm.'**
   String get resolutionProofResolved;
 
   /// No description provided for @resolutionProofClosed.
@@ -2273,7 +2273,7 @@ abstract class AppLocalizations {
   /// No description provided for @resolvedReviewDescription.
   ///
   /// In en, this message translates to:
-  /// **'The barangay has addressed your report. Please review their action and confirm whether the issue was properly resolved.'**
+  /// **'Review the Department\'s resolution. Confirming lets the City proceed with final closure; disputing returns the report to the City for review.'**
   String get resolvedReviewDescription;
 
   /// No description provided for @reviewSignOff.
@@ -2393,7 +2393,7 @@ abstract class AppLocalizations {
   /// No description provided for @resolutionSummary.
   ///
   /// In en, this message translates to:
-  /// **'Resolution Summary'**
+  /// **'Department resolution summary'**
   String get resolutionSummary;
 
   /// No description provided for @rateResponse.
@@ -2489,37 +2489,61 @@ abstract class AppLocalizations {
   /// No description provided for @confirmResolved.
   ///
   /// In en, this message translates to:
-  /// **'Confirm — Issue is Resolved'**
+  /// **'Confirm resolution'**
   String get confirmResolved;
 
   /// No description provided for @disputeUnresolved.
   ///
   /// In en, this message translates to:
-  /// **'Dispute — Issue is Not Resolved'**
+  /// **'Dispute resolution'**
   String get disputeUnresolved;
 
   /// No description provided for @disputeNotice.
   ///
   /// In en, this message translates to:
-  /// **'Disputing will re-escalate the report to the municipal office for further action.'**
+  /// **'Disputing returns the report to the City for review.'**
   String get disputeNotice;
 
   /// No description provided for @disputeResolution.
   ///
   /// In en, this message translates to:
-  /// **'Dispute Resolution?'**
+  /// **'Dispute resolution'**
   String get disputeResolution;
 
   /// No description provided for @disputeConfirmation.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure you want to dispute this resolution? The report will be escalated back to the municipal office.'**
+  /// **'Explain what remains unresolved. The report will return to the City for review.'**
   String get disputeConfirmation;
+
+  /// No description provided for @disputeReasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for dispute'**
+  String get disputeReasonLabel;
+
+  /// No description provided for @disputeReasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what still needs attention'**
+  String get disputeReasonHint;
+
+  /// No description provided for @disputeReasonRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please explain what remains unresolved.'**
+  String get disputeReasonRequired;
+
+  /// No description provided for @disputeSubmitFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not submit. Check your connection and try again.'**
+  String get disputeSubmitFailed;
 
   /// No description provided for @yesDispute.
   ///
   /// In en, this message translates to:
-  /// **'Yes, Dispute'**
+  /// **'Submit dispute'**
   String get yesDispute;
 
   /// No description provided for @resolvedDefaultNote.

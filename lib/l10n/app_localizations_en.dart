@@ -1188,17 +1188,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get routingStatus => 'Routing status';
 
   @override
-  String get awaitingStaffConfirmation => 'Awaiting staff confirmation';
+  String get awaitingStaffConfirmation => 'Awaiting your confirmation';
 
   @override
   String get routingPolicyApplied => 'Routing policy applied';
 
   @override
-  String get resolutionProof => 'Resolution Proof';
+  String get resolutionProof => 'Response evidence';
 
   @override
   String get resolutionProofResolved =>
-      'Staff-uploaded proof for your review before final closure.';
+      'Evidence from the Department for your review before you confirm.';
 
   @override
   String get resolutionProofClosed =>
@@ -1213,7 +1213,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resolvedReviewDescription =>
-      'The barangay has addressed your report. Please review their action and confirm whether the issue was properly resolved.';
+      'Review the Department\'s resolution. Confirming lets the City proceed with final closure; disputing returns the report to the City for review.';
 
   @override
   String get reviewSignOff => 'Review & Sign Off';
@@ -1281,7 +1281,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'You have already submitted your review and digital signature for this report. No further action is needed.';
 
   @override
-  String get resolutionSummary => 'Resolution Summary';
+  String get resolutionSummary => 'Department resolution summary';
 
   @override
   String get rateResponse => 'Rate the Response (optional)';
@@ -1332,24 +1332,37 @@ class AppLocalizationsEn extends AppLocalizations {
       'Please enter your registered full name.';
 
   @override
-  String get confirmResolved => 'Confirm — Issue is Resolved';
+  String get confirmResolved => 'Confirm resolution';
 
   @override
-  String get disputeUnresolved => 'Dispute — Issue is Not Resolved';
+  String get disputeUnresolved => 'Dispute resolution';
 
   @override
   String get disputeNotice =>
-      'Disputing will re-escalate the report to the municipal office for further action.';
+      'Disputing returns the report to the City for review.';
 
   @override
-  String get disputeResolution => 'Dispute Resolution?';
+  String get disputeResolution => 'Dispute resolution';
 
   @override
   String get disputeConfirmation =>
-      'Are you sure you want to dispute this resolution? The report will be escalated back to the municipal office.';
+      'Explain what remains unresolved. The report will return to the City for review.';
 
   @override
-  String get yesDispute => 'Yes, Dispute';
+  String get disputeReasonLabel => 'Reason for dispute';
+
+  @override
+  String get disputeReasonHint => 'Tell us what still needs attention';
+
+  @override
+  String get disputeReasonRequired => 'Please explain what remains unresolved.';
+
+  @override
+  String get disputeSubmitFailed =>
+      'Could not submit. Check your connection and try again.';
+
+  @override
+  String get yesDispute => 'Submit dispute';
 
   @override
   String get resolvedDefaultNote =>

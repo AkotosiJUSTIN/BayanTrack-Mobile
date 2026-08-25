@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:signature/signature.dart';
 
+import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/string_utils.dart';
 import '../../../l10n/app_localizations.dart';
@@ -89,39 +90,46 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
-  Future<void> _submit({required bool satisfied}) async {
+  Future<String?> _submit({
+    required bool satisfied,
+    String? disputeReason,
+  }) async {
     final l10n = AppLocalizations.of(context);
-    if (!_nameValid) {
-      _showSnackBar(
-        '${l10n.registeredNameRequired} ($_userFullName)',
-        error: true,
-      );
-      return;
-    }
-    if (!_canvasValid) {
-      _showSnackBar(l10n.signatureRequired, error: true);
-      return;
+    if (_isSubmitting) return l10n.disputeSubmitFailed;
+
+    if (satisfied) {
+      if (!_nameValid) {
+        return '${l10n.registeredNameRequired} ($_userFullName)';
+      }
+      if (!_canvasValid) return l10n.signatureRequired;
+    } else if (disputeReason?.trim().isNotEmpty != true) {
+      return l10n.disputeReasonRequired;
     }
 
     setState(() => _isSubmitting = true);
 
     try {
-      // 1. Export canvas as PNG bytes
-      final signatureBytes = await _signatureController.toPngBytes();
       String? signatureImageId;
 
-      // 2. Upload signature image to get a proper record ID
-      if (signatureBytes != null && signatureBytes.isNotEmpty) {
+      if (satisfied) {
+        // Confirmation keeps the existing drawn-signature requirement. A
+        // failed upload is retryable; it must not silently become unsigned.
+        final signatureBytes = await _signatureController.toPngBytes();
+        if (signatureBytes == null || signatureBytes.isEmpty) {
+          return l10n.signatureRequired;
+        }
+        File? tempFile;
         try {
           final tempDir = await getTemporaryDirectory();
           final fileName =
               'signature_${widget.report.reportId ?? widget.report.id}_${DateTime.now().millisecondsSinceEpoch}.png';
-          final tempFile = File('${tempDir.path}/$fileName');
-          await tempFile.writeAsBytes(signatureBytes);
+          final file = File('${tempDir.path}/$fileName');
+          tempFile = file;
+          await file.writeAsBytes(signatureBytes);
 
           final repo = ref.read(imagesRepositoryProvider);
           final uploaded = await repo.uploadImage(
-            imageFile: tempFile,
+            imageFile: file,
             reportId: widget.report.id,
             isPrimary: false,
             purpose: 'signature',
@@ -129,19 +137,17 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           // Use the database record ID (not the S3 URL) so the backend can
           // resolve it to the closure_signature_image_id field.
           signatureImageId = uploaded.id;
-
-          // Clean up temp file
-          if (await tempFile.exists()) {
+        } catch (_) {
+          throw Exception(l10n.disputeSubmitFailed);
+        } finally {
+          if (tempFile != null && await tempFile.exists()) {
             await tempFile.delete();
           }
-        } catch (uploadError) {
-          debugPrint('Signature upload failed: $uploadError');
-          // Proceed without an image ID — backend will still store the name
         }
       }
 
-      final note = _noteController.text.trim();
-      final fullName = _nameController.text.trim();
+      final note = satisfied ? _noteController.text.trim() : null;
+      final fullName = satisfied ? _nameController.text.trim() : null;
 
       final controller = ref.read(
         reportDetailControllerProvider(widget.report.id).notifier,
@@ -149,7 +155,8 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
       final result = await controller.citizenCloseReport(
         satisfied: satisfied,
         rating: _rating > 0 ? _rating : null,
-        note: note.isNotEmpty ? note : null,
+        note: note?.isNotEmpty == true ? note : null,
+        reason: disputeReason?.trim(),
         signatureImageId: signatureImageId,
         signatureName: fullName,
       );
@@ -165,10 +172,9 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
 
       // Refresh the detail view and pop back
       ref.invalidate(reportDetailControllerProvider(widget.report.id));
-      Navigator.of(context).pop(true); // true = action was taken
+      return null;
     } catch (e) {
-      if (!mounted) return;
-      _showSnackBar(e.toString().replaceFirst('Exception: ', ''), error: true);
+      return e.toString().replaceFirst('Exception: ', '');
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -254,13 +260,20 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          20 + MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(theme, isDark),
             const SizedBox(height: 24),
             _buildResolutionCard(theme, isDark),
+            const SizedBox(height: 24),
+            _buildResponseEvidence(theme, isDark),
             const SizedBox(height: 24),
             _buildRatingSection(theme),
             const SizedBox(height: 24),
@@ -303,7 +316,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    l10n.reportResolved,
+                    l10n.awaitingStaffConfirmation,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -376,6 +389,91 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
     );
   }
 
+  Widget _buildResponseEvidence(ThemeData theme, bool isDark) {
+    final l10n = AppLocalizations.of(context);
+    final evidence = widget.report.resolvedProofImages;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : Colors.grey.shade200,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.photo_library_outlined,
+                size: 18,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                l10n.resolutionProof,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.resolutionProofResolved,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+            ),
+          ),
+          if (evidence.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 112,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: evidence.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final image = evidence[index];
+                  return Semantics(
+                    image: true,
+                    label: l10n.resolutionProof,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        ApiConstants.getImageUrl(image.url),
+                        width: 148,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 148,
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : Colors.grey.shade200,
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.image_not_supported_outlined,
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildRatingSection(ThemeData theme) {
     final l10n = AppLocalizations.of(context);
     return Column(
@@ -392,19 +490,25 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: List.generate(5, (index) {
             final starIndex = index + 1;
-            return GestureDetector(
-              onTap: () => setState(() {
-                // Tap same star again to deselect
-                _rating = _rating == starIndex ? 0 : starIndex;
-              }),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Icon(
-                  starIndex <= _rating ? Icons.star_rounded : Icons.star_outline_rounded,
-                  size: 36,
-                  color: starIndex <= _rating
-                      ? Colors.amber.shade600
-                      : Colors.grey.shade400,
+            return Semantics(
+              button: true,
+              label: '${l10n.rateResponse}: $starIndex',
+              child: GestureDetector(
+                onTap: () => setState(() {
+                  // Tap same star again to deselect
+                  _rating = _rating == starIndex ? 0 : starIndex;
+                }),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(
+                    starIndex <= _rating
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
+                    size: 36,
+                    color: starIndex <= _rating
+                        ? Colors.amber.shade600
+                        : Colors.grey.shade400,
+                  ),
                 ),
               ),
             );
@@ -598,7 +702,18 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
       children: [
         // Primary: Confirm Resolved
         FilledButton.icon(
-          onPressed: _isSubmitting ? null : () => _submit(satisfied: true),
+          key: const ValueKey('citizen-review-confirm'),
+          onPressed: _isSubmitting
+              ? null
+              : () async {
+                  final error = await _submit(satisfied: true);
+                  if (!mounted) return;
+                  if (error != null) {
+                    _showSnackBar(error, error: true);
+                  } else {
+                    Navigator.of(context).pop(true);
+                  }
+                },
           icon: _isSubmitting
               ? const SizedBox(
                   width: 18,
@@ -619,12 +734,13 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
 
         // Secondary: Dispute / Reopen
         OutlinedButton.icon(
-          onPressed: _isSubmitting ? null : () => _confirmReopen(theme),
-          icon: const Icon(Icons.report_problem_outlined),
+          key: const ValueKey('citizen-review-dispute'),
+          onPressed: _isSubmitting ? null : _showDisputeSheet,
+          icon: const Icon(Icons.chat_bubble_outline),
           label: Text(l10n.disputeUnresolved),
           style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.alertHigh,
-            side: BorderSide(color: AppColors.alertHigh),
+            foregroundColor: theme.colorScheme.primary,
+            side: BorderSide(color: theme.colorScheme.primary),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
         ),
@@ -634,35 +750,140 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           l10n.disputeNotice,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: AppColors.lightTextSecondary,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
           ),
         ),
       ],
     );
   }
 
-  Future<void> _confirmReopen(ThemeData theme) async {
+  Future<void> _showDisputeSheet() async {
     final l10n = AppLocalizations.of(context);
-    final confirm = await showDialog<bool>(
+    final reasonController = TextEditingController();
+    final reasonFocusNode = FocusNode();
+    var focusRequested = false;
+    final submitted = await showModalBottomSheet<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.disputeResolution),
-        content: Text(l10n.disputeConfirmation),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.alertHigh,
-            ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.yesDispute),
-          ),
-        ],
-      ),
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (sheetContext) {
+        var errorText;
+        var isSubmitting = false;
+
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            if (!focusRequested) {
+              focusRequested = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (sheetContext.mounted) reasonFocusNode.requestFocus();
+              });
+            }
+
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                16,
+                20,
+                20 + MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      l10n.disputeResolution,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.disputeConfirmation,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    key: const ValueKey('citizen-review-dispute-reason'),
+                    controller: reasonController,
+                    focusNode: reasonFocusNode,
+                    autofocus: true,
+                    minLines: 4,
+                    maxLines: 7,
+                    maxLength: 1000,
+                    textInputAction: TextInputAction.newline,
+                    onChanged: (_) {
+                      if (errorText != null) {
+                        setSheetState(() => errorText = null);
+                      }
+                    },
+                    decoration: InputDecoration(
+                      labelText: l10n.disputeReasonLabel,
+                      hintText: l10n.disputeReasonHint,
+                      errorText: errorText,
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      key: const ValueKey('citizen-review-dispute-submit'),
+                      onPressed: isSubmitting
+                          ? null
+                          : () async {
+                              final reason = reasonController.text.trim();
+                              if (reason.isEmpty) {
+                                setSheetState(
+                                  () => errorText = l10n.disputeReasonRequired,
+                                );
+                                reasonFocusNode.requestFocus();
+                                return;
+                              }
+                              setSheetState(() {
+                                isSubmitting = true;
+                                errorText = null;
+                              });
+                              final error = await _submit(
+                                satisfied: false,
+                                disputeReason: reason,
+                              );
+                              if (!sheetContext.mounted) return;
+                              if (error != null) {
+                                setSheetState(() {
+                                  isSubmitting = false;
+                                  errorText = error;
+                                });
+                                reasonFocusNode.requestFocus();
+                              } else {
+                                Navigator.of(sheetContext).pop(true);
+                              }
+                            },
+                      icon: isSubmitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.send_outlined),
+                      label: Text(l10n.yesDispute),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
-    if (confirm == true) _submit(satisfied: false);
+    reasonController.dispose();
+    reasonFocusNode.dispose();
+
+    if (submitted == true && mounted) Navigator.of(context).pop(true);
   }
 }
