@@ -63,10 +63,21 @@ class _NewReportDetailsScreenState
     }
   }
 
+  void _syncSuggestedLandmark(NewReportState state) {
+    if (state.landmarkManuallyEdited) return;
+    final suggested = state.streetLandmark ?? '';
+    if (_streetLandmarkController.text == suggested) return;
+    _streetLandmarkController.value = TextEditingValue(
+      text: suggested,
+      selection: TextSelection.collapsed(offset: suggested.length),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(newReportControllerProvider);
     final controller = ref.read(newReportControllerProvider.notifier);
+    _syncSuggestedLandmark(state);
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -176,7 +187,11 @@ class _NewReportDetailsScreenState
                       ),
                       validator: (v) {
                         if (v != null && v.trim().isNotEmpty) {
-                          return Validators.reportText(v, isRequired: false, l10n: l10n);
+                          return Validators.reportText(
+                            v,
+                            isRequired: false,
+                            l10n: l10n,
+                          );
                         }
                         return null;
                       },
@@ -202,7 +217,8 @@ class _NewReportDetailsScreenState
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      validator: (value) => Validators.reportText(value, l10n: l10n),
+                      validator: (value) =>
+                          Validators.reportText(value, l10n: l10n),
                     ),
                     const SizedBox(height: 16),
 
@@ -238,51 +254,53 @@ class _NewReportDetailsScreenState
                     ref
                         .watch(municipalitiesProvider)
                         .when(
-                          data: (municipalities) => DropdownButtonFormField<String>(
-                            initialValue:
-                                municipalities.any(
-                                  (item) => item.id == state.municipalityId,
-                                )
-                                ? state.municipalityId
-                                : null,
-                            decoration: InputDecoration(
-                              hintText: l10n.selectCity,
-                              prefixIcon: const Icon(Icons.location_city),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            items: municipalities
-                                .map(
-                                  (item) => DropdownMenuItem(
-                                    value: item.id,
-                                    child: Text(
-                                      '${item.name}, ${item.province}',
-                                    ),
+                          data: (municipalities) =>
+                              DropdownButtonFormField<String>(
+                                initialValue:
+                                    municipalities.any(
+                                      (item) => item.id == state.municipalityId,
+                                    )
+                                    ? state.municipalityId
+                                    : null,
+                                decoration: InputDecoration(
+                                  hintText: l10n.selectCity,
+                                  prefixIcon: const Icon(Icons.location_city),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                )
-                                .toList(),
-                            onChanged: (value) {
-                              if (value == null) return;
-                              final selected = municipalities.firstWhere(
-                                (item) => item.id == value,
-                              );
-                              controller.setMunicipality(
-                                id: selected.id,
-                                name: selected.name,
-                                province: selected.province,
-                              );
-                              _streetLandmarkController.clear();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(l10n.placeLocationPin),
                                 ),
-                              );
-                              Navigator.of(context).pop();
-                            },
-                            validator: (value) =>
-                                value == null ? l10n.pleaseSelectCity : null,
-                          ),
+                                items: municipalities
+                                    .map(
+                                      (item) => DropdownMenuItem(
+                                        value: item.id,
+                                        child: Text(
+                                          '${item.name}, ${item.province}',
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  final selected = municipalities.firstWhere(
+                                    (item) => item.id == value,
+                                  );
+                                  controller.setMunicipality(
+                                    id: selected.id,
+                                    name: selected.name,
+                                    province: selected.province,
+                                  );
+                                  _streetLandmarkController.clear();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(l10n.placeLocationPin),
+                                    ),
+                                  );
+                                  Navigator.of(context).pop();
+                                },
+                                validator: (value) => value == null
+                                    ? l10n.pleaseSelectCity
+                                    : null,
+                              ),
                           loading: () => const LinearProgressIndicator(),
                           error: (error, stack) => Text(
                             l10n.cityMetadataUnavailable,
@@ -291,89 +309,39 @@ class _NewReportDetailsScreenState
                         ),
                     const SizedBox(height: 16),
 
-                    // Barangay Dropdown (stores the stable ID)
-                    _buildSectionLabel(theme, '${l10n.barangay} *'),
+                    // Barangay is derived from the authoritative map pin.
+                    _buildSectionLabel(theme, l10n.barangay),
                     const SizedBox(height: 8),
-                    Consumer(
-                      builder: (context, ref, child) {
-                        final barangaysAsync = ref.watch(
-                          municipalityBarangaysProvider(state.municipalityId),
-                        );
-
-                        return barangaysAsync.when(
-                          data: (barangays) => DropdownButtonFormField<String>(
-                            initialValue:
-                                barangays.any(
-                                  (item) => item.id == state.barangayId,
-                                )
-                                ? state.barangayId
-                                : null,
-                            decoration: InputDecoration(
-                              hintText: l10n.selectBarangay,
-                              prefixIcon: const Icon(
-                                Icons.location_city_outlined,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            items: barangays.map((barangay) {
-                              return DropdownMenuItem(
-                                value: barangay.id,
-                                child: Text(barangay.name),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              if (value == null) return;
-                              final selected = barangays.firstWhere(
-                                (item) => item.id == value,
-                              );
-                              controller.setBarangay(
-                                id: selected.id,
-                                name: selected.name,
-                              );
-                              _checkFormValidity();
-                            },
-                            validator: (value) => value == null
-                                ? l10n.pleaseSelectBarangay
-                                : null,
-                          ),
-                          loading: () => DropdownButtonFormField<String>(
-                            decoration: InputDecoration(
-                              hintText: l10n.loadingBarangays,
-                              prefixIcon: const Icon(
-                                Icons.location_city_outlined,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            items: const [],
-                            onChanged: null,
-                          ),
-                          error: (error, stack) =>
-                              DropdownButtonFormField<String>(
-                                decoration: InputDecoration(
-                                  hintText:
-                                      state.municipalityId ==
-                                          defaultMunicipalityId
-                                      ? l10n.bundledBarangays
-                                      : l10n.barangaysUnavailable,
-                                  prefixIcon: const Icon(
-                                    Icons.location_city_outlined,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: theme.colorScheme.error,
-                                    ),
+                    InputDecorator(
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.location_city_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: state.isResolvingBarangay
+                          ? Row(
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.primary,
                                   ),
                                 ),
-                                items: const [],
-                                onChanged: null,
+                                const SizedBox(width: 10),
+                                Text(l10n.gettingLocation),
+                              ],
+                            )
+                          : Text(
+                              state.barangay ?? l10n.barangaysUnavailable,
+                              style: TextStyle(
+                                color: state.barangay == null
+                                    ? theme.hintColor
+                                    : null,
                               ),
-                        );
-                      },
+                            ),
                     ),
                     const SizedBox(height: 16),
 
@@ -400,6 +368,61 @@ class _NewReportDetailsScreenState
                         ),
                       ),
                     ),
+                    if (state.isResolvingLandmark)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              l10n.gettingLocation,
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (state.nearbyLandmarkSuggestions.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: state.nearbyLandmarkSuggestions
+                              .map(
+                                (suggestion) => ActionChip(
+                                  avatar: const Icon(
+                                    Icons.place_outlined,
+                                    size: 16,
+                                  ),
+                                  label: Text(suggestion),
+                                  onPressed: () {
+                                    _streetLandmarkController.text = suggestion;
+                                    controller.setStreetLandmark(suggestion);
+                                    _checkFormValidity();
+                                  },
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ),
+                    if (state.landmarkLookupError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(
+                          state.landmarkLookupError!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.hintColor,
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 24),
 
                     // ===== AI PRIORITIZATION INFO =====

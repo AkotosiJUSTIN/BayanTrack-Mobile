@@ -9,11 +9,13 @@ import '../../../../core/constants/urdaneta_geo.dart';
 import '../../../../core/maps/municipality_map.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/municipality_geo.dart';
+import '../../../auth/auth_di.dart';
 import '../../../auth/data/auth_models.dart';
 import '../../../auth/presentation/barangays_provider.dart';
 import '../../../../l10n/app_localizations.dart';
 import 'new_report_controller.dart';
 import 'new_report_details_screen.dart';
+import 'quick_report_geo.dart';
 
 enum _LocationInputMode { phone, manual }
 
@@ -38,6 +40,8 @@ class _NewReportLocationScreenState
   Position? _currentPosition;
   LatLng? _selectedPoint;
   String? _pendingMetadataId;
+  String? _lastBarangayResolutionKey;
+  int _landmarkLookupVersion = 0;
   _LocationInputMode _locationInputMode = _LocationInputMode.phone;
 
   @override
@@ -315,6 +319,8 @@ class _NewReportLocationScreenState
     }
 
     final controller = ref.read(newReportControllerProvider.notifier);
+    _lastBarangayResolutionKey = null;
+    controller.beginBarangayResolution();
     controller.setLocation(
       latitude: point.latitude,
       longitude: point.longitude,
@@ -329,7 +335,78 @@ class _NewReportLocationScreenState
       _error = null;
     });
 
+    _lookupNearbyLandmarks(point);
+
     if (moveCamera) _moveCameraToSelection();
+  }
+
+  void _scheduleBarangayResolution(
+    NewReportState state,
+    AsyncValue<List<BarangayModel>> barangaysAsync,
+  ) {
+    final point = _selectedPoint;
+    if (point == null || state.latitude == null || state.longitude == null) {
+      return;
+    }
+    final barangays = barangaysAsync.asData?.value;
+    if (barangays == null && !barangaysAsync.hasError) return;
+    final sourceKey = barangaysAsync.hasError
+        ? 'error'
+        : barangays!
+              .map((item) => '${item.id}:${item.centerLat}:${item.centerLng}')
+              .join('|');
+    final key =
+        '${state.municipalityId}:${point.latitude}:${point.longitude}:$sourceKey';
+    if (_lastBarangayResolutionKey == key) return;
+    _lastBarangayResolutionKey = key;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final current = ref.read(newReportControllerProvider);
+      if (current.latitude != point.latitude ||
+          current.longitude != point.longitude ||
+          current.municipalityId != state.municipalityId) {
+        return;
+      }
+      final resolved = barangays == null
+          ? null
+          : deriveNearestBarangay(
+              barangays,
+              latitude: point.latitude,
+              longitude: point.longitude,
+            );
+      ref
+          .read(newReportControllerProvider.notifier)
+          .completeBarangayResolution(resolved);
+    });
+  }
+
+  Future<void> _lookupNearbyLandmarks(LatLng point) async {
+    final requestVersion = ++_landmarkLookupVersion;
+    final controller = ref.read(newReportControllerProvider.notifier);
+    controller.beginLandmarkLookup();
+    final result = await (() async {
+      try {
+        return await ref
+            .read(authRepositoryProvider)
+            .getNearbyLandmarks(
+              latitude: point.latitude,
+              longitude: point.longitude,
+            );
+      } catch (_) {
+        return null;
+      }
+    })();
+    if (!mounted || requestVersion != _landmarkLookupVersion) return;
+    if (result == null) {
+      controller.failLandmarkLookup();
+      return;
+    }
+    result.when(
+      success: (landmarks) =>
+          controller.completeLandmarkLookup(suggestNearbyLandmark(landmarks)),
+      failure: (_) => controller.failLandmarkLookup(),
+    );
   }
 
   void _moveCameraToSelection() {
@@ -399,6 +476,10 @@ class _NewReportLocationScreenState
   Widget build(BuildContext context) {
     final state = ref.watch(newReportControllerProvider);
     final municipalitiesAsync = ref.watch(municipalitiesProvider);
+    final barangaysAsync = ref.watch(
+      municipalityBarangaysProvider(state.municipalityId),
+    );
+    _scheduleBarangayResolution(state, barangaysAsync);
     final municipality = municipalitiesAsync.asData == null
         ? null
         : findMunicipalityMetadata(
@@ -707,6 +788,34 @@ class _NewReportLocationScreenState
                 if (state.latitude != null && state.longitude != null)
                   Text(
                     '${state.latitude!.toStringAsFixed(6)}, ${state.longitude!.toStringAsFixed(6)}',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                if (state.isResolvingBarangay)
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 11,
+                        height: 11,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        l10n.gettingLocation,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  )
+                else if (state.barangay != null)
+                  Text(
+                    '${l10n.barangay}: ${state.barangay}',
+                    style: theme.textTheme.bodySmall,
+                  )
+                else if (state.latitude != null && state.longitude != null)
+                  Text(
+                    l10n.barangaysUnavailable,
                     style: theme.textTheme.bodySmall,
                   ),
               ],

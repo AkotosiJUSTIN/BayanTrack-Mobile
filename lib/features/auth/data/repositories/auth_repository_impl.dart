@@ -318,4 +318,32 @@ class AuthRepositoryImpl implements AuthRepository {
       return Err(ErrorMapper.mapException(e, stack));
     }
   }
+
+  @override
+  Future<Result<List<NearbyLandmarkModel>>> getNearbyLandmarks({
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      final response = await _dio.get(
+        ApiConstants.nearbyLandmarks,
+        queryParameters: {'latitude': latitude, 'longitude': longitude},
+      );
+      final rawLandmarks = response.data is Map
+          ? response.data['landmarks']
+          : null;
+      if (rawLandmarks is! List) return const Success([]);
+      final landmarks = rawLandmarks
+          .whereType<Map>()
+          .map(
+            (item) =>
+                NearbyLandmarkModel.fromJson(Map<String, dynamic>.from(item)),
+          )
+          .where((item) => item.name.isNotEmpty)
+          .toList(growable: false);
+      return Success(landmarks);
+    } catch (e, stack) {
+      return Err(ErrorMapper.mapException(e, stack));
+    }
+  }
 }

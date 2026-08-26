@@ -313,3 +313,25 @@ sealed class BarangaysResponse with _$BarangaysResponse {
   factory BarangaysResponse.fromJson(Map<String, dynamic> json) =>
       _$BarangaysResponseFromJson(json);
 }
+
+/// Optional named-place context for a report location.
+class NearbyLandmarkModel {
+  final String name;
+  final double distanceMeters;
+  final String? category;
+
+  const NearbyLandmarkModel({
+    required this.name,
+    required this.distanceMeters,
+    this.category,
+  });
+
+  factory NearbyLandmarkModel.fromJson(Map<String, dynamic> json) {
+    return NearbyLandmarkModel(
+      name: json['name']?.toString().trim() ?? '',
+      distanceMeters:
+          (json['distance_meters'] as num?)?.toDouble() ?? double.infinity,
+      category: json['category']?.toString(),
+    );
+  }
+}

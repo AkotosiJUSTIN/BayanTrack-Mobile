@@ -61,6 +61,7 @@ class ApiConstants {
   static const String changePassword = '/auth/change-password/';
   static const String municipalities = '/auth/municipalities/';
   static const String barangays = '/auth/barangays/';
+  static const String nearbyLandmarks = '/auth/nearby-landmarks/';
 
   // Reports Endpoints
   static const String reports = '/reports/';

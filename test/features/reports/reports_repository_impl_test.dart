@@ -40,6 +40,8 @@ void main() {
         latitude: '15.9813940000',
         longitude: '120.6284780000',
         locationAccuracy: 'exact',
+        streetLandmark: 'Urdaneta Public Market',
+        location: 'Urdaneta Public Market',
         isQuickReport: true,
       );
 
@@ -48,6 +50,10 @@ void main() {
       expect(sent?['barangay_id'], 'bactad_east');
       expect(sent?['barangay'], 'Bactad East');
       expect(sent?['zone'], 'Bactad East');
+      expect(sent?['latitude'], '15.9813940000');
+      expect(sent?['longitude'], '120.6284780000');
+      expect(sent?['street_landmark'], 'Urdaneta Public Market');
+      expect(sent?['location'], 'Urdaneta Public Market');
       expect(sent?['is_quick_report'], isTrue);
     },
   );

@@ -193,8 +193,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       if (!serviceEnabled) {
         if (!mounted) return;
         setState(() {
-          _locationError =
-              '${l10n.locationServicesDisabled} ${l10n.manualPin}';
+          _locationError = '${l10n.locationServicesDisabled} ${l10n.manualPin}';
           _isLoadingLocation = false;
         });
         return;
@@ -218,7 +217,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         if (!mounted) return;
         setState(() {
           _locationError =
-            '${l10n.locationPermissionSettings} ${l10n.manualPin}';
+              '${l10n.locationPermissionSettings} ${l10n.manualPin}';
           _isLoadingLocation = false;
         });
         return;
@@ -284,8 +283,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         _isGettingPreciseLocation = false;
         _isLoadingLocation = false;
         if (_currentPosition == null) {
-          _locationError =
-              '${l10n.locationRequestTimedOut} ${l10n.manualPin}';
+          _locationError = '${l10n.locationRequestTimedOut} ${l10n.manualPin}';
         }
       });
     } catch (e) {
@@ -363,7 +361,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     final l10n = AppLocalizations.of(context);
 
     final description = _descriptionController.text.trim();
-    final descriptionError = quickReportDescriptionError(description, l10n: l10n);
+    final descriptionError = quickReportDescriptionError(
+      description,
+      l10n: l10n,
+    );
     if (descriptionError != null) {
       AppToast.warning(context, descriptionError);
       return;
@@ -465,7 +466,9 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
             province: _selectedMunicipality.province,
             latitude: point.latitude,
             longitude: point.longitude,
-            location: _locationLabel,
+            // The quick flow has no editable landmark field; GPS text must not
+            // be persisted as a landmark by the legacy serializer mapping.
+            location: null,
           );
       reportId = report.id;
     } catch (e) {
@@ -521,10 +524,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     final auth = ref.read(authControllerProvider);
     final userId = auth is AuthSuccess ? auth.user?.id : null;
     if (userId == null) {
-      AppToast.warning(
-        context,
-        '${l10n.reportSubmitted} ${l10n.signInAgain}',
-      );
+      AppToast.warning(context, '${l10n.reportSubmitted} ${l10n.signInAgain}');
       return;
     }
 
@@ -537,10 +537,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       );
       if (intents.single.state == EvidenceUploadState.missingLocalFile) {
         if (mounted) {
-          AppToast.warning(
-            context,
-            l10n.evidenceFileMissing,
-          );
+          AppToast.warning(context, l10n.evidenceFileMissing);
         }
         return;
       }
@@ -550,10 +547,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       }
     } catch (_) {
       if (!mounted) return;
-      AppToast.warning(
-        context,
-        l10n.evidenceUploadFailed,
-      );
+      AppToast.warning(context, l10n.evidenceUploadFailed);
     }
   }
 
@@ -849,9 +843,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                 ),
                               ),
                               const SizedBox(width: 10),
-                              Flexible(
-                                child: Text(l10n.submittingQuickReport),
-                              ),
+                              Flexible(child: Text(l10n.submittingQuickReport)),
                             ],
                           )
                         : Text(l10n.submitQuickReport),
@@ -1122,7 +1114,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                                 key: const Key(
                                                   'quick-report-refresh-location',
                                                 ),
-                                                tooltip: l10n.refreshDeviceLocation,
+                                                tooltip:
+                                                    l10n.refreshDeviceLocation,
                                                 constraints:
                                                     const BoxConstraints.tightFor(
                                                       width: 48,
@@ -1201,7 +1194,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                             color: scheme.secondary,
                                           ),
                                         ),
-                                        TextSpan(text: ' ${l10n.incidentLocationSelected}'),
+                                        TextSpan(
+                                          text:
+                                              ' ${l10n.incidentLocationSelected}',
+                                        ),
                                       ],
                                     ),
                                     style: theme.textTheme.bodySmall,

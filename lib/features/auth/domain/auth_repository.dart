@@ -83,4 +83,10 @@ abstract interface class AuthRepository {
   Future<Result<List<BarangayModel>>> getBarangays({
     String municipalityId = 'urdaneta',
   });
+
+  /// Get optional named places near a report coordinate.
+  Future<Result<List<NearbyLandmarkModel>>> getNearbyLandmarks({
+    required double latitude,
+    required double longitude,
+  });
 }

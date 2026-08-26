@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/constants/urdaneta_geo.dart';
+import '../../../auth/data/auth_models.dart';
 import '../../data/report_models.dart';
 import '../../domain/entities/report.dart' as domain;
 import '../../reports_di.dart';
+import 'quick_report_geo.dart';
 
 part 'new_report_controller.g.dart';
 
@@ -37,6 +39,11 @@ class NewReportState {
   final double? longitude;
   final LocationAccuracy locationAccuracy;
   final String? location; // Human-readable full address
+  final bool isResolvingBarangay;
+  final bool isResolvingLandmark;
+  final List<String> nearbyLandmarkSuggestions;
+  final String? landmarkLookupError;
+  final bool landmarkManuallyEdited;
 
   // Section C: Consent & Declaration
   final bool declarationConfirmed;
@@ -64,6 +71,11 @@ class NewReportState {
     this.longitude,
     this.locationAccuracy = LocationAccuracy.approximate,
     this.location,
+    this.isResolvingBarangay = false,
+    this.isResolvingLandmark = false,
+    this.nearbyLandmarkSuggestions = const [],
+    this.landmarkLookupError,
+    this.landmarkManuallyEdited = false,
     this.declarationConfirmed = false,
     this.dataProcessingConsent = false,
     this.isSubmitting = false,
@@ -88,12 +100,19 @@ class NewReportState {
     double? longitude,
     LocationAccuracy? locationAccuracy,
     String? location,
+    bool? isResolvingBarangay,
+    bool? isResolvingLandmark,
+    List<String>? nearbyLandmarkSuggestions,
+    String? landmarkLookupError,
+    bool? landmarkManuallyEdited,
     bool? declarationConfirmed,
     bool? dataProcessingConsent,
     bool? isSubmitting,
     String? error,
     bool clearLocation = false,
     bool clearBarangay = false,
+    bool clearStreetLandmark = false,
+    bool clearLandmarkSuggestions = false,
   }) {
     return NewReportState(
       selectedImages: selectedImages ?? this.selectedImages,
@@ -103,7 +122,7 @@ class NewReportState {
       incidentDatetime: incidentDatetime ?? this.incidentDatetime,
       isHappeningNow: isHappeningNow ?? this.isHappeningNow,
       zone: clearLocation || clearBarangay ? null : zone ?? this.zone,
-      streetLandmark: clearLocation
+      streetLandmark: clearLocation || clearStreetLandmark
           ? null
           : streetLandmark ?? this.streetLandmark,
       municipalityId: municipalityId ?? this.municipalityId,
@@ -115,6 +134,15 @@ class NewReportState {
       longitude: clearLocation ? null : longitude ?? this.longitude,
       locationAccuracy: locationAccuracy ?? this.locationAccuracy,
       location: clearLocation ? null : location ?? this.location,
+      isResolvingBarangay: isResolvingBarangay ?? this.isResolvingBarangay,
+      isResolvingLandmark: isResolvingLandmark ?? this.isResolvingLandmark,
+      nearbyLandmarkSuggestions: clearLocation || clearLandmarkSuggestions
+          ? const []
+          : nearbyLandmarkSuggestions ?? this.nearbyLandmarkSuggestions,
+      landmarkLookupError: landmarkLookupError,
+      landmarkManuallyEdited: clearLocation
+          ? false
+          : landmarkManuallyEdited ?? this.landmarkManuallyEdited,
       declarationConfirmed: declarationConfirmed ?? this.declarationConfirmed,
       dataProcessingConsent:
           dataProcessingConsent ?? this.dataProcessingConsent,
@@ -214,6 +242,53 @@ class NewReportController extends _$NewReportController {
     );
   }
 
+  void beginBarangayResolution() {
+    state = state.copyWith(isResolvingBarangay: true, clearBarangay: true);
+  }
+
+  void completeBarangayResolution(BarangayModel? barangay) {
+    if (barangay == null) {
+      state = state.copyWith(isResolvingBarangay: false, clearBarangay: true);
+      return;
+    }
+    state = state.copyWith(
+      isResolvingBarangay: false,
+      barangayId: barangay.id,
+      barangay: barangay.name,
+      zone: barangay.name,
+    );
+  }
+
+  void beginLandmarkLookup() {
+    state = state.copyWith(
+      isResolvingLandmark: true,
+      clearStreetLandmark: !state.landmarkManuallyEdited,
+      clearLandmarkSuggestions: true,
+      landmarkLookupError: null,
+    );
+  }
+
+  void completeLandmarkLookup(NearbyLandmarkSuggestion suggestion) {
+    state = state.copyWith(
+      isResolvingLandmark: false,
+      clearStreetLandmark:
+          !state.landmarkManuallyEdited && suggestion.prefill == null,
+      streetLandmark: state.landmarkManuallyEdited
+          ? state.streetLandmark
+          : suggestion.prefill,
+      nearbyLandmarkSuggestions: suggestion.choices,
+      landmarkLookupError: null,
+    );
+  }
+
+  void failLandmarkLookup() {
+    state = state.copyWith(
+      isResolvingLandmark: false,
+      clearLandmarkSuggestions: true,
+      landmarkLookupError: 'Nearby landmark suggestions unavailable.',
+    );
+  }
+
   void setZone(String? zone) {
     state = state.copyWith(zone: zone);
   }
@@ -238,7 +313,11 @@ class NewReportController extends _$NewReportController {
   }
 
   void setStreetLandmark(String? streetLandmark) {
-    state = state.copyWith(streetLandmark: streetLandmark);
+    state = state.copyWith(
+      streetLandmark: streetLandmark,
+      landmarkManuallyEdited: true,
+      landmarkLookupError: null,
+    );
   }
 
   void setCityMunicipality(String? cityMunicipality) {
@@ -254,7 +333,12 @@ class NewReportController extends _$NewReportController {
   }
 
   void clearLocation() {
-    state = state.copyWith(clearLocation: true, clearBarangay: true);
+    state = state.copyWith(
+      clearLocation: true,
+      clearBarangay: true,
+      clearLandmarkSuggestions: true,
+      landmarkManuallyEdited: false,
+    );
   }
 
   // ==================== CONSENT (Section C) ====================
@@ -291,7 +375,9 @@ class NewReportController extends _$NewReportController {
         latitude: _formatCoordinate(state.latitude),
         longitude: _formatCoordinate(state.longitude),
         locationAccuracy: state.locationAccuracy.name,
-        location: state.streetLandmark ?? state.location,
+        // Coordinates are authoritative; do not turn a coordinate label into
+        // a persisted landmark when the optional field is blank.
+        location: state.streetLandmark,
         barangay: state.barangay ?? state.zone,
         declarationConfirmed: state.declarationConfirmed,
         dataProcessingConsent: state.dataProcessingConsent,

@@ -51,6 +51,7 @@ class _RecordingCreateReportUseCase extends CreateReportUseCase {
       'city_municipality': cityMunicipality,
       'latitude': latitude,
       'longitude': longitude,
+      'street_landmark': streetLandmark,
       'is_quick_report': isQuickReport,
     };
     return Success(Report(id: 'created', description: description));
@@ -123,6 +124,8 @@ void main() {
       expect(useCase.arguments?['barangay_id'], 'other_city:barangay_a');
       expect(useCase.arguments?['barangay'], 'Barangay A');
       expect(useCase.arguments?['city_municipality'], 'Other City');
+      expect(useCase.arguments?['latitude'], '15.9000000000');
+      expect(useCase.arguments?['longitude'], '120.6000000000');
       expect(useCase.arguments?['is_quick_report'], isFalse);
     },
   );
