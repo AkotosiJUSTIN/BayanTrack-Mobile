@@ -209,10 +209,7 @@ void main() {
       locate: () => Future<Position>.error(StateError('GPS unavailable')),
     );
     await tester.pump();
-    expect(
-      find.text('Could not get device location. Refresh or use Manual Pin.'),
-      findsOneWidget,
-    );
+    expect(find.text('Error: Refresh location / Manual Pin'), findsOneWidget);
   });
 
   testWidgets('outside GPS explains manual selection without blocking access', (
@@ -222,7 +219,12 @@ void main() {
 
     expect(find.text('Location is outside Urdaneta'), findsOneWidget);
     expect(
-      find.textContaining('You do not need to be in the city.'),
+      find.descendant(
+        of: find.byKey(const Key('quick-report-outside-location')),
+        matching: find.text(
+          'You do not need to be in the city. Select the incident inside Urdaneta.',
+        ),
+      ),
       findsOneWidget,
     );
     expect(find.byKey(const Key('quick-report-switch-manual')), findsOneWidget);
@@ -474,7 +476,7 @@ void main() {
 
     expect(observer.popCount, 1);
     expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Your quick report has been submitted.'), findsOneWidget);
+    expect(find.text('Report submitted'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pump(const Duration(seconds: 4));
     await tester.pumpAndSettle();

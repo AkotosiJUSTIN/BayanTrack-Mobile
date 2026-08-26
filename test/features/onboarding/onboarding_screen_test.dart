@@ -113,14 +113,20 @@ void main() {
   testWidgets('switches onboarding UI to Filipino immediately', (tester) async {
     await _pumpOnboarding(tester, const Size(390, 844));
 
-    await tester.tap(
-      find.byKey(const ValueKey('onboarding-language-filipino')),
+    final filipinoButton = find.byKey(
+      const ValueKey('onboarding-language-fil'),
     );
+    await tester.ensureVisible(filipinoButton);
+    await tester.pump();
+    await tester.tap(filipinoButton);
     await tester.pumpAndSettle();
 
     expect(find.text('Piliin ang wika'), findsOneWidget);
     expect(find.text('Magpatuloy'), findsOneWidget);
-    expect(find.text('Maaari mo itong baguhin anumang oras sa Profile.'), findsOneWidget);
+    expect(
+      find.text('Maaari mo itong baguhin anumang oras sa Profile.'),
+      findsOneWidget,
+    );
 
     await _tapAndFinishPageAnimation(tester, 'Magpatuloy');
     expect(find.text(_titles[0]), findsNothing);
@@ -130,26 +136,26 @@ void main() {
     expect(preferences.getString('app_locale'), 'fil');
   });
 
-  testWidgets('keeps Filipino onboarding usable on a small screen with large text', (
-    tester,
-  ) async {
-    await _pumpOnboarding(
-      tester,
-      const Size(320, 568),
-      textScale: 1.5,
-    );
+  testWidgets(
+    'keeps Filipino onboarding usable on a small screen with large text',
+    (tester) async {
+      await _pumpOnboarding(tester, const Size(320, 568), textScale: 1.5);
 
-    await tester.tap(
-      find.byKey(const ValueKey('onboarding-language-filipino')),
-    );
-    await tester.pumpAndSettle();
+      final filipinoButton = find.byKey(
+        const ValueKey('onboarding-language-fil'),
+      );
+      await tester.ensureVisible(filipinoButton);
+      await tester.pump();
+      await tester.tap(filipinoButton);
+      await tester.pumpAndSettle();
 
-    for (var page = 0; page < _titles.length; page++) {
+      for (var page = 0; page < _titles.length; page++) {
+        expect(tester.takeException(), isNull);
+        await _tapAndFinishPageAnimation(tester, 'Magpatuloy');
+      }
       expect(tester.takeException(), isNull);
-      await _tapAndFinishPageAnimation(tester, 'Magpatuloy');
-    }
-    expect(tester.takeException(), isNull);
-  });
+    },
+  );
 
   testWidgets('centers every main group between shared header and footer', (
     tester,

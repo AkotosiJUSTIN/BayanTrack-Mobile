@@ -83,7 +83,7 @@ void main() {
       await tester.pumpWidget(_app(repository, pickImage: (_) async => null));
       await tester.pumpAndSettle();
 
-      expect(find.text('Unable to load your profile.'), findsOneWidget);
+      expect(find.text('Unable to load profile.'), findsOneWidget);
       expect(find.widgetWithText(OutlinedButton, 'Retry'), findsOneWidget);
     },
   );
@@ -118,7 +118,7 @@ void main() {
       await tester.tap(find.text('Add picture'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(find.text('Choose from gallery'));
+      await tester.tap(find.text('Choose from Gallery'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       await tester.runAsync(
@@ -128,7 +128,7 @@ void main() {
 
       expect(find.text('Uploading 50%'), findsOneWidget);
       final save = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Save changes'),
+        find.widgetWithText(FilledButton, 'Save Changes'),
       );
       expect(save.onPressed, isNull);
 
@@ -191,7 +191,7 @@ void main() {
     await tester.tap(find.text('Add picture'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('Choose from gallery'));
+    await tester.tap(find.text('Choose from Gallery'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.runAsync(

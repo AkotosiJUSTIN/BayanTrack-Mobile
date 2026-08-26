@@ -1,3 +1,4 @@
+import 'package:bayantrack_mobile/core/providers/theme_provider.dart';
 import 'package:bayantrack_mobile/core/theme/app_theme.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:bayantrack_mobile/features/onboarding/presentation/onboarding_screen.dart';
@@ -139,6 +140,7 @@ Future<void> _pumpSplash(
   double textScale = 1,
 }) async {
   SharedPreferences.setMockInitialValues({'onboarding_complete': false});
+  final prefs = await SharedPreferences.getInstance();
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
@@ -146,6 +148,7 @@ Future<void> _pumpSplash(
 
   await tester.pumpWidget(
     ProviderScope(
+      overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
       child: MaterialApp(
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: AppLocalizations.localizationsDelegates,

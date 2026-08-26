@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bayantrack_mobile/core/domain/result.dart';
+import 'package:bayantrack_mobile/core/providers/theme_provider.dart';
 import 'package:bayantrack_mobile/core/theme/app_colors.dart';
 import 'package:bayantrack_mobile/core/theme/app_theme.dart';
 import 'package:bayantrack_mobile/features/auth/auth_di.dart';
@@ -13,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const _mascotAsset = 'assets/images/auth/forgot_password_mascot.webp';
 const _otpMascotAsset = 'assets/images/auth/check_otp_mascot.webp';
@@ -40,9 +42,9 @@ void main() {
     );
 
     expect(find.text('Reset Password'), findsNothing);
-    expect(find.text('Forgot Password?'), findsOneWidget);
+    expect(find.text('Forgot Password'), findsOneWidget);
     expect(
-      find.text('Enter your email and we’ll send you a 6-digit OTP code.'),
+      find.text('Enter your email to receive a verification code.'),
       findsOneWidget,
     );
     expect(find.text('Remember your password?'), findsOneWidget);
@@ -156,7 +158,7 @@ void main() {
           .enabled,
       isFalse,
     );
-    expect(find.bySemanticsLabel('Sending OTP'), findsOneWidget);
+    expect(find.bySemanticsLabel('Sending…'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('forgot-password-submit-button')),
       findsNothing,
@@ -269,7 +271,14 @@ void main() {
     expect((illustration.image as AssetImage).assetName, _passwordMascotAsset);
     expect(illustration.fit, BoxFit.contain);
     expect(illustration.excludeFromSemantics, isTrue);
-    expect(find.text('Set New Password'), findsOneWidget);
+    expect(
+      tester
+          .widget<Text>(
+            find.byKey(const ValueKey('forgot-password-password-title')),
+          )
+          .data,
+      'Reset Password',
+    );
     expect(find.text('Create your new password.'), findsOneWidget);
 
     _expectVerticalOrder(tester, [
@@ -407,7 +416,14 @@ void main() {
     verify(
       () => repository.verifyResetOtp(email: 'ada@example.com', otp: '123456'),
     ).called(1);
-    expect(find.text('Set New Password'), findsOneWidget);
+    expect(
+      tester
+          .widget<Text>(
+            find.byKey(const ValueKey('forgot-password-password-title')),
+          )
+          .data,
+      'Reset Password',
+    );
   });
 
   testWidgets('OTP loading disables input and actions', (tester) async {
@@ -436,7 +452,7 @@ void main() {
           .enabled,
       isFalse,
     );
-    expect(find.bySemanticsLabel('Verifying OTP'), findsOneWidget);
+    expect(find.bySemanticsLabel('Verify Code'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('forgot-password-verify-button')),
       findsNothing,
@@ -532,7 +548,7 @@ void main() {
         isNull,
       );
     }
-    expect(find.bySemanticsLabel('Changing password'), findsOneWidget);
+    expect(find.bySemanticsLabel('Change Password'), findsOneWidget);
 
     reset.complete(const Success<void>(null));
     await tester.pump();
@@ -555,7 +571,7 @@ void main() {
       find.byKey(const ValueKey('forgot-password-recovery-back-button')),
     );
     await tester.pump();
-    expect(find.text('Forgot Password?'), findsOneWidget);
+    expect(find.text('Forgot Password'), findsOneWidget);
 
     await _advanceToOtp(tester, repository);
     await tester.ensureVisible(
@@ -652,6 +668,8 @@ Future<void> _pumpForgot(
   bool pushFromRoot = false,
   AuthRepository? repository,
 }) async {
+  SharedPreferences.setMockInitialValues({});
+  final prefs = await SharedPreferences.getInstance();
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -661,6 +679,7 @@ Future<void> _pumpForgot(
     ProviderScope(
       key: UniqueKey(),
       overrides: [
+        sharedPrefsProvider.overrideWithValue(prefs),
         if (repository == null)
           authControllerProvider.overrideWithValue(authState)
         else

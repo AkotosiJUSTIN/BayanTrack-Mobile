@@ -161,9 +161,10 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
         signatureName: fullName,
       );
 
-      if (!mounted) return;
+      if (!mounted) return null;
 
-      final message = result['message'] as String? ??
+      final message =
+          result['message'] as String? ??
           (satisfied
               ? l10n.reportConfirmedResolved
               : l10n.reportReopenedEscalated);
@@ -201,10 +202,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
     // Guard: already reviewed — show read-only confirmation, no form
     if (widget.report.citizenVerifiedAt != null) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(l10n.reviewResolution),
-          centerTitle: true,
-        ),
+        appBar: AppBar(title: Text(l10n.reviewResolution), centerTitle: true),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
@@ -255,10 +253,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.reviewResolution),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: Text(l10n.reviewResolution), centerTitle: true),
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
           20,
@@ -335,10 +330,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        Text(
-          l10n.resolvedReviewDescription,
-          style: theme.textTheme.bodyMedium,
-        ),
+        Text(l10n.resolvedReviewDescription, style: theme.textTheme.bodyMedium),
       ],
     );
   }
@@ -380,10 +372,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            _resolutionNote,
-            style: theme.textTheme.bodyMedium,
-          ),
+          Text(_resolutionNote, style: theme.textTheme.bodyMedium),
         ],
       ),
     );
@@ -528,13 +517,13 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
   }
 
   String _ratingLabel(int rating, AppLocalizations l10n) => switch (rating) {
-        1 => l10n.veryDissatisfied,
-        2 => l10n.dissatisfied,
-        3 => l10n.neutral,
-        4 => l10n.satisfied,
-        5 => l10n.verySatisfied,
-        _ => '',
-      };
+    1 => l10n.veryDissatisfied,
+    2 => l10n.dissatisfied,
+    3 => l10n.neutral,
+    4 => l10n.satisfied,
+    5 => l10n.verySatisfied,
+    _ => '',
+  };
 
   Widget _buildNoteSection(ThemeData theme, bool isDark) {
     final l10n = AppLocalizations.of(context);
@@ -553,12 +542,10 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           maxLines: 4,
           maxLength: 500,
           decoration: InputDecoration(
-            hintText:
-                l10n.resolutionCommentsHint,
+            hintText: l10n.resolutionCommentsHint,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             filled: true,
-            fillColor:
-                isDark ? AppColors.darkSurface : Colors.grey.shade50,
+            fillColor: isDark ? AppColors.darkSurface : Colors.grey.shade50,
           ),
         ),
       ],
@@ -581,10 +568,14 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
             const SizedBox(width: 6),
             Text(
               l10n.digitalSignature,
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            if (_signatureValid) ...[const SizedBox(width: 8), Icon(Icons.verified_rounded, size: 18, color: AppColors.success)],
+            if (_signatureValid) ...[
+              const SizedBox(width: 8),
+              Icon(Icons.verified_rounded, size: 18, color: AppColors.success),
+            ],
           ],
         ),
         const SizedBox(height: 4),
@@ -611,8 +602,9 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                 Signature(
                   controller: _signatureController,
                   height: 160,
-                  backgroundColor:
-                      isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  backgroundColor: isDark
+                      ? const Color(0xFF1E1E1E)
+                      : Colors.white,
                 ),
                 // Placeholder hint
                 if (!_canvasValid)
@@ -643,8 +635,11 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(6),
-                        child: Icon(Icons.refresh_rounded,
-                            size: 18, color: Colors.grey.shade500),
+                        child: Icon(
+                          Icons.refresh_rounded,
+                          size: 18,
+                          color: Colors.grey.shade500,
+                        ),
                       ),
                     ),
                   ),
@@ -658,8 +653,9 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               l10n.signatureRequired,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: AppColors.alertHigh),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColors.alertHigh,
+              ),
             ),
           ),
 
@@ -687,8 +683,9 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               l10n.registeredNameRequired,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: AppColors.alertHigh),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColors.alertHigh,
+              ),
             ),
           ),
       ],
