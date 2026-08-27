@@ -22,19 +22,23 @@ identity verification, notifications, and profile management.
 
 ## Setup
 
+Use a Flutter SDK that provides Dart 3.10.7 or newer (the version constraint
+is in `pubspec.yaml`).
+
 ```powershell
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
 flutter run
 ```
 
-API addressing is configured in
-`lib/core/constants/api_constants.dart`:
+API addressing is supplied at run time with `--dart-define`:
 
-- empty `_devServerIp`: Android emulator bridge `10.0.2.2`;
-- LAN IP: real device on the same Wi-Fi/hotspot;
-- `127.0.0.1`: physical Android device using
-  `adb reverse tcp:8000 tcp:8000`.
+- Android emulator: omit the defines and use the `10.0.2.2` default;
+- LAN device: pass `BAYANTRACK_API_BASE_URL=http://<host-ip>:8000/api` and
+  `BAYANTRACK_MEDIA_BASE_URL=http://<host-ip>:8000`;
+- USB device: use the same defines with `127.0.0.1` after
+  `adb reverse tcp:8000 tcp:8000`;
+- production: pass the deployed API and media URLs.
 
 See the
 [`Network Deployment` guide](../BayanTrack-Backend/Readmes/Network_Deployment.md)

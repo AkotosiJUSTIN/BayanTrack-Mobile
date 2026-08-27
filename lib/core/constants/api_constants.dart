@@ -1,41 +1,14 @@
 class ApiConstants {
-  // ─── DEPLOYMENT CONFIG ─────────────────────────────────────────────────────
-  //
-  // MODE A — USB cable + adb reverse (no firewall issues):
-  //   1. Connect phone via USB
-  //   2. Run: adb reverse tcp:8000 tcp:8000
-  //   3. Backend: python -m uvicorn backend.asgi:application --port 8000
-  //   4. Set _devServerIp = ''  →  app uses http://localhost:8000
-  //
-  // MODE B — WiFi / mobile hotspot (USB not required):
-  //   1. Backend MUST bind to all interfaces:
-  //      python -m uvicorn backend.asgi:application --host 0.0.0.0 --port 8000
-  //   2. Allow port 8000 through Windows Firewall (if prompted, click "Allow")
-  //   3. Set _devServerIp = '<your PC WiFi IP>'  (run ipconfig → Wi-Fi IPv4)
-  //      Current PC Wi-Fi IP: 192.168.1.23
-  //
-  // PRODUCTION → flip _isProduction to true and fill _prodUrl
-  //
-  static const bool _isProduction = false;
-  static const String _prodUrl = 'https://your-production-domain.com';
-
-  // MODE A (USB+adb): leave empty. MODE B (WiFi): set to PC's WiFi IP.
-  static const String _devServerIp = '';
-  // ───────────────────────────────────────────────────────────────────────────
-
-  static String get baseUrl {
-    if (_isProduction) return '$_prodUrl/api';
-    if (_devServerIp.isNotEmpty) return 'http://$_devServerIp:8000/api';
-    // MODE A: adb reverse tunnels device localhost → PC localhost:8000
-    return 'http://10.0.2.2:8000/api';
-  }
-
-  // Media base URL (without /api suffix)
-  static String get mediaBaseUrl {
-    if (_isProduction) return _prodUrl;
-    if (_devServerIp.isNotEmpty) return 'http://$_devServerIp:8000';
-    return 'http://10.0.2.2:8000';
-  }
+  // Pass complete URLs at build/run time. The default targets an Android
+  // emulator; physical devices use a LAN URL or 127.0.0.1 with adb reverse.
+  static const String baseUrl = String.fromEnvironment(
+    'BAYANTRACK_API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:8000/api',
+  );
+  static const String mediaBaseUrl = String.fromEnvironment(
+    'BAYANTRACK_MEDIA_BASE_URL',
+    defaultValue: 'http://10.0.2.2:8000',
+  );
 
   /// Build full URL for an image path
   /// Handles both relative (/media/...) and absolute URLs
