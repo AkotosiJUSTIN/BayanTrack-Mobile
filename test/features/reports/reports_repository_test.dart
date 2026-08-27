@@ -354,9 +354,12 @@ void main() {
         const reportId = 'report_123';
         final request = UpdateReportRequest(description: 'Updated description');
         final responseData = {
-          'id': reportId,
-          'description': 'Updated description',
-          'status': 'in_progress',
+          'message': 'Report updated successfully',
+          'report': {
+            'id': reportId,
+            'description': 'Updated description',
+            'status': 'in_progress',
+          },
         };
 
         when(

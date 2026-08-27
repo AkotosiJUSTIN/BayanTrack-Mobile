@@ -20,7 +20,10 @@ import '../../../auth/presentation/auth_controller.dart';
 import '../../../images/data/evidence_upload_queue.dart';
 import '../../../images/data/evidence_upload_queue_provider.dart';
 import '../../data/reports_repository.dart';
+import '../../data/report_models.dart'
+    hide LocationAccuracy, ReportCategory, ReportStatus;
 import '../../domain/entities/report_enums.dart' hide LocationAccuracy;
+import '../../reports_di.dart';
 import '../reports_controller.dart';
 import '../report_labels.dart';
 import 'new_report_controller.dart';
@@ -28,12 +31,15 @@ import 'quick_report_geo.dart';
 
 enum _QuickLocationInputMode { phone, manual }
 
+enum _EmergencyFollowUpAction { details, photos, done }
+
 /// Quick report flow: location + short description only.
 class QuickReportScreen extends ConsumerStatefulWidget {
   const QuickReportScreen({
     super.key,
     this.locationOverride,
     this.showMapTiles = true,
+    this.emergencyMode = false,
   });
 
   @visibleForTesting
@@ -42,6 +48,9 @@ class QuickReportScreen extends ConsumerStatefulWidget {
   @visibleForTesting
   final bool showMapTiles;
 
+  @visibleForTesting
+  final bool emergencyMode;
+
   @override
   ConsumerState<QuickReportScreen> createState() => _QuickReportScreenState();
 }
@@ -49,11 +58,18 @@ class QuickReportScreen extends ConsumerStatefulWidget {
 class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   final MapController _mapController = MapController();
   final TextEditingController _descriptionController = TextEditingController();
+  ReportCategoryOption? _selectedEmergencyCategory;
+  List<ReportCategoryOption> _emergencyCategories = const [];
+  bool _isLoadingEmergencyCategories = false;
+  String? _emergencyCategoryError;
+  late final String _emergencyIdempotencyKey =
+      'emergency-${DateTime.now().microsecondsSinceEpoch}';
   MunicipalityModel _selectedMunicipality = bundledUrdanetaMunicipality;
 
   bool _isSubmitting = false;
   bool _isLoadingLocation = false;
   bool _isGettingPreciseLocation = false;
+  bool _emergencyConfirmed = false;
   bool _deviceLocationOutside = false;
   String? _locationError;
   String? _submissionError;
@@ -67,6 +83,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _getCurrentLocation();
+      if (widget.emergencyMode) _loadEmergencyCategories();
     });
   }
 
@@ -143,6 +160,33 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       locationLabel:
           'Manual pin: ${point.latitude.toStringAsFixed(6)}, ${point.longitude.toStringAsFixed(6)}',
     );
+  }
+
+  Future<void> _loadEmergencyCategories() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingEmergencyCategories = true;
+      _emergencyCategoryError = null;
+    });
+    try {
+      final options = await ref
+          .read(reportsRepositoryProvider)
+          .getFormOptions();
+      if (!mounted) return;
+      setState(() {
+        _emergencyCategories = options.categories
+            .where((option) => option.active && option.key.isNotEmpty)
+            .toList(growable: false);
+        _isLoadingEmergencyCategories = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _emergencyCategories = offlineReportFormOptions.categories;
+        _isLoadingEmergencyCategories = false;
+        _emergencyCategoryError = AppLocalizations.of(context).error;
+      });
+    }
   }
 
   void _switchLocationMode(_QuickLocationInputMode mode) {
@@ -358,6 +402,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
   Future<void> _submitQuickReport() async {
     if (_isSubmitting) return;
+    if (widget.emergencyMode) {
+      await _submitEmergencyReport();
+      return;
+    }
     final l10n = AppLocalizations.of(context);
 
     final description = _descriptionController.text.trim();
@@ -494,6 +542,163 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
+  Future<void> _submitEmergencyReport() async {
+    if (_isSubmitting) return;
+    final l10n = AppLocalizations.of(context);
+    final category = _selectedEmergencyCategory;
+    if (category == null) {
+      AppToast.warning(context, l10n.emergencyCategoryRequired);
+      return;
+    }
+    if (!_emergencyConfirmed) {
+      AppToast.warning(context, l10n.emergencyConfirmationRequired);
+      return;
+    }
+
+    final point = _selectedPoint;
+    if (point == null || !_contains(point)) {
+      AppToast.warning(context, l10n.chooseIncidentLocation);
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+      _submissionError = null;
+    });
+
+    final nearestBarangay = _resolveNearestBarangay(
+      point.latitude,
+      point.longitude,
+    );
+    try {
+      final report = await ref
+          .read(newReportControllerProvider.notifier)
+          .submitEmergencyReport(
+            category: category.key,
+            municipalityId: _selectedMunicipality.id,
+            barangayId: nearestBarangay?.id,
+            barangay: nearestBarangay?.name,
+            cityMunicipality: _selectedMunicipality.name,
+            province: _selectedMunicipality.province,
+            latitude: point.latitude,
+            longitude: point.longitude,
+            idempotencyKey: _emergencyIdempotencyKey,
+          );
+      if (!mounted) return;
+      ref.invalidate(reportsControllerProvider);
+      ref.read(myReportsRefreshProvider.notifier).increment();
+      setState(() => _isSubmitting = false);
+      await _offerEmergencyFollowUp(report.id);
+      if (!mounted) return;
+      AppToast.success(context, l10n.reportSubmitted);
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      if (!mounted) return;
+      final message = e is ReportSubmissionFailure
+          ? e.message
+          : l10n.unableSubmitReport;
+      setState(() {
+        _isSubmitting = false;
+        _submissionError = message;
+      });
+      AppToast.error(context, message);
+    }
+  }
+
+  Future<void> _offerEmergencyFollowUp(String reportId) async {
+    final l10n = AppLocalizations.of(context);
+    final action = await showModalBottomSheet<_EmergencyFollowUpAction>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.notes_outlined),
+              title: Text(l10n.addDetails),
+              onTap: () =>
+                  Navigator.pop(sheetContext, _EmergencyFollowUpAction.details),
+            ),
+            ListTile(
+              leading: const Icon(Icons.add_a_photo_outlined),
+              title: Text(l10n.addPhotos),
+              onTap: () =>
+                  Navigator.pop(sheetContext, _EmergencyFollowUpAction.photos),
+            ),
+            ListTile(
+              leading: const Icon(Icons.check_outlined),
+              title: Text(l10n.done),
+              onTap: () =>
+                  Navigator.pop(sheetContext, _EmergencyFollowUpAction.done),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    switch (action) {
+      case _EmergencyFollowUpAction.details:
+        await _addEmergencyDetails(reportId);
+      case _EmergencyFollowUpAction.photos:
+        await _queuePhoto(reportId);
+      case _EmergencyFollowUpAction.done:
+        return;
+    }
+  }
+
+  Future<void> _addEmergencyDetails(String reportId) async {
+    final l10n = AppLocalizations.of(context);
+    final controller = TextEditingController();
+    final details = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.addDetails),
+        content: TextField(
+          key: const Key('emergency-report-details'),
+          controller: controller,
+          autofocus: true,
+          minLines: 3,
+          maxLines: 6,
+          maxLength: 2000,
+          decoration: InputDecoration(
+            hintText: l10n.emergencyDetailsHint,
+            alignLabelWithHint: true,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = controller.text.trim();
+              if (value.isNotEmpty) Navigator.pop(dialogContext, value);
+            },
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (!mounted || details == null) return;
+
+    try {
+      final result = await ref.read(updateReportUseCaseProvider)(
+        id: reportId,
+        description: details,
+      );
+      if (!mounted) return;
+      result.when(
+        success: (_) => AppToast.success(context, l10n.detailsSaved),
+        failure: (failure) => AppToast.warning(context, failure.message),
+      );
+    } catch (_) {
+      if (mounted) AppToast.warning(context, l10n.unableSubmitReport);
+    }
+  }
+
   Future<void> _offerPhotoUpload(String reportId) async {
     final l10n = AppLocalizations.of(context);
     final addPhoto = await showDialog<bool>(
@@ -515,6 +720,12 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       ),
     );
     if (addPhoto != true || !mounted) return;
+
+    await _queuePhoto(reportId);
+  }
+
+  Future<void> _queuePhoto(String reportId) async {
+    final l10n = AppLocalizations.of(context);
 
     final picked = await ImagePicker().pickImage(
       source: ImageSource.camera,
@@ -566,7 +777,108 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
           ? l10n.tapMapIncident
           : l10n.chooseIncidentLocation;
     }
+    if (widget.emergencyMode) {
+      if (_selectedEmergencyCategory == null) {
+        return l10n.emergencyCategoryRequired;
+      }
+      if (!_emergencyConfirmed) {
+        return l10n.emergencyConfirmationRequired;
+      }
+      return null;
+    }
     return quickReportDescriptionError(description, l10n: l10n);
+  }
+
+  Widget _buildEmergencyNotice(ThemeData theme) {
+    final scheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      key: const Key('emergency-report-notice'),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: scheme.errorContainer,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: scheme.error.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.warning_amber_rounded, color: scheme.onErrorContainer),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              l10n.emergencyReportNotice,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onErrorContainer,
+                fontWeight: FontWeight.w600,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmergencyCategory(ThemeData theme) {
+    final scheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: DropdownButtonFormField<String>(
+        key: const Key('emergency-report-category'),
+        initialValue: _selectedEmergencyCategory?.key,
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: l10n.emergencyIncidentType,
+          prefixIcon: const Icon(Icons.category_outlined),
+          helperText: _isLoadingEmergencyCategories
+              ? l10n.loading
+              : _emergencyCategoryError,
+          helperStyle: TextStyle(color: scheme.onSurfaceVariant),
+        ),
+        items: _emergencyCategories
+            .map(
+              (option) => DropdownMenuItem<String>(
+                value: option.key,
+                child: Text(option.label),
+              ),
+            )
+            .toList(),
+        onChanged: _isSubmitting || _isLoadingEmergencyCategories
+            ? null
+            : (value) {
+                if (value == null) return;
+                setState(() {
+                  _selectedEmergencyCategory = _emergencyCategories.firstWhere(
+                    (option) => option.key == value,
+                  );
+                  _submissionError = null;
+                });
+              },
+      ),
+    );
+  }
+
+  Widget _buildEmergencyConfirmation(ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: CheckboxListTile(
+        key: const Key('emergency-report-confirmation'),
+        value: _emergencyConfirmed,
+        onChanged: _isSubmitting
+            ? null
+            : (value) => setState(() => _emergencyConfirmed = value ?? false),
+        controlAffinity: ListTileControlAffinity.leading,
+        contentPadding: EdgeInsets.zero,
+        title: Text(
+          l10n.emergencyConfirm,
+          style: theme.textTheme.bodyMedium?.copyWith(height: 1.3),
+        ),
+      ),
+    );
   }
 
   Widget _buildVerificationNotice(
@@ -818,11 +1130,19 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                   enabled: canSubmit,
                   liveRegion: _isSubmitting,
                   label: _isSubmitting
-                      ? l10n.submittingQuickReport
-                      : l10n.submitQuickReport,
+                      ? (widget.emergencyMode
+                            ? l10n.submittingEmergencyReport
+                            : l10n.submittingQuickReport)
+                      : (widget.emergencyMode
+                            ? l10n.submitEmergencyReport
+                            : l10n.submitQuickReport),
                   hint: disabledReason,
                   child: ElevatedButton(
-                    key: const Key('quick-report-submit'),
+                    key: Key(
+                      widget.emergencyMode
+                          ? 'emergency-report-submit'
+                          : 'quick-report-submit',
+                    ),
                     onPressed: canSubmit ? _submitQuickReport : null,
                     style: _isSubmitting
                         ? ElevatedButton.styleFrom(
@@ -843,10 +1163,20 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                 ),
                               ),
                               const SizedBox(width: 10),
-                              Flexible(child: Text(l10n.submittingQuickReport)),
+                              Flexible(
+                                child: Text(
+                                  widget.emergencyMode
+                                      ? l10n.submittingEmergencyReport
+                                      : l10n.submittingQuickReport,
+                                ),
+                              ),
                             ],
                           )
-                        : Text(l10n.submitQuickReport),
+                        : Text(
+                            widget.emergencyMode
+                                ? l10n.submitEmergencyReport
+                                : l10n.submitQuickReport,
+                          ),
                   ),
                 ),
               ],
@@ -881,9 +1211,13 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.quickReport),
+        title: Text(
+          widget.emergencyMode ? l10n.emergencyReport : l10n.quickReport,
+        ),
         leading: IconButton(
-          tooltip: l10n.closeQuickReport,
+          tooltip: widget.emergencyMode
+              ? l10n.closeEmergencyReport
+              : l10n.closeQuickReport,
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -901,6 +1235,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildVerificationNotice(permissions, theme),
+                    if (widget.emergencyMode) ...[
+                      _buildEmergencyNotice(theme),
+                      _buildEmergencyCategory(theme),
+                    ],
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
                       child: Column(
@@ -1228,51 +1566,55 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.shortDescription,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            l10n.shortDescriptionHint,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurface.withValues(alpha: 0.72),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Semantics(
-                            container: true,
-                            label: l10n.shortDescription,
-                            hint: l10n.shortDescriptionSemantics,
-                            child: TextField(
-                              key: const Key('quick-report-description'),
-                              controller: _descriptionController,
-                              minLines: 2,
-                              maxLines: 4,
-                              maxLength: quickReportDescriptionMaxLength,
-                              textInputAction: TextInputAction.newline,
-                              onChanged: (_) {
-                                if (_submissionError != null) {
-                                  setState(() => _submissionError = null);
-                                }
-                              },
-                              decoration: InputDecoration(
-                                hintText: l10n.whatIsHappening,
-                                alignLabelWithHint: true,
+                    if (widget.emergencyMode)
+                      _buildEmergencyConfirmation(theme)
+                    else ...[
+                      const SizedBox(height: 16),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.shortDescription,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 2),
+                            Text(
+                              l10n.shortDescriptionHint,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurface.withValues(alpha: 0.72),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Semantics(
+                              container: true,
+                              label: l10n.shortDescription,
+                              hint: l10n.shortDescriptionSemantics,
+                              child: TextField(
+                                key: const Key('quick-report-description'),
+                                controller: _descriptionController,
+                                minLines: 2,
+                                maxLines: 4,
+                                maxLength: quickReportDescriptionMaxLength,
+                                textInputAction: TextInputAction.newline,
+                                onChanged: (_) {
+                                  if (_submissionError != null) {
+                                    setState(() => _submissionError = null);
+                                  }
+                                },
+                                decoration: InputDecoration(
+                                  hintText: l10n.whatIsHappening,
+                                  alignLabelWithHint: true,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

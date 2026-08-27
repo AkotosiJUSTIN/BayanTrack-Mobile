@@ -25,7 +25,7 @@ class _RecordingCreateReportUseCase extends CreateReportUseCase {
     String? category,
     String? incidentType,
     String? title,
-    required String description,
+    String description = '',
     String? incidentDatetime,
     bool isHappeningNow = false,
     String? zone,
@@ -42,6 +42,8 @@ class _RecordingCreateReportUseCase extends CreateReportUseCase {
     bool declarationConfirmed = true,
     bool dataProcessingConsent = true,
     bool isQuickReport = false,
+    bool isEmergency = false,
+    String? idempotencyKey,
   }) async {
     arguments = {
       'municipality_id': municipalityId,

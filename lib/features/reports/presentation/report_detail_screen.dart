@@ -845,11 +845,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     final l10n = AppLocalizations.of(context);
     final result = _verificationResult!;
 
-    // `verified` = content hash intact. `statusVerified` = on-chain status enum
-    // matches the local DB status. The contract only stores status=Submitted at
-    // anchoring time and never updates it, so statusVerified will always be false
-    // once staff take any action. This is expected and NOT a breach — surface it
-    // as a separate informational note, not as a red "Integrity Breach".
+    // `verified` = content hash intact. `statusVerified` is only populated for
+    // legacy v3 status events; v4 checkpoints deliberately leave workflow
+    // status off-chain and return null.
     final isHealthy = result.verified; // content integrity only
 
     // Determine the display state
@@ -858,7 +856,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     final isNotAnchored = !result.isAnchored;
     final isNeutral = isNotFound || isConnectionError || isNotAnchored;
     // Status is out of sync with blockchain (expected after staff actions)
-    final isStatusPending = result.verified && !result.statusVerified;
+    final isStatusPending = result.verified && result.statusVerified == false;
 
     final Color statusColor;
     final IconData statusIcon;
@@ -966,7 +964,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      _getActionLabel(entry.actionType),
+                      _getActionLabel(entry),
                       style: theme.textTheme.labelMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -1002,8 +1000,20 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     );
   }
 
-  String _getActionLabel(int type) =>
-      AuditActionType.fromInt(type).displayLabel;
+  String _getActionLabel(BlockchainAuditEntry entry) {
+    // v4 checkpoints intentionally reuse the compact action integer space;
+    // equal statuses distinguish them from legacy workflow transitions.
+    if (entry.oldStatus == entry.newStatus) {
+      return switch (entry.actionType) {
+        0 => 'Created integrity checkpoint',
+        1 => 'Final integrity checkpoint',
+        2 => 'Dispute / reopen checkpoint',
+        3 => 'Administrative override checkpoint',
+        _ => AuditActionType.fromInt(entry.actionType).displayLabel,
+      };
+    }
+    return AuditActionType.fromInt(entry.actionType).displayLabel;
+  }
 
   Future<void> _handleVerification(String reportId) async {
     final l10n = AppLocalizations.of(context);

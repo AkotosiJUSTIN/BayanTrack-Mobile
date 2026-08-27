@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 /// Represents a single audit entry from the blockchain.
 class BlockchainAuditEntry extends Equatable {
-  final int reportId;
+  final String reportId;
   final int actionType;
   final String actor;
   final int timestamp;
@@ -38,9 +38,10 @@ class BlockchainAuditEntry extends Equatable {
 /// Represents the result of a blockchain verification check.
 class BlockchainVerificationResult extends Equatable {
   final String reportId;
-  final int? onChainId;
+  final String? onChainId;
   final bool verified;
-  final bool statusVerified;
+  /// Null for v4 checkpoints because workflow status remains off-chain.
+  final bool? statusVerified;
   final Map<String, dynamic> blockchainData;
   final List<BlockchainAuditEntry> auditHistory;
   final String message;
@@ -59,7 +60,7 @@ class BlockchainVerificationResult extends Equatable {
     required this.reportId,
     this.onChainId,
     required this.verified,
-    required this.statusVerified,
+    this.statusVerified,
     required this.blockchainData,
     required this.auditHistory,
     required this.message,

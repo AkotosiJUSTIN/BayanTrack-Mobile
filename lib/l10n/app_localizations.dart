@@ -668,6 +668,78 @@ abstract class AppLocalizations {
   /// **'Quick Report'**
   String get quickReport;
 
+  /// No description provided for @emergencyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Report'**
+  String get emergencyReport;
+
+  /// No description provided for @addDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Add details'**
+  String get addDetails;
+
+  /// No description provided for @closeEmergencyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Emergency Report'**
+  String get closeEmergencyReport;
+
+  /// No description provided for @emergencyIncidentType.
+  ///
+  /// In en, this message translates to:
+  /// **'Incident type'**
+  String get emergencyIncidentType;
+
+  /// No description provided for @emergencyReportNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'For immediate threats. BayanTrack does not replace emergency hotlines.'**
+  String get emergencyReportNotice;
+
+  /// No description provided for @emergencyConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'I confirm this is an emergency and the location is accurate.'**
+  String get emergencyConfirm;
+
+  /// No description provided for @emergencyCategoryRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an incident type to continue.'**
+  String get emergencyCategoryRequired;
+
+  /// No description provided for @emergencyConfirmationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the emergency and location before submitting.'**
+  String get emergencyConfirmationRequired;
+
+  /// No description provided for @submitEmergencyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Emergency Report'**
+  String get submitEmergencyReport;
+
+  /// No description provided for @submittingEmergencyReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending Emergency Report…'**
+  String get submittingEmergencyReport;
+
+  /// No description provided for @emergencyDetailsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add details that can help responders.'**
+  String get emergencyDetailsHint;
+
+  /// No description provided for @detailsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Details added'**
+  String get detailsSaved;
+
   /// No description provided for @fullReport.
   ///
   /// In en, this message translates to:

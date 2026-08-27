@@ -56,7 +56,7 @@ class _TestCreateReportUseCase extends CreateReportUseCase {
     String? category,
     String? incidentType,
     String? title,
-    required String description,
+    String description = '',
     String? incidentDatetime,
     bool isHappeningNow = false,
     String? zone,
@@ -73,6 +73,8 @@ class _TestCreateReportUseCase extends CreateReportUseCase {
     bool declarationConfirmed = true,
     bool dataProcessingConsent = true,
     bool isQuickReport = false,
+    bool isEmergency = false,
+    String? idempotencyKey,
   }) {
     callCount++;
     lastIsQuickReport = isQuickReport;

@@ -45,7 +45,7 @@ final class ProfileControllerProvider
   ProfileController create() => ProfileController();
 }
 
-String _$profileControllerHash() => r'0106b1fcf7b269af04182931ade7bd58a55352d8';
+String _$profileControllerHash() => r'73982c74e4901f295164e6d082dd188e66f4dde5';
 
 /// ProfileController - manages user profile state.
 ///

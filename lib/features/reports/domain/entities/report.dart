@@ -141,7 +141,7 @@ class Report extends Equatable {
   final String? citizenClosureNote;
 
   // Blockchain Integration
-  final int? onChainId;
+  final String? onChainId;
   final String? onChainHash;
   final String? blockchainTxnHash;
   final bool blockchainSynced;

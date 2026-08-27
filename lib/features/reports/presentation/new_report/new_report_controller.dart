@@ -429,6 +429,43 @@ class NewReportController extends _$NewReportController {
     );
   }
 
+  Future<domain.Report> submitEmergencyReport({
+    required String category,
+    required String municipalityId,
+    String? barangayId,
+    String? barangay,
+    required String cityMunicipality,
+    required String province,
+    required double latitude,
+    required double longitude,
+    String? idempotencyKey,
+  }) async {
+    final useCase = ref.read(createReportUseCaseProvider);
+    final result = await useCase(
+      category: category,
+      description: '',
+      isHappeningNow: true,
+      municipalityId: municipalityId,
+      barangayId: barangayId,
+      barangay: barangay,
+      zone: barangay,
+      cityMunicipality: cityMunicipality,
+      province: province,
+      latitude: _formatCoordinate(latitude),
+      longitude: _formatCoordinate(longitude),
+      locationAccuracy: LocationAccuracy.exact.name,
+      declarationConfirmed: true,
+      dataProcessingConsent: true,
+      isQuickReport: true,
+      isEmergency: true,
+      idempotencyKey: idempotencyKey,
+    );
+    return result.when(
+      success: (report) => report,
+      failure: (failure) => throw ReportSubmissionFailure(failure.message),
+    );
+  }
+
   String? _formatCoordinate(double? value) {
     if (value == null) return null;
     return value.toStringAsFixed(10);

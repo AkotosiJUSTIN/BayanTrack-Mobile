@@ -13,7 +13,7 @@ class CreateReportUseCase {
     String? category,
     String? incidentType,
     String? title,
-    required String description,
+    String description = '',
     String? incidentDatetime,
     bool isHappeningNow = false,
     String? zone,
@@ -30,6 +30,8 @@ class CreateReportUseCase {
     bool declarationConfirmed = true,
     bool dataProcessingConsent = true,
     bool isQuickReport = false,
+    bool isEmergency = false,
+    String? idempotencyKey,
   }) {
     return _repository.createReport(
       category: category,
@@ -52,6 +54,8 @@ class CreateReportUseCase {
       declarationConfirmed: declarationConfirmed,
       dataProcessingConsent: dataProcessingConsent,
       isQuickReport: isQuickReport,
+      isEmergency: isEmergency,
+      idempotencyKey: idempotencyKey,
     );
   }
 }

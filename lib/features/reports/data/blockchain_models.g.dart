@@ -9,7 +9,7 @@ part of 'blockchain_models.dart';
 _BlockchainAuditEntryDto _$BlockchainAuditEntryDtoFromJson(
   Map<String, dynamic> json,
 ) => _BlockchainAuditEntryDto(
-  reportId: (json['reportId'] as num).toInt(),
+  reportId: const StringValueConverter().fromJson(json['reportId']),
   actionType: (json['actionType'] as num).toInt(),
   actor: json['actor'] as String,
   timestamp: (json['timestamp'] as num).toInt(),
@@ -21,7 +21,7 @@ _BlockchainAuditEntryDto _$BlockchainAuditEntryDtoFromJson(
 Map<String, dynamic> _$BlockchainAuditEntryDtoToJson(
   _BlockchainAuditEntryDto instance,
 ) => <String, dynamic>{
-  'reportId': instance.reportId,
+  'reportId': const StringValueConverter().toJson(instance.reportId),
   'actionType': instance.actionType,
   'actor': instance.actor,
   'timestamp': instance.timestamp,
@@ -34,9 +34,9 @@ _BlockchainVerificationResultDto _$BlockchainVerificationResultDtoFromJson(
   Map<String, dynamic> json,
 ) => _BlockchainVerificationResultDto(
   reportId: json['report_id'] as String,
-  onChainId: const NullableIntConverter().fromJson(json['on_chain_id']),
+  onChainId: const NullableStringConverter().fromJson(json['on_chain_id']),
   verified: json['verified'] as bool,
-  statusVerified: json['status_verified'] as bool,
+  statusVerified: json['status_verified'] as bool?,
   blockchainData: json['blockchain_data'] as Map<String, dynamic>,
   auditHistory: (json['audit_history'] as List<dynamic>)
       .map((e) => BlockchainAuditEntryDto.fromJson(e as Map<String, dynamic>))
@@ -51,7 +51,7 @@ Map<String, dynamic> _$BlockchainVerificationResultDtoToJson(
   _BlockchainVerificationResultDto instance,
 ) => <String, dynamic>{
   'report_id': instance.reportId,
-  'on_chain_id': const NullableIntConverter().toJson(instance.onChainId),
+  'on_chain_id': const NullableStringConverter().toJson(instance.onChainId),
   'verified': instance.verified,
   'status_verified': instance.statusVerified,
   'blockchain_data': instance.blockchainData,

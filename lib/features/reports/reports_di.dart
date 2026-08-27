@@ -3,6 +3,7 @@ import '../../core/network/dio_provider.dart';
 import 'data/repositories/reports_repository_impl.dart';
 import 'domain/reports_repository.dart';
 import 'domain/usecases/create_report_usecase.dart';
+import 'domain/usecases/update_report_usecase.dart';
 import 'domain/usecases/delete_report_usecase.dart';
 import 'domain/usecases/get_my_reports_usecase.dart';
 import 'domain/usecases/get_report_stats_usecase.dart';
@@ -51,6 +52,13 @@ GetReportUseCase getReportUseCase(Ref ref) {
 @riverpod
 CreateReportUseCase createReportUseCase(Ref ref) {
   return CreateReportUseCase(
+    repository: ref.watch(reportsRepositoryDomainProvider),
+  );
+}
+
+@riverpod
+UpdateReportUseCase updateReportUseCase(Ref ref) {
+  return UpdateReportUseCase(
     repository: ref.watch(reportsRepositoryDomainProvider),
   );
 }

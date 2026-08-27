@@ -54,6 +54,21 @@
             android:textSize="12sp"
             android:textStyle="bold" />
 
+        <TextView
+            android:id="@+id/widget_emergency_report"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:background="@drawable/widget_primary_action"
+            android:fontFamily="sans"
+            android:gravity="center"
+            android:maxLines="2"
+            android:text="Emergency Report"
+            android:textColor="@color/widget_on_primary"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
         <LinearLayout
             android:id="@+id/widget_notifications"
             android:layout_width="0dp"

@@ -18,6 +18,10 @@ void main() {
       parseWidgetDestination('notifications'),
       WidgetDestination.notifications,
     );
+    expect(
+      parseWidgetDestination('emergency_report'),
+      WidgetDestination.emergencyReport,
+    );
     expect(parseWidgetDestination(''), isNull);
     expect(parseWidgetDestination('profile'), isNull);
     expect(parseWidgetDestination(42), isNull);
@@ -80,6 +84,22 @@ void main() {
     expect(bridge.takePendingDestination(), WidgetDestination.quickReport);
     expect(bridge.takePendingDestination(), isNull);
   });
+
+  test(
+    'emergency destination waits for authentication like every widget entry',
+    () async {
+      final bridge = WidgetBridge(invokeNative: (_, _) async => null);
+      addTearDown(bridge.dispose);
+
+      bridge.ingestRaw('emergency_report');
+      expect(bridge.takePendingDestination(), isNull);
+      await bridge.syncAuthenticated(true);
+      expect(
+        bridge.takePendingDestination(),
+        WidgetDestination.emergencyReport,
+      );
+    },
+  );
 
   test('maps Filipino locale and falls back to English', () {
     expect(widgetLocaleCode(const Locale('fil')), 'fil');

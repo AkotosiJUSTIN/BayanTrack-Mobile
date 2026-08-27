@@ -307,6 +307,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickReport => 'Quick Report';
 
   @override
+  String get emergencyReport => 'Emergency Report';
+
+  @override
+  String get addDetails => 'Add details';
+
+  @override
+  String get closeEmergencyReport => 'Close Emergency Report';
+
+  @override
+  String get emergencyIncidentType => 'Incident type';
+
+  @override
+  String get emergencyReportNotice =>
+      'For immediate threats. BayanTrack does not replace emergency hotlines.';
+
+  @override
+  String get emergencyConfirm =>
+      'I confirm this is an emergency and the location is accurate.';
+
+  @override
+  String get emergencyCategoryRequired =>
+      'Choose an incident type to continue.';
+
+  @override
+  String get emergencyConfirmationRequired =>
+      'Confirm the emergency and location before submitting.';
+
+  @override
+  String get submitEmergencyReport => 'Submit Emergency Report';
+
+  @override
+  String get submittingEmergencyReport => 'Sending Emergency Report…';
+
+  @override
+  String get emergencyDetailsHint => 'Add details that can help responders.';
+
+  @override
+  String get detailsSaved => 'Details added';
+
+  @override
   String get fullReport => 'Full Report';
 
   @override

@@ -97,12 +97,19 @@ class ReportsRepository {
   Future<Report> createReport(
     CreateReportRequest request, {
     bool isQuickReport = false,
+    String? idempotencyKey,
   }) async {
     final jsonData = {
       ...request.toJson(),
       if (isQuickReport) 'is_quick_report': true,
     };
-    final response = await _dio.post(ApiConstants.reports, data: jsonData);
+    final response = idempotencyKey == null
+        ? await _dio.post(ApiConstants.reports, data: jsonData)
+        : await _dio.post(
+            ApiConstants.reports,
+            data: jsonData,
+            options: Options(headers: {'Idempotency-Key': idempotencyKey}),
+          );
     // Backend returns {report: {...}, message: "..."}
     final data = response.data;
     if (data is Map && data.containsKey('report')) {
@@ -117,7 +124,10 @@ class ReportsRepository {
       ApiConstants.reportById(id),
       data: request.toJson(),
     );
-    return Report.fromJson(response.data);
+    final data = response.data;
+    return Report.fromJson(
+      data is Map && data['report'] is Map ? data['report'] : data,
+    );
   }
 
   /// Update report status (admin only)
@@ -129,7 +139,10 @@ class ReportsRepository {
       '${ApiConstants.reportById(id)}status/',
       data: request.toJson(),
     );
-    return Report.fromJson(response.data);
+    final data = response.data;
+    return Report.fromJson(
+      data is Map && data['report'] is Map ? data['report'] : data,
+    );
   }
 
   /// Delete a report

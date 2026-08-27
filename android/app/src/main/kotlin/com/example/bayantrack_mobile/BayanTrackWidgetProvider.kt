@@ -46,6 +46,7 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
         private const val MEDIUM_MIN_WIDTH_DP = 180
         private const val MEDIUM_MIN_HEIGHT_DP = 120
         private const val QUICK_REPORT_DESTINATION = "quick_report"
+        private const val EMERGENCY_REPORT_DESTINATION = "emergency_report"
         private const val NOTIFICATIONS_DESTINATION = "notifications"
 
         fun updateState(
@@ -95,6 +96,7 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
             val authenticated = preferences.getBoolean(KEY_AUTHENTICATED, false)
             val unreadCount = preferences.getInt(KEY_UNREAD_COUNT, 0).coerceAtLeast(0)
             val quickReportLabel = "Quick Report"
+            val emergencyReportLabel = "Emergency Report"
             val notificationsLabel = if (filipino) "Mga Notification" else "Notifications"
 
             views.setTextViewText(R.id.widget_brand, "BayanTrack")
@@ -106,11 +108,17 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
             )
 
             if (useMediumLayout) {
+                views.setTextViewText(R.id.widget_emergency_report, emergencyReportLabel)
+                views.setContentDescription(R.id.widget_emergency_report, emergencyReportLabel)
+                views.setOnClickPendingIntent(
+                    R.id.widget_emergency_report,
+                    navigationPendingIntent(context, EMERGENCY_REPORT_DESTINATION, 1002),
+                )
                 views.setTextViewText(R.id.widget_notifications_label, notificationsLabel)
                 views.setContentDescription(R.id.widget_notifications, notificationsLabel)
                 views.setOnClickPendingIntent(
                     R.id.widget_notifications,
-                    navigationPendingIntent(context, NOTIFICATIONS_DESTINATION, 1002),
+                    navigationPendingIntent(context, NOTIFICATIONS_DESTINATION, 1003),
                 )
                 views.setTextViewText(R.id.widget_unread_count, unreadCount.toString())
                 views.setViewVisibility(

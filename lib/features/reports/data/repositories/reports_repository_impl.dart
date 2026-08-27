@@ -138,7 +138,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
     String? category,
     String? incidentType,
     String? title,
-    required String description,
+    String description = '',
     String? incidentDatetime,
     bool isHappeningNow = false,
     String? zone,
@@ -155,6 +155,8 @@ class ReportsRepositoryImpl implements ReportsRepository {
     bool declarationConfirmed = true,
     bool dataProcessingConsent = true,
     bool isQuickReport = false,
+    bool isEmergency = false,
+    String? idempotencyKey,
   }) async {
     try {
       final request = dto.CreateReportRequest(
@@ -177,18 +179,27 @@ class ReportsRepositoryImpl implements ReportsRepository {
         barangay: barangay,
         declarationConfirmed: declarationConfirmed,
         dataProcessingConsent: dataProcessingConsent,
+        isEmergency: isEmergency,
       );
 
-      final response = await _dio.post(
-        ApiConstants.reports,
-        data: {...request.toJson(), if (isQuickReport) 'is_quick_report': true},
-      );
+      final requestData = {
+        ...request.toJson(),
+        if (isQuickReport) 'is_quick_report': true,
+      };
+      final response = idempotencyKey == null
+          ? await _dio.post(ApiConstants.reports, data: requestData)
+          : await _dio.post(
+              ApiConstants.reports,
+              data: requestData,
+              options: Options(headers: {'Idempotency-Key': idempotencyKey}),
+            );
 
       // Backend returns {report: {...}, message: "..."}
-      final data = response.data;
-      final reportData = (data is Map && data.containsKey('report'))
-          ? data['report']
-          : data;
+      final responseData = response.data;
+      final reportData =
+          (responseData is Map && responseData.containsKey('report'))
+          ? responseData['report']
+          : responseData;
       final dtoReport = dto.Report.fromJson(reportData);
       return Success(ReportMapper.fromDto(dtoReport));
     } catch (e, stack) {
@@ -230,7 +241,11 @@ class ReportsRepositoryImpl implements ReportsRepository {
         ApiConstants.reportById(id),
         data: request.toJson(),
       );
-      final dtoReport = dto.Report.fromJson(response.data);
+      final responseData = response.data;
+      final reportData = responseData is Map && responseData['report'] is Map
+          ? responseData['report']
+          : responseData;
+      final dtoReport = dto.Report.fromJson(reportData);
       return Success(ReportMapper.fromDto(dtoReport));
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));
@@ -255,7 +270,11 @@ class ReportsRepositoryImpl implements ReportsRepository {
         '${ApiConstants.reportById(id)}status/',
         data: request.toJson(),
       );
-      final dtoReport = dto.Report.fromJson(response.data);
+      final responseData = response.data;
+      final reportData = responseData is Map && responseData['report'] is Map
+          ? responseData['report']
+          : responseData;
+      final dtoReport = dto.Report.fromJson(reportData);
       return Success(ReportMapper.fromDto(dtoReport));
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));

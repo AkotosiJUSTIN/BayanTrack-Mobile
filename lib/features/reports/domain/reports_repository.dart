@@ -35,7 +35,7 @@ abstract interface class ReportsRepository {
     String? category,
     String? incidentType,
     String? title,
-    required String description,
+    String description = '',
     String? incidentDatetime,
     bool isHappeningNow = false,
     String? zone,
@@ -52,6 +52,8 @@ abstract interface class ReportsRepository {
     bool declarationConfirmed = true,
     bool dataProcessingConsent = true,
     bool isQuickReport = false,
+    bool isEmergency = false,
+    String? idempotencyKey,
   });
 
   /// Update a report

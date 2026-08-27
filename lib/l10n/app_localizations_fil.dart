@@ -310,6 +310,47 @@ class AppLocalizationsFil extends AppLocalizations {
   String get quickReport => 'Quick Report';
 
   @override
+  String get emergencyReport => 'Emergency Report';
+
+  @override
+  String get addDetails => 'Magdagdag ng detalye';
+
+  @override
+  String get closeEmergencyReport => 'Isara ang Emergency Report';
+
+  @override
+  String get emergencyIncidentType => 'Uri ng insidente';
+
+  @override
+  String get emergencyReportNotice =>
+      'Para sa agarang banta. Hindi kapalit ng emergency hotline ang BayanTrack.';
+
+  @override
+  String get emergencyConfirm =>
+      'Kinukumpirma kong emergency ito at tama ang lokasyon.';
+
+  @override
+  String get emergencyCategoryRequired =>
+      'Pumili ng uri ng insidente para magpatuloy.';
+
+  @override
+  String get emergencyConfirmationRequired =>
+      'Kumpirmahin ang emergency at lokasyon bago isumite.';
+
+  @override
+  String get submitEmergencyReport => 'Isumite ang Emergency Report';
+
+  @override
+  String get submittingEmergencyReport => 'Ipinapadala ang Emergency Report…';
+
+  @override
+  String get emergencyDetailsHint =>
+      'Magdagdag ng detalye na makatutulong sa responders.';
+
+  @override
+  String get detailsSaved => 'Nadagdag ang detalye';
+
+  @override
   String get fullReport => 'Buong Ulat';
 
   @override

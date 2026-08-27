@@ -68,7 +68,7 @@ _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
   taxonomyVersion: json['taxonomy_version'] as String?,
   incidentType: json['incident_type'] as String?,
   title: json['title'] as String?,
-  description: json['description'] as String,
+  description: json['description'] as String? ?? '',
   incidentDatetime: json['incident_datetime'] as String?,
   isHappeningNow: json['is_happening_now'] as bool? ?? false,
   zone: json['zone'] as String?,
@@ -217,7 +217,7 @@ _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
     json['citizen_satisfaction'],
   ),
   citizenClosureNote: json['citizen_closure_note'] as String?,
-  onChainId: const NullableIntConverter().fromJson(json['on_chain_id']),
+  onChainId: const NullableStringConverter().fromJson(json['on_chain_id']),
   onChainHash: json['on_chain_hash'] as String?,
   blockchainTxnHash: json['blockchain_txn_hash'] as String?,
   blockchainSynced: json['blockchain_synced'] as bool? ?? false,
@@ -331,7 +331,7 @@ Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
     instance.citizenSatisfaction,
   ),
   'citizen_closure_note': instance.citizenClosureNote,
-  'on_chain_id': const NullableIntConverter().toJson(instance.onChainId),
+  'on_chain_id': const NullableStringConverter().toJson(instance.onChainId),
   'on_chain_hash': instance.onChainHash,
   'blockchain_txn_hash': instance.blockchainTxnHash,
   'blockchain_synced': instance.blockchainSynced,
@@ -342,7 +342,7 @@ _CreateReportRequest _$CreateReportRequestFromJson(Map<String, dynamic> json) =>
       category: json['category'] as String?,
       incidentType: json['incident_type'] as String?,
       title: json['title'] as String?,
-      description: json['description'] as String,
+      description: json['description'] as String? ?? '',
       incidentDatetime: json['incident_datetime'] as String?,
       isHappeningNow: json['is_happening_now'] as bool? ?? false,
       zone: json['zone'] as String?,
@@ -358,6 +358,7 @@ _CreateReportRequest _$CreateReportRequestFromJson(Map<String, dynamic> json) =>
       barangay: json['barangay'] as String?,
       declarationConfirmed: json['declaration_confirmed'] as bool? ?? true,
       dataProcessingConsent: json['data_processing_consent'] as bool? ?? true,
+      isEmergency: json['is_emergency'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$CreateReportRequestToJson(
@@ -382,6 +383,7 @@ Map<String, dynamic> _$CreateReportRequestToJson(
   'barangay': instance.barangay,
   'declaration_confirmed': instance.declarationConfirmed,
   'data_processing_consent': instance.dataProcessingConsent,
+  'is_emergency': instance.isEmergency,
 };
 
 _UpdateReportRequest _$UpdateReportRequestFromJson(Map<String, dynamic> json) =>

@@ -40,6 +40,28 @@ class NullableIntConverter implements JsonConverter<int?, dynamic> {
   dynamic toJson(int? value) => value;
 }
 
+/// Normalizes legacy numeric IDs at the API boundary without losing precision.
+class StringValueConverter implements JsonConverter<String, dynamic> {
+  const StringValueConverter();
+
+  @override
+  String fromJson(dynamic value) => value?.toString() ?? '';
+
+  @override
+  dynamic toJson(String value) => value;
+}
+
+/// Accepts legacy numeric IDs while exposing the stable string contract.
+class NullableStringConverter implements JsonConverter<String?, dynamic> {
+  const NullableStringConverter();
+
+  @override
+  String? fromJson(dynamic value) => value?.toString();
+
+  @override
+  dynamic toJson(String? value) => value;
+}
+
 // ==================== REPORT CATEGORIES ====================
 
 /// Offline compatibility categories for the provisional taxonomy_v1 manifest.
@@ -261,7 +283,7 @@ sealed class Report with _$Report {
     @JsonKey(name: 'taxonomy_version') String? taxonomyVersion,
     @JsonKey(name: 'incident_type') String? incidentType,
     String? title,
-    required String description,
+    @Default('') String description,
     @JsonKey(name: 'incident_datetime') String? incidentDatetime,
     @JsonKey(name: 'is_happening_now') @Default(false) bool isHappeningNow,
 
@@ -412,7 +434,7 @@ sealed class Report with _$Report {
     @JsonKey(name: 'citizen_closure_note') String? citizenClosureNote,
 
     // Blockchain Integration
-    @JsonKey(name: 'on_chain_id') @NullableIntConverter() int? onChainId,
+    @JsonKey(name: 'on_chain_id') @NullableStringConverter() String? onChainId,
     @JsonKey(name: 'on_chain_hash') String? onChainHash,
     @JsonKey(name: 'blockchain_txn_hash') String? blockchainTxnHash,
     @JsonKey(name: 'blockchain_synced') @Default(false) bool blockchainSynced,
@@ -430,7 +452,7 @@ sealed class CreateReportRequest with _$CreateReportRequest {
     String? category,
     @JsonKey(name: 'incident_type') String? incidentType,
     String? title,
-    required String description,
+    @Default('') String description,
     @JsonKey(name: 'incident_datetime') String? incidentDatetime,
     @JsonKey(name: 'is_happening_now') @Default(false) bool isHappeningNow,
 
@@ -459,6 +481,7 @@ sealed class CreateReportRequest with _$CreateReportRequest {
     @JsonKey(name: 'data_processing_consent')
     @Default(true)
     bool dataProcessingConsent,
+    @JsonKey(name: 'is_emergency') @Default(false) bool isEmergency,
   }) = _CreateReportRequest;
 
   factory CreateReportRequest.fromJson(Map<String, dynamic> json) =>

@@ -99,6 +99,9 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
 
       final page = switch (destination) {
         WidgetDestination.quickReport => const QuickReportScreen(),
+        WidgetDestination.emergencyReport => const QuickReportScreen(
+          emergencyMode: true,
+        ),
         WidgetDestination.notifications => const NotificationsScreen(),
       };
       final navigation = Navigator.of(

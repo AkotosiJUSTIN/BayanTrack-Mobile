@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const _widgetChannelName = 'bayantrack/widget';
 
-enum WidgetDestination { quickReport, notifications }
+enum WidgetDestination { quickReport, emergencyReport, notifications }
 
 WidgetDestination? parseWidgetDestination(Object? raw) {
   if (raw is! String) return null;
@@ -15,6 +15,9 @@ WidgetDestination? parseWidgetDestination(Object? raw) {
     'quick_report' ||
     'quick-report' ||
     'quickreport' => WidgetDestination.quickReport,
+    'emergency_report' ||
+    'emergency-report' ||
+    'emergencyreport' => WidgetDestination.emergencyReport,
     'notifications' || 'notification' => WidgetDestination.notifications,
     _ => null,
   };
