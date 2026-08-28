@@ -56,4 +56,35 @@ void main() {
     expect(find.text('Wika'), findsOneWidget);
     expect(prefs.getString('app_locale'), 'fil');
   });
+
+  testWidgets('Profile failure shows safe retry guidance', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPrefsProvider.overrideWithValue(prefs),
+          userPermissionsProvider.overrideWithValue(UserPermissions(null)),
+          profileControllerProvider.overrideWithBuild(
+            (_, _) async => throw Exception('private backend details'),
+          ),
+          profileStatsControllerProvider.overrideWithBuild(
+            (_, _) => const {'total': 0, 'resolved': 0, 'pending': 0},
+          ),
+          kycStatusControllerProvider.overrideWithBuild((_, _) async => null),
+        ],
+        child: const MaterialApp(
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: ProfileScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Unable to load profile.'), findsOneWidget);
+    expect(find.text('private backend details'), findsNothing);
+    expect(find.widgetWithText(FilledButton, 'Retry'), findsOneWidget);
+  });
 }

@@ -524,6 +524,7 @@
   "reviewAndResubmit": "Review the feedback and resubmit with corrected documents",
   "qualityCheckNotes": "Quality Check Notes",
   "submittedInformation": "Submitted Information",
+  "noVerificationSubmitted": "No verification submitted yet",
   "resubmissions": "Resubmissions",
   "kycResubmitRequested": "Additional information is required. Please resubmit your documents.",
   "kycSuspended": "Your account verification has been suspended. Please contact support.",

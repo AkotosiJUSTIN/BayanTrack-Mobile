@@ -55,6 +55,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   final _provinceController = TextEditingController();
   final _zipCodeController = TextEditingController();
   final _idNumberController = TextEditingController();
+  final _stepScrollController = ScrollController();
 
   String? _selectedBarangayName;
   int _currentStep = 0;
@@ -111,6 +112,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     _provinceController.dispose();
     _zipCodeController.dispose();
     _idNumberController.dispose();
+    _stepScrollController.dispose();
     super.dispose();
   }
 
@@ -148,6 +150,15 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   }
 
   void _validateLive() => _formKey.currentState?.validate();
+
+  void _setCurrentStep(int step) {
+    setState(() => _currentStep = step);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _stepScrollController.hasClients) {
+        _stepScrollController.jumpTo(0);
+      }
+    });
+  }
 
   void _showImageSourceDialog(String imageType, String title) {
     final l10n = AppLocalizations.of(context);
@@ -273,7 +284,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       return;
     }
 
-    setState(() => _currentStep++);
+    _setCurrentStep(_currentStep + 1);
   }
 
   Future<void> _submitForm() async {
@@ -285,7 +296,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
       // Navigate to the step with errors
       if (_currentStep != errorStep) {
-        setState(() => _currentStep = errorStep);
+        _setCurrentStep(errorStep);
       }
 
       AppToast.error(context, errorMessage);
@@ -349,148 +360,223 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
               ? l10n.resubmitUserVerification
               : l10n.submitUserVerification,
         ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(4),
+          child: Semantics(
+            container: true,
+            label: l10n.stepOf(_currentStep + 1, 7),
+            child: LinearProgressIndicator(
+              value: (_currentStep + 1) / 7,
+              minHeight: 4,
+            ),
+          ),
+        ),
       ),
       body: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: Stepper(
-          currentStep: _currentStep,
-          onStepContinue: () {
-            if (_currentStep < 6) {
-              _continueStep();
-            } else {
-              _submitForm();
-            }
-          },
-          onStepCancel: () {
-            if (_currentStep > 0) {
-              setState(() => _currentStep--);
-            }
-          },
-          onStepTapped: (step) => setState(() => _currentStep = step),
-          controlsBuilder: (context, details) {
-            return Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Row(
-                children: [
-                  if (_currentStep < 6)
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: details.onStepContinue,
-                        child: Text(l10n.continueLabel),
-                      ),
-                    )
-                  else
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: state.isSubmitting ? null : _submitForm,
-                        child: state.isSubmitting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                widget.isResubmission
-                                    ? l10n.resubmitDocuments
-                                    : l10n.submit,
-                              ),
-                      ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildStepHeader(state),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: _stepScrollController,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 640),
+                      child: _buildCurrentStep(state),
                     ),
-                  const SizedBox(width: 12),
-                  if (_currentStep > 0)
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: details.onStepCancel,
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                          side: BorderSide(
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(l10n.back),
-                      ),
-                    ),
-                ],
+                  ),
+                ),
               ),
-            );
-          },
-          steps: [
-            // ===== STEP 0: Basic Identity =====
-            Step(
-              title: Text(l10n.basicIdentity),
-              subtitle: Text(l10n.personalInformation),
-              isActive: _currentStep >= 0,
-              state: state.isBasicIdentityComplete
-                  ? StepState.complete
-                  : StepState.indexed,
-              content: _buildBasicIdentitySection(state),
+              _buildWizardControls(state, l10n),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStepHeader(KycFormState state) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final titles = [
+      l10n.basicIdentity,
+      l10n.contactInfo,
+      l10n.reportLocation,
+      l10n.governmentId,
+      l10n.idPhotos,
+      l10n.selfie,
+      l10n.declaration,
+    ];
+    final subtitles = [
+      l10n.personalInformation,
+      l10n.emailPhone,
+      l10n.currentResidence,
+      l10n.idTypeNumber,
+      l10n.uploadIdImages,
+      l10n.faceVerification,
+      l10n.confirmSubmit,
+    ];
+    final completed = [
+      state.isBasicIdentityComplete,
+      state.isContactComplete,
+      state.isAddressComplete,
+      state.isIdDetailsComplete,
+      state.hasIdFront,
+      state.hasSelfie,
+      state.isDeclarationComplete,
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: List.generate(titles.length, (index) {
+              final isCurrent = index == _currentStep;
+              final color = isCurrent
+                  ? theme.colorScheme.primary
+                  : completed[index]
+                  ? theme.colorScheme.primaryContainer
+                  : theme.colorScheme.surfaceContainerHighest;
+              final foregroundColor = isCurrent
+                  ? theme.colorScheme.onPrimary
+                  : completed[index]
+                  ? theme.colorScheme.onPrimaryContainer
+                  : theme.colorScheme.onSurfaceVariant;
+
+              return Expanded(
+                child: Semantics(
+                  button: true,
+                  selected: isCurrent,
+                  label:
+                      '${l10n.stepOf(index + 1, titles.length)}: ${titles[index]}',
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: () => _setCurrentStep(index),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Center(
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                          ),
+                          child: completed[index] && !isCurrent
+                              ? Icon(
+                                  Icons.check,
+                                  size: 18,
+                                  color: foregroundColor,
+                                )
+                              : Text(
+                                  '${index + 1}',
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    color: foregroundColor,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            l10n.stepOf(_currentStep + 1, titles.length),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-            // ===== STEP 1: Contact Information =====
-            Step(
-              title: Text(l10n.contactInfo),
-              subtitle: Text(l10n.emailPhone),
-              isActive: _currentStep >= 1,
-              state: state.isContactComplete
-                  ? StepState.complete
-                  : StepState.indexed,
-              content: _buildContactSection(state),
+          ),
+          Text(
+            titles[_currentStep],
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
-            // ===== STEP 2: Address =====
-            Step(
-              title: Text(l10n.reportLocation),
-              subtitle: Text(l10n.currentResidence),
-              isActive: _currentStep >= 2,
-              state: state.isAddressComplete
-                  ? StepState.complete
-                  : StepState.indexed,
-              content: _buildAddressSection(state),
+          ),
+          Text(
+            subtitles[_currentStep],
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
-            // ===== STEP 3: Government ID =====
-            Step(
-              title: Text(l10n.governmentId),
-              subtitle: Text(l10n.idTypeNumber),
-              isActive: _currentStep >= 3,
-              state: state.isIdDetailsComplete
-                  ? StepState.complete
-                  : StepState.indexed,
-              content: _buildIdDetailsSection(state),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCurrentStep(KycFormState state) => switch (_currentStep) {
+    0 => _buildBasicIdentitySection(state),
+    1 => _buildContactSection(state),
+    2 => _buildAddressSection(state),
+    3 => _buildIdDetailsSection(state),
+    4 => _buildIdImagesSection(state),
+    5 => _buildSelfieSection(state),
+    _ => _buildDeclarationSection(state),
+  };
+
+  Widget _buildWizardControls(
+    KycFormState state,
+    AppLocalizations l10n,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: ElevatedButton(
+              onPressed: state.isSubmitting
+                  ? null
+                  : _currentStep < 6
+                  ? _continueStep
+                  : _submitForm,
+              child: state.isSubmitting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text(
+                      _currentStep < 6
+                          ? l10n.continueLabel
+                          : widget.isResubmission
+                          ? l10n.resubmitDocuments
+                          : l10n.submit,
+                    ),
             ),
-            // ===== STEP 4: ID Images =====
-            Step(
-              title: Text(l10n.idPhotos),
-              subtitle: Text(l10n.uploadIdImages),
-              isActive: _currentStep >= 4,
-              state: (state.hasIdFront)
-                  ? StepState.complete
-                  : StepState.indexed,
-              content: _buildIdImagesSection(state),
-            ),
-            // ===== STEP 5: Selfie =====
-            Step(
-              title: Text(l10n.selfie),
-              subtitle: Text(l10n.faceVerification),
-              isActive: _currentStep >= 5,
-              state: state.hasSelfie ? StepState.complete : StepState.indexed,
-              content: _buildSelfieSection(state),
-            ),
-            // ===== STEP 6: Declaration =====
-            Step(
-              title: Text(l10n.declaration),
-              subtitle: Text(l10n.confirmSubmit),
-              isActive: _currentStep >= 6,
-              state: state.isDeclarationComplete
-                  ? StepState.complete
-                  : StepState.indexed,
-              content: _buildDeclarationSection(state),
+          ),
+          if (_currentStep > 0) ...[
+            const SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: state.isSubmitting
+                    ? null
+                    : () => _setCurrentStep(_currentStep - 1),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(l10n.back),
+              ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -504,19 +590,24 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _buildVerificationNotice(),
+        const SizedBox(height: 16),
+
         // Rejection reason banner
         if (widget.isResubmission &&
             widget.existingKyc?.rejectionReason != null)
           _buildRejectionBanner(widget.existingKyc!.rejectionReason!),
 
-        const SizedBox(height: 8),
+        if (widget.isResubmission &&
+            widget.existingKyc?.rejectionReason != null)
+          const SizedBox(height: 16),
 
         // First Name *
         TextFormField(
           controller: _firstNameController,
           decoration: InputDecoration(
             labelText: '${l10n.firstName} *',
-            border: OutlineInputBorder(),
+            border: _inputBorder(),
             prefixIcon: Icon(Icons.person),
           ),
           textCapitalization: TextCapitalization.words,
@@ -538,7 +629,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           controller: _middleNameController,
           decoration: InputDecoration(
             labelText: l10n.middleName,
-            border: OutlineInputBorder(),
+            border: _inputBorder(),
             prefixIcon: Icon(Icons.person_outline),
           ),
           textCapitalization: TextCapitalization.words,
@@ -558,7 +649,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           controller: _lastNameController,
           decoration: InputDecoration(
             labelText: '${l10n.lastName} *',
-            border: OutlineInputBorder(),
+            border: _inputBorder(),
             prefixIcon: Icon(Icons.person),
           ),
           textCapitalization: TextCapitalization.words,
@@ -576,7 +667,10 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         const SizedBox(height: 16),
 
         // Date of Birth *
-        InkWell(
+        Semantics(
+          button: true,
+          label: '${l10n.dateOfBirth}, ${l10n.selectDate}',
+          child: InkWell(
           onTap: () async {
             final date = await showDatePicker(
               context: context,
@@ -592,7 +686,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           child: InputDecorator(
             decoration: InputDecoration(
               labelText: '${l10n.dateOfBirth} *',
-              border: OutlineInputBorder(),
+              border: _inputBorder(),
               prefixIcon: Icon(Icons.calendar_today),
             ),
             child: Text(
@@ -601,6 +695,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
                   : '${state.dateOfBirth!.year}-${state.dateOfBirth!.month.toString().padLeft(2, '0')}-${state.dateOfBirth!.day.toString().padLeft(2, '0')}',
             ),
           ),
+          ),
         ),
         const SizedBox(height: 16),
 
@@ -608,7 +703,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         DropdownButtonFormField<Sex>(
           decoration: InputDecoration(
             labelText: l10n.sex,
-            border: OutlineInputBorder(),
+            border: _inputBorder(),
             prefixIcon: Icon(Icons.wc),
           ),
           initialValue: state.sex,
@@ -629,7 +724,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           controller: _nationalityController,
           decoration: InputDecoration(
             labelText: '${l10n.nationality} *',
-            border: OutlineInputBorder(),
+            border: _inputBorder(),
             prefixIcon: Icon(Icons.flag),
             hintText: l10n.nationalityExample,
           ),
@@ -651,7 +746,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         DropdownButtonFormField<CivilStatus>(
           decoration: InputDecoration(
             labelText: l10n.civilStatus,
-            border: OutlineInputBorder(),
+            border: _inputBorder(),
             prefixIcon: Icon(Icons.favorite),
           ),
           initialValue: state.civilStatus,
@@ -680,7 +775,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           controller: _emailController,
           decoration: InputDecoration(
             labelText: '${l10n.emailAddress} *',
-            border: OutlineInputBorder(),
+            border: _inputBorder(),
             prefixIcon: Icon(Icons.email),
           ),
           keyboardType: TextInputType.emailAddress,
@@ -697,7 +792,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           controller: _mobileNumberController,
           decoration: InputDecoration(
             labelText: '${l10n.mobileNumberRequired} *',
-            border: OutlineInputBorder(),
+            border: _inputBorder(),
             prefixIcon: Icon(Icons.phone),
             prefixText: '+63 ',
             hintText: '9123456789',
@@ -753,7 +848,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           controller: _streetBarangayController,
           decoration: InputDecoration(
             labelText: '${l10n.houseStreet} *',
-            border: OutlineInputBorder(),
+            border: _inputBorder(),
             prefixIcon: Icon(Icons.home),
             hintText: l10n.houseStreetHint,
           ),
@@ -791,7 +886,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: '${l10n.barangay} *',
-                    border: OutlineInputBorder(),
+                    border: _inputBorder(),
                     prefixIcon: Icon(Icons.location_city_outlined),
                     hintText: l10n.selectYourBarangay,
                   ),
@@ -820,7 +915,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           controller: _cityMunicipalityController,
           decoration: InputDecoration(
             labelText: '${l10n.city} *',
-            border: OutlineInputBorder(),
+            border: _inputBorder(),
             prefixIcon: Icon(Icons.location_city),
           ),
           textCapitalization: TextCapitalization.words,
@@ -844,7 +939,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           controller: _provinceController,
           decoration: InputDecoration(
             labelText: '${l10n.province} *',
-            border: OutlineInputBorder(),
+            border: _inputBorder(),
             prefixIcon: Icon(Icons.map),
           ),
           textCapitalization: TextCapitalization.words,
@@ -868,7 +963,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           controller: _zipCodeController,
           decoration: InputDecoration(
             labelText: l10n.zipCode,
-            border: OutlineInputBorder(),
+            border: _inputBorder(),
             prefixIcon: Icon(Icons.markunread_mailbox),
           ),
           keyboardType: TextInputType.number,
@@ -895,7 +990,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         DropdownButtonFormField<IdType>(
           decoration: InputDecoration(
             labelText: '${l10n.idType} *',
-            border: OutlineInputBorder(),
+            border: _inputBorder(),
             prefixIcon: Icon(Icons.badge),
           ),
           initialValue: state.selectedIdType,
@@ -919,7 +1014,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           controller: _idNumberController,
           decoration: InputDecoration(
             labelText: '${l10n.idNumber} *',
-            border: OutlineInputBorder(),
+            border: _inputBorder(),
             prefixIcon: Icon(Icons.numbers),
           ),
           inputFormatters: [
@@ -936,7 +1031,10 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         const SizedBox(height: 16),
 
         // ID Expiry Date
-        InkWell(
+        Semantics(
+          button: true,
+          label: '${l10n.idExpiryDate}, ${l10n.selectOptionalDate}',
+          child: InkWell(
           onTap: () async {
             final date = await showDatePicker(
               context: context,
@@ -953,7 +1051,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           child: InputDecorator(
             decoration: InputDecoration(
               labelText: l10n.idExpiryDate,
-              border: OutlineInputBorder(),
+              border: _inputBorder(),
               prefixIcon: Icon(Icons.event),
             ),
             child: Text(
@@ -961,6 +1059,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
                   ? l10n.selectOptionalDate
                   : '${state.idExpiryDate!.year}-${state.idExpiryDate!.month.toString().padLeft(2, '0')}-${state.idExpiryDate!.day.toString().padLeft(2, '0')}',
             ),
+          ),
           ),
         ),
       ],
@@ -1154,6 +1253,58 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
   // ==================== HELPER WIDGETS ====================
 
+  InputBorder _inputBorder() => OutlineInputBorder(
+    borderRadius: BorderRadius.circular(12),
+  );
+
+  Widget _buildVerificationNotice() {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.shield_outlined, color: theme.colorScheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.verificationNotice,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  l10n.declarationFullText,
+                  style: theme.textTheme.bodySmall?.copyWith(height: 1.4),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  l10n.allRequiredFields,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _idTypeLabel(IdType value, AppLocalizations l10n) => switch (value) {
     IdType.passport => l10n.idPassport,
     IdType.nationalId => l10n.idNational,
@@ -1181,33 +1332,42 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
   Widget _buildRejectionBanner(String reason) {
     final l10n = AppLocalizations.of(context);
-    return Card(
-      color: AppColors.alertHigh.withValues(alpha: 0.1),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            const Icon(Icons.info_outline, color: AppColors.alertHigh),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.previousRejectionReason,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.errorContainer.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.error.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, color: theme.colorScheme.error),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.previousRejectionReason,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
-                  Text(reason, style: const TextStyle(fontSize: 13)),
-                ],
-              ),
+                ),
+                const SizedBox(height: 4),
+                Text(reason, style: theme.textTheme.bodyMedium),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildSummaryRow(String label, String value) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -1215,7 +1375,12 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         children: [
           SizedBox(
             width: 80,
-            child: Text('$label:', style: const TextStyle(color: Colors.grey)),
+            child: Text(
+              '$label:',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
           Expanded(child: Text(value.isEmpty ? '-' : value)),
         ],
@@ -1230,68 +1395,94 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     required VoidCallback onRemove,
   }) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
+        Text(
+          title,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         const SizedBox(height: 8),
         if (imagePath == null)
-          InkWell(
-            onTap: onTap,
-            child: Container(
-              height: 150,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.add_a_photo,
-                      size: 40,
-                      color: Theme.of(context).colorScheme.outline,
+          Semantics(
+            button: true,
+            label: '$title, ${l10n.tapAddPhoto}',
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    border: Border.all(color: theme.colorScheme.outline),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_a_photo_outlined,
+                          size: 40,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(l10n.tapAddPhoto),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(l10n.tapAddPhoto),
-                  ],
+                  ),
                 ),
               ),
             ),
           )
         else
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  File(imagePath),
-                  height: 150,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Colors.red,
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 18,
+          Semantics(
+            image: true,
+            label: title,
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(
+                    File(imagePath),
+                    height: 150,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 150,
+                      width: double.infinity,
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                    onPressed: onRemove,
-                    padding: EdgeInsets.zero,
                   ),
                 ),
-              ),
-            ],
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Material(
+                    color: theme.colorScheme.error,
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      tooltip: l10n.remove,
+                      icon: Icon(
+                        Icons.close,
+                        color: theme.colorScheme.onError,
+                      ),
+                      onPressed: onRemove,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
       ],
     );

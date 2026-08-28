@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -17,6 +16,7 @@ import '../../../auth/data/auth_models.dart';
 import '../../../auth/data/user_permissions.dart';
 import '../../../auth/presentation/barangays_provider.dart';
 import '../../../auth/presentation/auth_controller.dart';
+import '../../../images/data/evidence_file_stager.dart';
 import '../../../images/data/evidence_upload_queue.dart';
 import '../../../images/data/evidence_upload_queue_provider.dart';
 import '../../data/reports_repository.dart';
@@ -28,6 +28,7 @@ import '../reports_controller.dart';
 import '../report_labels.dart';
 import 'new_report_controller.dart';
 import 'quick_report_geo.dart';
+import 'report_flow_widgets.dart';
 
 enum _QuickLocationInputMode { phone, manual }
 
@@ -740,11 +741,13 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     }
 
     try {
+      final staged = await stageEvidenceFile(picked);
+      if (!mounted) return;
       final queue = await ref.read(evidenceUploadQueueProvider.future);
       final intents = await queue.enqueue(
         userId: userId,
         reportId: reportId,
-        files: [File(picked.path)],
+        files: [staged],
       );
       if (intents.single.state == EvidenceUploadState.missingLocalFile) {
         if (mounted) {
@@ -835,7 +838,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
           prefixIcon: const Icon(Icons.category_outlined),
           helperText: _isLoadingEmergencyCategories
               ? l10n.loading
-              : _emergencyCategoryError,
+              : _emergencyCategoryError ?? l10n.requiredShort,
           helperStyle: TextStyle(color: scheme.onSurfaceVariant),
         ),
         items: _emergencyCategories
@@ -873,9 +876,24 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
             : (value) => setState(() => _emergencyConfirmed = value ?? false),
         controlAffinity: ListTileControlAffinity.leading,
         contentPadding: EdgeInsets.zero,
-        title: Text(
-          l10n.emergencyConfirm,
-          style: theme.textTheme.bodyMedium?.copyWith(height: 1.3),
+        title: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                l10n.emergencyConfirm,
+                style: theme.textTheme.bodyMedium?.copyWith(height: 1.3),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              l10n.requiredShort,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1084,104 +1102,109 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     return Material(
       key: const Key('quick-report-submit-bar'),
       color: theme.scaffoldBackgroundColor,
-      child: SafeArea(
-        top: false,
-        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: ValueListenableBuilder<TextEditingValue>(
-          valueListenable: _descriptionController,
-          builder: (context, value, _) {
-            final disabledReason = _submitDisabledReason(value.text);
-            final canSubmit = !_isSubmitting && disabledReason == null;
-            final submitError = _submissionError;
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (submitError != null) ...[
-                  Semantics(
-                    liveRegion: true,
-                    label: l10n.submissionError(submitError),
-                    child: Text(
-                      submitError,
-                      key: const Key('quick-report-submit-error'),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.error,
-                        fontWeight: FontWeight.w600,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: scheme.outlineVariant)),
+        ),
+        child: SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _descriptionController,
+            builder: (context, value, _) {
+              final disabledReason = _submitDisabledReason(value.text);
+              final canSubmit = !_isSubmitting && disabledReason == null;
+              final submitError = _submissionError;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (submitError != null) ...[
+                    Semantics(
+                      liveRegion: true,
+                      label: l10n.submissionError(submitError),
+                      child: Text(
+                        submitError,
+                        key: const Key('quick-report-submit-error'),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.error,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                ] else if (!_isSubmitting && disabledReason != null) ...[
-                  Semantics(
-                    liveRegion: true,
-                    label: l10n.submitDisabled(disabledReason),
-                    child: Text(
-                      disabledReason,
-                      key: const Key('quick-report-disabled-reason'),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurface.withValues(alpha: 0.72),
+                    const SizedBox(height: 6),
+                  ] else if (!_isSubmitting && disabledReason != null) ...[
+                    Semantics(
+                      liveRegion: true,
+                      label: l10n.submitDisabled(disabledReason),
+                      child: Text(
+                        disabledReason,
+                        key: const Key('quick-report-disabled-reason'),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurface.withValues(alpha: 0.72),
+                        ),
                       ),
                     ),
+                    const SizedBox(height: 6),
+                  ],
+                  Semantics(
+                    button: true,
+                    enabled: canSubmit,
+                    liveRegion: _isSubmitting,
+                    label: _isSubmitting
+                        ? (widget.emergencyMode
+                              ? l10n.submittingEmergencyReport
+                              : l10n.submittingQuickReport)
+                        : (widget.emergencyMode
+                              ? l10n.submitEmergencyReport
+                              : l10n.submitQuickReport),
+                    hint: disabledReason,
+                    child: ElevatedButton(
+                      key: Key(
+                        widget.emergencyMode
+                            ? 'emergency-report-submit'
+                            : 'quick-report-submit',
+                      ),
+                      onPressed: canSubmit ? _submitQuickReport : null,
+                      style: _isSubmitting
+                          ? ElevatedButton.styleFrom(
+                              disabledBackgroundColor: scheme.primary,
+                              disabledForegroundColor: scheme.onPrimary,
+                            )
+                          : null,
+                      child: _isSubmitting
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: scheme.onPrimary,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Flexible(
+                                  child: Text(
+                                    widget.emergencyMode
+                                        ? l10n.submittingEmergencyReport
+                                        : l10n.submittingQuickReport,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Text(
+                              widget.emergencyMode
+                                  ? l10n.submitEmergencyReport
+                                  : l10n.submitQuickReport,
+                            ),
+                    ),
                   ),
-                  const SizedBox(height: 6),
                 ],
-                Semantics(
-                  button: true,
-                  enabled: canSubmit,
-                  liveRegion: _isSubmitting,
-                  label: _isSubmitting
-                      ? (widget.emergencyMode
-                            ? l10n.submittingEmergencyReport
-                            : l10n.submittingQuickReport)
-                      : (widget.emergencyMode
-                            ? l10n.submitEmergencyReport
-                            : l10n.submitQuickReport),
-                  hint: disabledReason,
-                  child: ElevatedButton(
-                    key: Key(
-                      widget.emergencyMode
-                          ? 'emergency-report-submit'
-                          : 'quick-report-submit',
-                    ),
-                    onPressed: canSubmit ? _submitQuickReport : null,
-                    style: _isSubmitting
-                        ? ElevatedButton.styleFrom(
-                            disabledBackgroundColor: scheme.primary,
-                            disabledForegroundColor: scheme.onPrimary,
-                          )
-                        : null,
-                    child: _isSubmitting
-                        ? Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: scheme.onPrimary,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Flexible(
-                                child: Text(
-                                  widget.emergencyMode
-                                      ? l10n.submittingEmergencyReport
-                                      : l10n.submittingQuickReport,
-                                ),
-                              ),
-                            ],
-                          )
-                        : Text(
-                            widget.emergencyMode
-                                ? l10n.submitEmergencyReport
-                                : l10n.submitQuickReport,
-                          ),
-                  ),
-                ),
-              ],
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );
@@ -1235,6 +1258,15 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildVerificationNotice(permissions, theme),
+                    ReportFlowProgress(step: 1, total: 1),
+                    ReportFlowHeader(
+                      title: widget.emergencyMode
+                          ? l10n.emergencyReport
+                          : l10n.quickReport,
+                      guidance: widget.emergencyMode
+                          ? l10n.chooseIncidentLocation
+                          : l10n.selectLocationDescription,
+                    ),
                     if (widget.emergencyMode) ...[
                       _buildEmergencyNotice(theme),
                       _buildEmergencyCategory(theme),
@@ -1575,11 +1607,23 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              l10n.shortDescription,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    l10n.shortDescription,
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                                Text(
+                                  l10n.requiredShort,
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: scheme.primary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -1591,7 +1635,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                             const SizedBox(height: 8),
                             Semantics(
                               container: true,
-                              label: l10n.shortDescription,
+                              label:
+                                  '${l10n.shortDescription}, ${l10n.requiredShort}',
                               hint: l10n.shortDescriptionSemantics,
                               child: TextField(
                                 key: const Key('quick-report-description'),

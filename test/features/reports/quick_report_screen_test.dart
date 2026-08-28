@@ -175,6 +175,7 @@ void main() {
   ) async {
     await _pumpQuickReport(tester, locate: () async => inside);
 
+    expect(find.text('Step 1 of 1'), findsOneWidget);
     expect(
       find.text(
         'You can report now. Verification improves trust and unlocks account features.',

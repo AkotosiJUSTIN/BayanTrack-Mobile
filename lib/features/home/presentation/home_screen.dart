@@ -208,56 +208,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           VerificationBanner(permissions: permissions),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: l10n.searchReports,
+                labelText: l10n.searchReports,
                 prefixIcon: const Icon(Icons.search),
-                contentPadding: EdgeInsets.symmetric(vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurface
-                        : AppColors.lightSurface,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.darkBorder
-                          : AppColors.lightBorder,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildToggleButton(
-                        label: l10n.map,
-                        icon: Icons.map_outlined,
-                        isSelected: _isMapView,
-                        onTap: () => setState(() => _isMapView = true),
-                      ),
-                      _buildToggleButton(
-                        label: l10n.list,
-                        icon: Icons.list,
-                        isSelected: !_isMapView,
-                        onTap: () => setState(() => _isMapView = false),
-                      ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                Text(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final viewSelector = _buildViewSelector(l10n);
+                final count = Text(
                   l10n.reportCount(_totalReports),
-                  style: theme.textTheme.bodySmall,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                );
+
+                if (constraints.maxWidth < 360) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      count,
+                      const SizedBox(height: 8),
+                      viewSelector,
+                    ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: count),
+                    viewSelector,
+                  ],
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                l10n.status,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary,
                 ),
-              ],
+              ),
             ),
           ),
           SizedBox(
@@ -319,59 +323,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildToggleButton({
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark
-                    ? AppColors.darkSurfaceVariant
-                    : AppColors.lightSurfaceVariant)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
+  Widget _buildViewSelector(AppLocalizations l10n) {
+    return SegmentedButton<bool>(
+      expandedInsets: EdgeInsets.zero,
+      showSelectedIcon: false,
+      segments: [
+        ButtonSegment<bool>(
+          value: true,
+          label: Text(l10n.map),
+          icon: const Icon(Icons.map_outlined),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: isSelected
-                  ? (isDark
-                        ? AppColors.darkTextPrimary
-                        : AppColors.lightTextPrimary)
-                  : (isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected
-                    ? (isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.lightTextPrimary)
-                    : (isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary),
-              ),
-            ),
-          ],
+        ButtonSegment<bool>(
+          value: false,
+          label: Text(l10n.list),
+          icon: const Icon(Icons.list),
         ),
-      ),
+      ],
+      selected: {_isMapView},
+      onSelectionChanged: (selection) {
+        if (selection.isNotEmpty) {
+          setState(() => _isMapView = selection.first);
+        }
+      },
     );
   }
 
@@ -664,6 +637,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               style: theme.textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.tonal(
+            onPressed: _onRefresh,
+            child: Text(AppLocalizations.of(context)!.retry),
           ),
         ],
       ),

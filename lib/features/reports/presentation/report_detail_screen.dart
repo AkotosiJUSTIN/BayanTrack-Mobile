@@ -48,6 +48,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     // Use the controller to fetch the report
     final reportAsync = ref.watch(
@@ -61,6 +62,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             SliverAppBar(
               expandedHeight: 300,
               pinned: true,
+              title: Text(l10n.reportDetails),
               flexibleSpace: FlexibleSpaceBar(
                 background: _buildImagePlaceholder(isDark),
               ),
@@ -78,6 +80,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             SliverAppBar(
               expandedHeight: 300,
               pinned: true,
+              title: Text(l10n.reportDetails),
               flexibleSpace: FlexibleSpaceBar(
                 background: _buildImagePlaceholder(isDark),
               ),
@@ -97,6 +100,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
               SliverAppBar(
                 expandedHeight: 300,
                 pinned: true,
+                title: Text(l10n.reportDetails),
                 flexibleSpace: FlexibleSpaceBar(
                   background: _buildImageCarousel(isDark, imageUrls),
                 ),
@@ -112,6 +116,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   }
 
   Widget _buildImagePlaceholder(bool isDark) {
+    final theme = Theme.of(context);
     return Container(
       color: isDark ? AppColors.darkSurface : AppColors.lightSurfaceVariant,
       child: Center(
@@ -121,9 +126,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             Icon(
               Icons.image_outlined,
               size: 64,
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ],
         ),
@@ -132,6 +135,8 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   }
 
   Widget _buildImageCarousel(bool isDark, List<String> imageUrls) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
     if (imageUrls.isEmpty) {
       return Container(
         color: isDark ? AppColors.darkSurface : AppColors.lightSurfaceVariant,
@@ -142,18 +147,12 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
               Icon(
                 Icons.image_not_supported_outlined,
                 size: 64,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(height: 8),
               Text(
                 AppLocalizations.of(context).noImages,
-                style: TextStyle(
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
-                ),
+                style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -173,11 +172,16 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             return Image.network(
               imageUrls[index],
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              semanticLabel: '${l10n.reportDetails} ${index + 1}',
+              errorBuilder: (_, _, _) => Container(
                 color: isDark
                     ? AppColors.darkSurface
                     : AppColors.lightSurfaceVariant,
-                child: const Icon(Icons.broken_image, size: 64),
+                child: Icon(
+                  Icons.broken_image,
+                  size: 64,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             );
           },
@@ -237,6 +241,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
   Widget _buildReportContent(ThemeData theme, bool isDark, Report report) {
     final l10n = AppLocalizations.of(context);
+    final successColor = theme.brightness == Brightness.dark
+        ? AppColors.resolvedTextDark
+        : AppColors.resolvedText;
     final municipalities = ref.watch(municipalitiesProvider).asData?.value;
     final municipality =
         findMunicipalityMetadata(
@@ -247,240 +254,297 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             ? bundledUrdanetaMunicipality
             : null);
     final linkedReportCount = report.linkedReportCount;
+    final reportShortId = report.id.length > 8
+        ? report.id.substring(0, 8)
+        : report.id;
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Status and category badges
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              _buildStatusBadge(context, report.status),
-              if (report.categoryDisplay != null || report.category != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.darkSurfaceVariant
-                        : AppColors.lightSurfaceVariant,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    localizedReportCategory(
-                      report.category,
-                      l10n,
-                      fallback: report.categoryDisplay,
-                    ),
-                    style: theme.textTheme.labelSmall,
-                  ),
-                ),
-              PriorityBadge(
-                priorityLevel: report.displayPriorityLevel,
-                showScores: false, // Simplified view for citizens
+          if (report.title?.trim().isNotEmpty == true) ...[
+            Text(
+              report.title!,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
               ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          Semantics(
+            container: true,
+            explicitChildNodes: true,
+            label:
+                '${l10n.status}: ${localizedReportStatus(report.status, l10n)}',
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                _buildStatusBadge(context, report.status),
+                if (report.categoryDisplay != null || report.category != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant,
+                      ),
+                    ),
+                    child: Text(
+                      localizedReportCategory(
+                        report.category,
+                        l10n,
+                        fallback: report.categoryDisplay,
+                      ),
+                      style: theme.textTheme.labelMedium,
+                    ),
+                  ),
+                PriorityBadge(
+                  priorityLevel: report.displayPriorityLevel,
+                  showScores: false,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 16,
+            runSpacing: 6,
+            children: [
               if (report.displayPriorityLevel != null)
-                Chip(
-                  visualDensity: VisualDensity.compact,
-                  label: Text(
-                    report.priorityIsAdvisory
-                        ? l10n.aiSuggestionPending
-                        : l10n.operationalPriority,
+                Text(
+                  report.priorityIsAdvisory
+                      ? l10n.aiSuggestionPending
+                      : l10n.operationalPriority,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               if (linkedReportCount > 1 && report.isIncidentRepresentative)
-                Chip(
-                  visualDensity: VisualDensity.compact,
-                    label: Text(l10n.confirmedLinkedReports(linkedReportCount)),
+                Text(
+                  l10n.confirmedLinkedReports(linkedReportCount),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               if (report.credibilityScore != null)
-                Chip(
-                  visualDensity: VisualDensity.compact,
-                  label: Text(
-                    l10n.credibility(report.credibilityScore!.round()),
+                Text(
+                  l10n.credibility(report.credibilityScore!.round()),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               if (report.blockchainSynced)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(
-                      color: AppColors.success.withValues(alpha: 0.3),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.verified_user_outlined,
+                      size: 16,
+                      color: successColor,
                     ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.verified_user_outlined,
-                        size: 14,
-                        color: AppColors.success,
+                    const SizedBox(width: 4),
+                    Text(
+                      l10n.verified,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: successColor,
+                        fontWeight: FontWeight.w600,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        l10n.verified,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: AppColors.success,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
             ],
           ),
-          const SizedBox(height: 8),
 
           // Time
           if (report.createdAt != null)
             Text(
               localizedRelativeTime(context, report.createdAt, l10n),
               style: theme.textTheme.bodySmall?.copyWith(
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           const SizedBox(height: 16),
 
+          if (report.createdAt != null ||
+              report.submittedAt != null ||
+              report.verifiedAt != null ||
+              report.resolvedAt != null ||
+              report.assignedDepartment != null) ...[
+            _buildWorkflowActivity(theme, report),
+            const SizedBox(height: 24),
+          ],
+
           // Description
-          Text(
-            l10n.reportDescription,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+          _buildSectionHeading(
+            theme,
+            icon: Icons.description_outlined,
+            title: l10n.reportDescription,
           ),
           const SizedBox(height: 8),
-          Text(report.description, style: theme.textTheme.bodyMedium),
+          Text(
+            report.description,
+            style: theme.textTheme.bodyLarge?.copyWith(height: 1.45),
+          ),
           const SizedBox(height: 24),
 
           // Location
-          if (report.latitude != null && report.longitude != null) ...[
-            Text(
-              l10n.reportLocation,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+          if (report.hasCoordinates ||
+              report.streetLandmark != null ||
+              report.location != null ||
+              report.barangay != null ||
+              report.cityMunicipality != null ||
+              report.zone != null) ...[
+            _buildSectionHeading(
+              theme,
+              icon: Icons.location_on_outlined,
+              title: l10n.reportLocation,
             ),
             const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
-                height: 200,
-                child: Stack(
-                  children: [
-                    FlutterMap(
-                      mapController: _locationMapController,
-                      options: MapOptions(
-                        initialCenter: LatLng(
-                          report.latitude!,
-                          report.longitude!,
-                        ),
-                        initialZoom: 16,
-                        initialCameraFit: municipality == null
-                            ? null
-                            : MunicipalityMapCamera.initialFit(municipality),
-                        cameraConstraint: municipality == null
-                            ? const CameraConstraint.unconstrained()
-                            : MunicipalityMapCamera.constraintFor(
-                                    municipality,
-                                  ) ??
-                                  const CameraConstraint.unconstrained(),
-                        interactionOptions: const InteractionOptions(
-                          flags:
-                              InteractiveFlag.pinchZoom | InteractiveFlag.drag,
-                        ),
-                      ),
+            if (report.streetLandmark != null)
+              _buildInfoRow(l10n.address, report.streetLandmark!, theme),
+            if (report.barangay != null)
+              _buildInfoRow(l10n.barangay, report.barangay!, theme),
+            if (report.cityMunicipality != null)
+              _buildInfoRow(l10n.city, report.cityMunicipality!, theme),
+            if (report.zone != null)
+              _buildInfoRow(l10n.zone, report.zone!, theme),
+            if (report.streetLandmark == null &&
+                report.barangay == null &&
+                report.cityMunicipality == null &&
+                report.zone == null &&
+                report.location != null)
+              Text(
+                report.location!,
+                style: theme.textTheme.bodyLarge?.copyWith(height: 1.4),
+              ),
+            if (report.hasCoordinates) ...[
+              const SizedBox(height: 12),
+              Semantics(
+                container: true,
+                label: '${l10n.reportLocation}: ${report.displayLocation}',
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    height: 200,
+                    child: Stack(
                       children: [
-                        TileLayer(
-                          urlTemplate:
-                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName: 'com.example.bayantrack_mobile',
-                        ),
-                        MunicipalityBoundaryLayer(
-                          boundary: municipality?.boundary,
-                        ),
-                        MarkerLayer(
-                          markers: [
-                            Marker(
-                              point: LatLng(
-                                report.latitude!,
-                                report.longitude!,
-                              ),
-                              width: 40,
-                              height: 40,
-                              child: const Icon(
-                                Icons.location_on,
-                                size: 40,
-                                color: AppColors.alertHigh,
-                              ),
+                        FlutterMap(
+                          mapController: _locationMapController,
+                          options: MapOptions(
+                            initialCenter: LatLng(
+                              report.latitude!,
+                              report.longitude!,
+                            ),
+                            initialZoom: 16,
+                            initialCameraFit: municipality == null
+                                ? null
+                                : MunicipalityMapCamera.initialFit(
+                                    municipality,
+                                  ),
+                            cameraConstraint: municipality == null
+                                ? const CameraConstraint.unconstrained()
+                                : MunicipalityMapCamera.constraintFor(
+                                        municipality,
+                                      ) ??
+                                      const CameraConstraint.unconstrained(),
+                            interactionOptions: const InteractionOptions(
+                              flags:
+                                  InteractiveFlag.pinchZoom |
+                                  InteractiveFlag.drag,
+                            ),
+                          ),
+                          children: [
+                            TileLayer(
+                              urlTemplate:
+                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              userAgentPackageName:
+                                  'com.example.bayantrack_mobile',
+                            ),
+                            MunicipalityBoundaryLayer(
+                              boundary: municipality?.boundary,
+                            ),
+                            MarkerLayer(
+                              markers: [
+                                Marker(
+                                  point: LatLng(
+                                    report.latitude!,
+                                    report.longitude!,
+                                  ),
+                                  width: 40,
+                                  height: 40,
+                                  child: const Icon(
+                                    Icons.location_on,
+                                    size: 40,
+                                    color: AppColors.alertHigh,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
+                        if (municipality != null)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: IconButton.filledTonal(
+                              constraints: const BoxConstraints.tightFor(
+                                width: 48,
+                                height: 48,
+                              ),
+                              tooltip: l10n.recenterToMunicipality(
+                                municipality.name,
+                              ),
+                              onPressed: () => MunicipalityMapCamera.recenter(
+                                _locationMapController,
+                                municipality,
+                              ),
+                              icon: const Icon(
+                                Icons.center_focus_strong_outlined,
+                              ),
+                            ),
+                          ),
+                        Positioned(
+                          bottom: 8,
+                          left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.scaffoldBackgroundColor.withValues(
+                                alpha: 0.85,
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '${report.latitude?.toStringAsFixed(7)}, '
+                              '${report.longitude?.toStringAsFixed(7)}',
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                    if (municipality != null)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: IconButton.filledTonal(
-                          constraints: const BoxConstraints.tightFor(
-                            width: 48,
-                            height: 48,
-                          ),
-                          tooltip: l10n.recenterToMunicipality(municipality.name),
-                          onPressed: () => MunicipalityMapCamera.recenter(
-                            _locationMapController,
-                            municipality,
-                          ),
-                          icon: const Icon(Icons.center_focus_strong_outlined),
-                        ),
-                      ),
-                    Positioned(
-                      bottom: 8,
-                      left: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.scaffoldBackgroundColor.withValues(
-                            alpha: 0.85,
-                          ),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '${report.latitude?.toStringAsFixed(7)}, '
-                          '${report.longitude?.toStringAsFixed(7)}',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ],
             const SizedBox(height: 24),
           ],
 
           // AI Analysis (if available)
           if (report.categoryDisplay != null ||
               report.category != null ||
-              report.priority != null ||
+              report.displayPriorityLevel != null ||
               report.departmentDisplay != null ||
-              report.recommendedDepartment != null ||
-              report.assignedDepartment != null) ...[
+              report.recommendedDepartment != null) ...[
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -528,16 +592,10 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                     _buildInfoRow(
                       l10n.aiDepartmentSuggestion,
                       '${report.departmentDisplay ?? report.recommendedDepartment}'
-                          '${report.departmentProbability != null ? ' (${(report.departmentProbability! * 100).toStringAsFixed(1)}%)' : ''}',
+                      '${report.departmentProbability != null ? ' (${(report.departmentProbability! * 100).toStringAsFixed(1)}%)' : ''}',
                       theme,
                     ),
-                  if (report.assignedDepartment != null)
-                    _buildInfoRow(
-                      l10n.currentHandler,
-                      report.assignedDepartment!,
-                      theme,
-                    )
-                  else if (report.departmentDisplay != null ||
+                  if (report.departmentDisplay != null ||
                       report.recommendedDepartment != null)
                     _buildInfoRow(
                       l10n.routingStatus,
@@ -552,24 +610,17 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             const SizedBox(height: 24),
           ],
 
-          // Zone info
-          if (report.zone != null) ...[
-            _buildInfoRow(l10n.zone, report.zone!, theme),
-            const SizedBox(height: 8),
-          ],
-
           // Report ID
-          _buildInfoRow('Report ID', report.id.substring(0, 8), theme),
+          _buildInfoRow('Report ID', reportShortId, theme),
           const SizedBox(height: 24),
 
           if (report.resolvedProofImages.isNotEmpty &&
               (report.status == ReportStatus.resolved ||
                   report.status == ReportStatus.closed)) ...[
-            Text(
-              l10n.resolutionProof,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+            _buildSectionHeading(
+              theme,
+              icon: Icons.photo_library_outlined,
+              title: l10n.resolutionProof,
             ),
             const SizedBox(height: 8),
             Text(
@@ -577,9 +628,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   ? l10n.resolutionProofResolved
                   : l10n.resolutionProofClosed,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 12),
@@ -588,24 +637,29 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: report.resolvedProofImages.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
                 itemBuilder: (context, index) {
                   final proofImage = report.resolvedProofImages[index];
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      ApiConstants.getImageUrl(proofImage.url),
-                      width: 140,
-                      height: 104,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                  return Semantics(
+                    image: true,
+                    label: l10n.resolutionProof,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        ApiConstants.getImageUrl(proofImage.url),
                         width: 140,
                         height: 104,
-                        color: isDark
-                            ? AppColors.darkSurface
-                            : AppColors.lightSurfaceVariant,
-                        alignment: Alignment.center,
-                        child: const Icon(Icons.broken_image_outlined),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Container(
+                          width: 140,
+                          height: 104,
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.broken_image_outlined,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                       ),
                     ),
                   );
@@ -617,7 +671,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
           // Citizen resolution review banner (shown only to the report owner
           // when the report has been resolved by barangay staff)
-          _buildCitizenReviewBanner(theme, isDark, report),
+          _buildCitizenReviewBanner(theme, report),
 
           // Blockchain Verification Section
           _buildBlockchainSection(theme, isDark, report),
@@ -627,15 +681,90 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     );
   }
 
+  Widget _buildWorkflowActivity(ThemeData theme, Report report) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeading(
+          theme,
+          icon: Icons.timeline_outlined,
+          title: l10n.status,
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+          ),
+          child: Column(
+            children: [
+              if (report.createdAt != null)
+                _buildInfoRow(
+                  l10n.submitted,
+                  _formatDate(report.createdAt!),
+                  theme,
+                ),
+              if (report.verifiedAt != null)
+                _buildInfoRow(
+                  l10n.verified,
+                  _formatDate(report.verifiedAt!),
+                  theme,
+                ),
+              if (report.resolvedAt != null)
+                _buildInfoRow(
+                  l10n.resolvedStatus,
+                  _formatDate(report.resolvedAt!),
+                  theme,
+                ),
+              if (report.assignedDepartment != null)
+                _buildInfoRow(
+                  l10n.currentHandler,
+                  report.assignedDepartment!,
+                  theme,
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime date) =>
+      DateFormat('MMM dd, yyyy, HH:mm').format(date);
+
+  Widget _buildSectionHeading(
+    ThemeData theme, {
+    required IconData icon,
+    required String title,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   /// Shows a prominent call-to-action banner to the report owner when the
   /// barangay has marked the report as resolved and the citizen hasn't yet
   /// submitted their review.
-  Widget _buildCitizenReviewBanner(
-    ThemeData theme,
-    bool isDark,
-    Report report,
-  ) {
+  Widget _buildCitizenReviewBanner(ThemeData theme, Report report) {
     final l10n = AppLocalizations.of(context);
+    final successColor = theme.brightness == Brightness.dark
+        ? AppColors.resolvedTextDark
+        : AppColors.resolvedText;
     if (report.status != ReportStatus.resolved) return const SizedBox.shrink();
 
     // Only show to the report owner
@@ -653,19 +782,19 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: AppColors.success.withValues(alpha: 0.08),
+            color: successColor.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+            border: Border.all(color: successColor.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
-              Icon(Icons.verified_rounded, color: AppColors.success, size: 20),
+              Icon(Icons.verified_rounded, color: successColor, size: 20),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   l10n.alreadyReviewed,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.success,
+                    color: successColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -683,28 +812,23 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.success.withValues(alpha: 0.15),
-              AppColors.success.withValues(alpha: 0.05),
-            ],
-          ),
+          color: successColor.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
+          border: Border.all(color: successColor.withValues(alpha: 0.4)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.task_alt_rounded, color: AppColors.success),
+                Icon(Icons.task_alt_rounded, color: successColor),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     l10n.reportResolved,
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.success,
+                      color: successColor,
                     ),
                   ),
                 ),
@@ -733,7 +857,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                 icon: const Icon(Icons.rate_review_outlined),
                 label: Text(l10n.reviewSignOff),
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.success,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  minimumSize: const Size.fromHeight(52),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -749,39 +875,28 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.grey.shade50,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : Colors.grey.shade200,
-        ),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Wrap(
-            spacing: 8,
-            runSpacing: 4,
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
+          Row(
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.account_tree_outlined,
-                    size: 18,
-                    color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary,
+              Icon(
+                Icons.account_tree_outlined,
+                size: 20,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.blockchainVerification,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.blockchainVerification,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+                ),
               ),
               if (_isVerifying)
                 const Padding(
@@ -800,7 +915,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   icon: const Icon(Icons.refresh, size: 16),
                   label: Text(l10n.verifyNow),
                   style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
+                    minimumSize: const Size(48, 48),
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     textStyle: theme.textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.bold,
@@ -827,15 +942,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                 (entry) => _buildAuditEntry(theme, entry, isDark),
               ),
           ] else if (report.blockchainSynced)
-            Text(
-              l10n.blockchainAnchored,
-              style: theme.textTheme.bodySmall,
-            )
+            Text(l10n.blockchainAnchored, style: theme.textTheme.bodySmall)
           else
-            Text(
-              l10n.blockchainPending,
-              style: theme.textTheme.bodySmall,
-            ),
+            Text(l10n.blockchainPending, style: theme.textTheme.bodySmall),
         ],
       ),
     );
@@ -844,6 +953,16 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   Widget _buildVerificationStatus(ThemeData theme) {
     final l10n = AppLocalizations.of(context);
     final result = _verificationResult!;
+    final isDark = theme.brightness == Brightness.dark;
+    final successColor = isDark
+        ? AppColors.resolvedTextDark
+        : AppColors.resolvedText;
+    final warningColor = isDark
+        ? AppColors.pendingTextDark
+        : AppColors.pendingText;
+    final errorColor = isDark
+        ? AppColors.rejectedTextDark
+        : AppColors.rejectedText;
 
     // `verified` = content hash intact. `statusVerified` is only populated for
     // legacy v3 status events; v4 checkpoints deliberately leave workflow
@@ -863,28 +982,28 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     final String title;
 
     if (isHealthy && !isStatusPending) {
-      statusColor = AppColors.success;
+      statusColor = successColor;
       statusIcon = Icons.check_circle;
       title = l10n.integrityVerified;
     } else if (isStatusPending) {
       // Content is intact; only the on-chain status enum lags behind
-      statusColor = AppColors.alertMedium;
+      statusColor = warningColor;
       statusIcon = Icons.sync_rounded;
       title = l10n.contentVerified;
     } else if (isNotAnchored) {
-      statusColor = AppColors.alertMedium;
+      statusColor = warningColor;
       statusIcon = Icons.hourglass_empty;
       title = l10n.notYetAnchored;
     } else if (isNotFound) {
-      statusColor = AppColors.alertMedium;
+      statusColor = warningColor;
       statusIcon = Icons.search_off;
       title = l10n.recordNotFound;
     } else if (isConnectionError) {
-      statusColor = AppColors.alertMedium;
+      statusColor = warningColor;
       statusIcon = Icons.cloud_off;
       title = l10n.blockchainUnavailable;
     } else {
-      statusColor = AppColors.alertHigh;
+      statusColor = errorColor;
       statusIcon = Icons.warning;
       title = l10n.integrityBreach;
     }
@@ -892,9 +1011,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: (isNeutral ? AppColors.alertMedium : statusColor).withValues(
-          alpha: 0.1,
-        ),
+        color: (isNeutral ? warningColor : statusColor).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -961,14 +1078,16 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      _getActionLabel(entry),
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Text(
+                        _getActionLabel(entry),
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Text(
                       DateFormat('MMM dd, HH:mm').format(
                         DateTime.fromMillisecondsSinceEpoch(
@@ -981,7 +1100,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                 ),
                 Text(
                   l10n.byActor(
-                    '${entry.actor.substring(0, 6)}...${entry.actor.substring(entry.actor.length - 4)}',
+                    entry.actor.length > 10
+                        ? '${entry.actor.substring(0, 6)}...${entry.actor.substring(entry.actor.length - 4)}'
+                        : entry.actor,
                   ),
                   style: theme.textTheme.bodySmall,
                 ),
@@ -1031,63 +1152,66 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       });
 
       if (result == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.verificationFailed),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.verificationFailed)));
       }
     }
   }
 
   Widget _buildStatusBadge(BuildContext context, ReportStatus status) {
     final l10n = AppLocalizations.of(context);
-    final (color, label) = switch (status) {
-      ReportStatus.submitted => (const Color(0xFFF59E0B), l10n.submitted), // Amber
-      ReportStatus.underReview => (
-        const Color(0xFF8B5CF6),
-        l10n.underReview,
-      ), // Violet
-      ReportStatus.inProgress => (
-        const Color(0xFF2563EB),
-        l10n.inProgress,
-      ), // Blue
-      ReportStatus.escalated => (
-        const Color(0xFF8B5CF6),
-        l10n.underReview,
-      ), // Violet
+    final colorScheme = Theme.of(context).colorScheme;
+    final (background, foreground, label) = switch (status) {
+      ReportStatus.submitted => (
+        colorScheme.tertiaryContainer,
+        colorScheme.onTertiaryContainer,
+        l10n.submitted,
+      ),
+      ReportStatus.underReview ||
+      ReportStatus.verified ||
+      ReportStatus.assigned ||
+      ReportStatus.escalated ||
       ReportStatus.endorsed => (
-        const Color(0xFF8B5CF6),
+        colorScheme.secondaryContainer,
+        colorScheme.onSecondaryContainer,
         l10n.underReview,
-      ), // Violet
-      ReportStatus.resolved => (const Color(0xFF22C55E), l10n.resolvedStatus), // Green
-      ReportStatus.closed => (const Color(0xFF64748B), l10n.closed), // Gray
+      ),
+      ReportStatus.inProgress => (
+        colorScheme.primaryContainer,
+        colorScheme.onPrimaryContainer,
+        l10n.inProgress,
+      ),
+      ReportStatus.resolved => (
+        AppColors.success.withValues(alpha: 0.16),
+        colorScheme.onSurface,
+        l10n.resolvedStatus,
+      ),
+      ReportStatus.closed => (
+        colorScheme.surfaceContainerHighest,
+        colorScheme.onSurfaceVariant,
+        l10n.closed,
+      ),
       ReportStatus.rejected => (
-        const Color(0xFFEF4444),
+        colorScheme.errorContainer,
+        colorScheme.onErrorContainer,
         l10n.rejected,
-      ), // Light Red
-      ReportStatus.verified => (
-        const Color(0xFF8B5CF6),
-        l10n.underReview,
-      ), // Violet
-      ReportStatus.assigned => (
-        const Color(0xFF8B5CF6),
-        l10n.underReview,
-      ), // Violet
+      ),
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(16),
+        color: background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: foreground.withValues(alpha: 0.22)),
       ),
       child: Text(
         label,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: foreground,
           fontSize: 12,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -1095,20 +1219,18 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
   Widget _buildInfoRow(String label, String value, ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: theme.textTheme.bodySmall),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              value,
-              style: theme.textTheme.bodyMedium,
-              textAlign: TextAlign.end,
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
+          const SizedBox(height: 4),
+          Text(value, style: theme.textTheme.bodyMedium),
         ],
       ),
     );

@@ -1642,6 +1642,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get submittedInformation => 'Submitted Information';
 
   @override
+  String get noVerificationSubmitted => 'No verification submitted yet';
+
+  @override
   String get resubmissions => 'Resubmissions';
 
   @override

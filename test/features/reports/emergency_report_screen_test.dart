@@ -137,6 +137,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.text('Step 1 of 1'), findsOneWidget);
       expect(find.byKey(const Key('emergency-report-notice')), findsOneWidget);
       expect(
         find.text(

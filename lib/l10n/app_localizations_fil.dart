@@ -1648,6 +1648,9 @@ class AppLocalizationsFil extends AppLocalizations {
   String get submittedInformation => 'Isinumiteng Impormasyon';
 
   @override
+  String get noVerificationSubmitted => 'Wala pang naisumiteng beripikasyon';
+
+  @override
   String get resubmissions => 'Muling Pagsusumite';
 
   @override

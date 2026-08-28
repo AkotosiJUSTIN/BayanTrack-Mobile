@@ -38,6 +38,7 @@ class ProfileScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
+            tooltip: l10n.logout,
             onPressed: () => _confirmLogout(context, ref),
           ),
         ],
@@ -63,7 +64,8 @@ class ProfileScreen extends ConsumerWidget {
                           _buildProfileHeader(context, profile, theme),
                       loading: () =>
                           const Center(child: CircularProgressIndicator()),
-                      error: (err, _) => Center(child: Text('${l10n.error}: $err')),
+                      error: (_, _) =>
+                          _buildProfileError(context, ref, theme),
                     ),
                     const SizedBox(height: 24),
 
@@ -153,81 +155,148 @@ class ProfileScreen extends ConsumerWidget {
       return name.isNotEmpty ? name : profile.email.split('@').first;
     }
 
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 50,
-          backgroundColor: AppColors.primary,
-          child: profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty
-              ? ClipOval(
-                  child: Image.network(
-                    ApiConstants.getImageUrl(profile.avatarUrl!),
-                    width: 100,
-                    height: 100,
-                    fit: BoxFit.cover,
-                    semanticLabel: '${getDisplayName()} ${l10n.profilePicture}',
-                    errorBuilder: (_, _, _) => Center(
-                      child: Text(
-                        getInitials(),
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+    final isDark = theme.brightness == Brightness.dark;
+    final initials = getInitials();
+    final displayName = getDisplayName();
+    final roleLabel = profile.role.toLowerCase() == 'citizen'
+        ? l10n.citizen
+        : profile.role.toUpperCase();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 32,
+            backgroundColor: AppColors.primary,
+            child: profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty
+                ? ClipOval(
+                    child: Image.network(
+                      ApiConstants.getImageUrl(profile.avatarUrl!),
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                      semanticLabel: '$displayName ${l10n.profilePicture}',
+                      errorBuilder: (_, _, _) => Center(
+                        child: Text(
+                          initials,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
+                  )
+                : Text(
+                    initials,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                )
-              : Text(
-                  getInitials(),
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  displayName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          getDisplayName(),
-          style: theme.textTheme.headlineSmall?.copyWith(
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        Text(
-          profile.email,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.outline,
-          ),
-        ),
-        if (profile.phone != null && profile.phone!.isNotEmpty)
-          Text(
-            profile.phone!,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.outline,
+                const SizedBox(height: 4),
+                Text(
+                  profile.email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
+                ),
+                if (profile.phone != null && profile.phone!.isNotEmpty)
+                  Text(
+                    profile.phone!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                if (profile.avatarStorageStatus == 'degraded')
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      l10n.profilePictureBackupPending,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.tertiary,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    roleLabel,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: isDark
+                          ? AppColors.primaryLight
+                          : AppColors.primaryDark,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        if (profile.avatarStorageStatus == 'degraded')
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              l10n.profilePictureBackupPending,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.tertiary,
-              ),
-            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileError(
+    BuildContext context,
+    WidgetRef ref,
+    ThemeData theme,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      child: Column(
+        children: [
+          Icon(Icons.person_off_outlined, size: 48, color: AppColors.alertHigh),
+          const SizedBox(height: 12),
+          Text(l10n.profileLoadFailed, style: theme.textTheme.titleMedium),
+          const SizedBox(height: 12),
+          FilledButton.tonal(
+            onPressed: () => ref.invalidate(profileControllerProvider),
+            child: Text(l10n.retry),
           ),
-        const SizedBox(height: 8),
-        Chip(
-          label: Text(
-            profile.role.toLowerCase() == 'citizen'
-                ? l10n.citizen
-                : profile.role.toUpperCase(),
-          ),
-          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-          labelStyle: TextStyle(color: AppColors.primary),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -236,28 +305,58 @@ class ProfileScreen extends ConsumerWidget {
     Map<String, int> stats,
     ThemeData theme,
   ) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildStatItem(
-          context,
-          AppLocalizations.of(context)!.reports,
-          stats['total']?.toString() ?? '0',
-          theme,
+    final l10n = AppLocalizations.of(context)!;
+    final isDark = theme.brightness == Brightness.dark;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: isDark ? 0.45 : 0.7,
         ),
-        _buildStatItem(
-          context,
-          AppLocalizations.of(context)!.resolved,
-          stats['resolved']?.toString() ?? '0',
-          theme,
-        ),
-        _buildStatItem(
-          context,
-          AppLocalizations.of(context)!.pending,
-          stats['pending']?.toString() ?? '0',
-          theme,
-        ),
-      ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Semantics(
+              label: '${l10n.reports}: ${stats['total'] ?? 0}',
+              child: _buildStatItem(
+                context,
+                l10n.reports,
+                stats['total']?.toString() ?? '0',
+                theme,
+              ),
+            ),
+          ),
+          const SizedBox(height: 40, child: VerticalDivider()),
+          Expanded(
+            child: Semantics(
+              label: '${l10n.resolved}: ${stats['resolved'] ?? 0}',
+              child: _buildStatItem(
+                context,
+                l10n.resolved,
+                stats['resolved']?.toString() ?? '0',
+                theme,
+              ),
+            ),
+          ),
+          const SizedBox(height: 40, child: VerticalDivider()),
+          Expanded(
+            child: Semantics(
+              label: '${l10n.pending}: ${stats['pending'] ?? 0}',
+              child: _buildStatItem(
+                context,
+                l10n.pending,
+                stats['pending']?.toString() ?? '0',
+                theme,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -271,13 +370,17 @@ class ProfileScreen extends ConsumerWidget {
       children: [
         Text(
           value,
-          style: theme.textTheme.headlineMedium?.copyWith(
+          textAlign: TextAlign.center,
+          style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
             color: AppColors.primary,
           ),
         ),
         Text(
           label,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.outline,
           ),
@@ -293,6 +396,7 @@ class ProfileScreen extends ConsumerWidget {
         final locale = ref.watch(appLocaleProvider);
         final l10n = AppLocalizations.of(context)!;
         return Card(
+          margin: EdgeInsets.zero,
           child: Column(
             children: [
               ListTile(
@@ -390,7 +494,9 @@ class ProfileScreen extends ConsumerWidget {
     final statusColor = _getKycStatusColor(kycStatus?.status);
 
     return Card(
+      margin: EdgeInsets.zero,
       child: InkWell(
+        borderRadius: BorderRadius.circular(16),
         onTap: () {
           Navigator.push(
             context,
@@ -399,59 +505,71 @@ class ProfileScreen extends ConsumerWidget {
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  _getKycStatusIcon(kycStatus?.status),
-                  color: statusColor,
-                  size: 32,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context)!.userVerification,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      localizedVerificationStatusMessage(
-                        permissions,
-                        AppLocalizations.of(context)!,
-                      ),
-                      style: TextStyle(fontSize: 14, color: statusColor),
+                    child: Icon(
+                      _getKycStatusIcon(kycStatus?.status),
+                      color: statusColor,
+                      size: 24,
                     ),
-                    if (!permissions.isVerified) ...[
-                      const SizedBox(height: 10),
-                      ElevatedButton(
-                        onPressed: () => _navigateToVerificationAction(
-                          context,
-                          ref,
-                          permissions,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppLocalizations.of(context)!.userVerification,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.alertMedium,
-                          foregroundColor: Colors.white,
+                        const SizedBox(height: 4),
+                        Text(
+                          localizedVerificationStatusMessage(
+                            permissions,
+                            AppLocalizations.of(context)!,
+                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: statusColor),
                         ),
-                        child: Text(AppLocalizations.of(context)!.verifyIdentity),
-                      ),
-                    ],
-                  ],
-                ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: statusColor),
+                ],
               ),
-              Icon(Icons.chevron_right, color: statusColor),
+              if (!permissions.isVerified) ...[
+                const SizedBox(height: 14),
+                FilledButton.icon(
+                  onPressed: () => _navigateToVerificationAction(
+                    context,
+                    ref,
+                    permissions,
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.alertMedium,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.verified_user_outlined),
+                  label: Text(
+                    localizedVerificationActionLabel(
+                      permissions,
+                      AppLocalizations.of(context)!,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

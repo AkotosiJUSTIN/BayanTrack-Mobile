@@ -524,6 +524,7 @@
   "reviewAndResubmit": "Suriin ang feedback at isumite muli ang inayos na mga dokumento",
   "qualityCheckNotes": "Mga Tala sa Quality Check",
   "submittedInformation": "Isinumiteng Impormasyon",
+  "noVerificationSubmitted": "Wala pang naisumiteng beripikasyon",
   "resubmissions": "Muling Pagsusumite",
   "kycResubmitRequested": "Kailangan ng karagdagang impormasyon. Isumite muli ang iyong mga dokumento.",
   "kycSuspended": "Nasuspinde ang beripikasyon ng iyong account. Makipag-ugnayan sa support.",

@@ -32,19 +32,23 @@ class NotificationsScreen extends ConsumerWidget {
           // Mark all as read button
           notificationsAsync.maybeWhen(
             data: (data) => data.unreadCount > 0
-                ? TextButton(
-                    onPressed: () async {
-                      await ref
-                          .read(notificationsControllerProvider.notifier)
-                          .markAllAsRead();
-                      if (context.mounted) {
-                        AppToast.success(
-                          context,
-                          l10n.allNotificationsRead,
-                        );
-                      }
-                    },
-                    child: Text(l10n.markAllRead),
+                ? Semantics(
+                    button: true,
+                    label: l10n.markAllRead,
+                    child: TextButton(
+                      onPressed: () async {
+                        await ref
+                            .read(notificationsControllerProvider.notifier)
+                            .markAllAsRead();
+                        if (context.mounted) {
+                          AppToast.success(
+                            context,
+                            l10n.allNotificationsRead,
+                          );
+                        }
+                      },
+                      child: Text(l10n.markAllRead),
+                    ),
                   )
                 : const SizedBox.shrink(),
             orElse: () => const SizedBox.shrink(),
@@ -85,12 +89,9 @@ class NotificationsScreen extends ConsumerWidget {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       itemCount: data.results.length,
-      separatorBuilder: (_, _) => Divider(
-        height: 1,
-        color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-      ),
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final notification = data.results[index];
         return _NotificationTile(
@@ -118,7 +119,7 @@ class NotificationsScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     ThemeData theme,
-    Object error,
+    Object _,
   ) {
     return Center(
       child: Column(
@@ -140,7 +141,7 @@ class NotificationsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
+          FilledButton.tonal(
             onPressed: () => ref.invalidate(notificationsControllerProvider),
             child: Text(AppLocalizations.of(context)!.retry),
           ),
@@ -191,9 +192,21 @@ class _NotificationTile extends StatelessWidget {
           : (isDark
                 ? AppColors.primary.withValues(alpha: 0.1)
                 : AppColors.primary.withValues(alpha: 0.05)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: notification.isRead
+            ? BorderSide.none
+            : BorderSide(
+                color: AppColors.primary.withValues(alpha: 0.24),
+              ),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      minVerticalPadding: 12,
       leading: _buildIcon(isDark),
       title: Text(
         notification.title,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
         style: theme.textTheme.titleSmall?.copyWith(
           fontWeight: notification.isRead ? FontWeight.normal : FontWeight.w600,
         ),
@@ -271,8 +284,8 @@ class _NotificationTile extends StatelessWidget {
     }
 
     return Container(
-      width: 40,
-      height: 40,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(8),

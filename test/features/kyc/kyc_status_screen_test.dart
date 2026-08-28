@@ -1,0 +1,79 @@
+import 'package:bayantrack_mobile/core/theme/app_theme.dart';
+import 'package:bayantrack_mobile/features/kyc/domain/entities/kyc_enums.dart';
+import 'package:bayantrack_mobile/features/kyc/domain/entities/kyc_status.dart';
+import 'package:bayantrack_mobile/features/kyc/presentation/kyc_controller.dart';
+import 'package:bayantrack_mobile/features/kyc/presentation/kyc_status_screen.dart';
+import 'package:bayantrack_mobile/l10n/app_localizations.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+Future<void> _pumpStatus(
+  WidgetTester tester, {
+  required ThemeData theme,
+  Locale locale = const Locale('en'),
+  KycStatusEntity? status,
+}) async {
+  tester.view.physicalSize = const Size(360, 800);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        kycStatusControllerProvider.overrideWithBuild((_, _) async => status),
+      ],
+      child: MaterialApp(
+        locale: locale,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        theme: theme,
+        home: const KycStatusScreen(),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
+
+void main() {
+  testWidgets('explains identity verification before the first submission', (
+    tester,
+  ) async {
+    await _pumpStatus(tester, theme: AppTheme.light);
+
+    expect(find.text('Terms & Conditions and Privacy Policy'), findsOneWidget);
+    expect(find.text('Verify Identity'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps the entry state readable in Filipino dark mode', (
+    tester,
+  ) async {
+    await _pumpStatus(
+      tester,
+      theme: AppTheme.dark,
+      locale: const Locale('fil'),
+    );
+
+    expect(find.text('Mga Tuntunin at Kundisyon at Patakaran sa Privacy'), findsOneWidget);
+    expect(find.text('Wala pang naisumiteng beripikasyon'), findsOneWidget);
+    expect(find.text('I-verify ang Pagkakakilanlan'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'does not show blank submitted information for an unverified user',
+    (tester) async {
+    await _pumpStatus(
+      tester,
+      theme: AppTheme.light,
+      status: const KycStatusEntity(
+        status: KycVerificationStatus.unverified,
+      ),
+    );
+
+    expect(find.text('No verification submitted yet'), findsOneWidget);
+    expect(find.text('Submitted Information'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+}

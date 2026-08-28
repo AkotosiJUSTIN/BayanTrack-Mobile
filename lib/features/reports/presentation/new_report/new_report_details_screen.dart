@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../auth/presentation/barangays_provider.dart';
 import 'new_report_controller.dart';
 import 'new_report_review_screen.dart';
+import 'report_flow_widgets.dart';
 
 /// Third step: Enter report details (category, incident type, description, severity)
 class NewReportDetailsScreen extends ConsumerStatefulWidget {
@@ -80,407 +80,437 @@ class _NewReportDetailsScreenState
     _syncSuggestedLandmark(state);
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final scheme = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.newReport)),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Progress indicator
-          LinearProgressIndicator(
-            value: 0.75,
-            backgroundColor: isDark
-                ? AppColors.darkBorder
-                : AppColors.lightBorder,
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-          ),
-
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Step title
-                    Text(
-                      l10n.stepOf(3, 4),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
+      body: SafeArea(
+        top: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ReportFlowProgress(step: 3, total: 4),
+            Expanded(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Form(
+                  key: _formKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ReportFlowHeader(
+                        title: l10n.reportDetails,
+                        guidance: l10n.describeReportIssue,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.reportDetails,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      l10n.describeReportIssue,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDark
-                            ? AppColors.darkTextSecondary
-                            : AppColors.lightTextSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // ===== AI AUTO-CATEGORIZATION INFO =====
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: AppColors.primary.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.auto_awesome,
-                            color: AppColors.primary,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              l10n.aiCategorize,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: isDark
-                                    ? AppColors.darkTextPrimary
-                                    : AppColors.lightTextPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ===== TITLE (OPTIONAL) =====
-                    _buildSectionLabel(
-                      theme,
-                      '${l10n.reportTitle} (${l10n.optional})',
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _titleController,
-                      maxLength: 200,
-                      textInputAction: TextInputAction.next,
-                      onChanged: (v) {
-                        controller.setTitle(v);
-                        _checkFormValidity();
-                      },
-                      decoration: InputDecoration(
-                        hintText: l10n.briefTitle,
-                        prefixIcon: const Icon(Icons.title),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      validator: (v) {
-                        if (v != null && v.trim().isNotEmpty) {
-                          return Validators.reportText(
-                            v,
-                            isRequired: false,
-                            l10n: l10n,
-                          );
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ===== DESCRIPTION =====
-                    _buildSectionLabel(theme, '${l10n.reportDescription} *'),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _descriptionController,
-                      maxLines: 5,
-                      maxLength: 5000,
-                      textInputAction: TextInputAction.newline,
-                      onChanged: (v) {
-                        controller.setDescription(v);
-                        _checkFormValidity();
-                      },
-                      decoration: InputDecoration(
-                        hintText: l10n.descriptionDetailed,
-                        alignLabelWithHint: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      validator: (value) =>
-                          Validators.reportText(value, l10n: l10n),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ===== IS HAPPENING NOW =====
-                    SwitchListTile(
-                      title: Text(l10n.isHappeningNow),
-                      subtitle: Text(
-                        l10n.incidentOngoingSubtitle,
-                        style: TextStyle(
-                          color: isDark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.lightTextSecondary,
-                        ),
-                      ),
-                      value: state.isHappeningNow,
-                      onChanged: controller.setIsHappeningNow,
-                      activeThumbColor: AppColors.primary,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ===== LOCATION SECTION =====
-                    Text(
-                      l10n.locationDetails,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    _buildSectionLabel(theme, '${l10n.selectCity} *'),
-                    const SizedBox(height: 8),
-                    ref
-                        .watch(municipalitiesProvider)
-                        .when(
-                          data: (municipalities) =>
-                              DropdownButtonFormField<String>(
-                                initialValue:
-                                    municipalities.any(
-                                      (item) => item.id == state.municipalityId,
-                                    )
-                                    ? state.municipalityId
-                                    : null,
-                                decoration: InputDecoration(
-                                  hintText: l10n.selectCity,
-                                  prefixIcon: const Icon(Icons.location_city),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Semantics(
+                              container: true,
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: scheme.primary.withValues(alpha: 0.06),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: scheme.primary.withValues(
+                                      alpha: 0.18,
+                                    ),
                                   ),
                                 ),
-                                items: municipalities
-                                    .map(
-                                      (item) => DropdownMenuItem(
-                                        value: item.id,
-                                        child: Text(
-                                          '${item.name}, ${item.province}',
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline,
+                                      color: scheme.primary,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        '${l10n.aiCategorize}. ${l10n.aiDetectSeverity}.',
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(height: 1.35),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ReportFlowSection(
+                              title: l10n.reportDescription,
+                              icon: Icons.edit_note_outlined,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildSectionLabel(
+                                    theme,
+                                    l10n.reportTitle,
+                                    optional: true,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Semantics(
+                                    container: true,
+                                    label:
+                                        '${l10n.reportTitle}, ${l10n.optional}',
+                                    child: TextFormField(
+                                      controller: _titleController,
+                                      maxLength: 200,
+                                      textInputAction: TextInputAction.next,
+                                      onChanged: (v) {
+                                        controller.setTitle(v);
+                                        _checkFormValidity();
+                                      },
+                                      decoration: InputDecoration(
+                                        hintText: l10n.briefTitle,
+                                        prefixIcon: const Icon(Icons.title),
+                                      ),
+                                      validator: (v) {
+                                        if (v != null && v.trim().isNotEmpty) {
+                                          return Validators.reportText(
+                                            v,
+                                            isRequired: false,
+                                            l10n: l10n,
+                                          );
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  _buildSectionLabel(
+                                    theme,
+                                    l10n.reportDescription,
+                                    isRequired: true,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Semantics(
+                                    container: true,
+                                    label:
+                                        '${l10n.reportDescription}, ${l10n.requiredShort}',
+                                    child: TextFormField(
+                                      controller: _descriptionController,
+                                      maxLines: 5,
+                                      maxLength: 5000,
+                                      textInputAction: TextInputAction.newline,
+                                      onChanged: (v) {
+                                        controller.setDescription(v);
+                                        _checkFormValidity();
+                                      },
+                                      decoration: InputDecoration(
+                                        hintText: l10n.descriptionDetailed,
+                                        alignLabelWithHint: true,
+                                      ),
+                                      validator: (value) =>
+                                          Validators.reportText(
+                                            value,
+                                            l10n: l10n,
+                                          ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  SwitchListTile(
+                                    title: Text(l10n.isHappeningNow),
+                                    subtitle: Text(
+                                      l10n.incidentOngoingSubtitle,
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: scheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                    value: state.isHappeningNow,
+                                    onChanged: controller.setIsHappeningNow,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ReportFlowSection(
+                              title: l10n.locationDetails,
+                              icon: Icons.location_on_outlined,
+                              description: l10n.selectLocationDescription,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildSectionLabel(
+                                    theme,
+                                    l10n.selectCity,
+                                    isRequired: true,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ref
+                                      .watch(municipalitiesProvider)
+                                      .when(
+                                        data: (municipalities) =>
+                                            DropdownButtonFormField<String>(
+                                              initialValue:
+                                                  municipalities.any(
+                                                    (item) =>
+                                                        item.id ==
+                                                        state.municipalityId,
+                                                  )
+                                                  ? state.municipalityId
+                                                  : null,
+                                              isExpanded: true,
+                                              decoration: InputDecoration(
+                                                labelText: l10n.selectCity,
+                                                prefixIcon: const Icon(
+                                                  Icons.location_city_outlined,
+                                                ),
+                                              ),
+                                              items: municipalities
+                                                  .map(
+                                                    (item) => DropdownMenuItem(
+                                                      value: item.id,
+                                                      child: Text(
+                                                        '${item.name}, ${item.province}',
+                                                      ),
+                                                    ),
+                                                  )
+                                                  .toList(),
+                                              onChanged: (value) {
+                                                if (value == null) return;
+                                                final selected = municipalities
+                                                    .firstWhere(
+                                                      (item) =>
+                                                          item.id == value,
+                                                    );
+                                                controller.setMunicipality(
+                                                  id: selected.id,
+                                                  name: selected.name,
+                                                  province: selected.province,
+                                                );
+                                                _streetLandmarkController.clear();
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      l10n.placeLocationPin,
+                                                    ),
+                                                  ),
+                                                );
+                                                Navigator.of(context).pop();
+                                              },
+                                              validator: (value) => value == null
+                                                  ? l10n.pleaseSelectCity
+                                                  : null,
+                                            ),
+                                        loading: () =>
+                                            const LinearProgressIndicator(),
+                                        error: (error, stack) => Text(
+                                          l10n.cityMetadataUnavailable,
+                                          style: TextStyle(
+                                            color: scheme.error,
+                                          ),
                                         ),
                                       ),
-                                    )
-                                    .toList(),
-                                onChanged: (value) {
-                                  if (value == null) return;
-                                  final selected = municipalities.firstWhere(
-                                    (item) => item.id == value,
-                                  );
-                                  controller.setMunicipality(
-                                    id: selected.id,
-                                    name: selected.name,
-                                    province: selected.province,
-                                  );
-                                  _streetLandmarkController.clear();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(l10n.placeLocationPin),
+                                  const SizedBox(height: 16),
+                                  _buildSectionLabel(theme, l10n.barangay),
+                                  const SizedBox(height: 8),
+                                  Semantics(
+                                    container: true,
+                                    label:
+                                        '${l10n.barangay}: ${state.barangay ?? l10n.barangaysUnavailable}',
+                                    child: InputDecorator(
+                                      decoration: const InputDecoration(
+                                        prefixIcon: Icon(
+                                          Icons.location_city_outlined,
+                                        ),
+                                      ),
+                                      child: state.isResolvingBarangay
+                                          ? Row(
+                                              children: [
+                                                SizedBox(
+                                                  width: 16,
+                                                  height: 16,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Text(l10n.gettingLocation),
+                                              ],
+                                            )
+                                          : Text(
+                                              state.barangay ??
+                                                  l10n.barangaysUnavailable,
+                                              style: TextStyle(
+                                                color: state.barangay == null
+                                                    ? scheme.onSurfaceVariant
+                                                    : null,
+                                              ),
+                                            ),
                                     ),
-                                  );
-                                  Navigator.of(context).pop();
-                                },
-                                validator: (value) => value == null
-                                    ? l10n.pleaseSelectCity
-                                    : null,
-                              ),
-                          loading: () => const LinearProgressIndicator(),
-                          error: (error, stack) => Text(
-                            l10n.cityMetadataUnavailable,
-                            style: TextStyle(color: theme.colorScheme.error),
-                          ),
-                        ),
-                    const SizedBox(height: 16),
-
-                    // Barangay is derived from the authoritative map pin.
-                    _buildSectionLabel(theme, l10n.barangay),
-                    const SizedBox(height: 8),
-                    InputDecorator(
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.location_city_outlined),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: state.isResolvingBarangay
-                          ? Row(
-                              children: [
-                                SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.primary,
                                   ),
-                                ),
-                                const SizedBox(width: 10),
-                                Text(l10n.gettingLocation),
-                              ],
-                            )
-                          : Text(
-                              state.barangay ?? l10n.barangaysUnavailable,
-                              style: TextStyle(
-                                color: state.barangay == null
-                                    ? theme.hintColor
-                                    : null,
+                                  const SizedBox(height: 16),
+                                  _buildSectionLabel(
+                                    theme,
+                                    l10n.streetLandmark,
+                                    optional: true,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Semantics(
+                                    container: true,
+                                    label:
+                                        '${l10n.streetLandmark}, ${l10n.optional}',
+                                    child: TextFormField(
+                                      controller: _streetLandmarkController,
+                                      textInputAction: TextInputAction.next,
+                                      textCapitalization:
+                                          TextCapitalization.sentences,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.allow(
+                                          _addressInputRegex,
+                                        ),
+                                        LengthLimitingTextInputFormatter(255),
+                                      ],
+                                      onChanged: (v) {
+                                        controller.setStreetLandmark(v);
+                                        _checkFormValidity();
+                                      },
+                                      decoration: InputDecoration(
+                                        hintText: l10n.streetAddress,
+                                        prefixIcon: const Icon(
+                                          Icons.place_outlined,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  if (state.isResolvingLandmark)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8),
+                                      child: Row(
+                                        children: [
+                                          const SizedBox(
+                                            width: 14,
+                                            height: 14,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            l10n.gettingLocation,
+                                            style: theme.textTheme.bodySmall,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  if (state.nearbyLandmarkSuggestions.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8),
+                                      child: Wrap(
+                                        spacing: 8,
+                                        runSpacing: 4,
+                                        children: state
+                                            .nearbyLandmarkSuggestions
+                                            .map(
+                                              (suggestion) => ActionChip(
+                                                avatar: const Icon(
+                                                  Icons.place_outlined,
+                                                  size: 16,
+                                                ),
+                                                label: Text(suggestion),
+                                                onPressed: () {
+                                                  _streetLandmarkController.text =
+                                                      suggestion;
+                                                  controller.setStreetLandmark(
+                                                    suggestion,
+                                                  );
+                                                  _checkFormValidity();
+                                                },
+                                              ),
+                                            )
+                                            .toList(),
+                                      ),
+                                    ),
+                                  if (state.landmarkLookupError != null)
+                                    Semantics(
+                                      container: true,
+                                      liveRegion: true,
+                                      label:
+                                          '${l10n.error}: ${state.landmarkLookupError}',
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(top: 6),
+                                        child: Text(
+                                          state.landmarkLookupError!,
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: scheme.onSurfaceVariant,
+                                              ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
-                            ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Street / Landmark
-                    _buildSectionLabel(theme, l10n.streetLandmark),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _streetLandmarkController,
-                      textInputAction: TextInputAction.next,
-                      textCapitalization: TextCapitalization.sentences,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(_addressInputRegex),
-                        LengthLimitingTextInputFormatter(255),
-                      ],
-                      onChanged: (v) {
-                        controller.setStreetLandmark(v);
-                        _checkFormValidity();
-                      },
-                      decoration: InputDecoration(
-                        hintText: l10n.streetAddress,
-                        prefixIcon: const Icon(Icons.place_outlined),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                    if (state.isResolvingLandmark)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              l10n.gettingLocation,
-                              style: theme.textTheme.bodySmall,
                             ),
                           ],
                         ),
                       ),
-                    if (state.nearbyLandmarkSuggestions.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          children: state.nearbyLandmarkSuggestions
-                              .map(
-                                (suggestion) => ActionChip(
-                                  avatar: const Icon(
-                                    Icons.place_outlined,
-                                    size: 16,
-                                  ),
-                                  label: Text(suggestion),
-                                  onPressed: () {
-                                    _streetLandmarkController.text = suggestion;
-                                    controller.setStreetLandmark(suggestion);
-                                    _checkFormValidity();
-                                  },
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-                    if (state.landmarkLookupError != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Text(
-                          state.landmarkLookupError!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.hintColor,
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 24),
-
-                    // ===== AI PRIORITIZATION INFO =====
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: AppColors.primary.withOpacity(0.3),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.auto_awesome,
-                            color: AppColors.primary,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              l10n.aiDetectSeverity,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: isDark
-                                    ? AppColors.darkTextPrimary
-                                    : AppColors.lightTextPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-
-          // Continue button
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: ElevatedButton(
-              onPressed: (state.hasDetails && _isFormValid)
-                  ? _navigateToReview
-                  : null,
-              child: Text(l10n.continueToReview),
+            ReportFlowBottomBar(
+              child: ElevatedButton(
+                onPressed: (state.hasDetails && _isFormValid)
+                    ? _navigateToReview
+                    : null,
+                child: Text(l10n.continueToReview),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSectionLabel(ThemeData theme, String label) {
-    return Text(
-      label,
-      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+  Widget _buildSectionLabel(
+    ThemeData theme,
+    String label, {
+    bool isRequired = false,
+    bool optional = false,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    final marker = isRequired
+        ? l10n.requiredShort
+        : optional
+        ? l10n.optional
+        : null;
+    return Semantics(
+      label: marker == null ? label : '$label, $marker',
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          if (marker != null)
+            Text(
+              marker,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: isRequired
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

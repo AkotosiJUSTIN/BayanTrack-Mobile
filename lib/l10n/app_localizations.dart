@@ -3068,6 +3068,12 @@ abstract class AppLocalizations {
   /// **'Submitted Information'**
   String get submittedInformation;
 
+  /// No description provided for @noVerificationSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'No verification submitted yet'**
+  String get noVerificationSubmitted;
+
   /// No description provided for @resubmissions.
   ///
   /// In en, this message translates to:

@@ -29,6 +29,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
 
   int _currentPage = 0;
   int _totalPages = 1;
+  int _totalReports = 0;
 
   final _scrollController = ScrollController();
   final List<Report> _reports = [];
@@ -72,6 +73,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
       _loadError = null;
       _currentPage = 0;
       _totalPages = 1;
+      _totalReports = 0;
       _reports.clear();
     });
 
@@ -90,6 +92,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
           _reports.addAll(data.results);
           _currentPage = data.page;
           _totalPages = data.totalPages;
+          _totalReports = data.total;
           _isInitialLoading = false;
         });
       },
@@ -128,6 +131,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
           _reports.addAll(newReports);
           _currentPage = data.page;
           _totalPages = data.totalPages;
+          _totalReports = data.total;
           _isLoadingMore = false;
         });
       },
@@ -187,6 +191,30 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
           slivers: [
             SliverToBoxAdapter(
               child: VerificationBanner(permissions: permissions),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Text(
+                  l10n.reportCount(_totalReports),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                child: Text(
+                  l10n.status,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
+                  ),
+                ),
+              ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
             SliverToBoxAdapter(
@@ -404,6 +432,11 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
               style: theme.textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.tonal(
+            onPressed: _onRefresh,
+            child: Text(AppLocalizations.of(context)!.retry),
           ),
         ],
       ),

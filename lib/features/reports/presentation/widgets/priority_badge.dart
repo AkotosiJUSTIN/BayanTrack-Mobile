@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/report_enums.dart';
 
@@ -25,54 +26,59 @@ class PriorityBadge extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final colors = _getPriorityColors(priorityLevel!);
+    final colors = _getPriorityColors(context, priorityLevel!);
     final score = priorityScore ?? 0;
     final l10n = AppLocalizations.of(context);
 
-    return Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: colors.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colors.border, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            _getPriorityIcon(priorityLevel!),
-            size: fontSize + 2,
-            color: colors.text,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            _priorityLabel(priorityLevel!, l10n).toUpperCase(),
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w700,
+    final label = _priorityLabel(priorityLevel!, l10n);
+
+    return Semantics(
+      container: true,
+      label: '${l10n.operationalPriority}: $label',
+      child: Container(
+        padding: padding,
+        decoration: BoxDecoration(
+          color: colors.background,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colors.border, width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _getPriorityIcon(priorityLevel!),
+              size: fontSize + 2,
               color: colors.text,
-              letterSpacing: 0.5,
             ),
-          ),
-          if (showScores && score > 0) ...[
             const SizedBox(width: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-              decoration: BoxDecoration(
-                color: colors.text.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.w700,
+                color: colors.text,
               ),
-              child: Text(
-                score.toString(),
-                style: TextStyle(
-                  fontSize: fontSize - 1,
-                  fontWeight: FontWeight.w600,
-                  color: colors.text,
+            ),
+            if (showScores && score > 0) ...[
+              const SizedBox(width: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: colors.text.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  score.toString(),
+                  style: TextStyle(
+                    fontSize: fontSize - 1,
+                    fontWeight: FontWeight.w600,
+                    color: colors.text,
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -96,33 +102,37 @@ class PriorityBadge extends StatelessWidget {
     };
   }
 
-  _PriorityColors _getPriorityColors(PriorityLevel level) {
+  _PriorityColors _getPriorityColors(
+    BuildContext context,
+    PriorityLevel level,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
     return switch (level) {
       PriorityLevel.critical => _PriorityColors(
-          background: const Color(0xFFFFEBEE),
-          border: const Color(0xFFEF5350),
-          text: const Color(0xFFC62828),
-        ),
+        background: colorScheme.errorContainer,
+        border: colorScheme.error,
+        text: colorScheme.onErrorContainer,
+      ),
       PriorityLevel.high => _PriorityColors(
-          background: const Color(0xFFFFF3E0),
-          border: const Color(0xFFFF9800),
-          text: const Color(0xFFE65100),
-        ),
+        background: AppColors.alertMedium.withValues(alpha: 0.16),
+        border: AppColors.alertMedium,
+        text: colorScheme.onSurface,
+      ),
       PriorityLevel.medium => _PriorityColors(
-          background: const Color(0xFFFFF8E1),
-          border: const Color(0xFFFFB300),
-          text: const Color(0xFFF57F17),
-        ),
+        background: colorScheme.tertiaryContainer,
+        border: colorScheme.tertiary,
+        text: colorScheme.onTertiaryContainer,
+      ),
       PriorityLevel.low => _PriorityColors(
-          background: const Color(0xFFE8F5E9),
-          border: const Color(0xFF66BB6A),
-          text: const Color(0xFF2E7D32),
-        ),
+        background: colorScheme.secondaryContainer,
+        border: colorScheme.secondary,
+        text: colorScheme.onSecondaryContainer,
+      ),
       PriorityLevel.veryLow => _PriorityColors(
-          background: const Color(0xFFE3F2FD),
-          border: const Color(0xFF42A5F5),
-          text: const Color(0xFF1565C0),
-        ),
+        background: colorScheme.primaryContainer,
+        border: colorScheme.primary,
+        text: colorScheme.onPrimaryContainer,
+      ),
     };
   }
 }
@@ -246,10 +256,7 @@ class _PriorityReasonsState extends State<PriorityReasons> {
                               style: theme.textTheme.bodySmall,
                             ),
                             if (widget.hotspotScore != null)
-                              Text(
-                                ' + ',
-                                style: theme.textTheme.bodySmall,
-                              ),
+                              Text(' + ', style: theme.textTheme.bodySmall),
                           ],
                           if (widget.hotspotScore != null)
                             Text(
@@ -266,7 +273,7 @@ class _PriorityReasonsState extends State<PriorityReasons> {
                       ),
                     ),
                   const SizedBox(height: 12),
-                  
+
                   // Reasons list
                   Text(
                     l10n.reasons,
@@ -275,21 +282,23 @@ class _PriorityReasonsState extends State<PriorityReasons> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ...widget.reasons.map((reason) => Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('• ', style: TextStyle(fontSize: 16)),
-                            Expanded(
-                              child: Text(
-                                reason,
-                                style: theme.textTheme.bodySmall,
-                              ),
+                  ...widget.reasons.map(
+                    (reason) => Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('• ', style: TextStyle(fontSize: 16)),
+                          Expanded(
+                            child: Text(
+                              reason,
+                              style: theme.textTheme.bodySmall,
                             ),
-                          ],
-                        ),
-                      )),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

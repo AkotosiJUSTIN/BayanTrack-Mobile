@@ -34,14 +34,16 @@ void main() {
     );
     await tester.pump();
 
-    expect(tester.widget<Stepper>(find.byType(Stepper)).currentStep, 0);
+    expect(find.byType(Stepper), findsNothing);
+    expect(find.text('Basic Identity'), findsOneWidget);
 
     await tester.tap(
       find.widgetWithText(ElevatedButton, 'Continue').hitTestable(),
     );
     await tester.pump();
 
-    expect(tester.widget<Stepper>(find.byType(Stepper)).currentStep, 0);
+    expect(find.byType(Stepper), findsNothing);
+    expect(find.text('Basic Identity'), findsOneWidget);
     expect(find.text('First name is required'), findsOneWidget);
   });
 }
