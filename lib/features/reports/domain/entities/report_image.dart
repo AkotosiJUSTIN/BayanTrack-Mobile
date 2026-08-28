@@ -7,6 +7,13 @@ class ReportImage extends Equatable {
   final String? reportId;
   final String? userId;
   final bool isPrimary;
+
+  /// Distinguishes how this image relates to the report.
+  ///
+  /// Known values: `'evidence'` (default), `'signature'`, `'document'`.
+  /// Null means the record pre-dates the purpose field — treat as evidence.
+  final String? purpose;
+
   final int? width;
   final int? height;
   final DateTime? createdAt;
@@ -17,14 +24,18 @@ class ReportImage extends Equatable {
     this.reportId,
     this.userId,
     this.isPrimary = false,
+    this.purpose,
     this.width,
     this.height,
     this.createdAt,
   });
 
-  @override
-  List<Object?> get props => [id, url, reportId, isPrimary];
+  /// True when this image is a closure e-signature rather than a report photo.
+  bool get isSignature => purpose == 'signature';
 
   @override
-  String toString() => 'ReportImage($id, $url, primary: $isPrimary)';
+  List<Object?> get props => [id, url, reportId, isPrimary, purpose];
+
+  @override
+  String toString() => 'ReportImage($id, $url, primary: $isPrimary, purpose: $purpose)';
 }

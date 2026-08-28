@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../l10n/app_localizations.dart';
 import '../../core/theme/app_colors.dart';
 import '../auth/data/user_permissions.dart';
 import '../auth/presentation/verification_widgets.dart';
 import '../auth/presentation/profile_screen.dart';
 import '../home/presentation/home_screen.dart';
+import '../images/presentation/evidence_upload_status_banner.dart';
 import '../notifications/presentation/notifications_screen.dart';
 import '../reports/presentation/my_reports_screen.dart';
+import '../reports/presentation/new_report/quick_report_screen.dart';
 import '../reports/presentation/new_report/new_report_photos_screen.dart';
 
 /// Main navigation shell with bottom nav bar and center FAB.
@@ -45,23 +48,73 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   void _onFabPressed() {
     if (_isNavigatingToNewReport || !mounted) return;
 
-    // Check if user has permission to create reports
     final permissions = ref.read(userPermissionsProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     if (!permissions.hasPermission(UserPermission.createReports)) {
-      showVerificationRequiredDialog(context, permissions, 'create reports');
+      showVerificationRequiredDialog(context, permissions, l10n.createReport);
       return;
     }
 
-    // Navigate to new report flow, guarded to prevent duplicate pushes.
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.createReport,
+                  style: Theme.of(sheetContext).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.chooseReportType,
+                  style: Theme.of(sheetContext).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(sheetContext);
+                    _openReportFlow(const QuickReportScreen());
+                  },
+                  icon: const Icon(Icons.flash_on),
+                  label: Text(l10n.quickReport),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(sheetContext);
+                    _openReportFlow(const NewReportPhotosScreen());
+                  },
+                  icon: const Icon(Icons.photo_library_outlined),
+                  label: Text(l10n.fullReport),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _openReportFlow(Widget page) {
+    if (_isNavigatingToNewReport || !mounted) return;
+
     setState(() => _isNavigatingToNewReport = true);
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const NewReportPhotosScreen()))
-        .whenComplete(() {
-          if (mounted) {
-            setState(() => _isNavigatingToNewReport = false);
-          }
-        });
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => page)).whenComplete(() {
+      if (mounted) {
+        setState(() => _isNavigatingToNewReport = false);
+      }
+    });
   }
 
   @override
@@ -69,9 +122,17 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
     debugPrint('[MainNavigationShell] Building with index: $_currentIndex');
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      body: Column(
+        children: [
+          const EvidenceUploadStatusBanner(),
+          Expanded(
+            child: IndexedStack(index: _currentIndex, children: _screens),
+          ),
+        ],
+      ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(top: 30),
         child: FloatingActionButton(
@@ -95,26 +156,26 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                 index: 0,
                 icon: Icons.home_outlined,
                 activeIcon: Icons.home,
-                label: 'Home',
+                label: l10n.home,
               ),
               _buildNavItem(
                 index: 1,
                 icon: Icons.description_outlined,
                 activeIcon: Icons.description,
-                label: 'My Reports',
+                label: l10n.myReports,
               ),
               const SizedBox(width: 48), // Space for FAB
               _buildNavItem(
                 index: 2,
                 icon: Icons.notifications_outlined,
                 activeIcon: Icons.notifications,
-                label: 'Notifications',
+                label: l10n.notifications,
               ),
               _buildNavItem(
                 index: 3,
                 icon: Icons.person_outline,
                 activeIcon: Icons.person,
-                label: 'Profile',
+                label: l10n.profile,
               ),
             ],
           ),

@@ -1,0 +1,886 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:signature/signature.dart';
+
+import '../../../core/constants/api_constants.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/string_utils.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../images/data/images_repository.dart';
+import '../domain/entities/report.dart';
+import 'report_detail_controller.dart';
+import '../../auth/presentation/auth_controller.dart';
+
+/// Screen shown to citizens so they can review a barangay-resolved report,
+/// provide a star rating, an optional note, and a digital confirmation
+/// before permanently closing the report or reopening it.
+class CitizenReviewScreen extends ConsumerStatefulWidget {
+  /// The report being reviewed (must be in `resolved` status).
+  final Report report;
+
+  const CitizenReviewScreen({super.key, required this.report});
+
+  @override
+  ConsumerState<CitizenReviewScreen> createState() =>
+      _CitizenReviewScreenState();
+}
+
+class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
+  int _rating = 0;
+  final _noteController = TextEditingController();
+  final _nameController = TextEditingController();
+  bool _isSubmitting = false;
+
+  late final SignatureController _signatureController;
+
+  @override
+  void initState() {
+    super.initState();
+    _signatureController = SignatureController(
+      penStrokeWidth: 2.5,
+      penColor: Colors.black,
+      exportBackgroundColor: Colors.white,
+      onDrawStart: () => setState(() {}),
+      onDrawEnd: () => setState(() {}),
+    );
+  }
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    _nameController.dispose();
+    _signatureController.dispose();
+    super.dispose();
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  String get _reportTitle =>
+      widget.report.title ??
+      widget.report.reportId ??
+      widget.report.id.substring(0, 8).toUpperCase();
+
+  String get _resolutionNote {
+    final rawText = widget.report.adminRemarks?.isNotEmpty == true
+        ? widget.report.adminRemarks!
+        : AppLocalizations.of(context).resolvedDefaultNote;
+    return StringUtils.unescapeHtml(rawText);
+  }
+
+  String get _userFullName {
+    final authState = ref.read(authControllerProvider);
+    if (authState is AuthSuccess) {
+      return authState.user?.fullName ?? '';
+    }
+    return '';
+  }
+
+  bool get _nameValid {
+    final inputName = _nameController.text.trim().toLowerCase();
+    final expectedName = _userFullName.toLowerCase();
+    return inputName.isNotEmpty && inputName == expectedName;
+  }
+
+  bool get _canvasValid => _signatureController.isNotEmpty;
+
+  bool get _signatureValid => _nameValid && _canvasValid;
+
+  // ── Actions ────────────────────────────────────────────────────────────────
+
+  Future<String?> _submit({
+    required bool satisfied,
+    String? disputeReason,
+  }) async {
+    final l10n = AppLocalizations.of(context);
+    if (_isSubmitting) return l10n.disputeSubmitFailed;
+
+    if (satisfied) {
+      if (!_nameValid) {
+        return '${l10n.registeredNameRequired} ($_userFullName)';
+      }
+      if (!_canvasValid) return l10n.signatureRequired;
+    } else if (disputeReason?.trim().isNotEmpty != true) {
+      return l10n.disputeReasonRequired;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      String? signatureImageId;
+
+      if (satisfied) {
+        // Confirmation keeps the existing drawn-signature requirement. A
+        // failed upload is retryable; it must not silently become unsigned.
+        final signatureBytes = await _signatureController.toPngBytes();
+        if (signatureBytes == null || signatureBytes.isEmpty) {
+          return l10n.signatureRequired;
+        }
+        File? tempFile;
+        try {
+          final tempDir = await getTemporaryDirectory();
+          final fileName =
+              'signature_${widget.report.reportId ?? widget.report.id}_${DateTime.now().millisecondsSinceEpoch}.png';
+          final file = File('${tempDir.path}/$fileName');
+          tempFile = file;
+          await file.writeAsBytes(signatureBytes);
+
+          final repo = ref.read(imagesRepositoryProvider);
+          final uploaded = await repo.uploadImage(
+            imageFile: file,
+            reportId: widget.report.id,
+            isPrimary: false,
+            purpose: 'signature',
+          );
+          // Use the database record ID (not the S3 URL) so the backend can
+          // resolve it to the closure_signature_image_id field.
+          signatureImageId = uploaded.id;
+        } catch (_) {
+          throw Exception(l10n.disputeSubmitFailed);
+        } finally {
+          if (tempFile != null && await tempFile.exists()) {
+            await tempFile.delete();
+          }
+        }
+      }
+
+      final note = satisfied ? _noteController.text.trim() : null;
+      final fullName = satisfied ? _nameController.text.trim() : null;
+
+      final controller = ref.read(
+        reportDetailControllerProvider(widget.report.id).notifier,
+      );
+      final result = await controller.citizenCloseReport(
+        satisfied: satisfied,
+        rating: _rating > 0 ? _rating : null,
+        note: note?.isNotEmpty == true ? note : null,
+        reason: disputeReason?.trim(),
+        signatureImageId: signatureImageId,
+        signatureName: fullName,
+      );
+
+      if (!mounted) return null;
+
+      final message =
+          result['message'] as String? ??
+          (satisfied
+              ? l10n.reportConfirmedResolved
+              : l10n.reportReopenedEscalated);
+
+      _showSnackBar(message);
+
+      // Refresh the detail view and pop back
+      ref.invalidate(reportDetailControllerProvider(widget.report.id));
+      return null;
+    } catch (e) {
+      return e.toString().replaceFirst('Exception: ', '');
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  void _showSnackBar(String message, {bool error = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: error ? AppColors.alertHigh : AppColors.success,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
+
+    // Guard: already reviewed — show read-only confirmation, no form
+    if (widget.report.citizenVerifiedAt != null) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.reviewResolution), centerTitle: true),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.verified_rounded,
+                    color: AppColors.success,
+                    size: 64,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  l10n.reviewAlreadySubmitted,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  l10n.reviewNoFurtherAction,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text(l10n.back),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.reviewResolution), centerTitle: true),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          20 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(theme, isDark),
+            const SizedBox(height: 24),
+            _buildResolutionCard(theme, isDark),
+            const SizedBox(height: 24),
+            _buildResponseEvidence(theme, isDark),
+            const SizedBox(height: 24),
+            _buildRatingSection(theme),
+            const SizedBox(height: 24),
+            _buildNoteSection(theme, isDark),
+            const SizedBox(height: 24),
+            _buildSignatureSection(theme, isDark),
+            const SizedBox(height: 32),
+            _buildActionButtons(theme),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Sub-widgets ────────────────────────────────────────────────────────────
+
+  Widget _buildHeader(ThemeData theme, bool isDark) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.task_alt_rounded,
+                color: AppColors.success,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.awaitingStaffConfirmation,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    _reportTitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Text(l10n.resolvedReviewDescription, style: theme.textTheme.bodyMedium),
+      ],
+    );
+  }
+
+  Widget _buildResolutionCard(ThemeData theme, bool isDark) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : Colors.grey.shade200,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.description_outlined,
+                size: 16,
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                l10n.resolutionSummary,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: isDark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.lightTextSecondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(_resolutionNote, style: theme.textTheme.bodyMedium),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResponseEvidence(ThemeData theme, bool isDark) {
+    final l10n = AppLocalizations.of(context);
+    final evidence = widget.report.resolvedProofImages;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkSurface : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? AppColors.darkBorder : Colors.grey.shade200,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.photo_library_outlined,
+                size: 18,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                l10n.resolutionProof,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            l10n.resolutionProofResolved,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.lightTextSecondary,
+            ),
+          ),
+          if (evidence.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 112,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: evidence.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final image = evidence[index];
+                  return Semantics(
+                    image: true,
+                    label: l10n.resolutionProof,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        ApiConstants.getImageUrl(image.url),
+                        width: 148,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 148,
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : Colors.grey.shade200,
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.image_not_supported_outlined,
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.lightTextSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRatingSection(ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.rateResponse,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: List.generate(5, (index) {
+            final starIndex = index + 1;
+            return Semantics(
+              button: true,
+              label: '${l10n.rateResponse}: $starIndex',
+              child: GestureDetector(
+                onTap: () => setState(() {
+                  // Tap same star again to deselect
+                  _rating = _rating == starIndex ? 0 : starIndex;
+                }),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(
+                    starIndex <= _rating
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
+                    size: 36,
+                    color: starIndex <= _rating
+                        ? Colors.amber.shade600
+                        : Colors.grey.shade400,
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+        if (_rating > 0) ...[
+          const SizedBox(height: 6),
+          Text(
+            _ratingLabel(_rating, l10n),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: Colors.amber.shade700,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _ratingLabel(int rating, AppLocalizations l10n) => switch (rating) {
+    1 => l10n.veryDissatisfied,
+    2 => l10n.dissatisfied,
+    3 => l10n.neutral,
+    4 => l10n.satisfied,
+    5 => l10n.verySatisfied,
+    _ => '',
+  };
+
+  Widget _buildNoteSection(ThemeData theme, bool isDark) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.additionalComments,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _noteController,
+          maxLines: 4,
+          maxLength: 500,
+          decoration: InputDecoration(
+            hintText: l10n.resolutionCommentsHint,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            filled: true,
+            fillColor: isDark ? AppColors.darkSurface : Colors.grey.shade50,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSignatureSection(ThemeData theme, bool isDark) {
+    final l10n = AppLocalizations.of(context);
+    final canvasBorder = _canvasValid
+        ? AppColors.success
+        : (isDark ? AppColors.darkBorder : Colors.grey.shade300);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Heading
+        Row(
+          children: [
+            Icon(Icons.draw_outlined, size: 18, color: AppColors.primary),
+            const SizedBox(width: 6),
+            Text(
+              l10n.digitalSignature,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (_signatureValid) ...[
+              const SizedBox(width: 8),
+              Icon(Icons.verified_rounded, size: 18, color: AppColors.success),
+            ],
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          l10n.signatureInstructions,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: isDark
+                ? AppColors.darkTextSecondary
+                : AppColors.lightTextSecondary,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // ── Canvas pad ──────────────────────────────────────────────────────
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: canvasBorder, width: 1.5),
+            ),
+            child: Stack(
+              children: [
+                Signature(
+                  controller: _signatureController,
+                  height: 160,
+                  backgroundColor: isDark
+                      ? const Color(0xFF1E1E1E)
+                      : Colors.white,
+                ),
+                // Placeholder hint
+                if (!_canvasValid)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Center(
+                        child: Text(
+                          l10n.signHere,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey.shade400,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                // Clear / reset button
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () {
+                        _signatureController.clear();
+                        setState(() {});
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: Icon(
+                          Icons.refresh_rounded,
+                          size: 18,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (!_canvasValid)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              l10n.signatureRequired,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColors.alertHigh,
+              ),
+            ),
+          ),
+
+        const SizedBox(height: 14),
+
+        // ── Full name field ─────────────────────────────────────────────────
+        TextField(
+          controller: _nameController,
+          onChanged: (_) => setState(() {}),
+          textCapitalization: TextCapitalization.words,
+          decoration: InputDecoration(
+            labelText: l10n.fullName,
+            hintText: l10n.fullNameHint,
+            prefixIcon: const Icon(Icons.person_outline),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            filled: true,
+            fillColor: isDark ? AppColors.darkSurface : Colors.grey.shade50,
+            suffixIcon: _nameValid
+                ? Icon(Icons.check_circle, color: AppColors.success)
+                : null,
+          ),
+        ),
+        if (!_nameValid && _nameController.text.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              l10n.registeredNameRequired,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColors.alertHigh,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons(ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Primary: Confirm Resolved
+        FilledButton.icon(
+          key: const ValueKey('citizen-review-confirm'),
+          onPressed: _isSubmitting
+              ? null
+              : () async {
+                  final error = await _submit(satisfied: true);
+                  if (!mounted) return;
+                  if (error != null) {
+                    _showSnackBar(error, error: true);
+                  } else {
+                    Navigator.of(context).pop(true);
+                  }
+                },
+          icon: _isSubmitting
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Icon(Icons.check_circle_outline),
+          label: Text(l10n.confirmResolved),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.success,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Secondary: Dispute / Reopen
+        OutlinedButton.icon(
+          key: const ValueKey('citizen-review-dispute'),
+          onPressed: _isSubmitting ? null : _showDisputeSheet,
+          icon: const Icon(Icons.chat_bubble_outline),
+          label: Text(l10n.disputeUnresolved),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: theme.colorScheme.primary,
+            side: BorderSide(color: theme.colorScheme.primary),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+
+        const SizedBox(height: 12),
+        Text(
+          l10n.disputeNotice,
+          textAlign: TextAlign.center,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showDisputeSheet() async {
+    final l10n = AppLocalizations.of(context);
+    final reasonController = TextEditingController();
+    final reasonFocusNode = FocusNode();
+    var focusRequested = false;
+    final submitted = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (sheetContext) {
+        var errorText;
+        var isSubmitting = false;
+
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            if (!focusRequested) {
+              focusRequested = true;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (sheetContext.mounted) reasonFocusNode.requestFocus();
+              });
+            }
+
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                16,
+                20,
+                20 + MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      l10n.disputeResolution,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.disputeConfirmation,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    key: const ValueKey('citizen-review-dispute-reason'),
+                    controller: reasonController,
+                    focusNode: reasonFocusNode,
+                    autofocus: true,
+                    minLines: 4,
+                    maxLines: 7,
+                    maxLength: 1000,
+                    textInputAction: TextInputAction.newline,
+                    onChanged: (_) {
+                      if (errorText != null) {
+                        setSheetState(() => errorText = null);
+                      }
+                    },
+                    decoration: InputDecoration(
+                      labelText: l10n.disputeReasonLabel,
+                      hintText: l10n.disputeReasonHint,
+                      errorText: errorText,
+                      alignLabelWithHint: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      key: const ValueKey('citizen-review-dispute-submit'),
+                      onPressed: isSubmitting
+                          ? null
+                          : () async {
+                              final reason = reasonController.text.trim();
+                              if (reason.isEmpty) {
+                                setSheetState(
+                                  () => errorText = l10n.disputeReasonRequired,
+                                );
+                                reasonFocusNode.requestFocus();
+                                return;
+                              }
+                              setSheetState(() {
+                                isSubmitting = true;
+                                errorText = null;
+                              });
+                              final error = await _submit(
+                                satisfied: false,
+                                disputeReason: reason,
+                              );
+                              if (!sheetContext.mounted) return;
+                              if (error != null) {
+                                setSheetState(() {
+                                  isSubmitting = false;
+                                  errorText = error;
+                                });
+                                reasonFocusNode.requestFocus();
+                              } else {
+                                Navigator.of(sheetContext).pop(true);
+                              }
+                            },
+                      icon: isSubmitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.send_outlined),
+                      label: Text(l10n.yesDispute),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+    reasonController.dispose();
+    reasonFocusNode.dispose();
+
+    if (submitted == true && mounted) Navigator.of(context).pop(true);
+  }
+}

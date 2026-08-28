@@ -61,9 +61,7 @@ class AuthController extends _$AuthController {
 
       result.when(
         success: (user) {
-          debugPrint(
-            '[AuthController] checkAuth success. User: ${user?.email}',
-          );
+          debugPrint('[AuthController] checkAuth success');
           if (user != null) {
             state = AuthSuccess('Session restored', user);
           } else {
@@ -86,7 +84,7 @@ class AuthController extends _$AuthController {
 
   /// Login user
   Future<bool> login(String email, String password) async {
-    debugPrint('[AuthController] login() starting for: $email');
+    debugPrint('[AuthController] login() starting');
     state = const AuthLoading();
 
     final loginUseCase = ref.read(loginUseCaseProvider);
@@ -94,7 +92,7 @@ class AuthController extends _$AuthController {
 
     return result.when(
       success: (user) {
-        debugPrint('[AuthController] login success: ${user.email}');
+        debugPrint('[AuthController] login success');
         // Fetch KYC status after successful login
         try {
           ref.invalidate(kycStatusControllerProvider);
@@ -120,6 +118,7 @@ class AuthController extends _$AuthController {
     required String passwordConfirm,
     required String firstName,
     required String lastName,
+    required String barangayId,
   }) async {
     state = const AuthLoading();
 
@@ -130,6 +129,7 @@ class AuthController extends _$AuthController {
       passwordConfirm: passwordConfirm,
       firstName: firstName,
       lastName: lastName,
+      barangayId: barangayId,
     );
 
     return result.when(
@@ -154,8 +154,8 @@ class AuthController extends _$AuthController {
   Future<bool> forgotPassword(String email) async {
     state = const AuthLoading();
 
-    final authRepository = ref.read(authRepositoryProvider);
-    final result = await authRepository.forgotPassword(email);
+    final passwordRecovery = ref.read(passwordRecoveryUseCaseProvider);
+    final result = await passwordRecovery.requestReset(email);
 
     return result.when(
       success: (_) {
@@ -178,8 +178,8 @@ class AuthController extends _$AuthController {
   }) async {
     state = const AuthLoading();
 
-    final authRepository = ref.read(authRepositoryProvider);
-    final result = await authRepository.verifyResetOtp(email: email, otp: otp);
+    final passwordRecovery = ref.read(passwordRecoveryUseCaseProvider);
+    final result = await passwordRecovery.verifyOtp(email: email, otp: otp);
 
     return result.when(
       success: (resetToken) {
@@ -203,8 +203,8 @@ class AuthController extends _$AuthController {
   }) async {
     state = const AuthLoading();
 
-    final authRepository = ref.read(authRepositoryProvider);
-    final result = await authRepository.resetPassword(
+    final passwordRecovery = ref.read(passwordRecoveryUseCaseProvider);
+    final result = await passwordRecovery.resetPassword(
       resetToken: resetToken,
       newPassword: newPassword,
       newPasswordConfirm: newPasswordConfirm,

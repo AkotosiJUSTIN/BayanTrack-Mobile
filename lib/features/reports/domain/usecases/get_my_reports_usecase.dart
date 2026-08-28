@@ -13,11 +13,13 @@ class GetMyReportsUseCase {
     int page = 1,
     int pageSize = 20,
     String? status,
+    String? sortBy,
   }) {
     return _repository.getMyReports(
       page: page,
       pageSize: pageSize,
       status: status,
+      sortBy: sortBy,
     );
   }
 }

@@ -23,6 +23,7 @@ class RegisterUseCase {
     required String passwordConfirm,
     required String firstName,
     required String lastName,
+    required String barangayId,
   }) async {
     // Step 1: Register with backend (returns tokens)
     final tokensResult = await _authRepository.register(
@@ -31,6 +32,7 @@ class RegisterUseCase {
       passwordConfirm: passwordConfirm,
       firstName: firstName,
       lastName: lastName,
+      barangayId: barangayId,
     );
 
     // Step 2: Check if registration succeeded

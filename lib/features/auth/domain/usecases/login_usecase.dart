@@ -40,9 +40,7 @@ class LoginUseCase {
 
     // Step 3: Save tokens
     final tokens = tokensResult.dataOrNull!;
-    debugPrint(
-      '[LoginUseCase] Step 3: Saving tokens (access=${tokens.accessToken.substring(0, 20)}...)',
-    );
+    debugPrint('[LoginUseCase] Step 3: Saving tokens');
     await _sessionRepository.saveTokens(
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
@@ -57,9 +55,7 @@ class LoginUseCase {
         '[LoginUseCase] Step 4: Profile fetch FAILED - ${profileResult.failureOrNull}',
       );
     } else {
-      debugPrint(
-        '[LoginUseCase] Step 4: Profile fetch SUCCESS - ${profileResult.dataOrNull}',
-      );
+      debugPrint('[LoginUseCase] Step 4: Profile fetch SUCCESS');
     }
     return profileResult;
   }

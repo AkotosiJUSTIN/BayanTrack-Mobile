@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/report_enums.dart';
 
 /// Priority badge widget displaying priority level with color coding
 class PriorityBadge extends StatelessWidget {
   final PriorityLevel? priorityLevel;
-  final int? baseScore;
-  final int? hotspotScore;
+  final int? priorityScore;
   final bool showScores;
   final double fontSize;
   final EdgeInsets padding;
@@ -13,8 +13,7 @@ class PriorityBadge extends StatelessWidget {
   const PriorityBadge({
     super.key,
     required this.priorityLevel,
-    this.baseScore,
-    this.hotspotScore,
+    this.priorityScore,
     this.showScores = false,
     this.fontSize = 11,
     this.padding = const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -27,7 +26,8 @@ class PriorityBadge extends StatelessWidget {
     }
 
     final colors = _getPriorityColors(priorityLevel!);
-    final totalScore = (baseScore ?? 0) + (hotspotScore ?? 0);
+    final score = priorityScore ?? 0;
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       padding: padding,
@@ -46,7 +46,7 @@ class PriorityBadge extends StatelessWidget {
           ),
           const SizedBox(width: 4),
           Text(
-            priorityLevel!.displayName.toUpperCase(),
+            _priorityLabel(priorityLevel!, l10n).toUpperCase(),
             style: TextStyle(
               fontSize: fontSize,
               fontWeight: FontWeight.w700,
@@ -54,7 +54,7 @@ class PriorityBadge extends StatelessWidget {
               letterSpacing: 0.5,
             ),
           ),
-          if (showScores && totalScore > 0) ...[
+          if (showScores && score > 0) ...[
             const SizedBox(width: 4),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
@@ -63,7 +63,7 @@ class PriorityBadge extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
-                totalScore.toString(),
+                score.toString(),
                 style: TextStyle(
                   fontSize: fontSize - 1,
                   fontWeight: FontWeight.w600,
@@ -77,12 +77,22 @@ class PriorityBadge extends StatelessWidget {
     );
   }
 
+  String _priorityLabel(PriorityLevel level, AppLocalizations l10n) =>
+      switch (level) {
+        PriorityLevel.critical => l10n.priorityCritical,
+        PriorityLevel.high => l10n.priorityHigh,
+        PriorityLevel.medium => l10n.medium,
+        PriorityLevel.low => l10n.priorityLow,
+        PriorityLevel.veryLow => l10n.priorityVeryLow,
+      };
+
   IconData _getPriorityIcon(PriorityLevel level) {
     return switch (level) {
       PriorityLevel.critical => Icons.error,
       PriorityLevel.high => Icons.warning,
       PriorityLevel.medium => Icons.info_outline,
       PriorityLevel.low => Icons.check_circle_outline,
+      PriorityLevel.veryLow => Icons.remove_circle_outline,
     };
   }
 
@@ -107,6 +117,11 @@ class PriorityBadge extends StatelessWidget {
           background: const Color(0xFFE8F5E9),
           border: const Color(0xFF66BB6A),
           text: const Color(0xFF2E7D32),
+        ),
+      PriorityLevel.veryLow => _PriorityColors(
+          background: const Color(0xFFE3F2FD),
+          border: const Color(0xFF42A5F5),
+          text: const Color(0xFF1565C0),
         ),
     };
   }
@@ -151,6 +166,7 @@ class _PriorityReasonsState extends State<PriorityReasons> {
     }
 
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final totalScore = (widget.baseScore ?? 0) + (widget.hotspotScore ?? 0);
 
     return Card(
@@ -173,7 +189,7 @@ class _PriorityReasonsState extends State<PriorityReasons> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Priority Analysis',
+                      l10n.priorityAnalysis,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -190,7 +206,7 @@ class _PriorityReasonsState extends State<PriorityReasons> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'Score: $totalScore',
+                        l10n.score(totalScore),
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: theme.colorScheme.onPrimaryContainer,
@@ -226,7 +242,7 @@ class _PriorityReasonsState extends State<PriorityReasons> {
                         children: [
                           if (widget.baseScore != null) ...[
                             Text(
-                              'Base: ${widget.baseScore}',
+                              l10n.baseScore(widget.baseScore!),
                               style: theme.textTheme.bodySmall,
                             ),
                             if (widget.hotspotScore != null)
@@ -237,7 +253,7 @@ class _PriorityReasonsState extends State<PriorityReasons> {
                           ],
                           if (widget.hotspotScore != null)
                             Text(
-                              'Hotspot: ${widget.hotspotScore}',
+                              l10n.hotspotScore(widget.hotspotScore!),
                               style: theme.textTheme.bodySmall,
                             ),
                           Text(
@@ -253,7 +269,7 @@ class _PriorityReasonsState extends State<PriorityReasons> {
                   
                   // Reasons list
                   Text(
-                    'Reasons:',
+                    l10n.reasons,
                     style: theme.textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),

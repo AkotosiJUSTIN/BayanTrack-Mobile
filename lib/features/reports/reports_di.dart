@@ -3,12 +3,14 @@ import '../../core/network/dio_provider.dart';
 import 'data/repositories/reports_repository_impl.dart';
 import 'domain/reports_repository.dart';
 import 'domain/usecases/create_report_usecase.dart';
+import 'domain/usecases/update_report_usecase.dart';
 import 'domain/usecases/delete_report_usecase.dart';
 import 'domain/usecases/get_my_reports_usecase.dart';
 import 'domain/usecases/get_report_stats_usecase.dart';
 import 'domain/usecases/get_report_usecase.dart';
 import 'domain/usecases/get_reports_usecase.dart';
 import 'domain/usecases/verify_report_usecase.dart';
+import 'domain/usecases/citizen_close_report_usecase.dart';
 
 part 'reports_di.g.dart';
 
@@ -55,6 +57,13 @@ CreateReportUseCase createReportUseCase(Ref ref) {
 }
 
 @riverpod
+UpdateReportUseCase updateReportUseCase(Ref ref) {
+  return UpdateReportUseCase(
+    repository: ref.watch(reportsRepositoryDomainProvider),
+  );
+}
+
+@riverpod
 DeleteReportUseCase deleteReportUseCase(Ref ref) {
   return DeleteReportUseCase(
     repository: ref.watch(reportsRepositoryDomainProvider),
@@ -71,6 +80,13 @@ GetReportStatsUseCase getReportStatsUseCase(Ref ref) {
 @riverpod
 VerifyReportUseCase verifyReportUseCase(Ref ref) {
   return VerifyReportUseCase(
+    repository: ref.watch(reportsRepositoryDomainProvider),
+  );
+}
+
+@riverpod
+CitizenCloseReportUseCase citizenCloseReportUseCase(Ref ref) {
+  return CitizenCloseReportUseCase(
     repository: ref.watch(reportsRepositoryDomainProvider),
   );
 }

@@ -19,6 +19,22 @@ class ReportsRepositoryImpl implements ReportsRepository {
 
   ReportsRepositoryImpl(this._dio);
 
+  String? _legacyStatusFallback(String status) {
+    return switch (status) {
+      'submitted' => 'Pending',
+      'under_review' => 'Under Review',
+      'verified' => 'Verified',
+      'assigned' => 'Assigned',
+      'in_progress' => 'In Progress',
+      'resolved' => 'Resolved',
+      'closed' => 'Closed',
+      'rejected' => 'Rejected',
+      'escalated' => 'Escalated',
+      'endorsed' => 'Endorsed',
+      _ => null,
+    };
+  }
+
   @override
   Future<Result<PaginatedReports>> getReports({
     int page = 1,
@@ -28,6 +44,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
     String? category,
     String? severity,
     bool? isEmergency,
+    String? sortBy,
   }) async {
     try {
       final queryParams = <String, dynamic>{
@@ -39,6 +56,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
       if (category != null) queryParams['category'] = category;
       if (severity != null) queryParams['severity'] = severity;
       if (isEmergency != null) queryParams['is_emergency'] = isEmergency;
+      if (sortBy != null) queryParams['sort_by'] = sortBy;
 
       final response = await _dio.get(
         ApiConstants.reports,
@@ -56,6 +74,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
     int page = 1,
     int pageSize = 20,
     String? status,
+    String? sortBy,
   }) async {
     try {
       final queryParams = <String, dynamic>{
@@ -63,12 +82,40 @@ class ReportsRepositoryImpl implements ReportsRepository {
         'page_size': pageSize,
       };
       if (status != null) queryParams['status'] = status;
+      if (sortBy != null) queryParams['sort_by'] = sortBy;
 
       final response = await _dio.get(
         ApiConstants.myReports,
         queryParameters: queryParams,
       );
-      final dtoResult = dto.PaginatedReports.fromJson(response.data);
+      var dtoResult = dto.PaginatedReports.fromJson(response.data);
+
+      // Some older records store status labels capitalized (e.g. "Closed").
+      // Retry once with the legacy label if the strict status lookup is empty.
+      if (status != null && dtoResult.results.isEmpty) {
+        final legacyStatus = _legacyStatusFallback(status);
+        if (legacyStatus != null && legacyStatus != status) {
+          final fallbackQuery = <String, dynamic>{
+            'page': page,
+            'page_size': pageSize,
+            'status': legacyStatus,
+          };
+          if (sortBy != null) fallbackQuery['sort_by'] = sortBy;
+
+          final fallbackResponse = await _dio.get(
+            ApiConstants.myReports,
+            queryParameters: fallbackQuery,
+          );
+          final fallbackResult = dto.PaginatedReports.fromJson(
+            fallbackResponse.data,
+          );
+
+          if (fallbackResult.results.isNotEmpty) {
+            dtoResult = fallbackResult;
+          }
+        }
+      }
+
       return Success(ReportMapper.paginatedFromDto(dtoResult));
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));
@@ -91,19 +138,25 @@ class ReportsRepositoryImpl implements ReportsRepository {
     String? category,
     String? incidentType,
     String? title,
-    required String description,
+    String description = '',
     String? incidentDatetime,
     bool isHappeningNow = false,
     String? zone,
     String? streetLandmark,
+    String municipalityId = 'urdaneta',
+    String? barangayId,
     String? cityMunicipality,
     String? province,
     String? latitude,
     String? longitude,
     String locationAccuracy = 'approximate',
     String? location,
+    String? barangay,
     bool declarationConfirmed = true,
     bool dataProcessingConsent = true,
+    bool isQuickReport = false,
+    bool isEmergency = false,
+    String? idempotencyKey,
   }) async {
     try {
       final request = dto.CreateReportRequest(
@@ -115,26 +168,38 @@ class ReportsRepositoryImpl implements ReportsRepository {
         isHappeningNow: isHappeningNow,
         zone: zone,
         streetLandmark: streetLandmark,
+        municipalityId: municipalityId,
+        barangayId: barangayId,
         cityMunicipality: cityMunicipality,
         province: province,
         latitude: latitude,
         longitude: longitude,
         locationAccuracy: locationAccuracy,
         location: location,
+        barangay: barangay,
         declarationConfirmed: declarationConfirmed,
         dataProcessingConsent: dataProcessingConsent,
+        isEmergency: isEmergency,
       );
 
-      final response = await _dio.post(
-        ApiConstants.reports,
-        data: request.toJson(),
-      );
+      final requestData = {
+        ...request.toJson(),
+        if (isQuickReport) 'is_quick_report': true,
+      };
+      final response = idempotencyKey == null
+          ? await _dio.post(ApiConstants.reports, data: requestData)
+          : await _dio.post(
+              ApiConstants.reports,
+              data: requestData,
+              options: Options(headers: {'Idempotency-Key': idempotencyKey}),
+            );
 
       // Backend returns {report: {...}, message: "..."}
-      final data = response.data;
-      final reportData = (data is Map && data.containsKey('report'))
-          ? data['report']
-          : data;
+      final responseData = response.data;
+      final reportData =
+          (responseData is Map && responseData.containsKey('report'))
+          ? responseData['report']
+          : responseData;
       final dtoReport = dto.Report.fromJson(reportData);
       return Success(ReportMapper.fromDto(dtoReport));
     } catch (e, stack) {
@@ -151,6 +216,8 @@ class ReportsRepositoryImpl implements ReportsRepository {
     String? incidentType,
     String? zone,
     String? streetLandmark,
+    String? municipalityId,
+    String? barangayId,
     String? cityMunicipality,
     String? province,
     String? barangay,
@@ -163,6 +230,8 @@ class ReportsRepositoryImpl implements ReportsRepository {
         incidentType: incidentType,
         zone: zone,
         streetLandmark: streetLandmark,
+        municipalityId: municipalityId,
+        barangayId: barangayId,
         cityMunicipality: cityMunicipality,
         province: province,
         barangay: barangay,
@@ -172,7 +241,11 @@ class ReportsRepositoryImpl implements ReportsRepository {
         ApiConstants.reportById(id),
         data: request.toJson(),
       );
-      final dtoReport = dto.Report.fromJson(response.data);
+      final responseData = response.data;
+      final reportData = responseData is Map && responseData['report'] is Map
+          ? responseData['report']
+          : responseData;
+      final dtoReport = dto.Report.fromJson(reportData);
       return Success(ReportMapper.fromDto(dtoReport));
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));
@@ -197,7 +270,11 @@ class ReportsRepositoryImpl implements ReportsRepository {
         '${ApiConstants.reportById(id)}status/',
         data: request.toJson(),
       );
-      final dtoReport = dto.Report.fromJson(response.data);
+      final responseData = response.data;
+      final reportData = responseData is Map && responseData['report'] is Map
+          ? responseData['report']
+          : responseData;
+      final dtoReport = dto.Report.fromJson(reportData);
       return Success(ReportMapper.fromDto(dtoReport));
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));
@@ -233,6 +310,39 @@ class ReportsRepositoryImpl implements ReportsRepository {
         response.data,
       );
       return Success(ReportMapper.blockchainVerificationFromDto(dtoResult));
+    } catch (e, stack) {
+      return Err(ErrorMapper.mapException(e, stack));
+    }
+  }
+
+  @override
+  Future<Result<Map<String, dynamic>>> citizenCloseReport({
+    required String id,
+    required bool satisfied,
+    int? rating,
+    String? note,
+    String? reason,
+    String? signatureImageId,
+    String? signatureName,
+  }) async {
+    try {
+      final body = <String, dynamic>{'satisfied': satisfied};
+      if (rating != null) body['rating'] = rating;
+      if (note != null && note.isNotEmpty) body['note'] = note;
+      if (reason != null && reason.isNotEmpty) body['reason'] = reason;
+      if (signatureImageId != null && signatureImageId.isNotEmpty) {
+        body['signature_image_id'] = signatureImageId;
+      }
+      if (signatureName != null && signatureName.isNotEmpty) {
+        body['signature_name'] = signatureName;
+      }
+
+      final response = await _dio.patch(
+        ApiConstants.reportCitizenClose(id),
+        data: body,
+      );
+      // Backend returns { message, satisfied, report_status }
+      return Success(Map<String, dynamic>.from(response.data as Map));
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));
     }

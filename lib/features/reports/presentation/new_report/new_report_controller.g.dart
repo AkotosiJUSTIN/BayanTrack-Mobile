@@ -45,7 +45,7 @@ final class NewReportControllerProvider
 }
 
 String _$newReportControllerHash() =>
-    r'49495d26e546f13138e1f87d21ffaa4e989e0151';
+    r'39504b463a74b71a4d5cdfa2ff4673decee02eb5';
 
 /// Controller for managing new report flow state
 

@@ -1,35 +1,54 @@
 import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../../core/constants/urdaneta_geo.dart';
+import '../../../auth/data/auth_models.dart';
 import '../../data/report_models.dart';
+import '../../domain/entities/report.dart' as domain;
+import '../../reports_di.dart';
+import 'quick_report_geo.dart';
 
 part 'new_report_controller.g.dart';
+
+class ReportSubmissionFailure implements Exception {
+  const ReportSubmissionFailure(this.message);
+
+  final String message;
+}
 
 /// State for the new report flow - comprehensive fields matching backend
 class NewReportState {
   // Images
   final List<File> selectedImages;
-  
+
   // Section A: Report Details
   final ReportCategory? category;
   final String? title;
   final String description;
   final DateTime? incidentDatetime;
   final bool isHappeningNow;
-  
+
   // Section B: Location Information
   final String? zone;
   final String? streetLandmark;
+  final String municipalityId;
+  final String? barangayId;
+  final String? barangay;
   final String? cityMunicipality;
   final String? province;
   final double? latitude;
   final double? longitude;
   final LocationAccuracy locationAccuracy;
   final String? location; // Human-readable full address
-  
+  final bool isResolvingBarangay;
+  final bool isResolvingLandmark;
+  final List<String> nearbyLandmarkSuggestions;
+  final String? landmarkLookupError;
+  final bool landmarkManuallyEdited;
+
   // Section C: Consent & Declaration
   final bool declarationConfirmed;
   final bool dataProcessingConsent;
-  
+
   // Form state
   final bool isSubmitting;
   final String? error;
@@ -43,12 +62,20 @@ class NewReportState {
     this.isHappeningNow = false,
     this.zone,
     this.streetLandmark,
-    this.cityMunicipality,
-    this.province,
+    this.municipalityId = 'urdaneta',
+    this.barangayId,
+    this.barangay,
+    this.cityMunicipality = UrdanetaGeo.defaultCityMunicipality,
+    this.province = UrdanetaGeo.defaultProvince,
     this.latitude,
     this.longitude,
     this.locationAccuracy = LocationAccuracy.approximate,
     this.location,
+    this.isResolvingBarangay = false,
+    this.isResolvingLandmark = false,
+    this.nearbyLandmarkSuggestions = const [],
+    this.landmarkLookupError,
+    this.landmarkManuallyEdited = false,
     this.declarationConfirmed = false,
     this.dataProcessingConsent = false,
     this.isSubmitting = false,
@@ -64,16 +91,28 @@ class NewReportState {
     bool? isHappeningNow,
     String? zone,
     String? streetLandmark,
+    String? municipalityId,
+    String? barangayId,
+    String? barangay,
     String? cityMunicipality,
     String? province,
     double? latitude,
     double? longitude,
     LocationAccuracy? locationAccuracy,
     String? location,
+    bool? isResolvingBarangay,
+    bool? isResolvingLandmark,
+    List<String>? nearbyLandmarkSuggestions,
+    String? landmarkLookupError,
+    bool? landmarkManuallyEdited,
     bool? declarationConfirmed,
     bool? dataProcessingConsent,
     bool? isSubmitting,
     String? error,
+    bool clearLocation = false,
+    bool clearBarangay = false,
+    bool clearStreetLandmark = false,
+    bool clearLandmarkSuggestions = false,
   }) {
     return NewReportState(
       selectedImages: selectedImages ?? this.selectedImages,
@@ -82,16 +121,31 @@ class NewReportState {
       description: description ?? this.description,
       incidentDatetime: incidentDatetime ?? this.incidentDatetime,
       isHappeningNow: isHappeningNow ?? this.isHappeningNow,
-      zone: zone ?? this.zone,
-      streetLandmark: streetLandmark ?? this.streetLandmark,
+      zone: clearLocation || clearBarangay ? null : zone ?? this.zone,
+      streetLandmark: clearLocation || clearStreetLandmark
+          ? null
+          : streetLandmark ?? this.streetLandmark,
+      municipalityId: municipalityId ?? this.municipalityId,
+      barangayId: clearBarangay ? null : barangayId ?? this.barangayId,
+      barangay: clearBarangay ? null : barangay ?? this.barangay,
       cityMunicipality: cityMunicipality ?? this.cityMunicipality,
       province: province ?? this.province,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
+      latitude: clearLocation ? null : latitude ?? this.latitude,
+      longitude: clearLocation ? null : longitude ?? this.longitude,
       locationAccuracy: locationAccuracy ?? this.locationAccuracy,
-      location: location ?? this.location,
+      location: clearLocation ? null : location ?? this.location,
+      isResolvingBarangay: isResolvingBarangay ?? this.isResolvingBarangay,
+      isResolvingLandmark: isResolvingLandmark ?? this.isResolvingLandmark,
+      nearbyLandmarkSuggestions: clearLocation || clearLandmarkSuggestions
+          ? const []
+          : nearbyLandmarkSuggestions ?? this.nearbyLandmarkSuggestions,
+      landmarkLookupError: landmarkLookupError,
+      landmarkManuallyEdited: clearLocation
+          ? false
+          : landmarkManuallyEdited ?? this.landmarkManuallyEdited,
       declarationConfirmed: declarationConfirmed ?? this.declarationConfirmed,
-      dataProcessingConsent: dataProcessingConsent ?? this.dataProcessingConsent,
+      dataProcessingConsent:
+          dataProcessingConsent ?? this.dataProcessingConsent,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       error: error,
     );
@@ -107,43 +161,15 @@ class NewReportState {
 
   /// Section validations
   bool get hasPhotos => selectedImages.isNotEmpty;
-  
-  bool get hasLocation => 
+
+  bool get hasLocation =>
       (zone != null && zone!.isNotEmpty) ||
       (streetLandmark != null && streetLandmark!.isNotEmpty) ||
       (latitude != null && longitude != null);
-  
-  bool get hasDetails => 
-      description.trim().isNotEmpty;
-  
+
+  bool get hasDetails => description.trim().isNotEmpty;
+
   bool get hasConsent => declarationConfirmed && dataProcessingConsent;
-
-  /// Build CreateReportRequest from current state
-  CreateReportRequest toCreateRequest() {
-    return CreateReportRequest(
-      category: category?.value,
-      title: title,
-      description: description,
-      incidentDatetime: incidentDatetime?.toIso8601String(),
-      isHappeningNow: isHappeningNow,
-      zone: zone,
-      streetLandmark: streetLandmark,
-      cityMunicipality: cityMunicipality,
-      province: province,
-      latitude: _formatCoordinate(latitude),
-      longitude: _formatCoordinate(longitude),
-      locationAccuracy: locationAccuracy.name,
-      location: streetLandmark ?? location,
-      declarationConfirmed: declarationConfirmed,
-      dataProcessingConsent: dataProcessingConsent,
-    );
-  }
-
-  String? _formatCoordinate(double? value) {
-    if (value == null) return null;
-    // Backend expects up to 10 decimal places for coordinates.
-    return value.toStringAsFixed(10);
-  }
 }
 
 /// Controller for managing new report flow state
@@ -216,12 +242,82 @@ class NewReportController extends _$NewReportController {
     );
   }
 
+  void beginBarangayResolution() {
+    state = state.copyWith(isResolvingBarangay: true, clearBarangay: true);
+  }
+
+  void completeBarangayResolution(BarangayModel? barangay) {
+    if (barangay == null) {
+      state = state.copyWith(isResolvingBarangay: false, clearBarangay: true);
+      return;
+    }
+    state = state.copyWith(
+      isResolvingBarangay: false,
+      barangayId: barangay.id,
+      barangay: barangay.name,
+      zone: barangay.name,
+    );
+  }
+
+  void beginLandmarkLookup() {
+    state = state.copyWith(
+      isResolvingLandmark: true,
+      clearStreetLandmark: !state.landmarkManuallyEdited,
+      clearLandmarkSuggestions: true,
+      landmarkLookupError: null,
+    );
+  }
+
+  void completeLandmarkLookup(NearbyLandmarkSuggestion suggestion) {
+    state = state.copyWith(
+      isResolvingLandmark: false,
+      clearStreetLandmark:
+          !state.landmarkManuallyEdited && suggestion.prefill == null,
+      streetLandmark: state.landmarkManuallyEdited
+          ? state.streetLandmark
+          : suggestion.prefill,
+      nearbyLandmarkSuggestions: suggestion.choices,
+      landmarkLookupError: null,
+    );
+  }
+
+  void failLandmarkLookup() {
+    state = state.copyWith(
+      isResolvingLandmark: false,
+      clearLandmarkSuggestions: true,
+      landmarkLookupError: 'Nearby landmark suggestions unavailable.',
+    );
+  }
+
   void setZone(String? zone) {
     state = state.copyWith(zone: zone);
   }
 
+  void setMunicipality({
+    required String id,
+    required String name,
+    required String province,
+  }) {
+    if (state.municipalityId == id) return;
+    state = state.copyWith(
+      municipalityId: id,
+      cityMunicipality: name,
+      province: province,
+      clearLocation: true,
+      clearBarangay: true,
+    );
+  }
+
+  void setBarangay({required String id, required String name}) {
+    state = state.copyWith(barangayId: id, barangay: name, zone: name);
+  }
+
   void setStreetLandmark(String? streetLandmark) {
-    state = state.copyWith(streetLandmark: streetLandmark);
+    state = state.copyWith(
+      streetLandmark: streetLandmark,
+      landmarkManuallyEdited: true,
+      landmarkLookupError: null,
+    );
   }
 
   void setCityMunicipality(String? cityMunicipality) {
@@ -238,11 +334,10 @@ class NewReportController extends _$NewReportController {
 
   void clearLocation() {
     state = state.copyWith(
-      latitude: null,
-      longitude: null,
-      location: null,
-      zone: null,
-      streetLandmark: null,
+      clearLocation: true,
+      clearBarangay: true,
+      clearLandmarkSuggestions: true,
+      landmarkManuallyEdited: false,
     );
   }
 
@@ -256,14 +351,124 @@ class NewReportController extends _$NewReportController {
     state = state.copyWith(dataProcessingConsent: value);
   }
 
-  // ==================== FORM STATE ====================
-
-  void setSubmitting(bool isSubmitting) {
-    state = state.copyWith(isSubmitting: isSubmitting);
+  Future<domain.Report> submit() async {
+    if (!state.canSubmit) {
+      throw const ReportSubmissionFailure(
+        'Please complete all required report fields.',
+      );
+    }
+    state = state.copyWith(isSubmitting: true, error: null);
+    try {
+      final useCase = ref.read(createReportUseCaseProvider);
+      final result = await useCase(
+        category: state.category?.value,
+        title: state.title,
+        description: state.description,
+        incidentDatetime: state.incidentDatetime?.toIso8601String(),
+        isHappeningNow: state.isHappeningNow,
+        zone: state.zone,
+        streetLandmark: state.streetLandmark,
+        municipalityId: state.municipalityId,
+        barangayId: state.barangayId,
+        cityMunicipality: state.cityMunicipality,
+        province: state.province,
+        latitude: _formatCoordinate(state.latitude),
+        longitude: _formatCoordinate(state.longitude),
+        locationAccuracy: state.locationAccuracy.name,
+        // Coordinates are authoritative; do not turn a coordinate label into
+        // a persisted landmark when the optional field is blank.
+        location: state.streetLandmark,
+        barangay: state.barangay ?? state.zone,
+        declarationConfirmed: state.declarationConfirmed,
+        dataProcessingConsent: state.dataProcessingConsent,
+      );
+      return result.when(
+        success: (report) => report,
+        failure: (failure) => throw ReportSubmissionFailure(failure.message),
+      );
+    } on ReportSubmissionFailure catch (error) {
+      if (ref.mounted) state = state.copyWith(error: error.message);
+      rethrow;
+    } finally {
+      if (ref.mounted) state = state.copyWith(isSubmitting: false);
+    }
   }
 
-  void setError(String? error) {
-    state = state.copyWith(error: error);
+  Future<domain.Report> submitQuickReport({
+    required String description,
+    required String municipalityId,
+    String? barangayId,
+    String? barangay,
+    required String cityMunicipality,
+    required String province,
+    required double latitude,
+    required double longitude,
+    String? location,
+  }) async {
+    final useCase = ref.read(createReportUseCaseProvider);
+    final result = await useCase(
+      description: description,
+      isHappeningNow: true,
+      zone: barangay,
+      municipalityId: municipalityId,
+      barangayId: barangayId,
+      barangay: barangay,
+      cityMunicipality: cityMunicipality,
+      province: province,
+      latitude: _formatCoordinate(latitude),
+      longitude: _formatCoordinate(longitude),
+      locationAccuracy: LocationAccuracy.exact.name,
+      location: location,
+      declarationConfirmed: true,
+      dataProcessingConsent: true,
+      isQuickReport: true,
+    );
+    return result.when(
+      success: (report) => report,
+      failure: (failure) => throw ReportSubmissionFailure(failure.message),
+    );
+  }
+
+  Future<domain.Report> submitEmergencyReport({
+    required String category,
+    required String municipalityId,
+    String? barangayId,
+    String? barangay,
+    required String cityMunicipality,
+    required String province,
+    required double latitude,
+    required double longitude,
+    String? idempotencyKey,
+  }) async {
+    final useCase = ref.read(createReportUseCaseProvider);
+    final result = await useCase(
+      category: category,
+      description: '',
+      isHappeningNow: true,
+      municipalityId: municipalityId,
+      barangayId: barangayId,
+      barangay: barangay,
+      zone: barangay,
+      cityMunicipality: cityMunicipality,
+      province: province,
+      latitude: _formatCoordinate(latitude),
+      longitude: _formatCoordinate(longitude),
+      locationAccuracy: LocationAccuracy.exact.name,
+      declarationConfirmed: true,
+      dataProcessingConsent: true,
+      isQuickReport: true,
+      isEmergency: true,
+      idempotencyKey: idempotencyKey,
+    );
+    return result.when(
+      success: (report) => report,
+      failure: (failure) => throw ReportSubmissionFailure(failure.message),
+    );
+  }
+
+  String? _formatCoordinate(double? value) {
+    if (value == null) return null;
+    return value.toStringAsFixed(10);
   }
 
   /// Reset the entire form

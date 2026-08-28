@@ -6,12 +6,18 @@ part 'notification_models.g.dart';
 // ==================== NOTIFICATION TYPE ====================
 
 enum NotificationType {
+  @JsonValue('report_submitted')
+  reportSubmitted,
   @JsonValue('status_change')
   statusChange,
   @JsonValue('comment')
   comment,
   @JsonValue('assignment')
   assignment,
+  @JsonValue('report_updated')
+  reportUpdated,
+  @JsonValue('kyc_update')
+  kycUpdate,
   @JsonValue('system')
   system,
 }
@@ -24,7 +30,9 @@ sealed class AppNotification with _$AppNotification {
     @JsonKey(name: 'id') required String id,
     required String title,
     required String message,
-    @Default(NotificationType.system) NotificationType type,
+    @JsonKey(unknownEnumValue: NotificationType.system)
+    @Default(NotificationType.system)
+    NotificationType type,
     @JsonKey(name: 'is_read') @Default(false) bool isRead,
     @JsonKey(name: 'related_report_id') String? reportId,
     @JsonKey(name: 'created_at') String? createdAt,
@@ -41,6 +49,7 @@ sealed class PaginatedNotifications with _$PaginatedNotifications {
   const factory PaginatedNotifications({
     @JsonKey(name: 'notifications') required List<AppNotification> results,
     @Default(0) int count,
+    int? total,
     @JsonKey(name: 'unread_count') @Default(0) int unreadCount,
     String? next,
     String? previous,
@@ -68,20 +77,4 @@ sealed class NotificationPreferences with _$NotificationPreferences {
 
   factory NotificationPreferences.fromJson(Map<String, dynamic> json) =>
       _$NotificationPreferencesFromJson(json);
-}
-
-// ==================== UPDATE PREFERENCES REQUEST ====================
-
-@freezed
-sealed class UpdatePreferencesRequest with _$UpdatePreferencesRequest {
-  const factory UpdatePreferencesRequest({
-    @JsonKey(name: 'email_enabled') bool? emailEnabled,
-    @JsonKey(name: 'push_enabled') bool? pushEnabled,
-    @JsonKey(name: 'notify_on_status_change') bool? notifyOnStatusChange,
-    @JsonKey(name: 'notify_on_comment') bool? notifyOnComment,
-    @JsonKey(name: 'notify_on_assignment') bool? notifyOnAssignment,
-  }) = _UpdatePreferencesRequest;
-
-  factory UpdatePreferencesRequest.fromJson(Map<String, dynamic> json) =>
-      _$UpdatePreferencesRequestFromJson(json);
 }

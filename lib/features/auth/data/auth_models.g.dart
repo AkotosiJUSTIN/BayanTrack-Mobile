@@ -36,6 +36,7 @@ _RegisterRequest _$RegisterRequestFromJson(Map<String, dynamic> json) =>
       passwordConfirm: json['password_confirm'] as String,
       firstName: json['first_name'] as String,
       lastName: json['last_name'] as String,
+      barangayId: json['barangay_id'] as String,
       role: json['role'] as String? ?? 'citizen',
     );
 
@@ -46,6 +47,7 @@ Map<String, dynamic> _$RegisterRequestToJson(_RegisterRequest instance) =>
       'password_confirm': instance.passwordConfirm,
       'first_name': instance.firstName,
       'last_name': instance.lastName,
+      'barangay_id': instance.barangayId,
       'role': instance.role,
     };
 
@@ -75,7 +77,11 @@ _UserProfile _$UserProfileFromJson(Map<String, dynamic> json) => _UserProfile(
   email: json['email'] as String,
   firstName: json['first_name'] as String? ?? '',
   lastName: json['last_name'] as String? ?? '',
+  phone: json['phone'] as String?,
   avatarUrl: json['avatar_url'] as String?,
+  avatarRevision: (json['avatar_revision'] as num?)?.toInt() ?? 0,
+  avatarStorageStatus: json['avatar_storage_status'] as String?,
+  profileRevision: (json['profile_revision'] as num?)?.toInt() ?? 0,
   role: json['role'] as String? ?? 'citizen',
   isActive: json['is_active'] as bool? ?? true,
   createdAt: json['created_at'] as String?,
@@ -88,7 +94,11 @@ Map<String, dynamic> _$UserProfileToJson(_UserProfile instance) =>
       'email': instance.email,
       'first_name': instance.firstName,
       'last_name': instance.lastName,
+      'phone': instance.phone,
       'avatar_url': instance.avatarUrl,
+      'avatar_revision': instance.avatarRevision,
+      'avatar_storage_status': instance.avatarStorageStatus,
+      'profile_revision': instance.profileRevision,
       'role': instance.role,
       'is_active': instance.isActive,
       'created_at': instance.createdAt,
@@ -100,7 +110,8 @@ _ProfileUpdateRequest _$ProfileUpdateRequestFromJson(
 ) => _ProfileUpdateRequest(
   firstName: json['first_name'] as String?,
   lastName: json['last_name'] as String?,
-  avatarUrl: json['avatar_url'] as String?,
+  phone: json['phone'] as String?,
+  expectedRevision: (json['expected_revision'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$ProfileUpdateRequestToJson(
@@ -108,7 +119,8 @@ Map<String, dynamic> _$ProfileUpdateRequestToJson(
 ) => <String, dynamic>{
   'first_name': instance.firstName,
   'last_name': instance.lastName,
-  'avatar_url': ?instance.avatarUrl,
+  'phone': instance.phone,
+  'expected_revision': instance.expectedRevision,
 };
 
 _ChangePasswordRequest _$ChangePasswordRequestFromJson(
@@ -153,3 +165,36 @@ Map<String, dynamic> _$ResetPasswordRequestToJson(
   'new_password': instance.newPassword,
   'new_password_confirm': instance.newPasswordConfirm,
 };
+
+_BarangayModel _$BarangayModelFromJson(Map<String, dynamic> json) =>
+    _BarangayModel(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      centerLat: (json['center_lat'] as num).toDouble(),
+      centerLng: (json['center_lng'] as num).toDouble(),
+      municipalityId: json['municipality_id'] as String? ?? 'urdaneta',
+      municipality: json['municipality'] as String?,
+      province: json['province'] as String?,
+    );
+
+Map<String, dynamic> _$BarangayModelToJson(_BarangayModel instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'center_lat': instance.centerLat,
+      'center_lng': instance.centerLng,
+      'municipality_id': instance.municipalityId,
+      'municipality': instance.municipality,
+      'province': instance.province,
+    };
+
+_BarangaysResponse _$BarangaysResponseFromJson(Map<String, dynamic> json) =>
+    _BarangaysResponse(
+      barangays: (json['barangays'] as List<dynamic>)
+          .map((e) => BarangayModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      count: (json['count'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$BarangaysResponseToJson(_BarangaysResponse instance) =>
+    <String, dynamic>{'barangays': instance.barangays, 'count': instance.count};

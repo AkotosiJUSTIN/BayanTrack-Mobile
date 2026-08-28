@@ -259,6 +259,54 @@ final class CreateReportUseCaseProvider
 String _$createReportUseCaseHash() =>
     r'f1db02add8fde53004d43a1d48764843f7080907';
 
+@ProviderFor(updateReportUseCase)
+final updateReportUseCaseProvider = UpdateReportUseCaseProvider._();
+
+final class UpdateReportUseCaseProvider
+    extends
+        $FunctionalProvider<
+          UpdateReportUseCase,
+          UpdateReportUseCase,
+          UpdateReportUseCase
+        >
+    with $Provider<UpdateReportUseCase> {
+  UpdateReportUseCaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'updateReportUseCaseProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$updateReportUseCaseHash();
+
+  @$internal
+  @override
+  $ProviderElement<UpdateReportUseCase> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  UpdateReportUseCase create(Ref ref) {
+    return updateReportUseCase(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(UpdateReportUseCase value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<UpdateReportUseCase>(value),
+    );
+  }
+}
+
+String _$updateReportUseCaseHash() =>
+    r'8c5945aa520367d43d8fbab494b46381b8376d28';
+
 @ProviderFor(deleteReportUseCase)
 final deleteReportUseCaseProvider = DeleteReportUseCaseProvider._();
 
@@ -402,3 +450,51 @@ final class VerifyReportUseCaseProvider
 
 String _$verifyReportUseCaseHash() =>
     r'cea77473a7640e05dc9bff9c193310a0c5c75cd4';
+
+@ProviderFor(citizenCloseReportUseCase)
+final citizenCloseReportUseCaseProvider = CitizenCloseReportUseCaseProvider._();
+
+final class CitizenCloseReportUseCaseProvider
+    extends
+        $FunctionalProvider<
+          CitizenCloseReportUseCase,
+          CitizenCloseReportUseCase,
+          CitizenCloseReportUseCase
+        >
+    with $Provider<CitizenCloseReportUseCase> {
+  CitizenCloseReportUseCaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'citizenCloseReportUseCaseProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$citizenCloseReportUseCaseHash();
+
+  @$internal
+  @override
+  $ProviderElement<CitizenCloseReportUseCase> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  CitizenCloseReportUseCase create(Ref ref) {
+    return citizenCloseReportUseCase(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(CitizenCloseReportUseCase value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<CitizenCloseReportUseCase>(value),
+    );
+  }
+}
+
+String _$citizenCloseReportUseCaseHash() =>
+    r'49a2a937a7d36df46fad6c963622b6e70a2cb7a5';

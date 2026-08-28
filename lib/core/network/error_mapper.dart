@@ -30,6 +30,16 @@ class ErrorMapper {
     return UnknownFailure(error.toString());
   }
 
+  /// Best message for user-facing validation and request errors.
+  static String userMessage(Failure failure) {
+    if (failure case ValidationFailure(
+      fieldErrors: final fieldErrors?,
+    ) when fieldErrors.isNotEmpty) {
+      return fieldErrors.values.first;
+    }
+    return failure.message;
+  }
+
   static Failure _mapDioException(DioException e) {
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
@@ -85,15 +95,15 @@ class ErrorMapper {
   }
 
   /// Extract field-level validation errors
-  /// Supports: {"errors": {"email": "Invalid email", "password": "Too short"}}
+  /// Supports nested `errors`/`details` maps and DRF field arrays.
   static Map<String, String>? _extractFieldErrors(dynamic body) {
     if (body is! Map<String, dynamic>) return null;
 
-    // Format: {"errors": {"field": "message"}}
-    if (body['errors'] is Map) {
-      return (body['errors'] as Map).map(
-        (k, v) => MapEntry(k.toString(), _flattenError(v)),
-      );
+    // Formats: {"errors": {"field": "message"}} and
+    // {"error": "...", "details": {"field": ["message"]}}.
+    final nested = body['errors'] is Map ? body['errors'] : body['details'];
+    if (nested is Map) {
+      return nested.map((k, v) => MapEntry(k.toString(), _flattenError(v)));
     }
 
     // DRF format: {"field": ["error1", "error2"]}

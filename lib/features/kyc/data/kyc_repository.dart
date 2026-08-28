@@ -19,7 +19,7 @@ class KycRepository {
 
   /// Get list of valid ID types
   Future<List<String>> getIdTypes() async {
-    final response = await _dio.get(ApiConstants.kycIdTypes);
+    final response = await _dio.get(ApiConstants.verificationIdTypes);
     final idTypesResponse = IdTypesResponse.fromJson(response.data);
     return idTypesResponse.idTypes;
   }
@@ -28,7 +28,7 @@ class KycRepository {
 
   /// Get all form options (ID types, sex options, civil statuses)
   Future<KycFormOptionsResponse> getFormOptions() async {
-    final response = await _dio.get(ApiConstants.kycFormOptions);
+    final response = await _dio.get(ApiConstants.verificationFormOptions);
     return KycFormOptionsResponse.fromJson(response.data);
   }
 
@@ -36,18 +36,8 @@ class KycRepository {
 
   /// Get current KYC status for the authenticated user
   Future<KycStatusResponse> getKycStatus() async {
-    final response = await _dio.get(ApiConstants.kycStatus);
-    final data = response.data as Map<String, dynamic>;
-    
-    // Backend returns different structures:
-    // - No KYC: {'kyc_status': 'unverified', 'message': '...'}
-    // - Has KYC: {'kyc': {...kyc data...}}
-    if (data.containsKey('kyc')) {
-      return KycStatusResponse.fromJson(data['kyc'] as Map<String, dynamic>);
-    } else {
-      // No KYC submitted yet - create minimal response
-      return KycStatusResponse.fromJson(data);
-    }
+    final response = await _dio.get(ApiConstants.verificationStatus);
+    return KycStatusResponse.fromJson(_verificationPayload(response.data));
   }
 
   // ==================== SUBMIT KYC ====================
@@ -56,9 +46,7 @@ class KycRepository {
   /// Uses multipart/form-data for file uploads
   Future<KycStatusResponse> submitKyc(KycSubmitRequest request) async {
     // Build form data with all text fields
-    final formDataMap = <String, dynamic>{
-      ...request.toFormDataMap(),
-    };
+    final formDataMap = <String, dynamic>{...request.toFormDataMap()};
 
     // Add ID front image (required)
     formDataMap['id_front_image'] = await MultipartFile.fromFile(
@@ -67,7 +55,8 @@ class KycRepository {
     );
 
     // Add ID back image (optional)
-    if (request.idBackImagePath != null && request.idBackImagePath!.isNotEmpty) {
+    if (request.idBackImagePath != null &&
+        request.idBackImagePath!.isNotEmpty) {
       formDataMap['id_back_image'] = await MultipartFile.fromFile(
         request.idBackImagePath!,
         filename: request.idBackImagePath!.split('/').last,
@@ -81,7 +70,8 @@ class KycRepository {
     );
 
     // Add selfie with ID image (optional)
-    if (request.selfieWithIdImagePath != null && request.selfieWithIdImagePath!.isNotEmpty) {
+    if (request.selfieWithIdImagePath != null &&
+        request.selfieWithIdImagePath!.isNotEmpty) {
       formDataMap['selfie_with_id_image'] = await MultipartFile.fromFile(
         request.selfieWithIdImagePath!,
         filename: request.selfieWithIdImagePath!.split('/').last,
@@ -91,16 +81,12 @@ class KycRepository {
     final formData = FormData.fromMap(formDataMap);
 
     final response = await _dio.post(
-      ApiConstants.kycSubmit,
+      ApiConstants.verificationSubmit,
       data: formData,
-      options: Options(
-        headers: {'Content-Type': 'multipart/form-data'},
-      ),
+      options: Options(headers: {'Content-Type': 'multipart/form-data'}),
     );
 
-    final data = response.data as Map<String, dynamic>;
-    // Backend returns {'message': '...', 'kyc': {...}, ...}
-    return KycStatusResponse.fromJson(data['kyc'] as Map<String, dynamic>);
+    return KycStatusResponse.fromJson(_verificationPayload(response.data));
   }
 
   // ==================== RESUBMIT KYC ====================
@@ -109,9 +95,7 @@ class KycRepository {
   /// Uses multipart/form-data for file uploads
   Future<KycStatusResponse> resubmitKyc(KycSubmitRequest request) async {
     // Build form data with all text fields
-    final formDataMap = <String, dynamic>{
-      ...request.toFormDataMap(),
-    };
+    final formDataMap = <String, dynamic>{...request.toFormDataMap()};
 
     // Add ID front image (required)
     formDataMap['id_front_image'] = await MultipartFile.fromFile(
@@ -120,7 +104,8 @@ class KycRepository {
     );
 
     // Add ID back image (optional)
-    if (request.idBackImagePath != null && request.idBackImagePath!.isNotEmpty) {
+    if (request.idBackImagePath != null &&
+        request.idBackImagePath!.isNotEmpty) {
       formDataMap['id_back_image'] = await MultipartFile.fromFile(
         request.idBackImagePath!,
         filename: request.idBackImagePath!.split('/').last,
@@ -134,7 +119,8 @@ class KycRepository {
     );
 
     // Add selfie with ID image (optional)
-    if (request.selfieWithIdImagePath != null && request.selfieWithIdImagePath!.isNotEmpty) {
+    if (request.selfieWithIdImagePath != null &&
+        request.selfieWithIdImagePath!.isNotEmpty) {
       formDataMap['selfie_with_id_image'] = await MultipartFile.fromFile(
         request.selfieWithIdImagePath!,
         filename: request.selfieWithIdImagePath!.split('/').last,
@@ -144,16 +130,12 @@ class KycRepository {
     final formData = FormData.fromMap(formDataMap);
 
     final response = await _dio.post(
-      ApiConstants.kycResubmit,
+      ApiConstants.verificationResubmit,
       data: formData,
-      options: Options(
-        headers: {'Content-Type': 'multipart/form-data'},
-      ),
+      options: Options(headers: {'Content-Type': 'multipart/form-data'}),
     );
 
-    final data = response.data as Map<String, dynamic>;
-    // Backend returns {'message': '...', 'kyc': {...}, ...}
-    return KycStatusResponse.fromJson(data['kyc'] as Map<String, dynamic>);
+    return KycStatusResponse.fromJson(_verificationPayload(response.data));
   }
 
   // ==================== VALIDATE IMAGE SIZE ====================
@@ -191,5 +173,15 @@ class KycRepository {
     }
 
     return errors;
+  }
+
+  Map<String, dynamic> _verificationPayload(Object? raw) {
+    final root = Map<String, dynamic>.from(raw as Map);
+    final nested = root['verification'] ?? root['kyc'];
+    final payload = nested is Map
+        ? Map<String, dynamic>.from(nested)
+        : Map<String, dynamic>.from(root);
+    payload['kyc_status'] ??= payload['verification_status'];
+    return payload;
   }
 }

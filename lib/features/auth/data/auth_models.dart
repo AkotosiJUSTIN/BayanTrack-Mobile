@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../core/maps/municipality_boundary.dart';
+
 part 'auth_models.freezed.dart';
 part 'auth_models.g.dart';
 
@@ -38,6 +40,7 @@ sealed class RegisterRequest with _$RegisterRequest {
     @JsonKey(name: 'password_confirm') required String passwordConfirm,
     @JsonKey(name: 'first_name') required String firstName,
     @JsonKey(name: 'last_name') required String lastName,
+    @JsonKey(name: 'barangay_id') required String barangayId,
     @Default('citizen') String role,
   }) = _RegisterRequest;
 
@@ -77,7 +80,11 @@ sealed class UserProfile with _$UserProfile {
     required String email,
     @JsonKey(name: 'first_name') @Default('') String firstName,
     @JsonKey(name: 'last_name') @Default('') String lastName,
+    String? phone,
     @JsonKey(name: 'avatar_url') String? avatarUrl,
+    @JsonKey(name: 'avatar_revision') @Default(0) int avatarRevision,
+    @JsonKey(name: 'avatar_storage_status') String? avatarStorageStatus,
+    @JsonKey(name: 'profile_revision') @Default(0) int profileRevision,
     @Default('citizen') String role,
     @JsonKey(name: 'is_active') @Default(true) bool isActive,
     @JsonKey(name: 'created_at') String? createdAt,
@@ -100,9 +107,8 @@ sealed class ProfileUpdateRequest with _$ProfileUpdateRequest {
   const factory ProfileUpdateRequest({
     @JsonKey(name: 'first_name') String? firstName,
     @JsonKey(name: 'last_name') String? lastName,
-    // includeIfNull: false → field is excluded from JSON when null.
-    // This prevents a name-only save from wiping the stored avatar_url.
-    @JsonKey(name: 'avatar_url', includeIfNull: false) String? avatarUrl,
+    String? phone,
+    @JsonKey(name: 'expected_revision') int? expectedRevision,
   }) = _ProfileUpdateRequest;
 
   factory ProfileUpdateRequest.fromJson(Map<String, dynamic> json) =>
@@ -144,4 +150,188 @@ sealed class ResetPasswordRequest with _$ResetPasswordRequest {
 
   factory ResetPasswordRequest.fromJson(Map<String, dynamic> json) =>
       _$ResetPasswordRequestFromJson(json);
+}
+
+// ==================== BARANGAYS ====================
+
+@freezed
+sealed class BarangayModel with _$BarangayModel {
+  const factory BarangayModel({
+    required String id,
+    required String name,
+    @JsonKey(name: 'center_lat') required double centerLat,
+    @JsonKey(name: 'center_lng') required double centerLng,
+    @JsonKey(name: 'municipality_id')
+    @Default('urdaneta')
+    String municipalityId,
+    String? municipality,
+    String? province,
+  }) = _BarangayModel;
+
+  factory BarangayModel.fromJson(Map<String, dynamic> json) =>
+      _$BarangayModelFromJson(json);
+}
+
+/// Geographic bounds supplied by the municipality metadata endpoint.
+class MunicipalityBounds {
+  final double south;
+  final double west;
+  final double north;
+  final double east;
+
+  const MunicipalityBounds({
+    required this.south,
+    required this.west,
+    required this.north,
+    required this.east,
+  });
+
+  factory MunicipalityBounds.fromJson(Map<String, dynamic> json) {
+    double number(String key) => (json[key] as num).toDouble();
+    return MunicipalityBounds(
+      south: number('south'),
+      west: number('west'),
+      north: number('north'),
+      east: number('east'),
+    );
+  }
+
+  bool get isValid => south < north && west < east;
+
+  bool contains(double latitude, double longitude) =>
+      isValid &&
+      latitude >= south &&
+      latitude <= north &&
+      longitude >= west &&
+      longitude <= east;
+
+  Map<String, dynamic> toJson() => {
+    'south': south,
+    'west': west,
+    'north': north,
+    'east': east,
+  };
+}
+
+/// Canonical municipality metadata used by report submission.
+class MunicipalityModel {
+  final String id;
+  final String name;
+  final String province;
+  final double? centerLat;
+  final double? centerLng;
+  final MunicipalityBounds? bounds;
+  final MunicipalityBoundary? boundary;
+  final String? psgcCode;
+  final bool isDefault;
+  final bool isSupported;
+
+  const MunicipalityModel({
+    required this.id,
+    required this.name,
+    required this.province,
+    this.centerLat,
+    this.centerLng,
+    this.bounds,
+    this.boundary,
+    this.psgcCode,
+    this.isDefault = false,
+    this.isSupported = true,
+  });
+
+  factory MunicipalityModel.fromJson(Map<String, dynamic> json) {
+    final rawBounds = json['bounds'];
+    final boundary = MunicipalityBoundary.tryParse(json['boundary']);
+    return MunicipalityModel(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      province: json['province']?.toString() ?? '',
+      centerLat: (json['center_lat'] as num?)?.toDouble(),
+      centerLng: (json['center_lng'] as num?)?.toDouble(),
+      bounds: rawBounds is Map
+          ? MunicipalityBounds.fromJson(Map<String, dynamic>.from(rawBounds))
+          : null,
+      boundary: boundary,
+      psgcCode: json['psgc_code']?.toString(),
+      isDefault: json['is_default'] == true,
+      isSupported: json['is_supported'] != false,
+    );
+  }
+
+  bool get hasUsableBounds => bounds?.isValid == true;
+  bool get hasUsableBoundary => boundary != null && hasUsableBounds;
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'province': province,
+    'center_lat': centerLat,
+    'center_lng': centerLng,
+    'bounds': bounds?.toJson(),
+    'boundary': boundary?.toGeoJson(),
+    'psgc_code': psgcCode,
+    'is_default': isDefault,
+    'is_supported': isSupported,
+  };
+}
+
+class MunicipalitiesResponse {
+  final List<MunicipalityModel> municipalities;
+  final int count;
+  final String defaultMunicipalityId;
+
+  const MunicipalitiesResponse({
+    required this.municipalities,
+    required this.count,
+    required this.defaultMunicipalityId,
+  });
+
+  factory MunicipalitiesResponse.fromJson(Map<String, dynamic> json) {
+    final items = json['municipalities'] as List<dynamic>? ?? const [];
+    return MunicipalitiesResponse(
+      municipalities: items
+          .map(
+            (item) => MunicipalityModel.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList(growable: false),
+      count: (json['count'] as num?)?.toInt() ?? items.length,
+      defaultMunicipalityId:
+          json['default_municipality_id']?.toString() ?? 'urdaneta',
+    );
+  }
+}
+
+@freezed
+sealed class BarangaysResponse with _$BarangaysResponse {
+  const factory BarangaysResponse({
+    required List<BarangayModel> barangays,
+    required int count,
+  }) = _BarangaysResponse;
+
+  factory BarangaysResponse.fromJson(Map<String, dynamic> json) =>
+      _$BarangaysResponseFromJson(json);
+}
+
+/// Optional named-place context for a report location.
+class NearbyLandmarkModel {
+  final String name;
+  final double distanceMeters;
+  final String? category;
+
+  const NearbyLandmarkModel({
+    required this.name,
+    required this.distanceMeters,
+    this.category,
+  });
+
+  factory NearbyLandmarkModel.fromJson(Map<String, dynamic> json) {
+    return NearbyLandmarkModel(
+      name: json['name']?.toString().trim() ?? '',
+      distanceMeters:
+          (json['distance_meters'] as num?)?.toDouble() ?? double.infinity,
+      category: json['category']?.toString(),
+    );
+  }
 }

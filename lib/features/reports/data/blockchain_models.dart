@@ -1,4 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'report_models.dart'
+    show NullableIntConverter, NullableStringConverter, StringValueConverter;
 
 part 'blockchain_models.freezed.dart';
 part 'blockchain_models.g.dart';
@@ -6,13 +8,13 @@ part 'blockchain_models.g.dart';
 @freezed
 abstract class BlockchainAuditEntryDto with _$BlockchainAuditEntryDto {
   const factory BlockchainAuditEntryDto({
-    @JsonKey(name: 'reportId') required int reportId,
-    @JsonKey(name: 'actionType') required int actionType,
+    @JsonKey(name: 'reportId') @StringValueConverter() required String reportId,
+    @JsonKey(name: 'actionType') @NullableIntConverter() required int actionType,
     @JsonKey(name: 'actor') required String actor,
-    @JsonKey(name: 'timestamp') required int timestamp,
+    @JsonKey(name: 'timestamp') @NullableIntConverter() required int timestamp,
     @JsonKey(name: 'detailsHash') required String detailsHash,
-    @JsonKey(name: 'oldStatus') required int oldStatus,
-    @JsonKey(name: 'newStatus') required int newStatus,
+    @JsonKey(name: 'oldStatus') @NullableIntConverter() required int oldStatus,
+    @JsonKey(name: 'newStatus') @NullableIntConverter() required int newStatus,
   }) = _BlockchainAuditEntryDto;
 
   factory BlockchainAuditEntryDto.fromJson(Map<String, dynamic> json) =>
@@ -24,9 +26,9 @@ abstract class BlockchainVerificationResultDto
     with _$BlockchainVerificationResultDto {
   const factory BlockchainVerificationResultDto({
     @JsonKey(name: 'report_id') required String reportId,
-    @JsonKey(name: 'on_chain_id') int? onChainId,
+    @JsonKey(name: 'on_chain_id') @NullableStringConverter() String? onChainId,
     required bool verified,
-    @JsonKey(name: 'status_verified') required bool statusVerified,
+    @JsonKey(name: 'status_verified') bool? statusVerified,
     @JsonKey(name: 'blockchain_data')
     required Map<String, dynamic> blockchainData,
     @JsonKey(name: 'audit_history')

@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:timeago/timeago.dart' as timeago;
+import 'package:latlong2/latlong.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/maps/municipality_map.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/presentation/barangays_provider.dart';
+import '../../auth/presentation/profile_controller.dart';
 import '../domain/entities/blockchain_verification.dart';
 import '../domain/entities/report.dart';
 import '../domain/entities/report_enums.dart';
+import 'citizen_review_screen.dart';
 import 'report_detail_controller.dart';
 import 'widgets/priority_badge.dart';
+import 'report_labels.dart';
 
 /// Report Detail Screen showing full report with images and details
 class ReportDetailScreen extends ConsumerStatefulWidget {
@@ -26,9 +33,16 @@ class ReportDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
+  final MapController _locationMapController = MapController();
   int _currentImageIndex = 0;
   BlockchainVerificationResult? _verificationResult;
   bool _isVerifying = false;
+
+  @override
+  void dispose() {
+    _locationMapController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +88,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           ],
         ),
         data: (report) {
-          final imageUrls = report.images
+          final imageUrls = report.coreImages
               .map((img) => ApiConstants.getImageUrl(img.url))
               .toList();
 
@@ -134,7 +148,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'No images',
+                AppLocalizations.of(context).noImages,
                 style: TextStyle(
                   color: isDark
                       ? AppColors.darkTextSecondary
@@ -196,20 +210,25 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   }
 
   Widget _buildErrorState(ThemeData theme, String error) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Column(
         children: [
           Icon(Icons.error_outline, size: 64, color: AppColors.alertHigh),
           const SizedBox(height: 16),
-          Text('Failed to load report', style: theme.textTheme.titleMedium),
+          Text(l10n.unableLoadReports, style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
-          Text(error, style: theme.textTheme.bodySmall),
+          Text(
+            l10n.reportsNetworkError,
+            style: theme.textTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () =>
                 ref.invalidate(reportDetailControllerProvider(widget.reportId)),
-            child: const Text('Retry'),
+            child: Text(l10n.retry),
           ),
         ],
       ),
@@ -217,6 +236,17 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   }
 
   Widget _buildReportContent(ThemeData theme, bool isDark, Report report) {
+    final l10n = AppLocalizations.of(context);
+    final municipalities = ref.watch(municipalitiesProvider).asData?.value;
+    final municipality =
+        findMunicipalityMetadata(
+          municipalities ?? const [bundledUrdanetaMunicipality],
+          report.municipalityId,
+        ) ??
+        (report.municipalityId == defaultMunicipalityId
+            ? bundledUrdanetaMunicipality
+            : null);
+    final linkedReportCount = report.linkedReportCount;
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -228,8 +258,8 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              _buildStatusBadge(report.status),
-              if (report.category != null)
+              _buildStatusBadge(context, report.status),
+              if (report.categoryDisplay != null || report.category != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -242,14 +272,39 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
-                    report.category!.displayName,
+                    localizedReportCategory(
+                      report.category,
+                      l10n,
+                      fallback: report.categoryDisplay,
+                    ),
                     style: theme.textTheme.labelSmall,
                   ),
                 ),
               PriorityBadge(
-                priorityLevel: report.priorityLevel,
+                priorityLevel: report.displayPriorityLevel,
                 showScores: false, // Simplified view for citizens
               ),
+              if (report.displayPriorityLevel != null)
+                Chip(
+                  visualDensity: VisualDensity.compact,
+                  label: Text(
+                    report.priorityIsAdvisory
+                        ? l10n.aiSuggestionPending
+                        : l10n.operationalPriority,
+                  ),
+                ),
+              if (linkedReportCount > 1 && report.isIncidentRepresentative)
+                Chip(
+                  visualDensity: VisualDensity.compact,
+                    label: Text(l10n.confirmedLinkedReports(linkedReportCount)),
+                ),
+              if (report.credibilityScore != null)
+                Chip(
+                  visualDensity: VisualDensity.compact,
+                  label: Text(
+                    l10n.credibility(report.credibilityScore!.round()),
+                  ),
+                ),
               if (report.blockchainSynced)
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -273,7 +328,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Verified',
+                        l10n.verified,
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: AppColors.success,
                           fontWeight: FontWeight.bold,
@@ -289,7 +344,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           // Time
           if (report.createdAt != null)
             Text(
-              timeago.format(report.createdAt!),
+              localizedRelativeTime(context, report.createdAt, l10n),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: isDark
                     ? AppColors.darkTextSecondary
@@ -300,7 +355,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
           // Description
           Text(
-            'Description',
+            l10n.reportDescription,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -312,67 +367,120 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           // Location
           if (report.latitude != null && report.longitude != null) ...[
             Text(
-              'Location',
+              l10n.reportLocation,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
-            Container(
-              height: 150,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceVariant
-                    : AppColors.lightSurfaceVariant,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                height: 200,
+                child: Stack(
+                  children: [
+                    FlutterMap(
+                      mapController: _locationMapController,
+                      options: MapOptions(
+                        initialCenter: LatLng(
+                          report.latitude!,
+                          report.longitude!,
+                        ),
+                        initialZoom: 16,
+                        initialCameraFit: municipality == null
+                            ? null
+                            : MunicipalityMapCamera.initialFit(municipality),
+                        cameraConstraint: municipality == null
+                            ? const CameraConstraint.unconstrained()
+                            : MunicipalityMapCamera.constraintFor(
+                                    municipality,
+                                  ) ??
+                                  const CameraConstraint.unconstrained(),
+                        interactionOptions: const InteractionOptions(
+                          flags:
+                              InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+                        ),
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.example.bayantrack_mobile',
+                        ),
+                        MunicipalityBoundaryLayer(
+                          boundary: municipality?.boundary,
+                        ),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: LatLng(
+                                report.latitude!,
+                                report.longitude!,
+                              ),
+                              width: 40,
+                              height: 40,
+                              child: const Icon(
+                                Icons.location_on,
+                                size: 40,
+                                color: AppColors.alertHigh,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    if (municipality != null)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: IconButton.filledTonal(
+                          constraints: const BoxConstraints.tightFor(
+                            width: 48,
+                            height: 48,
+                          ),
+                          tooltip: l10n.recenterToMunicipality(municipality.name),
+                          onPressed: () => MunicipalityMapCamera.recenter(
+                            _locationMapController,
+                            municipality,
+                          ),
+                          icon: const Icon(Icons.center_focus_strong_outlined),
+                        ),
+                      ),
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.scaffoldBackgroundColor.withValues(
+                            alpha: 0.85,
+                          ),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '${report.latitude?.toStringAsFixed(7)}, '
+                          '${report.longitude?.toStringAsFixed(7)}',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              child: Stack(
-                children: [
-                  Center(
-                    child: Icon(
-                      Icons.map_outlined,
-                      size: 64,
-                      color: isDark
-                          ? AppColors.darkTextSecondary.withValues(alpha: 0.3)
-                          : AppColors.lightTextSecondary.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  Center(
-                    child: Icon(
-                      Icons.location_on,
-                      size: 36,
-                      color: AppColors.alertHigh,
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '${report.latitude}, ${report.longitude}',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ),
             const SizedBox(height: 24),
           ],
 
           // AI Analysis (if available)
-          if (report.category != null || report.priority != null) ...[
+          if (report.categoryDisplay != null ||
+              report.category != null ||
+              report.priority != null ||
+              report.departmentDisplay != null ||
+              report.recommendedDepartment != null ||
+              report.assignedDepartment != null) ...[
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -390,7 +498,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                       Icon(Icons.auto_awesome, color: AppColors.primaryVariant),
                       const SizedBox(width: 8),
                       Text(
-                        'AI Analysis',
+                        l10n.aiAnalysis,
                         style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: AppColors.primaryVariant,
@@ -399,16 +507,43 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  if (report.category != null)
+                  if (report.categoryDisplay != null || report.category != null)
                     _buildInfoRow(
-                      'Category',
-                      report.category!.displayName,
+                      l10n.category,
+                      localizedReportCategory(
+                        report.category,
+                        l10n,
+                        fallback: report.categoryDisplay,
+                      ),
                       theme,
                     ),
                   if (report.categoryConfidence != null)
                     _buildInfoRow(
-                      'Confidence',
+                      l10n.categoryConfidence,
                       '${(report.categoryConfidence! * 100).toStringAsFixed(1)}%',
+                      theme,
+                    ),
+                  if (report.departmentDisplay != null ||
+                      report.recommendedDepartment != null)
+                    _buildInfoRow(
+                      l10n.aiDepartmentSuggestion,
+                      '${report.departmentDisplay ?? report.recommendedDepartment}'
+                          '${report.departmentProbability != null ? ' (${(report.departmentProbability! * 100).toStringAsFixed(1)}%)' : ''}',
+                      theme,
+                    ),
+                  if (report.assignedDepartment != null)
+                    _buildInfoRow(
+                      l10n.currentHandler,
+                      report.assignedDepartment!,
+                      theme,
+                    )
+                  else if (report.departmentDisplay != null ||
+                      report.recommendedDepartment != null)
+                    _buildInfoRow(
+                      l10n.routingStatus,
+                      report.needsDepartmentReview
+                          ? l10n.awaitingStaffConfirmation
+                          : l10n.routingPolicyApplied,
                       theme,
                     ),
                 ],
@@ -419,13 +554,70 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
           // Zone info
           if (report.zone != null) ...[
-            _buildInfoRow('Zone', report.zone!, theme),
+            _buildInfoRow(l10n.zone, report.zone!, theme),
             const SizedBox(height: 8),
           ],
 
           // Report ID
           _buildInfoRow('Report ID', report.id.substring(0, 8), theme),
           const SizedBox(height: 24),
+
+          if (report.resolvedProofImages.isNotEmpty &&
+              (report.status == ReportStatus.resolved ||
+                  report.status == ReportStatus.closed)) ...[
+            Text(
+              l10n.resolutionProof,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              report.status == ReportStatus.resolved
+                  ? l10n.resolutionProofResolved
+                  : l10n.resolutionProofClosed,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 104,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: report.resolvedProofImages.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final proofImage = report.resolvedProofImages[index];
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      ApiConstants.getImageUrl(proofImage.url),
+                      width: 140,
+                      height: 104,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 140,
+                        height: 104,
+                        color: isDark
+                            ? AppColors.darkSurface
+                            : AppColors.lightSurfaceVariant,
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.broken_image_outlined),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+
+          // Citizen resolution review banner (shown only to the report owner
+          // when the report has been resolved by barangay staff)
+          _buildCitizenReviewBanner(theme, isDark, report),
 
           // Blockchain Verification Section
           _buildBlockchainSection(theme, isDark, report),
@@ -435,7 +627,125 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     );
   }
 
+  /// Shows a prominent call-to-action banner to the report owner when the
+  /// barangay has marked the report as resolved and the citizen hasn't yet
+  /// submitted their review.
+  Widget _buildCitizenReviewBanner(
+    ThemeData theme,
+    bool isDark,
+    Report report,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    if (report.status != ReportStatus.resolved) return const SizedBox.shrink();
+
+    // Only show to the report owner
+    final profileAsync = ref.watch(profileControllerProvider);
+    final currentUserId = profileAsync.asData?.value.id;
+    if (currentUserId == null || currentUserId != report.userId) {
+      return const SizedBox.shrink();
+    }
+
+    // --- Already reviewed: show a compact confirmation chip ---
+    if (report.citizenVerifiedAt != null) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.success.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.verified_rounded, color: AppColors.success, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l10n.alreadyReviewed,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.success,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // --- Pending review: show the CTA ---
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.success.withValues(alpha: 0.15),
+              AppColors.success.withValues(alpha: 0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.task_alt_rounded, color: AppColors.success),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    l10n.reportResolved,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.resolvedReviewDescription,
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () async {
+                  final acted = await Navigator.of(context).push<bool>(
+                    MaterialPageRoute(
+                      builder: (_) => CitizenReviewScreen(report: report),
+                    ),
+                  );
+                  // Refresh report after review is submitted
+                  if (acted == true && mounted) {
+                    ref.invalidate(reportDetailControllerProvider(report.id));
+                  }
+                },
+                icon: const Icon(Icons.rate_review_outlined),
+                label: Text(l10n.reviewSignOff),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.success,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildBlockchainSection(ThemeData theme, bool isDark, Report report) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -448,30 +758,39 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Icon(
-                Icons.account_tree_outlined,
-                size: 20,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Blockchain Verification',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.account_tree_outlined,
+                    size: 18,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  const SizedBox(width: 8),
+                  Text(
+                    l10n.blockchainVerification,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
               if (_isVerifying)
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                const Padding(
+                  padding: EdgeInsets.only(right: 8),
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 )
               else
                 TextButton.icon(
@@ -479,10 +798,13 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                       ? null
                       : () => _handleVerification(report.id),
                   icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Verify Integrity'),
+                  label: Text(l10n.verifyNow),
                   style: TextButton.styleFrom(
                     visualDensity: VisualDensity.compact,
-                    textStyle: theme.textTheme.labelMedium,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    textStyle: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
             ],
@@ -492,26 +814,26 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             _buildVerificationStatus(theme),
             const Divider(height: 24),
             Text(
-              'Audit History',
+              l10n.auditHistory,
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 8),
             if (_verificationResult!.auditHistory.isEmpty)
-              Text('No audit entries found.', style: theme.textTheme.bodySmall)
+              Text(l10n.noAuditEntries, style: theme.textTheme.bodySmall)
             else
               ..._verificationResult!.auditHistory.map(
                 (entry) => _buildAuditEntry(theme, entry, isDark),
               ),
           ] else if (report.blockchainSynced)
             Text(
-              'This report is anchored on the blockchain. Click verify to perform a live integrity check.',
+              l10n.blockchainAnchored,
               style: theme.textTheme.bodySmall,
             )
           else
             Text(
-              'This report is pending blockchain synchronization.',
+              l10n.blockchainPending,
               style: theme.textTheme.bodySmall,
             ),
         ],
@@ -520,39 +842,51 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   }
 
   Widget _buildVerificationStatus(ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
     final result = _verificationResult!;
-    final isHealthy = result.verified && result.statusVerified;
+
+    // `verified` = content hash intact. `statusVerified` is only populated for
+    // legacy v3 status events; v4 checkpoints deliberately leave workflow
+    // status off-chain and return null.
+    final isHealthy = result.verified; // content integrity only
 
     // Determine the display state
     final isNotFound = result.notFoundOnChain;
     final isConnectionError = result.connectionError;
     final isNotAnchored = !result.isAnchored;
     final isNeutral = isNotFound || isConnectionError || isNotAnchored;
+    // Status is out of sync with blockchain (expected after staff actions)
+    final isStatusPending = result.verified && result.statusVerified == false;
 
     final Color statusColor;
     final IconData statusIcon;
     final String title;
 
-    if (isHealthy) {
+    if (isHealthy && !isStatusPending) {
       statusColor = AppColors.success;
       statusIcon = Icons.check_circle;
-      title = 'Integrity Verified';
+      title = l10n.integrityVerified;
+    } else if (isStatusPending) {
+      // Content is intact; only the on-chain status enum lags behind
+      statusColor = AppColors.alertMedium;
+      statusIcon = Icons.sync_rounded;
+      title = l10n.contentVerified;
     } else if (isNotAnchored) {
       statusColor = AppColors.alertMedium;
       statusIcon = Icons.hourglass_empty;
-      title = 'Not Yet Anchored';
+      title = l10n.notYetAnchored;
     } else if (isNotFound) {
       statusColor = AppColors.alertMedium;
       statusIcon = Icons.search_off;
-      title = 'Record Not Found';
+      title = l10n.recordNotFound;
     } else if (isConnectionError) {
       statusColor = AppColors.alertMedium;
       statusIcon = Icons.cloud_off;
-      title = 'Blockchain Unavailable';
+      title = l10n.blockchainUnavailable;
     } else {
       statusColor = AppColors.alertHigh;
       statusIcon = Icons.warning;
-      title = 'Integrity Breach Detected';
+      title = l10n.integrityBreach;
     }
 
     return Container(
@@ -597,6 +931,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     BlockchainAuditEntry entry,
     bool isDark,
   ) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -629,7 +964,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      _getActionLabel(entry.actionType),
+                      _getActionLabel(entry),
                       style: theme.textTheme.labelMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -645,12 +980,14 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   ],
                 ),
                 Text(
-                  'By ${entry.actor.substring(0, 6)}...${entry.actor.substring(entry.actor.length - 4)}',
+                  l10n.byActor(
+                    '${entry.actor.substring(0, 6)}...${entry.actor.substring(entry.actor.length - 4)}',
+                  ),
                   style: theme.textTheme.bodySmall,
                 ),
                 if (entry.oldStatus != entry.newStatus)
                   Text(
-                    'Status: ${entry.oldStatus} → ${entry.newStatus}',
+                    l10n.statusTransition(entry.oldStatus, entry.newStatus),
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontStyle: FontStyle.italic,
                     ),
@@ -663,16 +1000,23 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     );
   }
 
-  String _getActionLabel(int type) {
-    return switch (type) {
-      0 => 'Created',
-      1 => 'Status Updated',
-      2 => 'Metadata Updated',
-      _ => 'Unknown Action',
-    };
+  String _getActionLabel(BlockchainAuditEntry entry) {
+    // v4 checkpoints intentionally reuse the compact action integer space;
+    // equal statuses distinguish them from legacy workflow transitions.
+    if (entry.oldStatus == entry.newStatus) {
+      return switch (entry.actionType) {
+        0 => 'Created integrity checkpoint',
+        1 => 'Final integrity checkpoint',
+        2 => 'Dispute / reopen checkpoint',
+        3 => 'Administrative override checkpoint',
+        _ => AuditActionType.fromInt(entry.actionType).displayLabel,
+      };
+    }
+    return AuditActionType.fromInt(entry.actionType).displayLabel;
   }
 
   Future<void> _handleVerification(String reportId) async {
+    final l10n = AppLocalizations.of(context);
     setState(() => _isVerifying = true);
 
     final controller = ref.read(
@@ -688,23 +1032,48 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
       if (result == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Verification failed. Please try again later.'),
+          SnackBar(
+            content: Text(l10n.verificationFailed),
           ),
         );
       }
     }
   }
 
-  Widget _buildStatusBadge(ReportStatus status) {
+  Widget _buildStatusBadge(BuildContext context, ReportStatus status) {
+    final l10n = AppLocalizations.of(context);
     final (color, label) = switch (status) {
-      ReportStatus.submitted => (AppColors.alertMedium, 'Submitted'),
-      ReportStatus.underReview => (AppColors.alertMedium, 'Under Review'),
-      ReportStatus.inProgress => (AppColors.primary, 'In Progress'),
-      ReportStatus.resolved => (AppColors.success, 'Resolved'),
-      ReportStatus.rejected => (AppColors.alertHigh, 'Rejected'),
-      ReportStatus.verified => (AppColors.alertMedium, 'Verified'),
-      ReportStatus.assigned => (AppColors.primary, 'Assigned'),
+      ReportStatus.submitted => (const Color(0xFFF59E0B), l10n.submitted), // Amber
+      ReportStatus.underReview => (
+        const Color(0xFF8B5CF6),
+        l10n.underReview,
+      ), // Violet
+      ReportStatus.inProgress => (
+        const Color(0xFF2563EB),
+        l10n.inProgress,
+      ), // Blue
+      ReportStatus.escalated => (
+        const Color(0xFF8B5CF6),
+        l10n.underReview,
+      ), // Violet
+      ReportStatus.endorsed => (
+        const Color(0xFF8B5CF6),
+        l10n.underReview,
+      ), // Violet
+      ReportStatus.resolved => (const Color(0xFF22C55E), l10n.resolvedStatus), // Green
+      ReportStatus.closed => (const Color(0xFF64748B), l10n.closed), // Gray
+      ReportStatus.rejected => (
+        const Color(0xFFEF4444),
+        l10n.rejected,
+      ), // Light Red
+      ReportStatus.verified => (
+        const Color(0xFF8B5CF6),
+        l10n.underReview,
+      ), // Violet
+      ReportStatus.assigned => (
+        const Color(0xFF8B5CF6),
+        l10n.underReview,
+      ), // Violet
     };
 
     return Container(
@@ -729,9 +1098,17 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: theme.textTheme.bodySmall),
-          Text(value, style: theme.textTheme.bodyMedium),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              value,
+              style: theme.textTheme.bodyMedium,
+              textAlign: TextAlign.end,
+            ),
+          ),
         ],
       ),
     );

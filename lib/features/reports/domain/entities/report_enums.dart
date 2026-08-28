@@ -4,7 +4,7 @@
 /// The data layer DTOs retain @JsonValue for serialization.
 library;
 
-/// Report category aligned with Mangaldan Municipal Office routing
+/// Report category aligned with Urdaneta City office routing
 enum ReportCategory {
   engineeringInfrastructure,
   floodDisaster,
@@ -53,16 +53,22 @@ enum ReportStatus {
   verified,
   assigned,
   inProgress,
+  escalated,
+  endorsed,
   resolved,
+  closed,
   rejected;
 
   String get displayName => switch (this) {
     submitted => 'Submitted',
     underReview => 'Under Review',
-    verified => 'Verified',
-    assigned => 'Assigned',
+    verified => 'Under Review',
+    assigned => 'Under Review',
     inProgress => 'In Progress',
+    escalated => 'Under Review',
+    endorsed => 'Under Review',
     resolved => 'Resolved',
+    closed => 'Closed',
     rejected => 'Rejected',
   };
 
@@ -72,18 +78,30 @@ enum ReportStatus {
     verified => 'verified',
     assigned => 'assigned',
     inProgress => 'in_progress',
+    escalated => 'escalated',
+    endorsed => 'endorsed',
     resolved => 'resolved',
+    closed => 'closed',
     rejected => 'rejected',
   };
 
   static ReportStatus fromString(String? value) {
-    return switch (value) {
-      'submitted' => ReportStatus.submitted,
+    final normalized = value
+        ?.trim()
+        .toLowerCase()
+        .replaceAll('-', '_')
+        .replaceAll(' ', '_');
+
+    return switch (normalized) {
+      'submitted' || 'pending' => ReportStatus.submitted,
       'under_review' => ReportStatus.underReview,
       'verified' => ReportStatus.verified,
       'assigned' => ReportStatus.assigned,
       'in_progress' => ReportStatus.inProgress,
+      'escalated' => ReportStatus.escalated,
+      'endorsed' => ReportStatus.endorsed,
       'resolved' => ReportStatus.resolved,
+      'closed' || 'citizen_closed' => ReportStatus.closed,
       'rejected' => ReportStatus.rejected,
       _ => ReportStatus.submitted,
     };
@@ -135,39 +153,18 @@ enum LocationAccuracy {
   }
 }
 
-/// Duplicate detection state
-enum DuplicateState {
-  newReport,
-  potentialDuplicate,
-  confirmedDuplicate,
-  unique;
-
-  String get apiValue => switch (this) {
-    newReport => 'new',
-    potentialDuplicate => 'potential_duplicate',
-    confirmedDuplicate => 'confirmed_duplicate',
-    unique => 'unique',
-  };
-
-  static DuplicateState fromString(String? value) {
-    return switch (value) {
-      'new' => DuplicateState.newReport,
-      'potential_duplicate' => DuplicateState.potentialDuplicate,
-      'confirmed_duplicate' => DuplicateState.confirmedDuplicate,
-      'unique' => DuplicateState.unique,
-      _ => DuplicateState.newReport,
-    };
-  }
-}
+// Duplicate detection retired; routing metadata is used instead.
 
 /// Priority level from AI prioritization
 enum PriorityLevel {
+  veryLow,
   low,
   medium,
   high,
   critical;
 
   String get displayName => switch (this) {
+    veryLow => 'Very Low',
     low => 'Low',
     medium => 'Medium',
     high => 'High',
@@ -175,19 +172,33 @@ enum PriorityLevel {
   };
 
   String get apiValue => switch (this) {
+    veryLow => 'VERY_LOW',
     low => 'LOW',
     medium => 'MEDIUM',
     high => 'HIGH',
     critical => 'CRITICAL',
   };
 
-  static PriorityLevel fromString(String? value) {
+  /// Map AI integer level (1-5) to PriorityLevel
+  static PriorityLevel fromInt(int? value) {
+    return switch (value) {
+      1 => PriorityLevel.veryLow,
+      2 => PriorityLevel.low,
+      3 => PriorityLevel.medium,
+      4 => PriorityLevel.high,
+      5 => PriorityLevel.critical,
+      _ => PriorityLevel.medium,
+    };
+  }
+
+  static PriorityLevel? fromString(String? value) {
     return switch (value?.toUpperCase()) {
+      'VERY_LOW' => PriorityLevel.veryLow,
       'LOW' => PriorityLevel.low,
       'MEDIUM' => PriorityLevel.medium,
       'HIGH' => PriorityLevel.high,
       'CRITICAL' => PriorityLevel.critical,
-      _ => PriorityLevel.medium,
+      _ => null,
     };
   }
 }

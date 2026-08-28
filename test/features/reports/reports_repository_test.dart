@@ -30,6 +30,35 @@ void main() {
               'zone': 'Zone 1',
               'latitude': '14.5995',
               'longitude': '120.9842',
+              'recommended_department': 'Engineering',
+              'department_confidence': 0.91,
+              'department_key': 'municipal_engineering',
+              'department_display': 'Municipal Engineering Office',
+              'department_probability': 0.91,
+              'department_top2_gap': 0.72,
+              'suggested_departments': [
+                {
+                  'key': 'municipal_engineering',
+                  'label': 'Municipal Engineering Office',
+                  'probability': 0.91,
+                },
+                {
+                  'key': 'general_services',
+                  'label': 'General Services Office',
+                  'probability': null,
+                },
+              ],
+              'department_source': 'ai_advisory',
+              'department_is_advisory': true,
+              'needs_department_review': true,
+              'department_review_reasons': [
+                'department_probability_below_threshold',
+              ],
+              'department_model_version': 'department-test',
+              'department_model_validated': false,
+              'department_registry_version': 'department_registry_v1',
+              'department_policy_version': 'department_policy_v1',
+              'credibility_score': 72.5,
               'images': [],
               'created_at': '2026-01-15T00:00:00Z',
             },
@@ -71,6 +100,31 @@ void main() {
         expect(result.results.first.id, 'report_1');
         expect(result.results.first.description, 'Broken streetlight');
         expect(result.results.first.status, 'submitted');
+        expect(result.results.first.recommendedDepartment, 'Engineering');
+        expect(result.results.first.departmentConfidence, 0.91);
+        expect(result.results.first.departmentKey, 'municipal_engineering');
+        expect(
+          result.results.first.departmentDisplay,
+          'Municipal Engineering Office',
+        );
+        expect(result.results.first.departmentProbability, 0.91);
+        expect(result.results.first.departmentTop2Gap, 0.72);
+        expect(result.results.first.suggestedDepartments, hasLength(2));
+        expect(
+          result.results.first.suggestedDepartments.last.key,
+          'general_services',
+        );
+        expect(
+          result.results.first.suggestedDepartments.last.probability,
+          isNull,
+        );
+        expect(result.results.first.departmentIsAdvisory, isTrue);
+        expect(result.results.first.needsDepartmentReview, isTrue);
+        expect(
+          result.results.first.departmentRegistryVersion,
+          'department_registry_v1',
+        );
+        expect(result.results.first.credibilityScore, 72.5);
         expect(result.results[1].status, 'in_progress');
       });
 
@@ -197,6 +251,52 @@ void main() {
         expect(result.description, 'Detailed report');
         expect(result.status, 'resolved');
       });
+
+      test(
+        'should tolerate advisory duplicate metadata without exposing candidate data',
+        () async {
+          const reportId = 'report_123';
+          final responseData = {
+            'id': reportId,
+            'description': 'Detailed report',
+            'status': 'submitted',
+            'duplicate_state': 'potential_duplicate',
+            'duplicate_score': 0.91,
+            'duplicate_confidence': 'high',
+            'duplicate_explanation': 'similar_wording, same_barangay',
+            'related_issue_id': 'LEGACY-RELATED-ID',
+            'incident_group_id': 'IG-1',
+            'duplicate_suggestions': [
+              {
+                'candidate_report_id': 'PRIVATE-CANDIDATE-ID',
+                'candidate_title': 'Private candidate title',
+              },
+            ],
+          };
+
+          when(() => mockDio.get(ApiConstants.reportById(reportId))).thenAnswer(
+            (_) async => Response(
+              data: responseData,
+              statusCode: 200,
+              requestOptions: RequestOptions(
+                path: ApiConstants.reportById(reportId),
+              ),
+            ),
+          );
+
+          final result = await reportsRepository.getReport(reportId);
+
+          expect(result.id, reportId);
+          expect(result.description, 'Detailed report');
+          expect(result.incidentGroupId, 'IG-1');
+          expect(result.toJson().containsKey('duplicate_suggestions'), isFalse);
+          expect(result.toJson().containsKey('related_issue_id'), isFalse);
+          expect(
+            result.toJson().toString(),
+            isNot(contains('PRIVATE-CANDIDATE-ID')),
+          );
+        },
+      );
     });
 
     group('createReport', () {
@@ -205,6 +305,8 @@ void main() {
         final request = CreateReportRequest(
           description: 'New issue report',
           streetLandmark: '123 Main Street, Quezon City',
+          municipalityId: 'urdaneta',
+          barangayId: 'zone_5',
           barangay: 'Zone 5',
           latitude: "14.5995",
           longitude: "120.9842",
@@ -238,6 +340,8 @@ void main() {
         expect(result.id, 'new_report_123');
         expect(result.description, 'New issue report');
         expect(result.status, 'submitted');
+        expect(request.toJson()['municipality_id'], 'urdaneta');
+        expect(request.toJson()['barangay_id'], 'zone_5');
         verify(
           () => mockDio.post(ApiConstants.reports, data: request.toJson()),
         ).called(1);
@@ -250,9 +354,12 @@ void main() {
         const reportId = 'report_123';
         final request = UpdateReportRequest(description: 'Updated description');
         final responseData = {
-          'id': reportId,
-          'description': 'Updated description',
-          'status': 'in_progress',
+          'message': 'Report updated successfully',
+          'report': {
+            'id': reportId,
+            'description': 'Updated description',
+            'status': 'in_progress',
+          },
         };
 
         when(

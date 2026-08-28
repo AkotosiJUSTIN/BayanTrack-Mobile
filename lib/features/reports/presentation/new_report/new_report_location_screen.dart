@@ -5,10 +5,17 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../../core/constants/mangaldan_geo.dart';
+import '../../../../core/constants/urdaneta_geo.dart';
+import '../../../../core/maps/municipality_map.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/municipality_geo.dart';
+import '../../../auth/auth_di.dart';
+import '../../../auth/data/auth_models.dart';
+import '../../../auth/presentation/barangays_provider.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'new_report_controller.dart';
 import 'new_report_details_screen.dart';
+import 'quick_report_geo.dart';
 
 enum _LocationInputMode { phone, manual }
 
@@ -24,13 +31,7 @@ class NewReportLocationScreen extends ConsumerStatefulWidget {
 class _NewReportLocationScreenState
     extends ConsumerState<NewReportLocationScreen> {
   final MapController _mapController = MapController();
-  final LatLngBounds _mangaldanBounds = LatLngBounds(
-    const LatLng(MangaldanGeo.south, MangaldanGeo.west),
-    const LatLng(MangaldanGeo.north, MangaldanGeo.east),
-  );
-  final List<LatLng> _mangaldanPolygon = MangaldanGeo.boundary
-      .map((point) => LatLng(point.$1, point.$2))
-      .toList(growable: false);
+  MunicipalityModel _selectedMunicipality = bundledUrdanetaMunicipality;
 
   bool _isLoading = false;
   bool _isGettingPreciseLocation = false;
@@ -38,7 +39,16 @@ class _NewReportLocationScreenState
   String? _error;
   Position? _currentPosition;
   LatLng? _selectedPoint;
+  String? _pendingMetadataId;
+  String? _lastBarangayResolutionKey;
+  int _landmarkLookupVersion = 0;
   _LocationInputMode _locationInputMode = _LocationInputMode.phone;
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -46,7 +56,6 @@ class _NewReportLocationScreenState
     _applyDefaultLocationIfMissing();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _syncInitialSelectionToProvider();
-      _moveCameraToSelection();
       _getCurrentLocation();
     });
   }
@@ -56,15 +65,77 @@ class _NewReportLocationScreenState
 
     if (state.latitude != null && state.longitude != null) {
       _selectedPoint = LatLng(state.latitude!, state.longitude!);
-      _isOutsideServiceArea = !MangaldanGeo.contains(
+      _isOutsideServiceArea = !municipalityContains(
+        _selectedMunicipality,
         state.latitude!,
         state.longitude!,
       );
       return;
     }
 
-    _selectedPoint = const LatLng(MangaldanGeo.defaultLat, MangaldanGeo.defaultLng);
+    _selectedPoint = const LatLng(
+      UrdanetaGeo.defaultLat,
+      UrdanetaGeo.defaultLng,
+    );
     _isOutsideServiceArea = false;
+  }
+
+  void _selectMunicipality(MunicipalityModel municipality) {
+    if (municipality.id == _selectedMunicipality.id) return;
+    final bounds = municipality.bounds;
+    if (bounds == null || !municipality.hasUsableBoundary) {
+      setState(() => _error = municipalityUnavailableMessage(municipality));
+      return;
+    }
+    ref
+        .read(newReportControllerProvider.notifier)
+        .setMunicipality(
+          id: municipality.id,
+          name: municipality.name,
+          province: municipality.province,
+        );
+    final center = LatLng(
+      municipality.centerLat ?? (bounds.south + bounds.north) / 2,
+      municipality.centerLng ?? (bounds.west + bounds.east) / 2,
+    );
+    setState(() {
+      _selectedMunicipality = municipality;
+      _selectedPoint = center;
+      _currentPosition = null;
+      _error = null;
+      _isOutsideServiceArea = false;
+    });
+    _setSelectedPoint(
+      center,
+      locationLabel: '${municipality.name}, ${municipality.province}',
+    );
+    if (_locationInputMode == _LocationInputMode.phone) {
+      _getCurrentLocation();
+    }
+  }
+
+  void _restoreMunicipalityMetadata(MunicipalityModel municipality) {
+    if (!mounted || municipality.id == _selectedMunicipality.id) return;
+    final state = ref.read(newReportControllerProvider);
+    final bounds = municipality.bounds;
+    if (bounds == null || !municipality.hasUsableBoundary) return;
+    final point = state.latitude != null && state.longitude != null
+        ? LatLng(state.latitude!, state.longitude!)
+        : LatLng(
+            municipality.centerLat ?? (bounds.south + bounds.north) / 2,
+            municipality.centerLng ?? (bounds.west + bounds.east) / 2,
+          );
+    setState(() {
+      _selectedMunicipality = municipality;
+      _selectedPoint = point;
+      _isOutsideServiceArea = !municipalityContains(
+        municipality,
+        point.latitude,
+        point.longitude,
+      );
+      _pendingMetadataId = null;
+    });
+    _moveCameraToSelection();
   }
 
   void _syncInitialSelectionToProvider() {
@@ -78,12 +149,15 @@ class _NewReportLocationScreenState
 
     _setSelectedPoint(
       point,
-      locationLabel: MangaldanGeo.defaultLocationLabel,
+      locationLabel:
+          '${_selectedMunicipality.name}, ${_selectedMunicipality.province}',
+      moveCamera: false,
     );
   }
 
   Future<void> _getCurrentLocation() async {
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
 
     setState(() {
       _isLoading = true;
@@ -95,7 +169,7 @@ class _NewReportLocationScreenState
       if (!serviceEnabled) {
         if (!mounted) return;
         setState(() {
-          _error = 'Location services are disabled. Please enable GPS.';
+          _error = l10n.locationServicesDisabled;
           _isLoading = false;
         });
         return;
@@ -107,7 +181,7 @@ class _NewReportLocationScreenState
         if (permission == LocationPermission.denied) {
           if (!mounted) return;
           setState(() {
-            _error = 'Location permission denied';
+            _error = l10n.locationPermissionDenied;
             _isLoading = false;
           });
           return;
@@ -117,8 +191,7 @@ class _NewReportLocationScreenState
       if (permission == LocationPermission.deniedForever) {
         if (!mounted) return;
         setState(() {
-          _error =
-              'Location permissions are permanently denied. Enable them in Settings.';
+          _error = l10n.locationPermissionSettings;
           _isLoading = false;
         });
         return;
@@ -138,33 +211,37 @@ class _NewReportLocationScreenState
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Failed to get location: ${e.toString()}';
+        _error = '${l10n.error}: ${e.toString()}';
         _isLoading = false;
       });
     }
   }
 
-  Future<void> _getPreciseLocationInBackground(Position? fallbackPosition) async {
+  Future<void> _getPreciseLocationInBackground(
+    Position? fallbackPosition,
+  ) async {
+    final l10n = AppLocalizations.of(context);
     try {
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: AndroidSettings(
-          accuracy: LocationAccuracy.medium,
-          distanceFilter: 10,
-          forceLocationManager: false,
-          intervalDuration: const Duration(seconds: 5),
-          foregroundNotificationConfig: const ForegroundNotificationConfig(
-            notificationTitle: 'Getting location',
-            notificationText: 'BayanTrack is getting your location',
-            enableWakeLock: false,
-          ),
-        ),
-      ).timeout(
-        const Duration(seconds: 8),
-        onTimeout: () {
-          if (fallbackPosition != null) return fallbackPosition;
-          throw TimeoutException('Location request timed out');
-        },
-      );
+      final position =
+          await Geolocator.getCurrentPosition(
+            locationSettings: AndroidSettings(
+              accuracy: LocationAccuracy.medium,
+              distanceFilter: 10,
+              forceLocationManager: false,
+              intervalDuration: const Duration(seconds: 5),
+              foregroundNotificationConfig: ForegroundNotificationConfig(
+                notificationTitle: l10n.gettingLocation,
+                notificationText: l10n.gettingLocationNotification,
+                enableWakeLock: false,
+              ),
+            ),
+          ).timeout(
+            const Duration(seconds: 8),
+            onTimeout: () {
+              if (fallbackPosition != null) return fallbackPosition;
+              throw TimeoutException('Location request timed out');
+            },
+          );
 
       if (!mounted) return;
       setState(() {
@@ -179,7 +256,7 @@ class _NewReportLocationScreenState
         _isGettingPreciseLocation = false;
         _isLoading = false;
         if (_currentPosition == null) {
-          _error = 'Location request timed out. Please try again.';
+          _error = l10n.locationRequestTimedOut;
         }
       });
     } catch (e) {
@@ -188,7 +265,7 @@ class _NewReportLocationScreenState
         _isGettingPreciseLocation = false;
         _isLoading = false;
         if (_currentPosition == null) {
-          _error = 'Failed to get precise location: ${e.toString()}';
+          _error = '${l10n.error}: ${e.toString()}';
         }
       });
     }
@@ -200,12 +277,16 @@ class _NewReportLocationScreenState
     }
 
     final point = LatLng(position.latitude, position.longitude);
-    if (!MangaldanGeo.contains(point.latitude, point.longitude)) {
+    if (!municipalityContains(
+      _selectedMunicipality,
+      point.latitude,
+      point.longitude,
+    )) {
       ref.read(newReportControllerProvider.notifier).clearLocation();
       setState(() {
         _isOutsideServiceArea = true;
-        _error =
-            'Report creation is only available within Mangaldan, Pangasinan.';
+        _selectedPoint = null;
+        _error = municipalityUnavailableMessage(_selectedMunicipality);
       });
       return;
     }
@@ -217,27 +298,36 @@ class _NewReportLocationScreenState
     );
   }
 
-  void _setSelectedPoint(LatLng point, {required String locationLabel}) {
-    final inMangaldan = MangaldanGeo.contains(point.latitude, point.longitude);
+  void _setSelectedPoint(
+    LatLng point, {
+    required String locationLabel,
+    bool moveCamera = true,
+  }) {
+    final inMunicipality = municipalityContains(
+      _selectedMunicipality,
+      point.latitude,
+      point.longitude,
+    );
 
-    if (!inMangaldan) {
+    if (!inMunicipality) {
       ref.read(newReportControllerProvider.notifier).clearLocation();
       setState(() {
         _isOutsideServiceArea = true;
-        _error =
-            'Report creation is only available within Mangaldan, Pangasinan.';
+        _error = municipalityUnavailableMessage(_selectedMunicipality);
       });
       return;
     }
 
     final controller = ref.read(newReportControllerProvider.notifier);
+    _lastBarangayResolutionKey = null;
+    controller.beginBarangayResolution();
     controller.setLocation(
       latitude: point.latitude,
       longitude: point.longitude,
       location: locationLabel,
     );
-    controller.setCityMunicipality(MangaldanGeo.defaultCityMunicipality);
-    controller.setProvince(MangaldanGeo.defaultProvince);
+    controller.setCityMunicipality(_selectedMunicipality.name);
+    controller.setProvince(_selectedMunicipality.province);
 
     setState(() {
       _selectedPoint = point;
@@ -245,7 +335,78 @@ class _NewReportLocationScreenState
       _error = null;
     });
 
-    _moveCameraToSelection();
+    _lookupNearbyLandmarks(point);
+
+    if (moveCamera) _moveCameraToSelection();
+  }
+
+  void _scheduleBarangayResolution(
+    NewReportState state,
+    AsyncValue<List<BarangayModel>> barangaysAsync,
+  ) {
+    final point = _selectedPoint;
+    if (point == null || state.latitude == null || state.longitude == null) {
+      return;
+    }
+    final barangays = barangaysAsync.asData?.value;
+    if (barangays == null && !barangaysAsync.hasError) return;
+    final sourceKey = barangaysAsync.hasError
+        ? 'error'
+        : barangays!
+              .map((item) => '${item.id}:${item.centerLat}:${item.centerLng}')
+              .join('|');
+    final key =
+        '${state.municipalityId}:${point.latitude}:${point.longitude}:$sourceKey';
+    if (_lastBarangayResolutionKey == key) return;
+    _lastBarangayResolutionKey = key;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final current = ref.read(newReportControllerProvider);
+      if (current.latitude != point.latitude ||
+          current.longitude != point.longitude ||
+          current.municipalityId != state.municipalityId) {
+        return;
+      }
+      final resolved = barangays == null
+          ? null
+          : deriveNearestBarangay(
+              barangays,
+              latitude: point.latitude,
+              longitude: point.longitude,
+            );
+      ref
+          .read(newReportControllerProvider.notifier)
+          .completeBarangayResolution(resolved);
+    });
+  }
+
+  Future<void> _lookupNearbyLandmarks(LatLng point) async {
+    final requestVersion = ++_landmarkLookupVersion;
+    final controller = ref.read(newReportControllerProvider.notifier);
+    controller.beginLandmarkLookup();
+    final result = await (() async {
+      try {
+        return await ref
+            .read(authRepositoryProvider)
+            .getNearbyLandmarks(
+              latitude: point.latitude,
+              longitude: point.longitude,
+            );
+      } catch (_) {
+        return null;
+      }
+    })();
+    if (!mounted || requestVersion != _landmarkLookupVersion) return;
+    if (result == null) {
+      controller.failLandmarkLookup();
+      return;
+    }
+    result.when(
+      success: (landmarks) =>
+          controller.completeLandmarkLookup(suggestNearbyLandmark(landmarks)),
+      failure: (_) => controller.failLandmarkLookup(),
+    );
   }
 
   void _moveCameraToSelection() {
@@ -260,11 +421,14 @@ class _NewReportLocationScreenState
 
   void _onMapTap(LatLng point) {
     if (_locationInputMode != _LocationInputMode.manual) return;
-    if (!MangaldanGeo.contains(point.latitude, point.longitude)) {
+    if (!municipalityContains(
+      _selectedMunicipality,
+      point.latitude,
+      point.longitude,
+    )) {
       setState(() {
         _isOutsideServiceArea = true;
-        _error =
-            'You can only place a manual pin within Mangaldan, Pangasinan.';
+        _error = municipalityUnavailableMessage(_selectedMunicipality);
       });
       return;
     }
@@ -291,9 +455,14 @@ class _NewReportLocationScreenState
   }
 
   void _useDefaultLocation() {
+    final bounds = _selectedMunicipality.bounds!;
     _setSelectedPoint(
-      const LatLng(MangaldanGeo.defaultLat, MangaldanGeo.defaultLng),
-      locationLabel: MangaldanGeo.defaultLocationLabel,
+      LatLng(
+        _selectedMunicipality.centerLat ?? (bounds.south + bounds.north) / 2,
+        _selectedMunicipality.centerLng ?? (bounds.west + bounds.east) / 2,
+      ),
+      locationLabel:
+          '${_selectedMunicipality.name}, ${_selectedMunicipality.province}',
     );
   }
 
@@ -306,13 +475,38 @@ class _NewReportLocationScreenState
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(newReportControllerProvider);
+    final municipalitiesAsync = ref.watch(municipalitiesProvider);
+    final barangaysAsync = ref.watch(
+      municipalityBarangaysProvider(state.municipalityId),
+    );
+    _scheduleBarangayResolution(state, barangaysAsync);
+    final municipality = municipalitiesAsync.asData == null
+        ? null
+        : findMunicipalityMetadata(
+            municipalitiesAsync.asData!.value,
+            state.municipalityId,
+          );
+    if (municipality != null &&
+        municipality.id != _selectedMunicipality.id &&
+        _pendingMetadataId != municipality.id) {
+      _pendingMetadataId = municipality.id;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _restoreMunicipalityMetadata(municipality);
+      });
+    }
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final selectedPoint = _selectedPoint ??
-        const LatLng(MangaldanGeo.defaultLat, MangaldanGeo.defaultLng);
+    final bounds = _selectedMunicipality.bounds!;
+    final selectedPoint =
+        _selectedPoint ??
+        LatLng(
+          _selectedMunicipality.centerLat ?? (bounds.south + bounds.north) / 2,
+          _selectedMunicipality.centerLng ?? (bounds.west + bounds.east) / 2,
+        );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New Report')),
+      appBar: AppBar(title: Text(l10n.newReport)),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -329,7 +523,7 @@ class _NewReportLocationScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Step 2 of 4',
+                  l10n.stepOf(2, 4),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,
@@ -337,18 +531,53 @@ class _NewReportLocationScreenState
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Location',
+                  l10n.reportLocation,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Choose location source: phone GPS or manual pin in Mangaldan only.',
+                  l10n.selectLocationDescription,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: isDark
                         ? AppColors.darkTextSecondary
                         : AppColors.lightTextSecondary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                municipalitiesAsync.when(
+                  data: (municipalities) => DropdownButtonFormField<String>(
+                    initialValue:
+                        municipalities.any(
+                          (item) => item.id == state.municipalityId,
+                        )
+                        ? state.municipalityId
+                        : _selectedMunicipality.id,
+                    decoration: InputDecoration(
+                      labelText: l10n.selectCity,
+                      prefixIcon: Icon(Icons.location_city),
+                      border: OutlineInputBorder(),
+                    ),
+                    items: municipalities
+                        .map(
+                          (item) => DropdownMenuItem(
+                            value: item.id,
+                            child: Text('${item.name}, ${item.province}'),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      _selectMunicipality(
+                        municipalities.firstWhere((item) => item.id == value),
+                      );
+                    },
+                  ),
+                  loading: () => const LinearProgressIndicator(),
+                  error: (error, stack) => Text(
+                    l10n.cityMetadataUnavailable,
+                    style: TextStyle(color: theme.colorScheme.error),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -378,7 +607,7 @@ class _NewReportLocationScreenState
               onPressed: state.hasLocation && !_isOutsideServiceArea
                   ? _navigateToDetails
                   : null,
-              child: const Text('Continue'),
+              child: Text(l10n.continueLabel),
             ),
           ),
         ],
@@ -387,11 +616,12 @@ class _NewReportLocationScreenState
   }
 
   Widget _buildModeSelector(ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         Expanded(
           child: ChoiceChip(
-            label: const Text('Use Phone Location'),
+            label: Text(l10n.usePhoneLocation),
             selected: _locationInputMode == _LocationInputMode.phone,
             onSelected: (_) => _switchMode(_LocationInputMode.phone),
           ),
@@ -399,7 +629,7 @@ class _NewReportLocationScreenState
         const SizedBox(width: 8),
         Expanded(
           child: ChoiceChip(
-            label: const Text('Manual Pin'),
+            label: Text(l10n.manualPin),
             selected: _locationInputMode == _LocationInputMode.manual,
             onSelected: (_) => _switchMode(_LocationInputMode.manual),
           ),
@@ -414,6 +644,7 @@ class _NewReportLocationScreenState
     required bool isDark,
     required NewReportState state,
   }) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkSurfaceVariant : AppColors.lightSurface,
@@ -432,7 +663,12 @@ class _NewReportLocationScreenState
               initialZoom: 15,
               minZoom: 12,
               maxZoom: 18,
-              cameraConstraint: CameraConstraint.contain(bounds: _mangaldanBounds),
+              initialCameraFit: MunicipalityMapCamera.initialFit(
+                _selectedMunicipality,
+              ),
+              cameraConstraint:
+                  MunicipalityMapCamera.constraintFor(_selectedMunicipality) ??
+                  const CameraConstraint.unconstrained(),
               onTap: (_, point) => _onMapTap(point),
             ),
             children: [
@@ -440,33 +676,27 @@ class _NewReportLocationScreenState
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.bayantrack_mobile',
               ),
-              PolygonLayer(
-                polygons: [
-                  Polygon(
-                    points: _mangaldanPolygon,
-                    color: AppColors.primary.withValues(alpha: 0.08),
-                    borderColor: AppColors.alertHigh,
-                    borderStrokeWidth: 2,
-                    pattern: const StrokePattern.dotted(spacingFactor: 1.2),
-                  ),
-                ],
-                invertedFill: Colors.black.withValues(alpha: 0.55),
+              MunicipalityBoundaryLayer(
+                boundary: _selectedMunicipality.boundary,
               ),
               MarkerLayer(
-                markers: [
-                  Marker(
-                    point: selectedPoint,
-                    width: 40,
-                    height: 40,
-                    child: Icon(
-                      Icons.location_on,
-                      size: 36,
-                      color: _locationInputMode == _LocationInputMode.manual
-                          ? AppColors.primary
-                          : AppColors.alertHigh,
-                    ),
-                  ),
-                ],
+                markers: _selectedPoint == null
+                    ? const []
+                    : [
+                        Marker(
+                          point: selectedPoint,
+                          width: 40,
+                          height: 40,
+                          child: Icon(
+                            Icons.location_on,
+                            size: 36,
+                            color:
+                                _locationInputMode == _LocationInputMode.manual
+                                ? AppColors.primary
+                                : AppColors.alertHigh,
+                          ),
+                        ),
+                      ],
               ),
               const RichAttributionWidget(
                 attributions: [
@@ -490,6 +720,18 @@ class _NewReportLocationScreenState
             ),
           if (_locationInputMode == _LocationInputMode.phone && _isLoading)
             const Center(child: CircularProgressIndicator()),
+          Positioned(
+            right: 12,
+            bottom: 12,
+            child: IconButton.filledTonal(
+              tooltip: l10n.recenterToCity,
+              onPressed: () => MunicipalityMapCamera.recenter(
+                _mapController,
+                _selectedMunicipality,
+              ),
+              icon: const Icon(Icons.center_focus_strong_outlined),
+            ),
+          ),
         ],
       ),
     );
@@ -497,6 +739,7 @@ class _NewReportLocationScreenState
 
   Widget _buildLocationStatusCard(BuildContext context, NewReportState state) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -522,8 +765,8 @@ class _NewReportLocationScreenState
                   children: [
                     Text(
                       _locationInputMode == _LocationInputMode.manual
-                          ? 'Manual Pin'
-                          : 'Phone Location',
+                          ? l10n.manualPin
+                          : l10n.phoneLocation,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -547,18 +790,46 @@ class _NewReportLocationScreenState
                     '${state.latitude!.toStringAsFixed(6)}, ${state.longitude!.toStringAsFixed(6)}',
                     style: theme.textTheme.bodySmall,
                   ),
+                if (state.isResolvingBarangay)
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 11,
+                        height: 11,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        l10n.gettingLocation,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
+                  )
+                else if (state.barangay != null)
+                  Text(
+                    '${l10n.barangay}: ${state.barangay}',
+                    style: theme.textTheme.bodySmall,
+                  )
+                else if (state.latitude != null && state.longitude != null)
+                  Text(
+                    l10n.barangaysUnavailable,
+                    style: theme.textTheme.bodySmall,
+                  ),
               ],
             ),
           ),
           if (_locationInputMode == _LocationInputMode.phone)
             IconButton(
-              tooltip: 'Refresh location',
+              tooltip: l10n.refreshLocation,
               onPressed: _getCurrentLocation,
               icon: const Icon(Icons.refresh),
             )
           else
             IconButton(
-              tooltip: 'Use Salay default',
+              tooltip: l10n.useCityCenter(_selectedMunicipality.name),
               onPressed: _useDefaultLocation,
               icon: const Icon(Icons.pin_drop_outlined),
             ),
@@ -569,6 +840,7 @@ class _NewReportLocationScreenState
 
   Widget _buildManualHint(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -577,7 +849,7 @@ class _NewReportLocationScreenState
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        'Tap the map to place your pin. Selection is limited to Mangaldan.',
+        l10n.tapMapWithin(_selectedMunicipality.name),
         style: theme.textTheme.bodySmall,
         textAlign: TextAlign.center,
       ),

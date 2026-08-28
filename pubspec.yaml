@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -42,10 +44,15 @@ dependencies:
   go_router: ^17.0.1
   flutter_secure_storage: ^10.0.0
   google_fonts: ^7.0.1
-  timeago: ^3.7.1
-  intl: ^0.19.0
+  intl: ^0.20.2
+  # Firebase & notifications
+  firebase_core: ^2.6.0
+  firebase_messaging: ^14.6.0
+  flutter_local_notifications: ^17.2.2
+  permission_handler: ^12.0.1
   image_picker: ^1.2.1
   geolocator: ^14.0.2
+  flutter_image_compress: ^2.4.0
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
   shared_preferences: ^2.5.4
@@ -53,6 +60,10 @@ dependencies:
   connectivity_plus: ^7.0.0
   package_info_plus: ^8.1.2
   flutter_svg: ^2.2.3
+  signature: ^5.5.0
+  socket_io_client: ^3.1.6
+  path_provider: 2.1.5
+  flutter_native_splash: ^2.4.3
 
 dev_dependencies:
   flutter_test:
@@ -64,18 +75,18 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  build_runner: ^2.10.5
+  build_runner: 2.10.5
   riverpod_generator: ^4.0.0+1
   json_serializable: ^6.11.2
   mocktail: ^1.0.4
   freezed: 3.2.3
-  flutter_native_splash: ^2.4.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
@@ -84,7 +95,11 @@ flutter:
 
   # Assets
   assets:
-    - assets/images/
+    - assets/images/branding/
+    - assets/images/auth/
+    - assets/images/onboarding/
+    - assets/onboarding/doodles/title_underline.svg
+    - assets/boundaries/0105546000.geojson
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -113,8 +128,16 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
 flutter_native_splash:
-  color: "#FFFFFF"
+  color: "#F8FAFC"
   color_dark: "#0F172A"
-  image: assets/images/logo.png
+  image: design-assets/masters/branding/bt_logo_mark.png
+  image_dark: design-assets/masters/branding/bt_logo_mark.png
   android: true
-  ios: true
+  ios: false
+  web: false
+  android_gravity: center
+  android_12:
+    color: "#F8FAFC"
+    color_dark: "#0F172A"
+    image: design-assets/masters/branding/bt_splash_android12_master.png
+    image_dark: design-assets/masters/branding/bt_splash_android12_master.png

@@ -1,29 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../../core/constants/mangaldan_geo.dart';
+import '../../../../core/maps/municipality_map.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/data/auth_models.dart';
 import '../../../reports/domain/entities/report.dart';
 import '../../../reports/domain/entities/report_enums.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../reports/presentation/report_labels.dart';
 
 /// OpenStreetMap widget that renders report pins from fetched coordinates.
-class MapPlaceholder extends StatelessWidget {
-  const MapPlaceholder({super.key, required this.reports, this.onMarkerTap});
+class MapPlaceholder extends StatefulWidget {
+  const MapPlaceholder({
+    super.key,
+    required this.reports,
+    required this.municipality,
+    this.onMarkerTap,
+  });
 
   final List<Report> reports;
+  final MunicipalityModel municipality;
   final ValueChanged<Report>? onMarkerTap;
 
   @override
+  State<MapPlaceholder> createState() => _MapPlaceholderState();
+}
+
+class _MapPlaceholderState extends State<MapPlaceholder> {
+  final MapController _mapController = MapController();
+
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final reportsWithCoordinates = _reportsWithCoordinates(reports);
+    final reportsWithCoordinates = _reportsWithCoordinates(widget.reports);
+    final l10n = AppLocalizations.of(context);
     final initialCenter = _initialCenterFor(reportsWithCoordinates);
-    final mangaldanPolygon = MangaldanGeo.boundary
-        .map((point) => LatLng(point.$1, point.$2))
-        .toList(growable: false);
-    final mangaldanBounds = LatLngBounds(
-      LatLng(MangaldanGeo.south, MangaldanGeo.west),
-      LatLng(MangaldanGeo.north, MangaldanGeo.east),
-    );
     final markers = reportsWithCoordinates
         .map(
           (report) => Marker(
@@ -31,14 +47,16 @@ class MapPlaceholder extends StatelessWidget {
             width: 40,
             height: 40,
             child: Tooltip(
-              message: _buildTooltipMessage(report),
+              message: _buildTooltipMessage(report, l10n),
               waitDuration: const Duration(milliseconds: 150),
               showDuration: const Duration(seconds: 3),
               preferBelow: false,
               verticalOffset: 18,
               child: GestureDetector(
-                onTap: onMarkerTap == null ? null : () => onMarkerTap!(report),
-                child: _buildMarker(_colorForSeverity(report.severity)),
+                onTap: widget.onMarkerTap == null
+                    ? null
+                    : () => widget.onMarkerTap!(report),
+                child: _buildMarker(_colorForStatus(report.status)),
               ),
             ),
           ),
@@ -48,30 +66,25 @@ class MapPlaceholder extends StatelessWidget {
     return Stack(
       children: [
         FlutterMap(
+          mapController: _mapController,
           options: MapOptions(
             initialCenter: initialCenter,
             initialZoom: 13,
-            minZoom: 12,
+            initialCameraFit: MunicipalityMapCamera.initialFit(
+              widget.municipality,
+            ),
+            cameraConstraint:
+                MunicipalityMapCamera.constraintFor(widget.municipality) ??
+                const CameraConstraint.unconstrained(),
+            minZoom: 4,
             maxZoom: 18,
-            cameraConstraint: CameraConstraint.contain(bounds: mangaldanBounds),
           ),
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.example.bayantrack_mobile',
             ),
-            PolygonLayer(
-              polygons: [
-                Polygon(
-                  points: mangaldanPolygon,
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  borderColor: AppColors.alertHigh,
-                  borderStrokeWidth: 2,
-                  pattern: const StrokePattern.dotted(spacingFactor: 1.2),
-                ),
-              ],
-              invertedFill: Colors.black.withValues(alpha: 0.55),
-            ),
+            MunicipalityBoundaryLayer(boundary: widget.municipality.boundary),
             MarkerLayer(markers: markers),
             const RichAttributionWidget(
               attributions: [
@@ -79,6 +92,19 @@ class MapPlaceholder extends StatelessWidget {
               ],
             ),
           ],
+        ),
+        Positioned(
+          right: 12,
+          top: markers.isEmpty ? 76 : 12,
+          child: IconButton.filledTonal(
+            constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+            tooltip: l10n.recenterToMunicipality(widget.municipality.name),
+            onPressed: () => MunicipalityMapCamera.recenter(
+              _mapController,
+              widget.municipality,
+            ),
+            icon: const Icon(Icons.center_focus_strong_outlined),
+          ),
         ),
         if (markers.isEmpty)
           Positioned(
@@ -96,14 +122,19 @@ class MapPlaceholder extends StatelessWidget {
       final lat = report.latitude;
       final lng = report.longitude;
       if (lat == null || lng == null) return false;
-      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return false;
-      return MangaldanGeo.contains(lat, lng);
+      return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
     }).toList();
   }
 
   LatLng _initialCenterFor(List<Report> reportsWithCoordinates) {
     if (reportsWithCoordinates.isEmpty) {
-      return const LatLng(MangaldanGeo.defaultLat, MangaldanGeo.defaultLng);
+      final bounds = widget.municipality.bounds;
+      return LatLng(
+        widget.municipality.centerLat ??
+            (bounds == null ? 15.9530 : (bounds.south + bounds.north) / 2),
+        widget.municipality.centerLng ??
+            (bounds == null ? 120.5772 : (bounds.west + bounds.east) / 2),
+      );
     }
 
     final latitudeTotal = reportsWithCoordinates.fold<double>(
@@ -123,6 +154,7 @@ class MapPlaceholder extends StatelessWidget {
 
   Widget _buildNoCoordinatesBanner(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
@@ -140,7 +172,7 @@ class MapPlaceholder extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'No report coordinates available in Mangaldan yet.',
+              l10n.noReportsYet,
               style: theme.textTheme.bodySmall,
             ),
           ),
@@ -149,24 +181,42 @@ class MapPlaceholder extends StatelessWidget {
     );
   }
 
-  Color _colorForSeverity(SeverityLevel severity) {
-    return switch (severity) {
-      SeverityLevel.low => AppColors.alertLow,
-      SeverityLevel.medium => AppColors.alertMedium,
-      SeverityLevel.high || SeverityLevel.critical => AppColors.alertHigh,
+  Color _colorForStatus(ReportStatus status) {
+    return switch (status) {
+      ReportStatus.submitted => AppColors.alertMedium,
+      ReportStatus.underReview => AppColors.alertMedium,
+      ReportStatus.verified => AppColors.alertMedium,
+      ReportStatus.assigned => AppColors.alertMedium,
+      ReportStatus.inProgress => const Color(0xFF3B82F6), // Blue
+      ReportStatus.escalated => AppColors.alertMedium,
+      ReportStatus.endorsed => AppColors.alertMedium,
+      ReportStatus.resolved => AppColors.success,
+      ReportStatus.closed => AppColors.success,
+      ReportStatus.rejected => AppColors.alertHigh,
     };
   }
 
-  String _buildTooltipMessage(Report report) {
+  String _buildTooltipMessage(Report report, AppLocalizations l10n) {
     final title = (report.title?.trim().isNotEmpty ?? false)
         ? report.title!.trim()
-        : 'Untitled report';
+        : l10n.reportTitle;
     final location = report.displayLocation;
 
     return '$title\n'
-        '${report.status.displayName} - ${report.severity.displayName}\n'
+        '${_statusLabel(report.status, l10n)} - ${_severityLabel(report.severity, l10n)}\n'
         '$location';
   }
+
+  String _statusLabel(ReportStatus status, AppLocalizations l10n) =>
+      localizedReportStatus(status, l10n);
+
+  String _severityLabel(SeverityLevel severity, AppLocalizations l10n) =>
+      switch (severity) {
+        SeverityLevel.low => l10n.priorityLow,
+        SeverityLevel.medium => l10n.medium,
+        SeverityLevel.high => l10n.priorityHigh,
+        SeverityLevel.critical => l10n.priorityCritical,
+      };
 
   Widget _buildMarker(Color color) {
     return Container(

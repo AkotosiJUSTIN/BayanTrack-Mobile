@@ -19,6 +19,7 @@ _UploadedImage _$UploadedImageFromJson(Map<String, dynamic> json) =>
       width: (json['width'] as num?)?.toInt(),
       height: (json['height'] as num?)?.toInt(),
       isPrimary: json['is_primary'] as bool? ?? false,
+      purpose: json['purpose'] as String?,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
     );
@@ -36,6 +37,7 @@ Map<String, dynamic> _$UploadedImageToJson(_UploadedImage instance) =>
       'width': instance.width,
       'height': instance.height,
       'is_primary': instance.isPrimary,
+      'purpose': instance.purpose,
       'created_at': instance.createdAt,
       'updated_at': instance.updatedAt,
     };

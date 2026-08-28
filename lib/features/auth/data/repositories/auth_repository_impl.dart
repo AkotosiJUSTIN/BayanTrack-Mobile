@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/domain/failures.dart';
@@ -25,7 +27,10 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final response = await _dio.post(
         ApiConstants.login,
-        data: LoginRequest(email: email, password: password).toJson(),
+        data: {
+          ...LoginRequest(email: email, password: password).toJson(),
+          'client_type': 'mobile',
+        },
       );
       final loginResponse = LoginResponse.fromJson(response.data);
       return Success(AuthMapper.tokensFromLoginResponse(loginResponse));
@@ -41,17 +46,22 @@ class AuthRepositoryImpl implements AuthRepository {
     required String passwordConfirm,
     required String firstName,
     required String lastName,
+    required String barangayId,
   }) async {
     try {
       final response = await _dio.post(
         ApiConstants.register,
-        data: RegisterRequest(
-          email: email,
-          password: password,
-          passwordConfirm: passwordConfirm,
-          firstName: firstName,
-          lastName: lastName,
-        ).toJson(),
+        data: {
+          ...RegisterRequest(
+            email: email,
+            password: password,
+            passwordConfirm: passwordConfirm,
+            firstName: firstName,
+            lastName: lastName,
+            barangayId: barangayId,
+          ).toJson(),
+          'client_type': 'mobile',
+        },
       );
       // Backend returns tokens on registration (same shape as login)
       final loginResponse = LoginResponse.fromJson(response.data);
@@ -66,7 +76,10 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final response = await _dio.post(
         ApiConstants.refresh,
-        data: RefreshTokenRequest(refreshToken: refreshToken).toJson(),
+        data: {
+          ...RefreshTokenRequest(refreshToken: refreshToken).toJson(),
+          'client_type': 'mobile',
+        },
       );
       final tokenResponse = RefreshTokenResponse.fromJson(response.data);
       return Success(AuthMapper.tokensFromRefreshResponse(tokenResponse));
@@ -114,7 +127,8 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Result<User>> updateProfile({
     String? firstName,
     String? lastName,
-    String? avatarUrl,
+    String? phone,
+    int? expectedRevision,
   }) async {
     try {
       final response = await _dio.put(
@@ -122,12 +136,79 @@ class AuthRepositoryImpl implements AuthRepository {
         data: ProfileUpdateRequest(
           firstName: firstName,
           lastName: lastName,
-          avatarUrl: avatarUrl,
+          phone: phone,
+          expectedRevision: expectedRevision,
         ).toJson(),
       );
       final userData = response.data['user'] ?? response.data;
       final profile = UserProfile.fromJson(userData);
       return Success(AuthMapper.userFromProfile(profile));
+    } catch (e, stack) {
+      return Err(ErrorMapper.mapException(e, stack));
+    }
+  }
+
+  @override
+  Future<Result<User>> uploadAvatar(
+    File imageFile, {
+    void Function(int sent, int total)? onSendProgress,
+  }) async {
+    try {
+      final avatar = await _avatarMultipartFile(imageFile);
+      final response = await _dio.post(
+        ApiConstants.profileAvatar,
+        data: FormData.fromMap({'avatar': avatar}),
+        onSendProgress: onSendProgress,
+      );
+      final userData = response.data['user'] ?? response.data;
+      return Success(
+        AuthMapper.userFromProfile(UserProfile.fromJson(userData)),
+      );
+    } catch (e, stack) {
+      return Err(ErrorMapper.mapException(e, stack));
+    }
+  }
+
+  Future<MultipartFile> _avatarMultipartFile(File file) async {
+    final header = await file.openRead(0, 12).first;
+    final (extension, contentType) =
+        header.length >= 3 &&
+            header[0] == 0xff &&
+            header[1] == 0xd8 &&
+            header[2] == 0xff
+        ? ('jpg', DioMediaType('image', 'jpeg'))
+        : header.length >= 8 &&
+              header[0] == 0x89 &&
+              header[1] == 0x50 &&
+              header[2] == 0x4e &&
+              header[3] == 0x47
+        ? ('png', DioMediaType('image', 'png'))
+        : header.length >= 12 &&
+              header[0] == 0x52 &&
+              header[1] == 0x49 &&
+              header[2] == 0x46 &&
+              header[3] == 0x46 &&
+              header[8] == 0x57 &&
+              header[9] == 0x45 &&
+              header[10] == 0x42 &&
+              header[11] == 0x50
+        ? ('webp', DioMediaType('image', 'webp'))
+        : ('bin', DioMediaType('application', 'octet-stream'));
+    return MultipartFile.fromFile(
+      file.path,
+      filename: 'avatar.$extension',
+      contentType: contentType,
+    );
+  }
+
+  @override
+  Future<Result<User>> removeAvatar() async {
+    try {
+      final response = await _dio.delete(ApiConstants.profileAvatar);
+      final userData = response.data['user'] ?? response.data;
+      return Success(
+        AuthMapper.userFromProfile(UserProfile.fromJson(userData)),
+      );
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));
     }
@@ -205,6 +286,62 @@ class AuthRepositoryImpl implements AuthRepository {
         },
       );
       return const Success(null);
+    } catch (e, stack) {
+      return Err(ErrorMapper.mapException(e, stack));
+    }
+  }
+
+  @override
+  Future<Result<List<MunicipalityModel>>> getMunicipalities() async {
+    try {
+      final response = await _dio.get(ApiConstants.municipalities);
+      return Success(
+        MunicipalitiesResponse.fromJson(response.data).municipalities,
+      );
+    } catch (e, stack) {
+      return Err(ErrorMapper.mapException(e, stack));
+    }
+  }
+
+  @override
+  Future<Result<List<BarangayModel>>> getBarangays({
+    String municipalityId = 'urdaneta',
+  }) async {
+    try {
+      final response = await _dio.get(
+        ApiConstants.barangays,
+        queryParameters: {'municipality_id': municipalityId},
+      );
+      final barangaysResponse = BarangaysResponse.fromJson(response.data);
+      return Success(barangaysResponse.barangays);
+    } catch (e, stack) {
+      return Err(ErrorMapper.mapException(e, stack));
+    }
+  }
+
+  @override
+  Future<Result<List<NearbyLandmarkModel>>> getNearbyLandmarks({
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      final response = await _dio.get(
+        ApiConstants.nearbyLandmarks,
+        queryParameters: {'latitude': latitude, 'longitude': longitude},
+      );
+      final rawLandmarks = response.data is Map
+          ? response.data['landmarks']
+          : null;
+      if (rawLandmarks is! List) return const Success([]);
+      final landmarks = rawLandmarks
+          .whereType<Map>()
+          .map(
+            (item) =>
+                NearbyLandmarkModel.fromJson(Map<String, dynamic>.from(item)),
+          )
+          .where((item) => item.name.isNotEmpty)
+          .toList(growable: false);
+      return Success(landmarks);
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));
     }

@@ -19,6 +19,8 @@ sealed class UploadedImage with _$UploadedImage {
     int? width,
     int? height,
     @JsonKey(name: 'is_primary') @Default(false) bool isPrimary,
+    /// 'evidence' | 'signature' | 'document' — null means legacy record.
+    String? purpose,
     @JsonKey(name: 'created_at') String? createdAt,
     @JsonKey(name: 'updated_at') String? updatedAt,
   }) = _UploadedImage;

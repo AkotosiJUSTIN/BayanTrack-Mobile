@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/data/user_permissions.dart';
 import '../../../auth/presentation/verification_widgets.dart';
+import '../../../../l10n/app_localizations.dart';
 import 'new_report_controller.dart';
 import 'new_report_location_screen.dart';
 
@@ -59,12 +60,13 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(newReportControllerProvider);
     final permissions = ref.watch(userPermissionsProvider);
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Report'),
+        title: Text(l10n.newReport),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () {
@@ -95,7 +97,7 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Step 1 of 4',
+                  l10n.stepOf(1, 4),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w600,
@@ -103,14 +105,14 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Add Photos',
+                  l10n.addPhotos,
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Take or select up to ${NewReportController.maxImages} photos of the issue',
+                  l10n.photosOfIssue(NewReportController.maxImages),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: isDark
                         ? AppColors.darkTextSecondary
@@ -124,8 +126,8 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
           // Image grid or empty state
           Expanded(
             child: state.selectedImages.isEmpty
-                ? _buildEmptyState(theme, isDark)
-                : _buildImageGrid(state.selectedImages, isDark),
+                ? _buildEmptyState(theme, isDark, l10n)
+                : _buildImageGrid(state.selectedImages, isDark, l10n),
           ),
 
           // Action buttons
@@ -137,7 +139,7 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _pickFromCamera,
                     icon: const Icon(Icons.camera_alt),
-                    label: const Text('Camera'),
+                    label: Text(l10n.camera),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -149,7 +151,7 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
                         ? null
                         : _pickFromGallery,
                     icon: const Icon(Icons.photo_library),
-                    label: const Text('Gallery'),
+                    label: Text(l10n.gallery),
                   ),
                 ),
               ],
@@ -161,7 +163,7 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             child: ElevatedButton(
               onPressed: state.hasPhotos ? _navigateToLocation : null,
-              child: const Text('Continue'),
+              child: Text(l10n.continueLabel),
             ),
           ),
         ],
@@ -169,7 +171,11 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme, bool isDark) {
+  Widget _buildEmptyState(
+    ThemeData theme,
+    bool isDark,
+    AppLocalizations l10n,
+  ) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -192,10 +198,10 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          Text('No photos yet', style: theme.textTheme.titleMedium),
+          Text(l10n.noPhotosYet, style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
-            'Use the buttons below to add photos',
+            l10n.useButtonsAddPhotos,
             style: theme.textTheme.bodySmall?.copyWith(
               color: isDark
                   ? AppColors.darkTextSecondary
@@ -207,7 +213,11 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
     );
   }
 
-  Widget _buildImageGrid(List<File> images, bool isDark) {
+  Widget _buildImageGrid(
+    List<File> images,
+    bool isDark,
+    AppLocalizations l10n,
+  ) {
     return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -252,8 +262,8 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: const Text(
-                    'Primary',
+                  child: Text(
+                    l10n.primaryPhoto,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 10,

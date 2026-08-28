@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// A consistent empty state placeholder to be used across the app.
 /// Displays an icon, a title, an optional message, and an optional retry button.
@@ -73,7 +74,7 @@ class EmptyContentPlaceholder extends StatelessWidget {
               const SizedBox(height: 24),
               FilledButton.tonal(
                 onPressed: onRetry,
-                child: Text(retryLabel ?? 'Retry'),
+                child: Text(retryLabel ?? AppLocalizations.of(context)!.retry),
               ),
             ],
           ],

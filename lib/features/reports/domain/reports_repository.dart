@@ -16,6 +16,7 @@ abstract interface class ReportsRepository {
     String? status,
     String? zone,
     String? category,
+    String? sortBy, // 'date', 'severity', 'priority'
   });
 
   /// Get current user's reports
@@ -23,6 +24,7 @@ abstract interface class ReportsRepository {
     int page = 1,
     int pageSize = 20,
     String? status,
+    String? sortBy, // 'date', 'severity', 'priority'
   });
 
   /// Get a single report by ID
@@ -33,19 +35,25 @@ abstract interface class ReportsRepository {
     String? category,
     String? incidentType,
     String? title,
-    required String description,
+    String description = '',
     String? incidentDatetime,
     bool isHappeningNow = false,
     String? zone,
     String? streetLandmark,
+    String municipalityId = 'urdaneta',
+    String? barangayId,
     String? cityMunicipality,
     String? province,
     String? latitude,
     String? longitude,
     String locationAccuracy = 'approximate',
     String? location,
+    String? barangay,
     bool declarationConfirmed = true,
     bool dataProcessingConsent = true,
+    bool isQuickReport = false,
+    bool isEmergency = false,
+    String? idempotencyKey,
   });
 
   /// Update a report
@@ -57,6 +65,8 @@ abstract interface class ReportsRepository {
     String? incidentType,
     String? zone,
     String? streetLandmark,
+    String? municipalityId,
+    String? barangayId,
     String? cityMunicipality,
     String? province,
     String? barangay,
@@ -78,4 +88,22 @@ abstract interface class ReportsRepository {
 
   /// Verify report on blockchain
   Future<Result<BlockchainVerificationResult>> verifyReport(String id);
+
+  /// Submit citizen closure review for a resolved report.
+  ///
+  /// [satisfied]         — true if the citizen confirms resolution, false to reopen.
+  /// [rating]            — optional 1–5 star rating.
+  /// [note]              — optional free-text feedback.
+  /// [reason]            — required when disputing a resolution.
+  /// [signatureImageId]  — uploaded image ID of the drawn signature.
+  /// [signatureName]     — full name typed by the citizen for identity confirmation.
+  Future<Result<Map<String, dynamic>>> citizenCloseReport({
+    required String id,
+    required bool satisfied,
+    int? rating,
+    String? note,
+    String? reason,
+    String? signatureImageId,
+    String? signatureName,
+  });
 }

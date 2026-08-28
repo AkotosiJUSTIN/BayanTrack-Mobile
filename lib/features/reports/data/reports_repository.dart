@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/dio_provider.dart';
@@ -15,8 +14,33 @@ ReportsRepository reportsRepository(Ref ref) {
 
 class ReportsRepository {
   final Dio _dio;
+  ReportFormOptions? _cachedFormOptions;
+  DateTime? _formOptionsCachedAt;
+
+  static const Duration _formOptionsCacheTtl = Duration(hours: 24);
 
   ReportsRepository(this._dio);
+
+  Future<List<NearbyReport>> getNearbyReports({
+    required double latitude,
+    required double longitude,
+    String municipalityId = 'urdaneta',
+    int radiusMeters = 500,
+  }) async {
+    final response = await _dio.get(
+      ApiConstants.nearbyReports,
+      queryParameters: {
+        'latitude': latitude,
+        'longitude': longitude,
+        'municipality_id': municipalityId,
+        'radius_m': radiusMeters,
+      },
+    );
+    final items = response.data['reports'] as List<dynamic>? ?? const [];
+    return items
+        .map((item) => NearbyReport.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
 
   // ==================== LIST REPORTS ====================
 
@@ -30,10 +54,7 @@ class ReportsRepository {
     String? severity,
     bool? isEmergency,
   }) async {
-    final queryParams = <String, dynamic>{
-      'page': page, 
-      'page_size': pageSize,
-    };
+    final queryParams = <String, dynamic>{'page': page, 'page_size': pageSize};
     if (status != null) queryParams['status'] = status;
     if (zone != null) queryParams['zone'] = zone;
     if (category != null) queryParams['category'] = category;
@@ -49,16 +70,13 @@ class ReportsRepository {
 
   /// Get current user's reports
   Future<PaginatedReports> getMyReports({
-    int page = 1, 
+    int page = 1,
     int pageSize = 20,
     String? status,
   }) async {
-    final queryParams = <String, dynamic>{
-      'page': page, 
-      'page_size': pageSize,
-    };
+    final queryParams = <String, dynamic>{'page': page, 'page_size': pageSize};
     if (status != null) queryParams['status'] = status;
-    
+
     final response = await _dio.get(
       ApiConstants.myReports,
       queryParameters: queryParams,
@@ -76,15 +94,22 @@ class ReportsRepository {
   // ==================== CREATE / UPDATE / DELETE ====================
 
   /// Create a report with all new fields
-  Future<Report> createReport(CreateReportRequest request) async {
-    final jsonData = request.toJson();
-    // Debug: Print the request payload
-    debugPrint('CreateReport request payload: $jsonData');
-    
-    final response = await _dio.post(
-      ApiConstants.reports,
-      data: request.toJson(),
-    );
+  Future<Report> createReport(
+    CreateReportRequest request, {
+    bool isQuickReport = false,
+    String? idempotencyKey,
+  }) async {
+    final jsonData = {
+      ...request.toJson(),
+      if (isQuickReport) 'is_quick_report': true,
+    };
+    final response = idempotencyKey == null
+        ? await _dio.post(ApiConstants.reports, data: jsonData)
+        : await _dio.post(
+            ApiConstants.reports,
+            data: jsonData,
+            options: Options(headers: {'Idempotency-Key': idempotencyKey}),
+          );
     // Backend returns {report: {...}, message: "..."}
     final data = response.data;
     if (data is Map && data.containsKey('report')) {
@@ -99,16 +124,25 @@ class ReportsRepository {
       ApiConstants.reportById(id),
       data: request.toJson(),
     );
-    return Report.fromJson(response.data);
+    final data = response.data;
+    return Report.fromJson(
+      data is Map && data['report'] is Map ? data['report'] : data,
+    );
   }
 
   /// Update report status (admin only)
-  Future<Report> updateReportStatus(String id, ReportStatusUpdateRequest request) async {
+  Future<Report> updateReportStatus(
+    String id,
+    ReportStatusUpdateRequest request,
+  ) async {
     final response = await _dio.patch(
       '${ApiConstants.reportById(id)}status/',
       data: request.toJson(),
     );
-    return Report.fromJson(response.data);
+    final data = response.data;
+    return Report.fromJson(
+      data is Map && data['report'] is Map ? data['report'] : data,
+    );
   }
 
   /// Delete a report
@@ -126,7 +160,83 @@ class ReportsRepository {
   // ==================== FORM OPTIONS ====================
 
   Future<ReportFormOptions> getFormOptions() async {
-    final response = await _dio.get(ApiConstants.reportFormOptions);
-    return ReportFormOptions.fromJson(response.data);
+    final now = DateTime.now();
+    if (_cachedFormOptions != null &&
+        _formOptionsCachedAt != null &&
+        now.difference(_formOptionsCachedAt!) < _formOptionsCacheTtl) {
+      return _cachedFormOptions!;
+    }
+
+    try {
+      final response = await _dio.get(ApiConstants.reportFormOptions);
+      final parsed = ReportFormOptions.fromJson(response.data);
+      _cachedFormOptions = parsed;
+      _formOptionsCachedAt = now;
+      return parsed;
+    } on DioException {
+      // Offline compatibility only; the backend remains authoritative online.
+      _cachedFormOptions = offlineReportFormOptions;
+      _formOptionsCachedAt = now;
+      return offlineReportFormOptions;
+    }
   }
+}
+
+const offlineReportFormOptions = ReportFormOptions(
+  taxonomyVersion: 'taxonomy_v1',
+  categories: [
+    ReportCategoryOption(
+      key: 'engineering_infrastructure',
+      label: 'Municipal Engineering & Infrastructure',
+      taxonomyVersion: 'taxonomy_v1',
+      active: true,
+    ),
+    ReportCategoryOption(
+      key: 'flood_disaster',
+      label: 'Flood & Disaster Response',
+      taxonomyVersion: 'taxonomy_v1',
+      active: true,
+    ),
+    ReportCategoryOption(
+      key: 'waste_environment',
+      label: 'Solid Waste & Environmental Management',
+      taxonomyVersion: 'taxonomy_v1',
+      active: true,
+    ),
+    ReportCategoryOption(
+      key: 'public_safety',
+      label: 'Public Safety & Order',
+      taxonomyVersion: 'taxonomy_v1',
+      active: true,
+    ),
+    ReportCategoryOption(
+      key: 'public_utilities',
+      label: 'Public Utilities & Service',
+      taxonomyVersion: 'taxonomy_v1',
+      active: true,
+    ),
+  ],
+  statuses: [],
+  severityLevels: [],
+);
+
+class NearbyReport {
+  final String category;
+  final String status;
+  final int distanceMeters;
+  final bool isGrouped;
+
+  const NearbyReport({
+    required this.category,
+    required this.status,
+    required this.distanceMeters,
+    required this.isGrouped,
+  });
+
+  factory NearbyReport.fromJson(Map<String, dynamic> json) => NearbyReport(
+    category: json['category']?.toString() ?? 'Uncategorized incident',
+    status: json['status']?.toString() ?? 'submitted',
+    distanceMeters: (json['distance_m'] as num?)?.round() ?? 0,
+    isGrouped: json['incident_group_id'] != null,
+  );
 }

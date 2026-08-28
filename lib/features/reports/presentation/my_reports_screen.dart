@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/presentation/widgets/empty_content_placeholder.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/verification_widgets.dart';
 import '../domain/entities/report.dart';
 import '../presentation/report_detail_screen.dart';
+import '../presentation/reports_controller.dart';
 import '../reports_di.dart';
 import '../../home/presentation/widgets/home_report_card.dart';
 
@@ -31,16 +33,18 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   final _scrollController = ScrollController();
   final List<Report> _reports = [];
 
-  final List<({String label, String? status})> _filters = const [
-    (label: 'All', status: null),
-    (label: 'Submitted', status: 'submitted'),
-    (label: 'Under Review', status: 'under_review'),
-    (label: 'In Progress', status: 'in_progress'),
-    (label: 'Resolved', status: 'resolved'),
-    (label: 'Rejected', status: 'rejected'),
+  final List<String?> _filters = const [
+    null,
+    'submitted',
+    'under_review',
+    'in_progress',
+    'resolved',
+    'closed',
+    'rejected',
   ];
 
-  String? get _selectedStatus => _filters[_selectedFilter].status;
+  String? get _selectedStatus => _filters[_selectedFilter];
+  String get _selectedSort => 'date';
   bool get _hasNextPage => _currentPage < _totalPages;
 
   @override
@@ -72,7 +76,11 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     });
 
     final getMyReports = ref.read(getMyReportsUseCaseProvider);
-    final result = await getMyReports(page: 1, status: _selectedStatus);
+    final result = await getMyReports(
+      page: 1,
+      status: _selectedStatus,
+      sortBy: _selectedSort,
+    );
 
     if (!mounted) return;
 
@@ -101,7 +109,11 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
 
     final nextPage = _currentPage + 1;
     final getMyReports = ref.read(getMyReportsUseCaseProvider);
-    final result = await getMyReports(page: nextPage, status: _selectedStatus);
+    final result = await getMyReports(
+      page: nextPage,
+      status: _selectedStatus,
+      sortBy: _selectedSort,
+    );
 
     if (!mounted) return;
 
@@ -155,9 +167,18 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
+
+    // Auto-reload when a new report is submitted from the new-report flow.
+    // The review screen calls increment() on MyReportsRefreshNotifier on success.
+    ref.listen<int>(myReportsRefreshProvider, (previous, next) {
+      if (next > (previous ?? 0)) {
+        _loadInitialReports();
+      }
+    });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Reports')),
+      appBar: AppBar(title: Text(l10n.myReports)),
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         child: CustomScrollView(
@@ -167,6 +188,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
             SliverToBoxAdapter(
               child: VerificationBanner(permissions: permissions),
             ),
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 48,
@@ -181,7 +203,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
                       padding: const EdgeInsets.only(right: 8),
                       child: FilterChip(
                         selected: isSelected,
-                        label: Text(_filters[index].label),
+                        label: Text(_filterLabel(_filters[index], l10n)),
                         selectedColor: AppColors.primary,
                         backgroundColor: isDark
                             ? AppColors.darkSurface
@@ -278,6 +300,19 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     );
   }
 
+  String _filterLabel(String? status, AppLocalizations l10n) {
+    return switch (status) {
+      null => l10n.all,
+      'submitted' => l10n.submitted,
+      'under_review' => l10n.underReview,
+      'in_progress' => l10n.inProgress,
+      'resolved' => l10n.resolvedStatus,
+      'closed' => l10n.closed,
+      'rejected' => l10n.rejected,
+      _ => l10n.status,
+    };
+  }
+
   Widget _buildListFooter(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
@@ -289,7 +324,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
                 child: CircularProgressIndicator(strokeWidth: 2.5),
               )
             : Text(
-                _hasNextPage ? 'Scroll to load more' : 'No more reports',
+                _hasNextPage ? AppLocalizations.of(context)!.scrollLoadMore : AppLocalizations.of(context)!.noMoreReports,
                 style: theme.textTheme.bodySmall,
               ),
       ),
@@ -297,17 +332,24 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   }
 
   List<_ReportSectionItem> _buildSectionItems(List<Report> reports) {
-    final sortedReports = [...reports]
+    // Sort by date descending, then by priority descending (critical first)
+    final sorted = [...reports]
       ..sort((a, b) {
-        final aDate = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final bDate = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-        return bDate.compareTo(aDate);
+        final aDate = a.createdAt ?? DateTime(0);
+        final bDate = b.createdAt ?? DateTime(0);
+        final aDay = DateTime(aDate.year, aDate.month, aDate.day);
+        final bDay = DateTime(bDate.year, bDate.month, bDate.day);
+        final dateCmp = bDay.compareTo(aDay);
+        if (dateCmp != 0) return dateCmp;
+        final aPriority = a.queuePriorityLevel?.index ?? -1;
+        final bPriority = b.queuePriorityLevel?.index ?? -1;
+        return bPriority.compareTo(aPriority);
       });
 
     final items = <_ReportSectionItem>[];
     DateTime? previousDate;
 
-    for (final report in sortedReports) {
+    for (final report in sorted) {
       final createdAt = report.createdAt;
       final reportDate = createdAt == null
           ? null
@@ -324,14 +366,15 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   }
 
   String _sectionLabelForDate(DateTime? date) {
-    if (date == null) return 'Unknown Date';
+    final l10n = AppLocalizations.of(context)!;
+    if (date == null) return l10n.unknownDate;
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
 
-    if (date == today) return 'Today';
-    if (date == yesterday) return 'Yesterday';
+    if (date == today) return l10n.today;
+    if (date == yesterday) return l10n.yesterday;
 
     return MaterialLocalizations.of(context).formatMediumDate(date);
   }
@@ -339,8 +382,8 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   Widget _buildEmptyState(ThemeData theme) {
     return EmptyContentPlaceholder(
       icon: Icons.assignment_outlined,
-      title: 'No reports found',
-      message: 'You have no reports for the selected filter.',
+      title: AppLocalizations.of(context)!.noReportsFound,
+      message: AppLocalizations.of(context)!.noReportsForFilter,
       onRetry: _onRefresh,
     );
   }
@@ -352,12 +395,12 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
         children: [
           Icon(Icons.error_outline, size: 64, color: AppColors.alertHigh),
           const SizedBox(height: 16),
-          Text('Failed to load reports', style: theme.textTheme.titleMedium),
+          Text(AppLocalizations.of(context)!.unableLoadReports, style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              error,
+              AppLocalizations.of(context)!.reportsNetworkError,
               style: theme.textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),

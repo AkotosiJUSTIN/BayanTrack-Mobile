@@ -13,9 +13,273 @@ part of 'report_models.dart';
 T _$identity<T>(T value) => value;
 
 /// @nodoc
+mixin _$DepartmentSuggestion {
+
+ String get key; String get label; double? get probability;
+/// Create a copy of DepartmentSuggestion
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$DepartmentSuggestionCopyWith<DepartmentSuggestion> get copyWith => _$DepartmentSuggestionCopyWithImpl<DepartmentSuggestion>(this as DepartmentSuggestion, _$identity);
+
+  /// Serializes this DepartmentSuggestion to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DepartmentSuggestion&&(identical(other.key, key) || other.key == key)&&(identical(other.label, label) || other.label == label)&&(identical(other.probability, probability) || other.probability == probability));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,key,label,probability);
+
+@override
+String toString() {
+  return 'DepartmentSuggestion(key: $key, label: $label, probability: $probability)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $DepartmentSuggestionCopyWith<$Res>  {
+  factory $DepartmentSuggestionCopyWith(DepartmentSuggestion value, $Res Function(DepartmentSuggestion) _then) = _$DepartmentSuggestionCopyWithImpl;
+@useResult
+$Res call({
+ String key, String label, double? probability
+});
+
+
+
+
+}
+/// @nodoc
+class _$DepartmentSuggestionCopyWithImpl<$Res>
+    implements $DepartmentSuggestionCopyWith<$Res> {
+  _$DepartmentSuggestionCopyWithImpl(this._self, this._then);
+
+  final DepartmentSuggestion _self;
+  final $Res Function(DepartmentSuggestion) _then;
+
+/// Create a copy of DepartmentSuggestion
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? key = null,Object? label = null,Object? probability = freezed,}) {
+  return _then(_self.copyWith(
+key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
+as String,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
+as String,probability: freezed == probability ? _self.probability : probability // ignore: cast_nullable_to_non_nullable
+as double?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [DepartmentSuggestion].
+extension DepartmentSuggestionPatterns on DepartmentSuggestion {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _DepartmentSuggestion value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _DepartmentSuggestion() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _DepartmentSuggestion value)  $default,){
+final _that = this;
+switch (_that) {
+case _DepartmentSuggestion():
+return $default(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _DepartmentSuggestion value)?  $default,){
+final _that = this;
+switch (_that) {
+case _DepartmentSuggestion() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String key,  String label,  double? probability)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _DepartmentSuggestion() when $default != null:
+return $default(_that.key,_that.label,_that.probability);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String key,  String label,  double? probability)  $default,) {final _that = this;
+switch (_that) {
+case _DepartmentSuggestion():
+return $default(_that.key,_that.label,_that.probability);}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String key,  String label,  double? probability)?  $default,) {final _that = this;
+switch (_that) {
+case _DepartmentSuggestion() when $default != null:
+return $default(_that.key,_that.label,_that.probability);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _DepartmentSuggestion implements DepartmentSuggestion {
+  const _DepartmentSuggestion({required this.key, required this.label, this.probability});
+  factory _DepartmentSuggestion.fromJson(Map<String, dynamic> json) => _$DepartmentSuggestionFromJson(json);
+
+@override final  String key;
+@override final  String label;
+@override final  double? probability;
+
+/// Create a copy of DepartmentSuggestion
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$DepartmentSuggestionCopyWith<_DepartmentSuggestion> get copyWith => __$DepartmentSuggestionCopyWithImpl<_DepartmentSuggestion>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$DepartmentSuggestionToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DepartmentSuggestion&&(identical(other.key, key) || other.key == key)&&(identical(other.label, label) || other.label == label)&&(identical(other.probability, probability) || other.probability == probability));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,key,label,probability);
+
+@override
+String toString() {
+  return 'DepartmentSuggestion(key: $key, label: $label, probability: $probability)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$DepartmentSuggestionCopyWith<$Res> implements $DepartmentSuggestionCopyWith<$Res> {
+  factory _$DepartmentSuggestionCopyWith(_DepartmentSuggestion value, $Res Function(_DepartmentSuggestion) _then) = __$DepartmentSuggestionCopyWithImpl;
+@override @useResult
+$Res call({
+ String key, String label, double? probability
+});
+
+
+
+
+}
+/// @nodoc
+class __$DepartmentSuggestionCopyWithImpl<$Res>
+    implements _$DepartmentSuggestionCopyWith<$Res> {
+  __$DepartmentSuggestionCopyWithImpl(this._self, this._then);
+
+  final _DepartmentSuggestion _self;
+  final $Res Function(_DepartmentSuggestion) _then;
+
+/// Create a copy of DepartmentSuggestion
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? key = null,Object? label = null,Object? probability = freezed,}) {
+  return _then(_DepartmentSuggestion(
+key: null == key ? _self.key : key // ignore: cast_nullable_to_non_nullable
+as String,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
+as String,probability: freezed == probability ? _self.probability : probability // ignore: cast_nullable_to_non_nullable
+as double?,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
 mixin _$ReportImage {
 
- String get id;@JsonKey(name: 'report_id') String? get reportId;@JsonKey(name: 'user_id') String? get userId; String get url;@JsonKey(name: 's3_key') String? get s3Key; String? get filename;@JsonKey(name: 'file_size') int? get fileSize;@JsonKey(name: 'mime_type') String? get mimeType; int? get width; int? get height;@JsonKey(name: 'is_primary') bool get isPrimary;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;
+ String get id;@JsonKey(name: 'report_id') String? get reportId;@JsonKey(name: 'user_id') String? get userId; String get url;@JsonKey(name: 's3_key') String? get s3Key; String? get filename;@JsonKey(name: 'file_size') int? get fileSize;@JsonKey(name: 'mime_type') String? get mimeType; int? get width; int? get height;@JsonKey(name: 'is_primary') bool get isPrimary;/// 'evidence' | 'signature' | 'document' — null means legacy/pre-field record.
+ String? get purpose;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;
 /// Create a copy of ReportImage
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +292,16 @@ $ReportImageCopyWith<ReportImage> get copyWith => _$ReportImageCopyWithImpl<Repo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportImage&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.url, url) || other.url == url)&&(identical(other.s3Key, s3Key) || other.s3Key == s3Key)&&(identical(other.filename, filename) || other.filename == filename)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.isPrimary, isPrimary) || other.isPrimary == isPrimary)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportImage&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.url, url) || other.url == url)&&(identical(other.s3Key, s3Key) || other.s3Key == s3Key)&&(identical(other.filename, filename) || other.filename == filename)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.isPrimary, isPrimary) || other.isPrimary == isPrimary)&&(identical(other.purpose, purpose) || other.purpose == purpose)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,reportId,userId,url,s3Key,filename,fileSize,mimeType,width,height,isPrimary,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,reportId,userId,url,s3Key,filename,fileSize,mimeType,width,height,isPrimary,purpose,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'ReportImage(id: $id, reportId: $reportId, userId: $userId, url: $url, s3Key: $s3Key, filename: $filename, fileSize: $fileSize, mimeType: $mimeType, width: $width, height: $height, isPrimary: $isPrimary, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'ReportImage(id: $id, reportId: $reportId, userId: $userId, url: $url, s3Key: $s3Key, filename: $filename, fileSize: $fileSize, mimeType: $mimeType, width: $width, height: $height, isPrimary: $isPrimary, purpose: $purpose, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -48,7 +312,7 @@ abstract mixin class $ReportImageCopyWith<$Res>  {
   factory $ReportImageCopyWith(ReportImage value, $Res Function(ReportImage) _then) = _$ReportImageCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String url,@JsonKey(name: 's3_key') String? s3Key, String? filename,@JsonKey(name: 'file_size') int? fileSize,@JsonKey(name: 'mime_type') String? mimeType, int? width, int? height,@JsonKey(name: 'is_primary') bool isPrimary,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
+ String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String url,@JsonKey(name: 's3_key') String? s3Key, String? filename,@JsonKey(name: 'file_size') int? fileSize,@JsonKey(name: 'mime_type') String? mimeType, int? width, int? height,@JsonKey(name: 'is_primary') bool isPrimary, String? purpose,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -65,7 +329,7 @@ class _$ReportImageCopyWithImpl<$Res>
 
 /// Create a copy of ReportImage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? url = null,Object? s3Key = freezed,Object? filename = freezed,Object? fileSize = freezed,Object? mimeType = freezed,Object? width = freezed,Object? height = freezed,Object? isPrimary = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? url = null,Object? s3Key = freezed,Object? filename = freezed,Object? fileSize = freezed,Object? mimeType = freezed,Object? width = freezed,Object? height = freezed,Object? isPrimary = null,Object? purpose = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,reportId: freezed == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
@@ -78,7 +342,8 @@ as int?,mimeType: freezed == mimeType ? _self.mimeType : mimeType // ignore: cas
 as String?,width: freezed == width ? _self.width : width // ignore: cast_nullable_to_non_nullable
 as int?,height: freezed == height ? _self.height : height // ignore: cast_nullable_to_non_nullable
 as int?,isPrimary: null == isPrimary ? _self.isPrimary : isPrimary // ignore: cast_nullable_to_non_nullable
-as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as bool,purpose: freezed == purpose ? _self.purpose : purpose // ignore: cast_nullable_to_non_nullable
+as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -162,10 +427,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String url, @JsonKey(name: 's3_key')  String? s3Key,  String? filename, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType,  int? width,  int? height, @JsonKey(name: 'is_primary')  bool isPrimary, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String url, @JsonKey(name: 's3_key')  String? s3Key,  String? filename, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType,  int? width,  int? height, @JsonKey(name: 'is_primary')  bool isPrimary,  String? purpose, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ReportImage() when $default != null:
-return $default(_that.id,_that.reportId,_that.userId,_that.url,_that.s3Key,_that.filename,_that.fileSize,_that.mimeType,_that.width,_that.height,_that.isPrimary,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.reportId,_that.userId,_that.url,_that.s3Key,_that.filename,_that.fileSize,_that.mimeType,_that.width,_that.height,_that.isPrimary,_that.purpose,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -183,10 +448,10 @@ return $default(_that.id,_that.reportId,_that.userId,_that.url,_that.s3Key,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String url, @JsonKey(name: 's3_key')  String? s3Key,  String? filename, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType,  int? width,  int? height, @JsonKey(name: 'is_primary')  bool isPrimary, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String url, @JsonKey(name: 's3_key')  String? s3Key,  String? filename, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType,  int? width,  int? height, @JsonKey(name: 'is_primary')  bool isPrimary,  String? purpose, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _ReportImage():
-return $default(_that.id,_that.reportId,_that.userId,_that.url,_that.s3Key,_that.filename,_that.fileSize,_that.mimeType,_that.width,_that.height,_that.isPrimary,_that.createdAt,_that.updatedAt);}
+return $default(_that.id,_that.reportId,_that.userId,_that.url,_that.s3Key,_that.filename,_that.fileSize,_that.mimeType,_that.width,_that.height,_that.isPrimary,_that.purpose,_that.createdAt,_that.updatedAt);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -200,10 +465,10 @@ return $default(_that.id,_that.reportId,_that.userId,_that.url,_that.s3Key,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String url, @JsonKey(name: 's3_key')  String? s3Key,  String? filename, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType,  int? width,  int? height, @JsonKey(name: 'is_primary')  bool isPrimary, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String url, @JsonKey(name: 's3_key')  String? s3Key,  String? filename, @JsonKey(name: 'file_size')  int? fileSize, @JsonKey(name: 'mime_type')  String? mimeType,  int? width,  int? height, @JsonKey(name: 'is_primary')  bool isPrimary,  String? purpose, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _ReportImage() when $default != null:
-return $default(_that.id,_that.reportId,_that.userId,_that.url,_that.s3Key,_that.filename,_that.fileSize,_that.mimeType,_that.width,_that.height,_that.isPrimary,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.reportId,_that.userId,_that.url,_that.s3Key,_that.filename,_that.fileSize,_that.mimeType,_that.width,_that.height,_that.isPrimary,_that.purpose,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -215,7 +480,7 @@ return $default(_that.id,_that.reportId,_that.userId,_that.url,_that.s3Key,_that
 @JsonSerializable()
 
 class _ReportImage implements ReportImage {
-  const _ReportImage({required this.id, @JsonKey(name: 'report_id') this.reportId, @JsonKey(name: 'user_id') this.userId, required this.url, @JsonKey(name: 's3_key') this.s3Key, this.filename, @JsonKey(name: 'file_size') this.fileSize, @JsonKey(name: 'mime_type') this.mimeType, this.width, this.height, @JsonKey(name: 'is_primary') this.isPrimary = false, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt});
+  const _ReportImage({required this.id, @JsonKey(name: 'report_id') this.reportId, @JsonKey(name: 'user_id') this.userId, required this.url, @JsonKey(name: 's3_key') this.s3Key, this.filename, @JsonKey(name: 'file_size') this.fileSize, @JsonKey(name: 'mime_type') this.mimeType, this.width, this.height, @JsonKey(name: 'is_primary') this.isPrimary = false, this.purpose, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt});
   factory _ReportImage.fromJson(Map<String, dynamic> json) => _$ReportImageFromJson(json);
 
 @override final  String id;
@@ -229,6 +494,8 @@ class _ReportImage implements ReportImage {
 @override final  int? width;
 @override final  int? height;
 @override@JsonKey(name: 'is_primary') final  bool isPrimary;
+/// 'evidence' | 'signature' | 'document' — null means legacy/pre-field record.
+@override final  String? purpose;
 @override@JsonKey(name: 'created_at') final  String? createdAt;
 @override@JsonKey(name: 'updated_at') final  String? updatedAt;
 
@@ -245,16 +512,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReportImage&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.url, url) || other.url == url)&&(identical(other.s3Key, s3Key) || other.s3Key == s3Key)&&(identical(other.filename, filename) || other.filename == filename)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.isPrimary, isPrimary) || other.isPrimary == isPrimary)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReportImage&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.url, url) || other.url == url)&&(identical(other.s3Key, s3Key) || other.s3Key == s3Key)&&(identical(other.filename, filename) || other.filename == filename)&&(identical(other.fileSize, fileSize) || other.fileSize == fileSize)&&(identical(other.mimeType, mimeType) || other.mimeType == mimeType)&&(identical(other.width, width) || other.width == width)&&(identical(other.height, height) || other.height == height)&&(identical(other.isPrimary, isPrimary) || other.isPrimary == isPrimary)&&(identical(other.purpose, purpose) || other.purpose == purpose)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,reportId,userId,url,s3Key,filename,fileSize,mimeType,width,height,isPrimary,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,reportId,userId,url,s3Key,filename,fileSize,mimeType,width,height,isPrimary,purpose,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'ReportImage(id: $id, reportId: $reportId, userId: $userId, url: $url, s3Key: $s3Key, filename: $filename, fileSize: $fileSize, mimeType: $mimeType, width: $width, height: $height, isPrimary: $isPrimary, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'ReportImage(id: $id, reportId: $reportId, userId: $userId, url: $url, s3Key: $s3Key, filename: $filename, fileSize: $fileSize, mimeType: $mimeType, width: $width, height: $height, isPrimary: $isPrimary, purpose: $purpose, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -265,7 +532,7 @@ abstract mixin class _$ReportImageCopyWith<$Res> implements $ReportImageCopyWith
   factory _$ReportImageCopyWith(_ReportImage value, $Res Function(_ReportImage) _then) = __$ReportImageCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String url,@JsonKey(name: 's3_key') String? s3Key, String? filename,@JsonKey(name: 'file_size') int? fileSize,@JsonKey(name: 'mime_type') String? mimeType, int? width, int? height,@JsonKey(name: 'is_primary') bool isPrimary,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
+ String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String url,@JsonKey(name: 's3_key') String? s3Key, String? filename,@JsonKey(name: 'file_size') int? fileSize,@JsonKey(name: 'mime_type') String? mimeType, int? width, int? height,@JsonKey(name: 'is_primary') bool isPrimary, String? purpose,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
 });
 
 
@@ -282,7 +549,7 @@ class __$ReportImageCopyWithImpl<$Res>
 
 /// Create a copy of ReportImage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? url = null,Object? s3Key = freezed,Object? filename = freezed,Object? fileSize = freezed,Object? mimeType = freezed,Object? width = freezed,Object? height = freezed,Object? isPrimary = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? url = null,Object? s3Key = freezed,Object? filename = freezed,Object? fileSize = freezed,Object? mimeType = freezed,Object? width = freezed,Object? height = freezed,Object? isPrimary = null,Object? purpose = freezed,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
   return _then(_ReportImage(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,reportId: freezed == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
@@ -295,7 +562,8 @@ as int?,mimeType: freezed == mimeType ? _self.mimeType : mimeType // ignore: cas
 as String?,width: freezed == width ? _self.width : width // ignore: cast_nullable_to_non_nullable
 as int?,height: freezed == height ? _self.height : height // ignore: cast_nullable_to_non_nullable
 as int?,isPrimary: null == isPrimary ? _self.isPrimary : isPrimary // ignore: cast_nullable_to_non_nullable
-as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as bool,purpose: freezed == purpose ? _self.purpose : purpose // ignore: cast_nullable_to_non_nullable
+as String?,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
@@ -309,15 +577,16 @@ as String?,
 mixin _$Report {
 
  String get id;@JsonKey(name: 'report_id') String? get reportId;@JsonKey(name: 'user_id') String? get userId;// Report Details
- String? get category;@JsonKey(name: 'incident_type') String? get incidentType; String? get title; String get description;@JsonKey(name: 'incident_datetime') String? get incidentDatetime;@JsonKey(name: 'is_happening_now') bool get isHappeningNow;// Location Information
- String? get zone;@JsonKey(name: 'street_landmark') String? get streetLandmark;@JsonKey(name: 'city_municipality') String? get cityMunicipality; String? get province; String? get latitude; String? get longitude;@JsonKey(name: 'location_accuracy') String get locationAccuracy;// Legacy fields
+ String? get category;@JsonKey(name: 'category_key') String? get categoryKey;@JsonKey(name: 'category_display') String? get categoryDisplay;@JsonKey(name: 'category_label_snapshot') String? get categoryLabelSnapshot;@JsonKey(name: 'taxonomy_version') String? get taxonomyVersion;@JsonKey(name: 'incident_type') String? get incidentType; String? get title; String get description;@JsonKey(name: 'incident_datetime') String? get incidentDatetime;@JsonKey(name: 'is_happening_now') bool get isHappeningNow;// Location Information
+ String? get zone;@JsonKey(name: 'street_landmark') String? get streetLandmark;@JsonKey(name: 'municipality_id', readValue: _readMunicipalityId) String get municipalityId;@JsonKey(name: 'barangay_id', readValue: _readBarangayId) String? get barangayId;@JsonKey(name: 'city_municipality') String? get cityMunicipality; String? get province; String? get latitude; String? get longitude;@JsonKey(name: 'location_accuracy') String get locationAccuracy;// Legacy fields
  String? get location; String? get barangay;// Severity & Impact
- String get severity;@JsonKey(name: 'people_affected') int? get peopleAffected;@JsonKey(name: 'is_emergency') bool get isEmergency;// System Fields
+ String get severity;@JsonKey(name: 'people_affected')@NullableIntConverter() int? get peopleAffected;@JsonKey(name: 'is_emergency') bool get isEmergency;// System Fields
  String get status;@JsonKey(name: 'assigned_department') String? get assignedDepartment;@JsonKey(name: 'admin_remarks') String? get adminRemarks;// AI Fields
-@JsonKey(name: 'category_confidence') double? get categoryConfidence; String? get priority;@JsonKey(name: 'priority_score') int? get priorityScore;@JsonKey(name: 'priority_level') String? get priorityLevel;@JsonKey(name: 'priority_reasons') List<String>? get priorityReasons;@JsonKey(name: 'base_score') int? get baseScore;@JsonKey(name: 'hotspot_score') int? get hotspotScore;@JsonKey(name: 'urgency_score') double? get urgencyScore;@JsonKey(name: 'duplicate_state') String? get duplicateState;@JsonKey(name: 'related_report_id') String? get relatedReportId;@JsonKey(name: 'duplicate_score') double? get duplicateScore;@JsonKey(name: 'duplicate_confidence') String? get duplicateConfidence;@JsonKey(name: 'duplicate_text_similarity') double? get duplicateTextSimilarity;@JsonKey(name: 'duplicate_location_similarity') double? get duplicateLocationSimilarity;@JsonKey(name: 'duplicate_explanation') String? get duplicateExplanation;@JsonKey(name: 'related_issue_id') String? get relatedIssueId;@JsonKey(name: 'sentiment_score') double? get sentimentScore;@JsonKey(name: 'auto_category_suggestion') String? get autoCategorySuggestion;// Images
- List<ReportImage> get images;// Timestamps
-@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;@JsonKey(name: 'submitted_at') String? get submittedAt;@JsonKey(name: 'verified_at') String? get verifiedAt;@JsonKey(name: 'resolved_at') String? get resolvedAt;// Blockchain Integration
-@JsonKey(name: 'on_chain_id') int? get onChainId;@JsonKey(name: 'on_chain_hash') String? get onChainHash;@JsonKey(name: 'blockchain_txn_hash') String? get blockchainTxnHash;@JsonKey(name: 'blockchain_synced') bool get blockchainSynced;
+@JsonKey(name: 'category_confidence') double? get categoryConfidence;@JsonKey(name: 'model_version') String? get modelVersion;@JsonKey(name: 'category_source') String? get categorySource;@JsonKey(name: 'model_probability') double? get modelProbability;@JsonKey(name: 'top2_gap') double? get top2Gap;@JsonKey(name: 'needs_category_review') bool? get needsCategoryReview;@JsonKey(name: 'review_reasons') List<String> get reviewReasons;@JsonKey(name: 'is_multi_issue') bool get isMultiIssue;@JsonKey(name: 'rules_applied') List<String> get rulesApplied; String? get priority;@JsonKey(name: 'priority_score')@NullableIntConverter() int? get priorityScore;@JsonKey(name: 'priority_level') String? get priorityLevel;@JsonKey(name: 'suggested_priority_score') double? get suggestedPriorityScore;@JsonKey(name: 'suggested_priority_level') String? get suggestedPriorityLevel;@JsonKey(name: 'queue_priority_score') double? get queuePriorityScore;@JsonKey(name: 'queue_priority_level') String? get queuePriorityLevel;@JsonKey(name: 'queue_priority_rank')@NullableIntConverter() int? get queuePriorityRank;@JsonKey(name: 'staff_priority_level') String? get staffPriorityLevel;@JsonKey(name: 'priority_source') String? get prioritySource;@JsonKey(name: 'priority_is_advisory') bool get priorityIsAdvisory;@JsonKey(name: 'needs_priority_review') bool get needsPriorityReview;@JsonKey(name: 'priority_review_reasons') List<String> get priorityReviewReasons;@JsonKey(name: 'linked_report_count') int get linkedReportCount;@JsonKey(name: 'linked_urgency_boost') int get linkedUrgencyBoost;@JsonKey(name: 'is_incident_representative') bool get isIncidentRepresentative;@JsonKey(name: 'priority_model_version') String? get priorityModelVersion;@JsonKey(name: 'priority_model_validated') bool get priorityModelValidated;@JsonKey(name: 'priority_calibration_version') String? get priorityCalibrationVersion;@JsonKey(name: 'emergency_probability') double? get emergencyProbability;@JsonKey(name: 'priority_components') Map<String, double> get priorityComponents;@JsonKey(name: 'priority_policy_version') String? get priorityPolicyVersion;@JsonKey(name: 'priority_rules_applied') List<String> get priorityRulesApplied;@JsonKey(name: 'priority_reasons') List<String>? get priorityReasons;@JsonKey(name: 'base_score')@NullableIntConverter() int? get baseScore;@JsonKey(name: 'hotspot_score')@NullableIntConverter() int? get hotspotScore;@JsonKey(name: 'urgency_score') double? get urgencyScore;@JsonKey(name: 'recommended_department') String? get recommendedDepartment;@JsonKey(name: 'department_confidence') double? get departmentConfidence;@JsonKey(name: 'routing_reasons') List<String>? get routingReasons;@JsonKey(name: 'needs_department_review') bool? get needsDepartmentReview;@JsonKey(name: 'department_key') String? get departmentKey;@JsonKey(name: 'department_display') String? get departmentDisplay;@JsonKey(name: 'department_probability') double? get departmentProbability;@JsonKey(name: 'department_top2_gap') double? get departmentTop2Gap;@JsonKey(name: 'suggested_departments') List<DepartmentSuggestion> get suggestedDepartments;@JsonKey(name: 'assigned_department_key') String? get assignedDepartmentKey;@JsonKey(name: 'department_source') String? get departmentSource;@JsonKey(name: 'department_is_advisory') bool get departmentIsAdvisory;@JsonKey(name: 'department_review_reasons') List<String> get departmentReviewReasons;@JsonKey(name: 'department_model_version') String? get departmentModelVersion;@JsonKey(name: 'department_model_validated') bool get departmentModelValidated;@JsonKey(name: 'department_calibration_version') String? get departmentCalibrationVersion;@JsonKey(name: 'department_registry_version') String? get departmentRegistryVersion;@JsonKey(name: 'department_policy_version') String? get departmentPolicyVersion;@JsonKey(name: 'department_rules_applied') List<String> get departmentRulesApplied;@JsonKey(name: 'credibility_score') double? get credibilityScore;@JsonKey(name: 'incident_group_id') String? get incidentGroupId;@JsonKey(name: 'sentiment_score') double? get sentimentScore;@JsonKey(name: 'auto_category_suggestion') String? get autoCategorySuggestion;// Images
+ List<ReportImage> get images;@JsonKey(name: 'resolved_proof_image_ids') List<String> get resolvedProofImageIds;@JsonKey(name: 'closure_signature_image_id') String? get closureSignatureImageId;@JsonKey(name: 'closure_signature_document_ids') List<String> get closureSignatureDocumentIds;// Timestamps
+@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;@JsonKey(name: 'submitted_at') String? get submittedAt;@JsonKey(name: 'verified_at') String? get verifiedAt;@JsonKey(name: 'resolved_at') String? get resolvedAt;// Citizen Closure
+@JsonKey(name: 'citizen_verified_at') String? get citizenVerifiedAt;@JsonKey(name: 'citizen_satisfaction')@NullableIntConverter() int? get citizenSatisfaction;@JsonKey(name: 'citizen_closure_note') String? get citizenClosureNote;// Blockchain Integration
+@JsonKey(name: 'on_chain_id')@NullableStringConverter() String? get onChainId;@JsonKey(name: 'on_chain_hash') String? get onChainHash;@JsonKey(name: 'blockchain_txn_hash') String? get blockchainTxnHash;@JsonKey(name: 'blockchain_synced') bool get blockchainSynced;
 /// Create a copy of Report
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -330,16 +599,16 @@ $ReportCopyWith<Report> get copyWith => _$ReportCopyWithImpl<Report>(this as Rep
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Report&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.category, category) || other.category == category)&&(identical(other.incidentType, incidentType) || other.incidentType == incidentType)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.incidentDatetime, incidentDatetime) || other.incidentDatetime == incidentDatetime)&&(identical(other.isHappeningNow, isHappeningNow) || other.isHappeningNow == isHappeningNow)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.streetLandmark, streetLandmark) || other.streetLandmark == streetLandmark)&&(identical(other.cityMunicipality, cityMunicipality) || other.cityMunicipality == cityMunicipality)&&(identical(other.province, province) || other.province == province)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.locationAccuracy, locationAccuracy) || other.locationAccuracy == locationAccuracy)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.severity, severity) || other.severity == severity)&&(identical(other.peopleAffected, peopleAffected) || other.peopleAffected == peopleAffected)&&(identical(other.isEmergency, isEmergency) || other.isEmergency == isEmergency)&&(identical(other.status, status) || other.status == status)&&(identical(other.assignedDepartment, assignedDepartment) || other.assignedDepartment == assignedDepartment)&&(identical(other.adminRemarks, adminRemarks) || other.adminRemarks == adminRemarks)&&(identical(other.categoryConfidence, categoryConfidence) || other.categoryConfidence == categoryConfidence)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.priorityScore, priorityScore) || other.priorityScore == priorityScore)&&(identical(other.priorityLevel, priorityLevel) || other.priorityLevel == priorityLevel)&&const DeepCollectionEquality().equals(other.priorityReasons, priorityReasons)&&(identical(other.baseScore, baseScore) || other.baseScore == baseScore)&&(identical(other.hotspotScore, hotspotScore) || other.hotspotScore == hotspotScore)&&(identical(other.urgencyScore, urgencyScore) || other.urgencyScore == urgencyScore)&&(identical(other.duplicateState, duplicateState) || other.duplicateState == duplicateState)&&(identical(other.relatedReportId, relatedReportId) || other.relatedReportId == relatedReportId)&&(identical(other.duplicateScore, duplicateScore) || other.duplicateScore == duplicateScore)&&(identical(other.duplicateConfidence, duplicateConfidence) || other.duplicateConfidence == duplicateConfidence)&&(identical(other.duplicateTextSimilarity, duplicateTextSimilarity) || other.duplicateTextSimilarity == duplicateTextSimilarity)&&(identical(other.duplicateLocationSimilarity, duplicateLocationSimilarity) || other.duplicateLocationSimilarity == duplicateLocationSimilarity)&&(identical(other.duplicateExplanation, duplicateExplanation) || other.duplicateExplanation == duplicateExplanation)&&(identical(other.relatedIssueId, relatedIssueId) || other.relatedIssueId == relatedIssueId)&&(identical(other.sentimentScore, sentimentScore) || other.sentimentScore == sentimentScore)&&(identical(other.autoCategorySuggestion, autoCategorySuggestion) || other.autoCategorySuggestion == autoCategorySuggestion)&&const DeepCollectionEquality().equals(other.images, images)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.submittedAt, submittedAt) || other.submittedAt == submittedAt)&&(identical(other.verifiedAt, verifiedAt) || other.verifiedAt == verifiedAt)&&(identical(other.resolvedAt, resolvedAt) || other.resolvedAt == resolvedAt)&&(identical(other.onChainId, onChainId) || other.onChainId == onChainId)&&(identical(other.onChainHash, onChainHash) || other.onChainHash == onChainHash)&&(identical(other.blockchainTxnHash, blockchainTxnHash) || other.blockchainTxnHash == blockchainTxnHash)&&(identical(other.blockchainSynced, blockchainSynced) || other.blockchainSynced == blockchainSynced));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Report&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.category, category) || other.category == category)&&(identical(other.categoryKey, categoryKey) || other.categoryKey == categoryKey)&&(identical(other.categoryDisplay, categoryDisplay) || other.categoryDisplay == categoryDisplay)&&(identical(other.categoryLabelSnapshot, categoryLabelSnapshot) || other.categoryLabelSnapshot == categoryLabelSnapshot)&&(identical(other.taxonomyVersion, taxonomyVersion) || other.taxonomyVersion == taxonomyVersion)&&(identical(other.incidentType, incidentType) || other.incidentType == incidentType)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.incidentDatetime, incidentDatetime) || other.incidentDatetime == incidentDatetime)&&(identical(other.isHappeningNow, isHappeningNow) || other.isHappeningNow == isHappeningNow)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.streetLandmark, streetLandmark) || other.streetLandmark == streetLandmark)&&(identical(other.municipalityId, municipalityId) || other.municipalityId == municipalityId)&&(identical(other.barangayId, barangayId) || other.barangayId == barangayId)&&(identical(other.cityMunicipality, cityMunicipality) || other.cityMunicipality == cityMunicipality)&&(identical(other.province, province) || other.province == province)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.locationAccuracy, locationAccuracy) || other.locationAccuracy == locationAccuracy)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.severity, severity) || other.severity == severity)&&(identical(other.peopleAffected, peopleAffected) || other.peopleAffected == peopleAffected)&&(identical(other.isEmergency, isEmergency) || other.isEmergency == isEmergency)&&(identical(other.status, status) || other.status == status)&&(identical(other.assignedDepartment, assignedDepartment) || other.assignedDepartment == assignedDepartment)&&(identical(other.adminRemarks, adminRemarks) || other.adminRemarks == adminRemarks)&&(identical(other.categoryConfidence, categoryConfidence) || other.categoryConfidence == categoryConfidence)&&(identical(other.modelVersion, modelVersion) || other.modelVersion == modelVersion)&&(identical(other.categorySource, categorySource) || other.categorySource == categorySource)&&(identical(other.modelProbability, modelProbability) || other.modelProbability == modelProbability)&&(identical(other.top2Gap, top2Gap) || other.top2Gap == top2Gap)&&(identical(other.needsCategoryReview, needsCategoryReview) || other.needsCategoryReview == needsCategoryReview)&&const DeepCollectionEquality().equals(other.reviewReasons, reviewReasons)&&(identical(other.isMultiIssue, isMultiIssue) || other.isMultiIssue == isMultiIssue)&&const DeepCollectionEquality().equals(other.rulesApplied, rulesApplied)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.priorityScore, priorityScore) || other.priorityScore == priorityScore)&&(identical(other.priorityLevel, priorityLevel) || other.priorityLevel == priorityLevel)&&(identical(other.suggestedPriorityScore, suggestedPriorityScore) || other.suggestedPriorityScore == suggestedPriorityScore)&&(identical(other.suggestedPriorityLevel, suggestedPriorityLevel) || other.suggestedPriorityLevel == suggestedPriorityLevel)&&(identical(other.queuePriorityScore, queuePriorityScore) || other.queuePriorityScore == queuePriorityScore)&&(identical(other.queuePriorityLevel, queuePriorityLevel) || other.queuePriorityLevel == queuePriorityLevel)&&(identical(other.queuePriorityRank, queuePriorityRank) || other.queuePriorityRank == queuePriorityRank)&&(identical(other.staffPriorityLevel, staffPriorityLevel) || other.staffPriorityLevel == staffPriorityLevel)&&(identical(other.prioritySource, prioritySource) || other.prioritySource == prioritySource)&&(identical(other.priorityIsAdvisory, priorityIsAdvisory) || other.priorityIsAdvisory == priorityIsAdvisory)&&(identical(other.needsPriorityReview, needsPriorityReview) || other.needsPriorityReview == needsPriorityReview)&&const DeepCollectionEquality().equals(other.priorityReviewReasons, priorityReviewReasons)&&(identical(other.linkedReportCount, linkedReportCount) || other.linkedReportCount == linkedReportCount)&&(identical(other.linkedUrgencyBoost, linkedUrgencyBoost) || other.linkedUrgencyBoost == linkedUrgencyBoost)&&(identical(other.isIncidentRepresentative, isIncidentRepresentative) || other.isIncidentRepresentative == isIncidentRepresentative)&&(identical(other.priorityModelVersion, priorityModelVersion) || other.priorityModelVersion == priorityModelVersion)&&(identical(other.priorityModelValidated, priorityModelValidated) || other.priorityModelValidated == priorityModelValidated)&&(identical(other.priorityCalibrationVersion, priorityCalibrationVersion) || other.priorityCalibrationVersion == priorityCalibrationVersion)&&(identical(other.emergencyProbability, emergencyProbability) || other.emergencyProbability == emergencyProbability)&&const DeepCollectionEquality().equals(other.priorityComponents, priorityComponents)&&(identical(other.priorityPolicyVersion, priorityPolicyVersion) || other.priorityPolicyVersion == priorityPolicyVersion)&&const DeepCollectionEquality().equals(other.priorityRulesApplied, priorityRulesApplied)&&const DeepCollectionEquality().equals(other.priorityReasons, priorityReasons)&&(identical(other.baseScore, baseScore) || other.baseScore == baseScore)&&(identical(other.hotspotScore, hotspotScore) || other.hotspotScore == hotspotScore)&&(identical(other.urgencyScore, urgencyScore) || other.urgencyScore == urgencyScore)&&(identical(other.recommendedDepartment, recommendedDepartment) || other.recommendedDepartment == recommendedDepartment)&&(identical(other.departmentConfidence, departmentConfidence) || other.departmentConfidence == departmentConfidence)&&const DeepCollectionEquality().equals(other.routingReasons, routingReasons)&&(identical(other.needsDepartmentReview, needsDepartmentReview) || other.needsDepartmentReview == needsDepartmentReview)&&(identical(other.departmentKey, departmentKey) || other.departmentKey == departmentKey)&&(identical(other.departmentDisplay, departmentDisplay) || other.departmentDisplay == departmentDisplay)&&(identical(other.departmentProbability, departmentProbability) || other.departmentProbability == departmentProbability)&&(identical(other.departmentTop2Gap, departmentTop2Gap) || other.departmentTop2Gap == departmentTop2Gap)&&const DeepCollectionEquality().equals(other.suggestedDepartments, suggestedDepartments)&&(identical(other.assignedDepartmentKey, assignedDepartmentKey) || other.assignedDepartmentKey == assignedDepartmentKey)&&(identical(other.departmentSource, departmentSource) || other.departmentSource == departmentSource)&&(identical(other.departmentIsAdvisory, departmentIsAdvisory) || other.departmentIsAdvisory == departmentIsAdvisory)&&const DeepCollectionEquality().equals(other.departmentReviewReasons, departmentReviewReasons)&&(identical(other.departmentModelVersion, departmentModelVersion) || other.departmentModelVersion == departmentModelVersion)&&(identical(other.departmentModelValidated, departmentModelValidated) || other.departmentModelValidated == departmentModelValidated)&&(identical(other.departmentCalibrationVersion, departmentCalibrationVersion) || other.departmentCalibrationVersion == departmentCalibrationVersion)&&(identical(other.departmentRegistryVersion, departmentRegistryVersion) || other.departmentRegistryVersion == departmentRegistryVersion)&&(identical(other.departmentPolicyVersion, departmentPolicyVersion) || other.departmentPolicyVersion == departmentPolicyVersion)&&const DeepCollectionEquality().equals(other.departmentRulesApplied, departmentRulesApplied)&&(identical(other.credibilityScore, credibilityScore) || other.credibilityScore == credibilityScore)&&(identical(other.incidentGroupId, incidentGroupId) || other.incidentGroupId == incidentGroupId)&&(identical(other.sentimentScore, sentimentScore) || other.sentimentScore == sentimentScore)&&(identical(other.autoCategorySuggestion, autoCategorySuggestion) || other.autoCategorySuggestion == autoCategorySuggestion)&&const DeepCollectionEquality().equals(other.images, images)&&const DeepCollectionEquality().equals(other.resolvedProofImageIds, resolvedProofImageIds)&&(identical(other.closureSignatureImageId, closureSignatureImageId) || other.closureSignatureImageId == closureSignatureImageId)&&const DeepCollectionEquality().equals(other.closureSignatureDocumentIds, closureSignatureDocumentIds)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.submittedAt, submittedAt) || other.submittedAt == submittedAt)&&(identical(other.verifiedAt, verifiedAt) || other.verifiedAt == verifiedAt)&&(identical(other.resolvedAt, resolvedAt) || other.resolvedAt == resolvedAt)&&(identical(other.citizenVerifiedAt, citizenVerifiedAt) || other.citizenVerifiedAt == citizenVerifiedAt)&&(identical(other.citizenSatisfaction, citizenSatisfaction) || other.citizenSatisfaction == citizenSatisfaction)&&(identical(other.citizenClosureNote, citizenClosureNote) || other.citizenClosureNote == citizenClosureNote)&&(identical(other.onChainId, onChainId) || other.onChainId == onChainId)&&(identical(other.onChainHash, onChainHash) || other.onChainHash == onChainHash)&&(identical(other.blockchainTxnHash, blockchainTxnHash) || other.blockchainTxnHash == blockchainTxnHash)&&(identical(other.blockchainSynced, blockchainSynced) || other.blockchainSynced == blockchainSynced));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,reportId,userId,category,incidentType,title,description,incidentDatetime,isHappeningNow,zone,streetLandmark,cityMunicipality,province,latitude,longitude,locationAccuracy,location,barangay,severity,peopleAffected,isEmergency,status,assignedDepartment,adminRemarks,categoryConfidence,priority,priorityScore,priorityLevel,const DeepCollectionEquality().hash(priorityReasons),baseScore,hotspotScore,urgencyScore,duplicateState,relatedReportId,duplicateScore,duplicateConfidence,duplicateTextSimilarity,duplicateLocationSimilarity,duplicateExplanation,relatedIssueId,sentimentScore,autoCategorySuggestion,const DeepCollectionEquality().hash(images),createdAt,updatedAt,submittedAt,verifiedAt,resolvedAt,onChainId,onChainHash,blockchainTxnHash,blockchainSynced]);
+int get hashCode => Object.hashAll([runtimeType,id,reportId,userId,category,categoryKey,categoryDisplay,categoryLabelSnapshot,taxonomyVersion,incidentType,title,description,incidentDatetime,isHappeningNow,zone,streetLandmark,municipalityId,barangayId,cityMunicipality,province,latitude,longitude,locationAccuracy,location,barangay,severity,peopleAffected,isEmergency,status,assignedDepartment,adminRemarks,categoryConfidence,modelVersion,categorySource,modelProbability,top2Gap,needsCategoryReview,const DeepCollectionEquality().hash(reviewReasons),isMultiIssue,const DeepCollectionEquality().hash(rulesApplied),priority,priorityScore,priorityLevel,suggestedPriorityScore,suggestedPriorityLevel,queuePriorityScore,queuePriorityLevel,queuePriorityRank,staffPriorityLevel,prioritySource,priorityIsAdvisory,needsPriorityReview,const DeepCollectionEquality().hash(priorityReviewReasons),linkedReportCount,linkedUrgencyBoost,isIncidentRepresentative,priorityModelVersion,priorityModelValidated,priorityCalibrationVersion,emergencyProbability,const DeepCollectionEquality().hash(priorityComponents),priorityPolicyVersion,const DeepCollectionEquality().hash(priorityRulesApplied),const DeepCollectionEquality().hash(priorityReasons),baseScore,hotspotScore,urgencyScore,recommendedDepartment,departmentConfidence,const DeepCollectionEquality().hash(routingReasons),needsDepartmentReview,departmentKey,departmentDisplay,departmentProbability,departmentTop2Gap,const DeepCollectionEquality().hash(suggestedDepartments),assignedDepartmentKey,departmentSource,departmentIsAdvisory,const DeepCollectionEquality().hash(departmentReviewReasons),departmentModelVersion,departmentModelValidated,departmentCalibrationVersion,departmentRegistryVersion,departmentPolicyVersion,const DeepCollectionEquality().hash(departmentRulesApplied),credibilityScore,incidentGroupId,sentimentScore,autoCategorySuggestion,const DeepCollectionEquality().hash(images),const DeepCollectionEquality().hash(resolvedProofImageIds),closureSignatureImageId,const DeepCollectionEquality().hash(closureSignatureDocumentIds),createdAt,updatedAt,submittedAt,verifiedAt,resolvedAt,citizenVerifiedAt,citizenSatisfaction,citizenClosureNote,onChainId,onChainHash,blockchainTxnHash,blockchainSynced]);
 
 @override
 String toString() {
-  return 'Report(id: $id, reportId: $reportId, userId: $userId, category: $category, incidentType: $incidentType, title: $title, description: $description, incidentDatetime: $incidentDatetime, isHappeningNow: $isHappeningNow, zone: $zone, streetLandmark: $streetLandmark, cityMunicipality: $cityMunicipality, province: $province, latitude: $latitude, longitude: $longitude, locationAccuracy: $locationAccuracy, location: $location, barangay: $barangay, severity: $severity, peopleAffected: $peopleAffected, isEmergency: $isEmergency, status: $status, assignedDepartment: $assignedDepartment, adminRemarks: $adminRemarks, categoryConfidence: $categoryConfidence, priority: $priority, priorityScore: $priorityScore, priorityLevel: $priorityLevel, priorityReasons: $priorityReasons, baseScore: $baseScore, hotspotScore: $hotspotScore, urgencyScore: $urgencyScore, duplicateState: $duplicateState, relatedReportId: $relatedReportId, duplicateScore: $duplicateScore, duplicateConfidence: $duplicateConfidence, duplicateTextSimilarity: $duplicateTextSimilarity, duplicateLocationSimilarity: $duplicateLocationSimilarity, duplicateExplanation: $duplicateExplanation, relatedIssueId: $relatedIssueId, sentimentScore: $sentimentScore, autoCategorySuggestion: $autoCategorySuggestion, images: $images, createdAt: $createdAt, updatedAt: $updatedAt, submittedAt: $submittedAt, verifiedAt: $verifiedAt, resolvedAt: $resolvedAt, onChainId: $onChainId, onChainHash: $onChainHash, blockchainTxnHash: $blockchainTxnHash, blockchainSynced: $blockchainSynced)';
+  return 'Report(id: $id, reportId: $reportId, userId: $userId, category: $category, categoryKey: $categoryKey, categoryDisplay: $categoryDisplay, categoryLabelSnapshot: $categoryLabelSnapshot, taxonomyVersion: $taxonomyVersion, incidentType: $incidentType, title: $title, description: $description, incidentDatetime: $incidentDatetime, isHappeningNow: $isHappeningNow, zone: $zone, streetLandmark: $streetLandmark, municipalityId: $municipalityId, barangayId: $barangayId, cityMunicipality: $cityMunicipality, province: $province, latitude: $latitude, longitude: $longitude, locationAccuracy: $locationAccuracy, location: $location, barangay: $barangay, severity: $severity, peopleAffected: $peopleAffected, isEmergency: $isEmergency, status: $status, assignedDepartment: $assignedDepartment, adminRemarks: $adminRemarks, categoryConfidence: $categoryConfidence, modelVersion: $modelVersion, categorySource: $categorySource, modelProbability: $modelProbability, top2Gap: $top2Gap, needsCategoryReview: $needsCategoryReview, reviewReasons: $reviewReasons, isMultiIssue: $isMultiIssue, rulesApplied: $rulesApplied, priority: $priority, priorityScore: $priorityScore, priorityLevel: $priorityLevel, suggestedPriorityScore: $suggestedPriorityScore, suggestedPriorityLevel: $suggestedPriorityLevel, queuePriorityScore: $queuePriorityScore, queuePriorityLevel: $queuePriorityLevel, queuePriorityRank: $queuePriorityRank, staffPriorityLevel: $staffPriorityLevel, prioritySource: $prioritySource, priorityIsAdvisory: $priorityIsAdvisory, needsPriorityReview: $needsPriorityReview, priorityReviewReasons: $priorityReviewReasons, linkedReportCount: $linkedReportCount, linkedUrgencyBoost: $linkedUrgencyBoost, isIncidentRepresentative: $isIncidentRepresentative, priorityModelVersion: $priorityModelVersion, priorityModelValidated: $priorityModelValidated, priorityCalibrationVersion: $priorityCalibrationVersion, emergencyProbability: $emergencyProbability, priorityComponents: $priorityComponents, priorityPolicyVersion: $priorityPolicyVersion, priorityRulesApplied: $priorityRulesApplied, priorityReasons: $priorityReasons, baseScore: $baseScore, hotspotScore: $hotspotScore, urgencyScore: $urgencyScore, recommendedDepartment: $recommendedDepartment, departmentConfidence: $departmentConfidence, routingReasons: $routingReasons, needsDepartmentReview: $needsDepartmentReview, departmentKey: $departmentKey, departmentDisplay: $departmentDisplay, departmentProbability: $departmentProbability, departmentTop2Gap: $departmentTop2Gap, suggestedDepartments: $suggestedDepartments, assignedDepartmentKey: $assignedDepartmentKey, departmentSource: $departmentSource, departmentIsAdvisory: $departmentIsAdvisory, departmentReviewReasons: $departmentReviewReasons, departmentModelVersion: $departmentModelVersion, departmentModelValidated: $departmentModelValidated, departmentCalibrationVersion: $departmentCalibrationVersion, departmentRegistryVersion: $departmentRegistryVersion, departmentPolicyVersion: $departmentPolicyVersion, departmentRulesApplied: $departmentRulesApplied, credibilityScore: $credibilityScore, incidentGroupId: $incidentGroupId, sentimentScore: $sentimentScore, autoCategorySuggestion: $autoCategorySuggestion, images: $images, resolvedProofImageIds: $resolvedProofImageIds, closureSignatureImageId: $closureSignatureImageId, closureSignatureDocumentIds: $closureSignatureDocumentIds, createdAt: $createdAt, updatedAt: $updatedAt, submittedAt: $submittedAt, verifiedAt: $verifiedAt, resolvedAt: $resolvedAt, citizenVerifiedAt: $citizenVerifiedAt, citizenSatisfaction: $citizenSatisfaction, citizenClosureNote: $citizenClosureNote, onChainId: $onChainId, onChainHash: $onChainHash, blockchainTxnHash: $blockchainTxnHash, blockchainSynced: $blockchainSynced)';
 }
 
 
@@ -350,7 +619,7 @@ abstract mixin class $ReportCopyWith<$Res>  {
   factory $ReportCopyWith(Report value, $Res Function(Report) _then) = _$ReportCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String? category,@JsonKey(name: 'incident_type') String? incidentType, String? title, String description,@JsonKey(name: 'incident_datetime') String? incidentDatetime,@JsonKey(name: 'is_happening_now') bool isHappeningNow, String? zone,@JsonKey(name: 'street_landmark') String? streetLandmark,@JsonKey(name: 'city_municipality') String? cityMunicipality, String? province, String? latitude, String? longitude,@JsonKey(name: 'location_accuracy') String locationAccuracy, String? location, String? barangay, String severity,@JsonKey(name: 'people_affected') int? peopleAffected,@JsonKey(name: 'is_emergency') bool isEmergency, String status,@JsonKey(name: 'assigned_department') String? assignedDepartment,@JsonKey(name: 'admin_remarks') String? adminRemarks,@JsonKey(name: 'category_confidence') double? categoryConfidence, String? priority,@JsonKey(name: 'priority_score') int? priorityScore,@JsonKey(name: 'priority_level') String? priorityLevel,@JsonKey(name: 'priority_reasons') List<String>? priorityReasons,@JsonKey(name: 'base_score') int? baseScore,@JsonKey(name: 'hotspot_score') int? hotspotScore,@JsonKey(name: 'urgency_score') double? urgencyScore,@JsonKey(name: 'duplicate_state') String? duplicateState,@JsonKey(name: 'related_report_id') String? relatedReportId,@JsonKey(name: 'duplicate_score') double? duplicateScore,@JsonKey(name: 'duplicate_confidence') String? duplicateConfidence,@JsonKey(name: 'duplicate_text_similarity') double? duplicateTextSimilarity,@JsonKey(name: 'duplicate_location_similarity') double? duplicateLocationSimilarity,@JsonKey(name: 'duplicate_explanation') String? duplicateExplanation,@JsonKey(name: 'related_issue_id') String? relatedIssueId,@JsonKey(name: 'sentiment_score') double? sentimentScore,@JsonKey(name: 'auto_category_suggestion') String? autoCategorySuggestion, List<ReportImage> images,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt,@JsonKey(name: 'submitted_at') String? submittedAt,@JsonKey(name: 'verified_at') String? verifiedAt,@JsonKey(name: 'resolved_at') String? resolvedAt,@JsonKey(name: 'on_chain_id') int? onChainId,@JsonKey(name: 'on_chain_hash') String? onChainHash,@JsonKey(name: 'blockchain_txn_hash') String? blockchainTxnHash,@JsonKey(name: 'blockchain_synced') bool blockchainSynced
+ String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String? category,@JsonKey(name: 'category_key') String? categoryKey,@JsonKey(name: 'category_display') String? categoryDisplay,@JsonKey(name: 'category_label_snapshot') String? categoryLabelSnapshot,@JsonKey(name: 'taxonomy_version') String? taxonomyVersion,@JsonKey(name: 'incident_type') String? incidentType, String? title, String description,@JsonKey(name: 'incident_datetime') String? incidentDatetime,@JsonKey(name: 'is_happening_now') bool isHappeningNow, String? zone,@JsonKey(name: 'street_landmark') String? streetLandmark,@JsonKey(name: 'municipality_id', readValue: _readMunicipalityId) String municipalityId,@JsonKey(name: 'barangay_id', readValue: _readBarangayId) String? barangayId,@JsonKey(name: 'city_municipality') String? cityMunicipality, String? province, String? latitude, String? longitude,@JsonKey(name: 'location_accuracy') String locationAccuracy, String? location, String? barangay, String severity,@JsonKey(name: 'people_affected')@NullableIntConverter() int? peopleAffected,@JsonKey(name: 'is_emergency') bool isEmergency, String status,@JsonKey(name: 'assigned_department') String? assignedDepartment,@JsonKey(name: 'admin_remarks') String? adminRemarks,@JsonKey(name: 'category_confidence') double? categoryConfidence,@JsonKey(name: 'model_version') String? modelVersion,@JsonKey(name: 'category_source') String? categorySource,@JsonKey(name: 'model_probability') double? modelProbability,@JsonKey(name: 'top2_gap') double? top2Gap,@JsonKey(name: 'needs_category_review') bool? needsCategoryReview,@JsonKey(name: 'review_reasons') List<String> reviewReasons,@JsonKey(name: 'is_multi_issue') bool isMultiIssue,@JsonKey(name: 'rules_applied') List<String> rulesApplied, String? priority,@JsonKey(name: 'priority_score')@NullableIntConverter() int? priorityScore,@JsonKey(name: 'priority_level') String? priorityLevel,@JsonKey(name: 'suggested_priority_score') double? suggestedPriorityScore,@JsonKey(name: 'suggested_priority_level') String? suggestedPriorityLevel,@JsonKey(name: 'queue_priority_score') double? queuePriorityScore,@JsonKey(name: 'queue_priority_level') String? queuePriorityLevel,@JsonKey(name: 'queue_priority_rank')@NullableIntConverter() int? queuePriorityRank,@JsonKey(name: 'staff_priority_level') String? staffPriorityLevel,@JsonKey(name: 'priority_source') String? prioritySource,@JsonKey(name: 'priority_is_advisory') bool priorityIsAdvisory,@JsonKey(name: 'needs_priority_review') bool needsPriorityReview,@JsonKey(name: 'priority_review_reasons') List<String> priorityReviewReasons,@JsonKey(name: 'linked_report_count') int linkedReportCount,@JsonKey(name: 'linked_urgency_boost') int linkedUrgencyBoost,@JsonKey(name: 'is_incident_representative') bool isIncidentRepresentative,@JsonKey(name: 'priority_model_version') String? priorityModelVersion,@JsonKey(name: 'priority_model_validated') bool priorityModelValidated,@JsonKey(name: 'priority_calibration_version') String? priorityCalibrationVersion,@JsonKey(name: 'emergency_probability') double? emergencyProbability,@JsonKey(name: 'priority_components') Map<String, double> priorityComponents,@JsonKey(name: 'priority_policy_version') String? priorityPolicyVersion,@JsonKey(name: 'priority_rules_applied') List<String> priorityRulesApplied,@JsonKey(name: 'priority_reasons') List<String>? priorityReasons,@JsonKey(name: 'base_score')@NullableIntConverter() int? baseScore,@JsonKey(name: 'hotspot_score')@NullableIntConverter() int? hotspotScore,@JsonKey(name: 'urgency_score') double? urgencyScore,@JsonKey(name: 'recommended_department') String? recommendedDepartment,@JsonKey(name: 'department_confidence') double? departmentConfidence,@JsonKey(name: 'routing_reasons') List<String>? routingReasons,@JsonKey(name: 'needs_department_review') bool? needsDepartmentReview,@JsonKey(name: 'department_key') String? departmentKey,@JsonKey(name: 'department_display') String? departmentDisplay,@JsonKey(name: 'department_probability') double? departmentProbability,@JsonKey(name: 'department_top2_gap') double? departmentTop2Gap,@JsonKey(name: 'suggested_departments') List<DepartmentSuggestion> suggestedDepartments,@JsonKey(name: 'assigned_department_key') String? assignedDepartmentKey,@JsonKey(name: 'department_source') String? departmentSource,@JsonKey(name: 'department_is_advisory') bool departmentIsAdvisory,@JsonKey(name: 'department_review_reasons') List<String> departmentReviewReasons,@JsonKey(name: 'department_model_version') String? departmentModelVersion,@JsonKey(name: 'department_model_validated') bool departmentModelValidated,@JsonKey(name: 'department_calibration_version') String? departmentCalibrationVersion,@JsonKey(name: 'department_registry_version') String? departmentRegistryVersion,@JsonKey(name: 'department_policy_version') String? departmentPolicyVersion,@JsonKey(name: 'department_rules_applied') List<String> departmentRulesApplied,@JsonKey(name: 'credibility_score') double? credibilityScore,@JsonKey(name: 'incident_group_id') String? incidentGroupId,@JsonKey(name: 'sentiment_score') double? sentimentScore,@JsonKey(name: 'auto_category_suggestion') String? autoCategorySuggestion, List<ReportImage> images,@JsonKey(name: 'resolved_proof_image_ids') List<String> resolvedProofImageIds,@JsonKey(name: 'closure_signature_image_id') String? closureSignatureImageId,@JsonKey(name: 'closure_signature_document_ids') List<String> closureSignatureDocumentIds,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt,@JsonKey(name: 'submitted_at') String? submittedAt,@JsonKey(name: 'verified_at') String? verifiedAt,@JsonKey(name: 'resolved_at') String? resolvedAt,@JsonKey(name: 'citizen_verified_at') String? citizenVerifiedAt,@JsonKey(name: 'citizen_satisfaction')@NullableIntConverter() int? citizenSatisfaction,@JsonKey(name: 'citizen_closure_note') String? citizenClosureNote,@JsonKey(name: 'on_chain_id')@NullableStringConverter() String? onChainId,@JsonKey(name: 'on_chain_hash') String? onChainHash,@JsonKey(name: 'blockchain_txn_hash') String? blockchainTxnHash,@JsonKey(name: 'blockchain_synced') bool blockchainSynced
 });
 
 
@@ -367,12 +636,16 @@ class _$ReportCopyWithImpl<$Res>
 
 /// Create a copy of Report
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? category = freezed,Object? incidentType = freezed,Object? title = freezed,Object? description = null,Object? incidentDatetime = freezed,Object? isHappeningNow = null,Object? zone = freezed,Object? streetLandmark = freezed,Object? cityMunicipality = freezed,Object? province = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? locationAccuracy = null,Object? location = freezed,Object? barangay = freezed,Object? severity = null,Object? peopleAffected = freezed,Object? isEmergency = null,Object? status = null,Object? assignedDepartment = freezed,Object? adminRemarks = freezed,Object? categoryConfidence = freezed,Object? priority = freezed,Object? priorityScore = freezed,Object? priorityLevel = freezed,Object? priorityReasons = freezed,Object? baseScore = freezed,Object? hotspotScore = freezed,Object? urgencyScore = freezed,Object? duplicateState = freezed,Object? relatedReportId = freezed,Object? duplicateScore = freezed,Object? duplicateConfidence = freezed,Object? duplicateTextSimilarity = freezed,Object? duplicateLocationSimilarity = freezed,Object? duplicateExplanation = freezed,Object? relatedIssueId = freezed,Object? sentimentScore = freezed,Object? autoCategorySuggestion = freezed,Object? images = null,Object? createdAt = freezed,Object? updatedAt = freezed,Object? submittedAt = freezed,Object? verifiedAt = freezed,Object? resolvedAt = freezed,Object? onChainId = freezed,Object? onChainHash = freezed,Object? blockchainTxnHash = freezed,Object? blockchainSynced = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? category = freezed,Object? categoryKey = freezed,Object? categoryDisplay = freezed,Object? categoryLabelSnapshot = freezed,Object? taxonomyVersion = freezed,Object? incidentType = freezed,Object? title = freezed,Object? description = null,Object? incidentDatetime = freezed,Object? isHappeningNow = null,Object? zone = freezed,Object? streetLandmark = freezed,Object? municipalityId = null,Object? barangayId = freezed,Object? cityMunicipality = freezed,Object? province = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? locationAccuracy = null,Object? location = freezed,Object? barangay = freezed,Object? severity = null,Object? peopleAffected = freezed,Object? isEmergency = null,Object? status = null,Object? assignedDepartment = freezed,Object? adminRemarks = freezed,Object? categoryConfidence = freezed,Object? modelVersion = freezed,Object? categorySource = freezed,Object? modelProbability = freezed,Object? top2Gap = freezed,Object? needsCategoryReview = freezed,Object? reviewReasons = null,Object? isMultiIssue = null,Object? rulesApplied = null,Object? priority = freezed,Object? priorityScore = freezed,Object? priorityLevel = freezed,Object? suggestedPriorityScore = freezed,Object? suggestedPriorityLevel = freezed,Object? queuePriorityScore = freezed,Object? queuePriorityLevel = freezed,Object? queuePriorityRank = freezed,Object? staffPriorityLevel = freezed,Object? prioritySource = freezed,Object? priorityIsAdvisory = null,Object? needsPriorityReview = null,Object? priorityReviewReasons = null,Object? linkedReportCount = null,Object? linkedUrgencyBoost = null,Object? isIncidentRepresentative = null,Object? priorityModelVersion = freezed,Object? priorityModelValidated = null,Object? priorityCalibrationVersion = freezed,Object? emergencyProbability = freezed,Object? priorityComponents = null,Object? priorityPolicyVersion = freezed,Object? priorityRulesApplied = null,Object? priorityReasons = freezed,Object? baseScore = freezed,Object? hotspotScore = freezed,Object? urgencyScore = freezed,Object? recommendedDepartment = freezed,Object? departmentConfidence = freezed,Object? routingReasons = freezed,Object? needsDepartmentReview = freezed,Object? departmentKey = freezed,Object? departmentDisplay = freezed,Object? departmentProbability = freezed,Object? departmentTop2Gap = freezed,Object? suggestedDepartments = null,Object? assignedDepartmentKey = freezed,Object? departmentSource = freezed,Object? departmentIsAdvisory = null,Object? departmentReviewReasons = null,Object? departmentModelVersion = freezed,Object? departmentModelValidated = null,Object? departmentCalibrationVersion = freezed,Object? departmentRegistryVersion = freezed,Object? departmentPolicyVersion = freezed,Object? departmentRulesApplied = null,Object? credibilityScore = freezed,Object? incidentGroupId = freezed,Object? sentimentScore = freezed,Object? autoCategorySuggestion = freezed,Object? images = null,Object? resolvedProofImageIds = null,Object? closureSignatureImageId = freezed,Object? closureSignatureDocumentIds = null,Object? createdAt = freezed,Object? updatedAt = freezed,Object? submittedAt = freezed,Object? verifiedAt = freezed,Object? resolvedAt = freezed,Object? citizenVerifiedAt = freezed,Object? citizenSatisfaction = freezed,Object? citizenClosureNote = freezed,Object? onChainId = freezed,Object? onChainHash = freezed,Object? blockchainTxnHash = freezed,Object? blockchainSynced = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,reportId: freezed == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
 as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String?,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
+as String?,categoryKey: freezed == categoryKey ? _self.categoryKey : categoryKey // ignore: cast_nullable_to_non_nullable
+as String?,categoryDisplay: freezed == categoryDisplay ? _self.categoryDisplay : categoryDisplay // ignore: cast_nullable_to_non_nullable
+as String?,categoryLabelSnapshot: freezed == categoryLabelSnapshot ? _self.categoryLabelSnapshot : categoryLabelSnapshot // ignore: cast_nullable_to_non_nullable
+as String?,taxonomyVersion: freezed == taxonomyVersion ? _self.taxonomyVersion : taxonomyVersion // ignore: cast_nullable_to_non_nullable
 as String?,incidentType: freezed == incidentType ? _self.incidentType : incidentType // ignore: cast_nullable_to_non_nullable
 as String?,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
@@ -380,6 +653,8 @@ as String,incidentDatetime: freezed == incidentDatetime ? _self.incidentDatetime
 as String?,isHappeningNow: null == isHappeningNow ? _self.isHappeningNow : isHappeningNow // ignore: cast_nullable_to_non_nullable
 as bool,zone: freezed == zone ? _self.zone : zone // ignore: cast_nullable_to_non_nullable
 as String?,streetLandmark: freezed == streetLandmark ? _self.streetLandmark : streetLandmark // ignore: cast_nullable_to_non_nullable
+as String?,municipalityId: null == municipalityId ? _self.municipalityId : municipalityId // ignore: cast_nullable_to_non_nullable
+as String,barangayId: freezed == barangayId ? _self.barangayId : barangayId // ignore: cast_nullable_to_non_nullable
 as String?,cityMunicipality: freezed == cityMunicipality ? _self.cityMunicipality : cityMunicipality // ignore: cast_nullable_to_non_nullable
 as String?,province: freezed == province ? _self.province : province // ignore: cast_nullable_to_non_nullable
 as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
@@ -394,31 +669,78 @@ as bool,status: null == status ? _self.status : status // ignore: cast_nullable_
 as String,assignedDepartment: freezed == assignedDepartment ? _self.assignedDepartment : assignedDepartment // ignore: cast_nullable_to_non_nullable
 as String?,adminRemarks: freezed == adminRemarks ? _self.adminRemarks : adminRemarks // ignore: cast_nullable_to_non_nullable
 as String?,categoryConfidence: freezed == categoryConfidence ? _self.categoryConfidence : categoryConfidence // ignore: cast_nullable_to_non_nullable
-as double?,priority: freezed == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
+as double?,modelVersion: freezed == modelVersion ? _self.modelVersion : modelVersion // ignore: cast_nullable_to_non_nullable
+as String?,categorySource: freezed == categorySource ? _self.categorySource : categorySource // ignore: cast_nullable_to_non_nullable
+as String?,modelProbability: freezed == modelProbability ? _self.modelProbability : modelProbability // ignore: cast_nullable_to_non_nullable
+as double?,top2Gap: freezed == top2Gap ? _self.top2Gap : top2Gap // ignore: cast_nullable_to_non_nullable
+as double?,needsCategoryReview: freezed == needsCategoryReview ? _self.needsCategoryReview : needsCategoryReview // ignore: cast_nullable_to_non_nullable
+as bool?,reviewReasons: null == reviewReasons ? _self.reviewReasons : reviewReasons // ignore: cast_nullable_to_non_nullable
+as List<String>,isMultiIssue: null == isMultiIssue ? _self.isMultiIssue : isMultiIssue // ignore: cast_nullable_to_non_nullable
+as bool,rulesApplied: null == rulesApplied ? _self.rulesApplied : rulesApplied // ignore: cast_nullable_to_non_nullable
+as List<String>,priority: freezed == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
 as String?,priorityScore: freezed == priorityScore ? _self.priorityScore : priorityScore // ignore: cast_nullable_to_non_nullable
 as int?,priorityLevel: freezed == priorityLevel ? _self.priorityLevel : priorityLevel // ignore: cast_nullable_to_non_nullable
-as String?,priorityReasons: freezed == priorityReasons ? _self.priorityReasons : priorityReasons // ignore: cast_nullable_to_non_nullable
+as String?,suggestedPriorityScore: freezed == suggestedPriorityScore ? _self.suggestedPriorityScore : suggestedPriorityScore // ignore: cast_nullable_to_non_nullable
+as double?,suggestedPriorityLevel: freezed == suggestedPriorityLevel ? _self.suggestedPriorityLevel : suggestedPriorityLevel // ignore: cast_nullable_to_non_nullable
+as String?,queuePriorityScore: freezed == queuePriorityScore ? _self.queuePriorityScore : queuePriorityScore // ignore: cast_nullable_to_non_nullable
+as double?,queuePriorityLevel: freezed == queuePriorityLevel ? _self.queuePriorityLevel : queuePriorityLevel // ignore: cast_nullable_to_non_nullable
+as String?,queuePriorityRank: freezed == queuePriorityRank ? _self.queuePriorityRank : queuePriorityRank // ignore: cast_nullable_to_non_nullable
+as int?,staffPriorityLevel: freezed == staffPriorityLevel ? _self.staffPriorityLevel : staffPriorityLevel // ignore: cast_nullable_to_non_nullable
+as String?,prioritySource: freezed == prioritySource ? _self.prioritySource : prioritySource // ignore: cast_nullable_to_non_nullable
+as String?,priorityIsAdvisory: null == priorityIsAdvisory ? _self.priorityIsAdvisory : priorityIsAdvisory // ignore: cast_nullable_to_non_nullable
+as bool,needsPriorityReview: null == needsPriorityReview ? _self.needsPriorityReview : needsPriorityReview // ignore: cast_nullable_to_non_nullable
+as bool,priorityReviewReasons: null == priorityReviewReasons ? _self.priorityReviewReasons : priorityReviewReasons // ignore: cast_nullable_to_non_nullable
+as List<String>,linkedReportCount: null == linkedReportCount ? _self.linkedReportCount : linkedReportCount // ignore: cast_nullable_to_non_nullable
+as int,linkedUrgencyBoost: null == linkedUrgencyBoost ? _self.linkedUrgencyBoost : linkedUrgencyBoost // ignore: cast_nullable_to_non_nullable
+as int,isIncidentRepresentative: null == isIncidentRepresentative ? _self.isIncidentRepresentative : isIncidentRepresentative // ignore: cast_nullable_to_non_nullable
+as bool,priorityModelVersion: freezed == priorityModelVersion ? _self.priorityModelVersion : priorityModelVersion // ignore: cast_nullable_to_non_nullable
+as String?,priorityModelValidated: null == priorityModelValidated ? _self.priorityModelValidated : priorityModelValidated // ignore: cast_nullable_to_non_nullable
+as bool,priorityCalibrationVersion: freezed == priorityCalibrationVersion ? _self.priorityCalibrationVersion : priorityCalibrationVersion // ignore: cast_nullable_to_non_nullable
+as String?,emergencyProbability: freezed == emergencyProbability ? _self.emergencyProbability : emergencyProbability // ignore: cast_nullable_to_non_nullable
+as double?,priorityComponents: null == priorityComponents ? _self.priorityComponents : priorityComponents // ignore: cast_nullable_to_non_nullable
+as Map<String, double>,priorityPolicyVersion: freezed == priorityPolicyVersion ? _self.priorityPolicyVersion : priorityPolicyVersion // ignore: cast_nullable_to_non_nullable
+as String?,priorityRulesApplied: null == priorityRulesApplied ? _self.priorityRulesApplied : priorityRulesApplied // ignore: cast_nullable_to_non_nullable
+as List<String>,priorityReasons: freezed == priorityReasons ? _self.priorityReasons : priorityReasons // ignore: cast_nullable_to_non_nullable
 as List<String>?,baseScore: freezed == baseScore ? _self.baseScore : baseScore // ignore: cast_nullable_to_non_nullable
 as int?,hotspotScore: freezed == hotspotScore ? _self.hotspotScore : hotspotScore // ignore: cast_nullable_to_non_nullable
 as int?,urgencyScore: freezed == urgencyScore ? _self.urgencyScore : urgencyScore // ignore: cast_nullable_to_non_nullable
-as double?,duplicateState: freezed == duplicateState ? _self.duplicateState : duplicateState // ignore: cast_nullable_to_non_nullable
-as String?,relatedReportId: freezed == relatedReportId ? _self.relatedReportId : relatedReportId // ignore: cast_nullable_to_non_nullable
-as String?,duplicateScore: freezed == duplicateScore ? _self.duplicateScore : duplicateScore // ignore: cast_nullable_to_non_nullable
-as double?,duplicateConfidence: freezed == duplicateConfidence ? _self.duplicateConfidence : duplicateConfidence // ignore: cast_nullable_to_non_nullable
-as String?,duplicateTextSimilarity: freezed == duplicateTextSimilarity ? _self.duplicateTextSimilarity : duplicateTextSimilarity // ignore: cast_nullable_to_non_nullable
-as double?,duplicateLocationSimilarity: freezed == duplicateLocationSimilarity ? _self.duplicateLocationSimilarity : duplicateLocationSimilarity // ignore: cast_nullable_to_non_nullable
-as double?,duplicateExplanation: freezed == duplicateExplanation ? _self.duplicateExplanation : duplicateExplanation // ignore: cast_nullable_to_non_nullable
-as String?,relatedIssueId: freezed == relatedIssueId ? _self.relatedIssueId : relatedIssueId // ignore: cast_nullable_to_non_nullable
+as double?,recommendedDepartment: freezed == recommendedDepartment ? _self.recommendedDepartment : recommendedDepartment // ignore: cast_nullable_to_non_nullable
+as String?,departmentConfidence: freezed == departmentConfidence ? _self.departmentConfidence : departmentConfidence // ignore: cast_nullable_to_non_nullable
+as double?,routingReasons: freezed == routingReasons ? _self.routingReasons : routingReasons // ignore: cast_nullable_to_non_nullable
+as List<String>?,needsDepartmentReview: freezed == needsDepartmentReview ? _self.needsDepartmentReview : needsDepartmentReview // ignore: cast_nullable_to_non_nullable
+as bool?,departmentKey: freezed == departmentKey ? _self.departmentKey : departmentKey // ignore: cast_nullable_to_non_nullable
+as String?,departmentDisplay: freezed == departmentDisplay ? _self.departmentDisplay : departmentDisplay // ignore: cast_nullable_to_non_nullable
+as String?,departmentProbability: freezed == departmentProbability ? _self.departmentProbability : departmentProbability // ignore: cast_nullable_to_non_nullable
+as double?,departmentTop2Gap: freezed == departmentTop2Gap ? _self.departmentTop2Gap : departmentTop2Gap // ignore: cast_nullable_to_non_nullable
+as double?,suggestedDepartments: null == suggestedDepartments ? _self.suggestedDepartments : suggestedDepartments // ignore: cast_nullable_to_non_nullable
+as List<DepartmentSuggestion>,assignedDepartmentKey: freezed == assignedDepartmentKey ? _self.assignedDepartmentKey : assignedDepartmentKey // ignore: cast_nullable_to_non_nullable
+as String?,departmentSource: freezed == departmentSource ? _self.departmentSource : departmentSource // ignore: cast_nullable_to_non_nullable
+as String?,departmentIsAdvisory: null == departmentIsAdvisory ? _self.departmentIsAdvisory : departmentIsAdvisory // ignore: cast_nullable_to_non_nullable
+as bool,departmentReviewReasons: null == departmentReviewReasons ? _self.departmentReviewReasons : departmentReviewReasons // ignore: cast_nullable_to_non_nullable
+as List<String>,departmentModelVersion: freezed == departmentModelVersion ? _self.departmentModelVersion : departmentModelVersion // ignore: cast_nullable_to_non_nullable
+as String?,departmentModelValidated: null == departmentModelValidated ? _self.departmentModelValidated : departmentModelValidated // ignore: cast_nullable_to_non_nullable
+as bool,departmentCalibrationVersion: freezed == departmentCalibrationVersion ? _self.departmentCalibrationVersion : departmentCalibrationVersion // ignore: cast_nullable_to_non_nullable
+as String?,departmentRegistryVersion: freezed == departmentRegistryVersion ? _self.departmentRegistryVersion : departmentRegistryVersion // ignore: cast_nullable_to_non_nullable
+as String?,departmentPolicyVersion: freezed == departmentPolicyVersion ? _self.departmentPolicyVersion : departmentPolicyVersion // ignore: cast_nullable_to_non_nullable
+as String?,departmentRulesApplied: null == departmentRulesApplied ? _self.departmentRulesApplied : departmentRulesApplied // ignore: cast_nullable_to_non_nullable
+as List<String>,credibilityScore: freezed == credibilityScore ? _self.credibilityScore : credibilityScore // ignore: cast_nullable_to_non_nullable
+as double?,incidentGroupId: freezed == incidentGroupId ? _self.incidentGroupId : incidentGroupId // ignore: cast_nullable_to_non_nullable
 as String?,sentimentScore: freezed == sentimentScore ? _self.sentimentScore : sentimentScore // ignore: cast_nullable_to_non_nullable
 as double?,autoCategorySuggestion: freezed == autoCategorySuggestion ? _self.autoCategorySuggestion : autoCategorySuggestion // ignore: cast_nullable_to_non_nullable
 as String?,images: null == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
-as List<ReportImage>,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as List<ReportImage>,resolvedProofImageIds: null == resolvedProofImageIds ? _self.resolvedProofImageIds : resolvedProofImageIds // ignore: cast_nullable_to_non_nullable
+as List<String>,closureSignatureImageId: freezed == closureSignatureImageId ? _self.closureSignatureImageId : closureSignatureImageId // ignore: cast_nullable_to_non_nullable
+as String?,closureSignatureDocumentIds: null == closureSignatureDocumentIds ? _self.closureSignatureDocumentIds : closureSignatureDocumentIds // ignore: cast_nullable_to_non_nullable
+as List<String>,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as String?,submittedAt: freezed == submittedAt ? _self.submittedAt : submittedAt // ignore: cast_nullable_to_non_nullable
 as String?,verifiedAt: freezed == verifiedAt ? _self.verifiedAt : verifiedAt // ignore: cast_nullable_to_non_nullable
 as String?,resolvedAt: freezed == resolvedAt ? _self.resolvedAt : resolvedAt // ignore: cast_nullable_to_non_nullable
+as String?,citizenVerifiedAt: freezed == citizenVerifiedAt ? _self.citizenVerifiedAt : citizenVerifiedAt // ignore: cast_nullable_to_non_nullable
+as String?,citizenSatisfaction: freezed == citizenSatisfaction ? _self.citizenSatisfaction : citizenSatisfaction // ignore: cast_nullable_to_non_nullable
+as int?,citizenClosureNote: freezed == citizenClosureNote ? _self.citizenClosureNote : citizenClosureNote // ignore: cast_nullable_to_non_nullable
 as String?,onChainId: freezed == onChainId ? _self.onChainId : onChainId // ignore: cast_nullable_to_non_nullable
-as int?,onChainHash: freezed == onChainHash ? _self.onChainHash : onChainHash // ignore: cast_nullable_to_non_nullable
+as String?,onChainHash: freezed == onChainHash ? _self.onChainHash : onChainHash // ignore: cast_nullable_to_non_nullable
 as String?,blockchainTxnHash: freezed == blockchainTxnHash ? _self.blockchainTxnHash : blockchainTxnHash // ignore: cast_nullable_to_non_nullable
 as String?,blockchainSynced: null == blockchainSynced ? _self.blockchainSynced : blockchainSynced // ignore: cast_nullable_to_non_nullable
 as bool,
@@ -503,10 +825,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String? category, @JsonKey(name: 'incident_type')  String? incidentType,  String? title,  String description, @JsonKey(name: 'incident_datetime')  String? incidentDatetime, @JsonKey(name: 'is_happening_now')  bool isHappeningNow,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? latitude,  String? longitude, @JsonKey(name: 'location_accuracy')  String locationAccuracy,  String? location,  String? barangay,  String severity, @JsonKey(name: 'people_affected')  int? peopleAffected, @JsonKey(name: 'is_emergency')  bool isEmergency,  String status, @JsonKey(name: 'assigned_department')  String? assignedDepartment, @JsonKey(name: 'admin_remarks')  String? adminRemarks, @JsonKey(name: 'category_confidence')  double? categoryConfidence,  String? priority, @JsonKey(name: 'priority_score')  int? priorityScore, @JsonKey(name: 'priority_level')  String? priorityLevel, @JsonKey(name: 'priority_reasons')  List<String>? priorityReasons, @JsonKey(name: 'base_score')  int? baseScore, @JsonKey(name: 'hotspot_score')  int? hotspotScore, @JsonKey(name: 'urgency_score')  double? urgencyScore, @JsonKey(name: 'duplicate_state')  String? duplicateState, @JsonKey(name: 'related_report_id')  String? relatedReportId, @JsonKey(name: 'duplicate_score')  double? duplicateScore, @JsonKey(name: 'duplicate_confidence')  String? duplicateConfidence, @JsonKey(name: 'duplicate_text_similarity')  double? duplicateTextSimilarity, @JsonKey(name: 'duplicate_location_similarity')  double? duplicateLocationSimilarity, @JsonKey(name: 'duplicate_explanation')  String? duplicateExplanation, @JsonKey(name: 'related_issue_id')  String? relatedIssueId, @JsonKey(name: 'sentiment_score')  double? sentimentScore, @JsonKey(name: 'auto_category_suggestion')  String? autoCategorySuggestion,  List<ReportImage> images, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'submitted_at')  String? submittedAt, @JsonKey(name: 'verified_at')  String? verifiedAt, @JsonKey(name: 'resolved_at')  String? resolvedAt, @JsonKey(name: 'on_chain_id')  int? onChainId, @JsonKey(name: 'on_chain_hash')  String? onChainHash, @JsonKey(name: 'blockchain_txn_hash')  String? blockchainTxnHash, @JsonKey(name: 'blockchain_synced')  bool blockchainSynced)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String? category, @JsonKey(name: 'category_key')  String? categoryKey, @JsonKey(name: 'category_display')  String? categoryDisplay, @JsonKey(name: 'category_label_snapshot')  String? categoryLabelSnapshot, @JsonKey(name: 'taxonomy_version')  String? taxonomyVersion, @JsonKey(name: 'incident_type')  String? incidentType,  String? title,  String description, @JsonKey(name: 'incident_datetime')  String? incidentDatetime, @JsonKey(name: 'is_happening_now')  bool isHappeningNow,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'municipality_id', readValue: _readMunicipalityId)  String municipalityId, @JsonKey(name: 'barangay_id', readValue: _readBarangayId)  String? barangayId, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? latitude,  String? longitude, @JsonKey(name: 'location_accuracy')  String locationAccuracy,  String? location,  String? barangay,  String severity, @JsonKey(name: 'people_affected')@NullableIntConverter()  int? peopleAffected, @JsonKey(name: 'is_emergency')  bool isEmergency,  String status, @JsonKey(name: 'assigned_department')  String? assignedDepartment, @JsonKey(name: 'admin_remarks')  String? adminRemarks, @JsonKey(name: 'category_confidence')  double? categoryConfidence, @JsonKey(name: 'model_version')  String? modelVersion, @JsonKey(name: 'category_source')  String? categorySource, @JsonKey(name: 'model_probability')  double? modelProbability, @JsonKey(name: 'top2_gap')  double? top2Gap, @JsonKey(name: 'needs_category_review')  bool? needsCategoryReview, @JsonKey(name: 'review_reasons')  List<String> reviewReasons, @JsonKey(name: 'is_multi_issue')  bool isMultiIssue, @JsonKey(name: 'rules_applied')  List<String> rulesApplied,  String? priority, @JsonKey(name: 'priority_score')@NullableIntConverter()  int? priorityScore, @JsonKey(name: 'priority_level')  String? priorityLevel, @JsonKey(name: 'suggested_priority_score')  double? suggestedPriorityScore, @JsonKey(name: 'suggested_priority_level')  String? suggestedPriorityLevel, @JsonKey(name: 'queue_priority_score')  double? queuePriorityScore, @JsonKey(name: 'queue_priority_level')  String? queuePriorityLevel, @JsonKey(name: 'queue_priority_rank')@NullableIntConverter()  int? queuePriorityRank, @JsonKey(name: 'staff_priority_level')  String? staffPriorityLevel, @JsonKey(name: 'priority_source')  String? prioritySource, @JsonKey(name: 'priority_is_advisory')  bool priorityIsAdvisory, @JsonKey(name: 'needs_priority_review')  bool needsPriorityReview, @JsonKey(name: 'priority_review_reasons')  List<String> priorityReviewReasons, @JsonKey(name: 'linked_report_count')  int linkedReportCount, @JsonKey(name: 'linked_urgency_boost')  int linkedUrgencyBoost, @JsonKey(name: 'is_incident_representative')  bool isIncidentRepresentative, @JsonKey(name: 'priority_model_version')  String? priorityModelVersion, @JsonKey(name: 'priority_model_validated')  bool priorityModelValidated, @JsonKey(name: 'priority_calibration_version')  String? priorityCalibrationVersion, @JsonKey(name: 'emergency_probability')  double? emergencyProbability, @JsonKey(name: 'priority_components')  Map<String, double> priorityComponents, @JsonKey(name: 'priority_policy_version')  String? priorityPolicyVersion, @JsonKey(name: 'priority_rules_applied')  List<String> priorityRulesApplied, @JsonKey(name: 'priority_reasons')  List<String>? priorityReasons, @JsonKey(name: 'base_score')@NullableIntConverter()  int? baseScore, @JsonKey(name: 'hotspot_score')@NullableIntConverter()  int? hotspotScore, @JsonKey(name: 'urgency_score')  double? urgencyScore, @JsonKey(name: 'recommended_department')  String? recommendedDepartment, @JsonKey(name: 'department_confidence')  double? departmentConfidence, @JsonKey(name: 'routing_reasons')  List<String>? routingReasons, @JsonKey(name: 'needs_department_review')  bool? needsDepartmentReview, @JsonKey(name: 'department_key')  String? departmentKey, @JsonKey(name: 'department_display')  String? departmentDisplay, @JsonKey(name: 'department_probability')  double? departmentProbability, @JsonKey(name: 'department_top2_gap')  double? departmentTop2Gap, @JsonKey(name: 'suggested_departments')  List<DepartmentSuggestion> suggestedDepartments, @JsonKey(name: 'assigned_department_key')  String? assignedDepartmentKey, @JsonKey(name: 'department_source')  String? departmentSource, @JsonKey(name: 'department_is_advisory')  bool departmentIsAdvisory, @JsonKey(name: 'department_review_reasons')  List<String> departmentReviewReasons, @JsonKey(name: 'department_model_version')  String? departmentModelVersion, @JsonKey(name: 'department_model_validated')  bool departmentModelValidated, @JsonKey(name: 'department_calibration_version')  String? departmentCalibrationVersion, @JsonKey(name: 'department_registry_version')  String? departmentRegistryVersion, @JsonKey(name: 'department_policy_version')  String? departmentPolicyVersion, @JsonKey(name: 'department_rules_applied')  List<String> departmentRulesApplied, @JsonKey(name: 'credibility_score')  double? credibilityScore, @JsonKey(name: 'incident_group_id')  String? incidentGroupId, @JsonKey(name: 'sentiment_score')  double? sentimentScore, @JsonKey(name: 'auto_category_suggestion')  String? autoCategorySuggestion,  List<ReportImage> images, @JsonKey(name: 'resolved_proof_image_ids')  List<String> resolvedProofImageIds, @JsonKey(name: 'closure_signature_image_id')  String? closureSignatureImageId, @JsonKey(name: 'closure_signature_document_ids')  List<String> closureSignatureDocumentIds, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'submitted_at')  String? submittedAt, @JsonKey(name: 'verified_at')  String? verifiedAt, @JsonKey(name: 'resolved_at')  String? resolvedAt, @JsonKey(name: 'citizen_verified_at')  String? citizenVerifiedAt, @JsonKey(name: 'citizen_satisfaction')@NullableIntConverter()  int? citizenSatisfaction, @JsonKey(name: 'citizen_closure_note')  String? citizenClosureNote, @JsonKey(name: 'on_chain_id')@NullableStringConverter()  String? onChainId, @JsonKey(name: 'on_chain_hash')  String? onChainHash, @JsonKey(name: 'blockchain_txn_hash')  String? blockchainTxnHash, @JsonKey(name: 'blockchain_synced')  bool blockchainSynced)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Report() when $default != null:
-return $default(_that.id,_that.reportId,_that.userId,_that.category,_that.incidentType,_that.title,_that.description,_that.incidentDatetime,_that.isHappeningNow,_that.zone,_that.streetLandmark,_that.cityMunicipality,_that.province,_that.latitude,_that.longitude,_that.locationAccuracy,_that.location,_that.barangay,_that.severity,_that.peopleAffected,_that.isEmergency,_that.status,_that.assignedDepartment,_that.adminRemarks,_that.categoryConfidence,_that.priority,_that.priorityScore,_that.priorityLevel,_that.priorityReasons,_that.baseScore,_that.hotspotScore,_that.urgencyScore,_that.duplicateState,_that.relatedReportId,_that.duplicateScore,_that.duplicateConfidence,_that.duplicateTextSimilarity,_that.duplicateLocationSimilarity,_that.duplicateExplanation,_that.relatedIssueId,_that.sentimentScore,_that.autoCategorySuggestion,_that.images,_that.createdAt,_that.updatedAt,_that.submittedAt,_that.verifiedAt,_that.resolvedAt,_that.onChainId,_that.onChainHash,_that.blockchainTxnHash,_that.blockchainSynced);case _:
+return $default(_that.id,_that.reportId,_that.userId,_that.category,_that.categoryKey,_that.categoryDisplay,_that.categoryLabelSnapshot,_that.taxonomyVersion,_that.incidentType,_that.title,_that.description,_that.incidentDatetime,_that.isHappeningNow,_that.zone,_that.streetLandmark,_that.municipalityId,_that.barangayId,_that.cityMunicipality,_that.province,_that.latitude,_that.longitude,_that.locationAccuracy,_that.location,_that.barangay,_that.severity,_that.peopleAffected,_that.isEmergency,_that.status,_that.assignedDepartment,_that.adminRemarks,_that.categoryConfidence,_that.modelVersion,_that.categorySource,_that.modelProbability,_that.top2Gap,_that.needsCategoryReview,_that.reviewReasons,_that.isMultiIssue,_that.rulesApplied,_that.priority,_that.priorityScore,_that.priorityLevel,_that.suggestedPriorityScore,_that.suggestedPriorityLevel,_that.queuePriorityScore,_that.queuePriorityLevel,_that.queuePriorityRank,_that.staffPriorityLevel,_that.prioritySource,_that.priorityIsAdvisory,_that.needsPriorityReview,_that.priorityReviewReasons,_that.linkedReportCount,_that.linkedUrgencyBoost,_that.isIncidentRepresentative,_that.priorityModelVersion,_that.priorityModelValidated,_that.priorityCalibrationVersion,_that.emergencyProbability,_that.priorityComponents,_that.priorityPolicyVersion,_that.priorityRulesApplied,_that.priorityReasons,_that.baseScore,_that.hotspotScore,_that.urgencyScore,_that.recommendedDepartment,_that.departmentConfidence,_that.routingReasons,_that.needsDepartmentReview,_that.departmentKey,_that.departmentDisplay,_that.departmentProbability,_that.departmentTop2Gap,_that.suggestedDepartments,_that.assignedDepartmentKey,_that.departmentSource,_that.departmentIsAdvisory,_that.departmentReviewReasons,_that.departmentModelVersion,_that.departmentModelValidated,_that.departmentCalibrationVersion,_that.departmentRegistryVersion,_that.departmentPolicyVersion,_that.departmentRulesApplied,_that.credibilityScore,_that.incidentGroupId,_that.sentimentScore,_that.autoCategorySuggestion,_that.images,_that.resolvedProofImageIds,_that.closureSignatureImageId,_that.closureSignatureDocumentIds,_that.createdAt,_that.updatedAt,_that.submittedAt,_that.verifiedAt,_that.resolvedAt,_that.citizenVerifiedAt,_that.citizenSatisfaction,_that.citizenClosureNote,_that.onChainId,_that.onChainHash,_that.blockchainTxnHash,_that.blockchainSynced);case _:
   return orElse();
 
 }
@@ -524,10 +846,10 @@ return $default(_that.id,_that.reportId,_that.userId,_that.category,_that.incide
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String? category, @JsonKey(name: 'incident_type')  String? incidentType,  String? title,  String description, @JsonKey(name: 'incident_datetime')  String? incidentDatetime, @JsonKey(name: 'is_happening_now')  bool isHappeningNow,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? latitude,  String? longitude, @JsonKey(name: 'location_accuracy')  String locationAccuracy,  String? location,  String? barangay,  String severity, @JsonKey(name: 'people_affected')  int? peopleAffected, @JsonKey(name: 'is_emergency')  bool isEmergency,  String status, @JsonKey(name: 'assigned_department')  String? assignedDepartment, @JsonKey(name: 'admin_remarks')  String? adminRemarks, @JsonKey(name: 'category_confidence')  double? categoryConfidence,  String? priority, @JsonKey(name: 'priority_score')  int? priorityScore, @JsonKey(name: 'priority_level')  String? priorityLevel, @JsonKey(name: 'priority_reasons')  List<String>? priorityReasons, @JsonKey(name: 'base_score')  int? baseScore, @JsonKey(name: 'hotspot_score')  int? hotspotScore, @JsonKey(name: 'urgency_score')  double? urgencyScore, @JsonKey(name: 'duplicate_state')  String? duplicateState, @JsonKey(name: 'related_report_id')  String? relatedReportId, @JsonKey(name: 'duplicate_score')  double? duplicateScore, @JsonKey(name: 'duplicate_confidence')  String? duplicateConfidence, @JsonKey(name: 'duplicate_text_similarity')  double? duplicateTextSimilarity, @JsonKey(name: 'duplicate_location_similarity')  double? duplicateLocationSimilarity, @JsonKey(name: 'duplicate_explanation')  String? duplicateExplanation, @JsonKey(name: 'related_issue_id')  String? relatedIssueId, @JsonKey(name: 'sentiment_score')  double? sentimentScore, @JsonKey(name: 'auto_category_suggestion')  String? autoCategorySuggestion,  List<ReportImage> images, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'submitted_at')  String? submittedAt, @JsonKey(name: 'verified_at')  String? verifiedAt, @JsonKey(name: 'resolved_at')  String? resolvedAt, @JsonKey(name: 'on_chain_id')  int? onChainId, @JsonKey(name: 'on_chain_hash')  String? onChainHash, @JsonKey(name: 'blockchain_txn_hash')  String? blockchainTxnHash, @JsonKey(name: 'blockchain_synced')  bool blockchainSynced)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String? category, @JsonKey(name: 'category_key')  String? categoryKey, @JsonKey(name: 'category_display')  String? categoryDisplay, @JsonKey(name: 'category_label_snapshot')  String? categoryLabelSnapshot, @JsonKey(name: 'taxonomy_version')  String? taxonomyVersion, @JsonKey(name: 'incident_type')  String? incidentType,  String? title,  String description, @JsonKey(name: 'incident_datetime')  String? incidentDatetime, @JsonKey(name: 'is_happening_now')  bool isHappeningNow,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'municipality_id', readValue: _readMunicipalityId)  String municipalityId, @JsonKey(name: 'barangay_id', readValue: _readBarangayId)  String? barangayId, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? latitude,  String? longitude, @JsonKey(name: 'location_accuracy')  String locationAccuracy,  String? location,  String? barangay,  String severity, @JsonKey(name: 'people_affected')@NullableIntConverter()  int? peopleAffected, @JsonKey(name: 'is_emergency')  bool isEmergency,  String status, @JsonKey(name: 'assigned_department')  String? assignedDepartment, @JsonKey(name: 'admin_remarks')  String? adminRemarks, @JsonKey(name: 'category_confidence')  double? categoryConfidence, @JsonKey(name: 'model_version')  String? modelVersion, @JsonKey(name: 'category_source')  String? categorySource, @JsonKey(name: 'model_probability')  double? modelProbability, @JsonKey(name: 'top2_gap')  double? top2Gap, @JsonKey(name: 'needs_category_review')  bool? needsCategoryReview, @JsonKey(name: 'review_reasons')  List<String> reviewReasons, @JsonKey(name: 'is_multi_issue')  bool isMultiIssue, @JsonKey(name: 'rules_applied')  List<String> rulesApplied,  String? priority, @JsonKey(name: 'priority_score')@NullableIntConverter()  int? priorityScore, @JsonKey(name: 'priority_level')  String? priorityLevel, @JsonKey(name: 'suggested_priority_score')  double? suggestedPriorityScore, @JsonKey(name: 'suggested_priority_level')  String? suggestedPriorityLevel, @JsonKey(name: 'queue_priority_score')  double? queuePriorityScore, @JsonKey(name: 'queue_priority_level')  String? queuePriorityLevel, @JsonKey(name: 'queue_priority_rank')@NullableIntConverter()  int? queuePriorityRank, @JsonKey(name: 'staff_priority_level')  String? staffPriorityLevel, @JsonKey(name: 'priority_source')  String? prioritySource, @JsonKey(name: 'priority_is_advisory')  bool priorityIsAdvisory, @JsonKey(name: 'needs_priority_review')  bool needsPriorityReview, @JsonKey(name: 'priority_review_reasons')  List<String> priorityReviewReasons, @JsonKey(name: 'linked_report_count')  int linkedReportCount, @JsonKey(name: 'linked_urgency_boost')  int linkedUrgencyBoost, @JsonKey(name: 'is_incident_representative')  bool isIncidentRepresentative, @JsonKey(name: 'priority_model_version')  String? priorityModelVersion, @JsonKey(name: 'priority_model_validated')  bool priorityModelValidated, @JsonKey(name: 'priority_calibration_version')  String? priorityCalibrationVersion, @JsonKey(name: 'emergency_probability')  double? emergencyProbability, @JsonKey(name: 'priority_components')  Map<String, double> priorityComponents, @JsonKey(name: 'priority_policy_version')  String? priorityPolicyVersion, @JsonKey(name: 'priority_rules_applied')  List<String> priorityRulesApplied, @JsonKey(name: 'priority_reasons')  List<String>? priorityReasons, @JsonKey(name: 'base_score')@NullableIntConverter()  int? baseScore, @JsonKey(name: 'hotspot_score')@NullableIntConverter()  int? hotspotScore, @JsonKey(name: 'urgency_score')  double? urgencyScore, @JsonKey(name: 'recommended_department')  String? recommendedDepartment, @JsonKey(name: 'department_confidence')  double? departmentConfidence, @JsonKey(name: 'routing_reasons')  List<String>? routingReasons, @JsonKey(name: 'needs_department_review')  bool? needsDepartmentReview, @JsonKey(name: 'department_key')  String? departmentKey, @JsonKey(name: 'department_display')  String? departmentDisplay, @JsonKey(name: 'department_probability')  double? departmentProbability, @JsonKey(name: 'department_top2_gap')  double? departmentTop2Gap, @JsonKey(name: 'suggested_departments')  List<DepartmentSuggestion> suggestedDepartments, @JsonKey(name: 'assigned_department_key')  String? assignedDepartmentKey, @JsonKey(name: 'department_source')  String? departmentSource, @JsonKey(name: 'department_is_advisory')  bool departmentIsAdvisory, @JsonKey(name: 'department_review_reasons')  List<String> departmentReviewReasons, @JsonKey(name: 'department_model_version')  String? departmentModelVersion, @JsonKey(name: 'department_model_validated')  bool departmentModelValidated, @JsonKey(name: 'department_calibration_version')  String? departmentCalibrationVersion, @JsonKey(name: 'department_registry_version')  String? departmentRegistryVersion, @JsonKey(name: 'department_policy_version')  String? departmentPolicyVersion, @JsonKey(name: 'department_rules_applied')  List<String> departmentRulesApplied, @JsonKey(name: 'credibility_score')  double? credibilityScore, @JsonKey(name: 'incident_group_id')  String? incidentGroupId, @JsonKey(name: 'sentiment_score')  double? sentimentScore, @JsonKey(name: 'auto_category_suggestion')  String? autoCategorySuggestion,  List<ReportImage> images, @JsonKey(name: 'resolved_proof_image_ids')  List<String> resolvedProofImageIds, @JsonKey(name: 'closure_signature_image_id')  String? closureSignatureImageId, @JsonKey(name: 'closure_signature_document_ids')  List<String> closureSignatureDocumentIds, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'submitted_at')  String? submittedAt, @JsonKey(name: 'verified_at')  String? verifiedAt, @JsonKey(name: 'resolved_at')  String? resolvedAt, @JsonKey(name: 'citizen_verified_at')  String? citizenVerifiedAt, @JsonKey(name: 'citizen_satisfaction')@NullableIntConverter()  int? citizenSatisfaction, @JsonKey(name: 'citizen_closure_note')  String? citizenClosureNote, @JsonKey(name: 'on_chain_id')@NullableStringConverter()  String? onChainId, @JsonKey(name: 'on_chain_hash')  String? onChainHash, @JsonKey(name: 'blockchain_txn_hash')  String? blockchainTxnHash, @JsonKey(name: 'blockchain_synced')  bool blockchainSynced)  $default,) {final _that = this;
 switch (_that) {
 case _Report():
-return $default(_that.id,_that.reportId,_that.userId,_that.category,_that.incidentType,_that.title,_that.description,_that.incidentDatetime,_that.isHappeningNow,_that.zone,_that.streetLandmark,_that.cityMunicipality,_that.province,_that.latitude,_that.longitude,_that.locationAccuracy,_that.location,_that.barangay,_that.severity,_that.peopleAffected,_that.isEmergency,_that.status,_that.assignedDepartment,_that.adminRemarks,_that.categoryConfidence,_that.priority,_that.priorityScore,_that.priorityLevel,_that.priorityReasons,_that.baseScore,_that.hotspotScore,_that.urgencyScore,_that.duplicateState,_that.relatedReportId,_that.duplicateScore,_that.duplicateConfidence,_that.duplicateTextSimilarity,_that.duplicateLocationSimilarity,_that.duplicateExplanation,_that.relatedIssueId,_that.sentimentScore,_that.autoCategorySuggestion,_that.images,_that.createdAt,_that.updatedAt,_that.submittedAt,_that.verifiedAt,_that.resolvedAt,_that.onChainId,_that.onChainHash,_that.blockchainTxnHash,_that.blockchainSynced);}
+return $default(_that.id,_that.reportId,_that.userId,_that.category,_that.categoryKey,_that.categoryDisplay,_that.categoryLabelSnapshot,_that.taxonomyVersion,_that.incidentType,_that.title,_that.description,_that.incidentDatetime,_that.isHappeningNow,_that.zone,_that.streetLandmark,_that.municipalityId,_that.barangayId,_that.cityMunicipality,_that.province,_that.latitude,_that.longitude,_that.locationAccuracy,_that.location,_that.barangay,_that.severity,_that.peopleAffected,_that.isEmergency,_that.status,_that.assignedDepartment,_that.adminRemarks,_that.categoryConfidence,_that.modelVersion,_that.categorySource,_that.modelProbability,_that.top2Gap,_that.needsCategoryReview,_that.reviewReasons,_that.isMultiIssue,_that.rulesApplied,_that.priority,_that.priorityScore,_that.priorityLevel,_that.suggestedPriorityScore,_that.suggestedPriorityLevel,_that.queuePriorityScore,_that.queuePriorityLevel,_that.queuePriorityRank,_that.staffPriorityLevel,_that.prioritySource,_that.priorityIsAdvisory,_that.needsPriorityReview,_that.priorityReviewReasons,_that.linkedReportCount,_that.linkedUrgencyBoost,_that.isIncidentRepresentative,_that.priorityModelVersion,_that.priorityModelValidated,_that.priorityCalibrationVersion,_that.emergencyProbability,_that.priorityComponents,_that.priorityPolicyVersion,_that.priorityRulesApplied,_that.priorityReasons,_that.baseScore,_that.hotspotScore,_that.urgencyScore,_that.recommendedDepartment,_that.departmentConfidence,_that.routingReasons,_that.needsDepartmentReview,_that.departmentKey,_that.departmentDisplay,_that.departmentProbability,_that.departmentTop2Gap,_that.suggestedDepartments,_that.assignedDepartmentKey,_that.departmentSource,_that.departmentIsAdvisory,_that.departmentReviewReasons,_that.departmentModelVersion,_that.departmentModelValidated,_that.departmentCalibrationVersion,_that.departmentRegistryVersion,_that.departmentPolicyVersion,_that.departmentRulesApplied,_that.credibilityScore,_that.incidentGroupId,_that.sentimentScore,_that.autoCategorySuggestion,_that.images,_that.resolvedProofImageIds,_that.closureSignatureImageId,_that.closureSignatureDocumentIds,_that.createdAt,_that.updatedAt,_that.submittedAt,_that.verifiedAt,_that.resolvedAt,_that.citizenVerifiedAt,_that.citizenSatisfaction,_that.citizenClosureNote,_that.onChainId,_that.onChainHash,_that.blockchainTxnHash,_that.blockchainSynced);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -541,10 +863,10 @@ return $default(_that.id,_that.reportId,_that.userId,_that.category,_that.incide
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String? category, @JsonKey(name: 'incident_type')  String? incidentType,  String? title,  String description, @JsonKey(name: 'incident_datetime')  String? incidentDatetime, @JsonKey(name: 'is_happening_now')  bool isHappeningNow,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? latitude,  String? longitude, @JsonKey(name: 'location_accuracy')  String locationAccuracy,  String? location,  String? barangay,  String severity, @JsonKey(name: 'people_affected')  int? peopleAffected, @JsonKey(name: 'is_emergency')  bool isEmergency,  String status, @JsonKey(name: 'assigned_department')  String? assignedDepartment, @JsonKey(name: 'admin_remarks')  String? adminRemarks, @JsonKey(name: 'category_confidence')  double? categoryConfidence,  String? priority, @JsonKey(name: 'priority_score')  int? priorityScore, @JsonKey(name: 'priority_level')  String? priorityLevel, @JsonKey(name: 'priority_reasons')  List<String>? priorityReasons, @JsonKey(name: 'base_score')  int? baseScore, @JsonKey(name: 'hotspot_score')  int? hotspotScore, @JsonKey(name: 'urgency_score')  double? urgencyScore, @JsonKey(name: 'duplicate_state')  String? duplicateState, @JsonKey(name: 'related_report_id')  String? relatedReportId, @JsonKey(name: 'duplicate_score')  double? duplicateScore, @JsonKey(name: 'duplicate_confidence')  String? duplicateConfidence, @JsonKey(name: 'duplicate_text_similarity')  double? duplicateTextSimilarity, @JsonKey(name: 'duplicate_location_similarity')  double? duplicateLocationSimilarity, @JsonKey(name: 'duplicate_explanation')  String? duplicateExplanation, @JsonKey(name: 'related_issue_id')  String? relatedIssueId, @JsonKey(name: 'sentiment_score')  double? sentimentScore, @JsonKey(name: 'auto_category_suggestion')  String? autoCategorySuggestion,  List<ReportImage> images, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'submitted_at')  String? submittedAt, @JsonKey(name: 'verified_at')  String? verifiedAt, @JsonKey(name: 'resolved_at')  String? resolvedAt, @JsonKey(name: 'on_chain_id')  int? onChainId, @JsonKey(name: 'on_chain_hash')  String? onChainHash, @JsonKey(name: 'blockchain_txn_hash')  String? blockchainTxnHash, @JsonKey(name: 'blockchain_synced')  bool blockchainSynced)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'report_id')  String? reportId, @JsonKey(name: 'user_id')  String? userId,  String? category, @JsonKey(name: 'category_key')  String? categoryKey, @JsonKey(name: 'category_display')  String? categoryDisplay, @JsonKey(name: 'category_label_snapshot')  String? categoryLabelSnapshot, @JsonKey(name: 'taxonomy_version')  String? taxonomyVersion, @JsonKey(name: 'incident_type')  String? incidentType,  String? title,  String description, @JsonKey(name: 'incident_datetime')  String? incidentDatetime, @JsonKey(name: 'is_happening_now')  bool isHappeningNow,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'municipality_id', readValue: _readMunicipalityId)  String municipalityId, @JsonKey(name: 'barangay_id', readValue: _readBarangayId)  String? barangayId, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? latitude,  String? longitude, @JsonKey(name: 'location_accuracy')  String locationAccuracy,  String? location,  String? barangay,  String severity, @JsonKey(name: 'people_affected')@NullableIntConverter()  int? peopleAffected, @JsonKey(name: 'is_emergency')  bool isEmergency,  String status, @JsonKey(name: 'assigned_department')  String? assignedDepartment, @JsonKey(name: 'admin_remarks')  String? adminRemarks, @JsonKey(name: 'category_confidence')  double? categoryConfidence, @JsonKey(name: 'model_version')  String? modelVersion, @JsonKey(name: 'category_source')  String? categorySource, @JsonKey(name: 'model_probability')  double? modelProbability, @JsonKey(name: 'top2_gap')  double? top2Gap, @JsonKey(name: 'needs_category_review')  bool? needsCategoryReview, @JsonKey(name: 'review_reasons')  List<String> reviewReasons, @JsonKey(name: 'is_multi_issue')  bool isMultiIssue, @JsonKey(name: 'rules_applied')  List<String> rulesApplied,  String? priority, @JsonKey(name: 'priority_score')@NullableIntConverter()  int? priorityScore, @JsonKey(name: 'priority_level')  String? priorityLevel, @JsonKey(name: 'suggested_priority_score')  double? suggestedPriorityScore, @JsonKey(name: 'suggested_priority_level')  String? suggestedPriorityLevel, @JsonKey(name: 'queue_priority_score')  double? queuePriorityScore, @JsonKey(name: 'queue_priority_level')  String? queuePriorityLevel, @JsonKey(name: 'queue_priority_rank')@NullableIntConverter()  int? queuePriorityRank, @JsonKey(name: 'staff_priority_level')  String? staffPriorityLevel, @JsonKey(name: 'priority_source')  String? prioritySource, @JsonKey(name: 'priority_is_advisory')  bool priorityIsAdvisory, @JsonKey(name: 'needs_priority_review')  bool needsPriorityReview, @JsonKey(name: 'priority_review_reasons')  List<String> priorityReviewReasons, @JsonKey(name: 'linked_report_count')  int linkedReportCount, @JsonKey(name: 'linked_urgency_boost')  int linkedUrgencyBoost, @JsonKey(name: 'is_incident_representative')  bool isIncidentRepresentative, @JsonKey(name: 'priority_model_version')  String? priorityModelVersion, @JsonKey(name: 'priority_model_validated')  bool priorityModelValidated, @JsonKey(name: 'priority_calibration_version')  String? priorityCalibrationVersion, @JsonKey(name: 'emergency_probability')  double? emergencyProbability, @JsonKey(name: 'priority_components')  Map<String, double> priorityComponents, @JsonKey(name: 'priority_policy_version')  String? priorityPolicyVersion, @JsonKey(name: 'priority_rules_applied')  List<String> priorityRulesApplied, @JsonKey(name: 'priority_reasons')  List<String>? priorityReasons, @JsonKey(name: 'base_score')@NullableIntConverter()  int? baseScore, @JsonKey(name: 'hotspot_score')@NullableIntConverter()  int? hotspotScore, @JsonKey(name: 'urgency_score')  double? urgencyScore, @JsonKey(name: 'recommended_department')  String? recommendedDepartment, @JsonKey(name: 'department_confidence')  double? departmentConfidence, @JsonKey(name: 'routing_reasons')  List<String>? routingReasons, @JsonKey(name: 'needs_department_review')  bool? needsDepartmentReview, @JsonKey(name: 'department_key')  String? departmentKey, @JsonKey(name: 'department_display')  String? departmentDisplay, @JsonKey(name: 'department_probability')  double? departmentProbability, @JsonKey(name: 'department_top2_gap')  double? departmentTop2Gap, @JsonKey(name: 'suggested_departments')  List<DepartmentSuggestion> suggestedDepartments, @JsonKey(name: 'assigned_department_key')  String? assignedDepartmentKey, @JsonKey(name: 'department_source')  String? departmentSource, @JsonKey(name: 'department_is_advisory')  bool departmentIsAdvisory, @JsonKey(name: 'department_review_reasons')  List<String> departmentReviewReasons, @JsonKey(name: 'department_model_version')  String? departmentModelVersion, @JsonKey(name: 'department_model_validated')  bool departmentModelValidated, @JsonKey(name: 'department_calibration_version')  String? departmentCalibrationVersion, @JsonKey(name: 'department_registry_version')  String? departmentRegistryVersion, @JsonKey(name: 'department_policy_version')  String? departmentPolicyVersion, @JsonKey(name: 'department_rules_applied')  List<String> departmentRulesApplied, @JsonKey(name: 'credibility_score')  double? credibilityScore, @JsonKey(name: 'incident_group_id')  String? incidentGroupId, @JsonKey(name: 'sentiment_score')  double? sentimentScore, @JsonKey(name: 'auto_category_suggestion')  String? autoCategorySuggestion,  List<ReportImage> images, @JsonKey(name: 'resolved_proof_image_ids')  List<String> resolvedProofImageIds, @JsonKey(name: 'closure_signature_image_id')  String? closureSignatureImageId, @JsonKey(name: 'closure_signature_document_ids')  List<String> closureSignatureDocumentIds, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'submitted_at')  String? submittedAt, @JsonKey(name: 'verified_at')  String? verifiedAt, @JsonKey(name: 'resolved_at')  String? resolvedAt, @JsonKey(name: 'citizen_verified_at')  String? citizenVerifiedAt, @JsonKey(name: 'citizen_satisfaction')@NullableIntConverter()  int? citizenSatisfaction, @JsonKey(name: 'citizen_closure_note')  String? citizenClosureNote, @JsonKey(name: 'on_chain_id')@NullableStringConverter()  String? onChainId, @JsonKey(name: 'on_chain_hash')  String? onChainHash, @JsonKey(name: 'blockchain_txn_hash')  String? blockchainTxnHash, @JsonKey(name: 'blockchain_synced')  bool blockchainSynced)?  $default,) {final _that = this;
 switch (_that) {
 case _Report() when $default != null:
-return $default(_that.id,_that.reportId,_that.userId,_that.category,_that.incidentType,_that.title,_that.description,_that.incidentDatetime,_that.isHappeningNow,_that.zone,_that.streetLandmark,_that.cityMunicipality,_that.province,_that.latitude,_that.longitude,_that.locationAccuracy,_that.location,_that.barangay,_that.severity,_that.peopleAffected,_that.isEmergency,_that.status,_that.assignedDepartment,_that.adminRemarks,_that.categoryConfidence,_that.priority,_that.priorityScore,_that.priorityLevel,_that.priorityReasons,_that.baseScore,_that.hotspotScore,_that.urgencyScore,_that.duplicateState,_that.relatedReportId,_that.duplicateScore,_that.duplicateConfidence,_that.duplicateTextSimilarity,_that.duplicateLocationSimilarity,_that.duplicateExplanation,_that.relatedIssueId,_that.sentimentScore,_that.autoCategorySuggestion,_that.images,_that.createdAt,_that.updatedAt,_that.submittedAt,_that.verifiedAt,_that.resolvedAt,_that.onChainId,_that.onChainHash,_that.blockchainTxnHash,_that.blockchainSynced);case _:
+return $default(_that.id,_that.reportId,_that.userId,_that.category,_that.categoryKey,_that.categoryDisplay,_that.categoryLabelSnapshot,_that.taxonomyVersion,_that.incidentType,_that.title,_that.description,_that.incidentDatetime,_that.isHappeningNow,_that.zone,_that.streetLandmark,_that.municipalityId,_that.barangayId,_that.cityMunicipality,_that.province,_that.latitude,_that.longitude,_that.locationAccuracy,_that.location,_that.barangay,_that.severity,_that.peopleAffected,_that.isEmergency,_that.status,_that.assignedDepartment,_that.adminRemarks,_that.categoryConfidence,_that.modelVersion,_that.categorySource,_that.modelProbability,_that.top2Gap,_that.needsCategoryReview,_that.reviewReasons,_that.isMultiIssue,_that.rulesApplied,_that.priority,_that.priorityScore,_that.priorityLevel,_that.suggestedPriorityScore,_that.suggestedPriorityLevel,_that.queuePriorityScore,_that.queuePriorityLevel,_that.queuePriorityRank,_that.staffPriorityLevel,_that.prioritySource,_that.priorityIsAdvisory,_that.needsPriorityReview,_that.priorityReviewReasons,_that.linkedReportCount,_that.linkedUrgencyBoost,_that.isIncidentRepresentative,_that.priorityModelVersion,_that.priorityModelValidated,_that.priorityCalibrationVersion,_that.emergencyProbability,_that.priorityComponents,_that.priorityPolicyVersion,_that.priorityRulesApplied,_that.priorityReasons,_that.baseScore,_that.hotspotScore,_that.urgencyScore,_that.recommendedDepartment,_that.departmentConfidence,_that.routingReasons,_that.needsDepartmentReview,_that.departmentKey,_that.departmentDisplay,_that.departmentProbability,_that.departmentTop2Gap,_that.suggestedDepartments,_that.assignedDepartmentKey,_that.departmentSource,_that.departmentIsAdvisory,_that.departmentReviewReasons,_that.departmentModelVersion,_that.departmentModelValidated,_that.departmentCalibrationVersion,_that.departmentRegistryVersion,_that.departmentPolicyVersion,_that.departmentRulesApplied,_that.credibilityScore,_that.incidentGroupId,_that.sentimentScore,_that.autoCategorySuggestion,_that.images,_that.resolvedProofImageIds,_that.closureSignatureImageId,_that.closureSignatureDocumentIds,_that.createdAt,_that.updatedAt,_that.submittedAt,_that.verifiedAt,_that.resolvedAt,_that.citizenVerifiedAt,_that.citizenSatisfaction,_that.citizenClosureNote,_that.onChainId,_that.onChainHash,_that.blockchainTxnHash,_that.blockchainSynced);case _:
   return null;
 
 }
@@ -556,7 +878,7 @@ return $default(_that.id,_that.reportId,_that.userId,_that.category,_that.incide
 @JsonSerializable()
 
 class _Report implements Report {
-  const _Report({required this.id, @JsonKey(name: 'report_id') this.reportId, @JsonKey(name: 'user_id') this.userId, this.category, @JsonKey(name: 'incident_type') this.incidentType, this.title, required this.description, @JsonKey(name: 'incident_datetime') this.incidentDatetime, @JsonKey(name: 'is_happening_now') this.isHappeningNow = false, this.zone, @JsonKey(name: 'street_landmark') this.streetLandmark, @JsonKey(name: 'city_municipality') this.cityMunicipality, this.province, this.latitude, this.longitude, @JsonKey(name: 'location_accuracy') this.locationAccuracy = 'approximate', this.location, this.barangay, this.severity = 'medium', @JsonKey(name: 'people_affected') this.peopleAffected, @JsonKey(name: 'is_emergency') this.isEmergency = false, this.status = 'submitted', @JsonKey(name: 'assigned_department') this.assignedDepartment, @JsonKey(name: 'admin_remarks') this.adminRemarks, @JsonKey(name: 'category_confidence') this.categoryConfidence, this.priority, @JsonKey(name: 'priority_score') this.priorityScore, @JsonKey(name: 'priority_level') this.priorityLevel, @JsonKey(name: 'priority_reasons') final  List<String>? priorityReasons, @JsonKey(name: 'base_score') this.baseScore, @JsonKey(name: 'hotspot_score') this.hotspotScore, @JsonKey(name: 'urgency_score') this.urgencyScore, @JsonKey(name: 'duplicate_state') this.duplicateState, @JsonKey(name: 'related_report_id') this.relatedReportId, @JsonKey(name: 'duplicate_score') this.duplicateScore, @JsonKey(name: 'duplicate_confidence') this.duplicateConfidence, @JsonKey(name: 'duplicate_text_similarity') this.duplicateTextSimilarity, @JsonKey(name: 'duplicate_location_similarity') this.duplicateLocationSimilarity, @JsonKey(name: 'duplicate_explanation') this.duplicateExplanation, @JsonKey(name: 'related_issue_id') this.relatedIssueId, @JsonKey(name: 'sentiment_score') this.sentimentScore, @JsonKey(name: 'auto_category_suggestion') this.autoCategorySuggestion, final  List<ReportImage> images = const [], @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt, @JsonKey(name: 'submitted_at') this.submittedAt, @JsonKey(name: 'verified_at') this.verifiedAt, @JsonKey(name: 'resolved_at') this.resolvedAt, @JsonKey(name: 'on_chain_id') this.onChainId, @JsonKey(name: 'on_chain_hash') this.onChainHash, @JsonKey(name: 'blockchain_txn_hash') this.blockchainTxnHash, @JsonKey(name: 'blockchain_synced') this.blockchainSynced = false}): _priorityReasons = priorityReasons,_images = images;
+  const _Report({required this.id, @JsonKey(name: 'report_id') this.reportId, @JsonKey(name: 'user_id') this.userId, this.category, @JsonKey(name: 'category_key') this.categoryKey, @JsonKey(name: 'category_display') this.categoryDisplay, @JsonKey(name: 'category_label_snapshot') this.categoryLabelSnapshot, @JsonKey(name: 'taxonomy_version') this.taxonomyVersion, @JsonKey(name: 'incident_type') this.incidentType, this.title, this.description = '', @JsonKey(name: 'incident_datetime') this.incidentDatetime, @JsonKey(name: 'is_happening_now') this.isHappeningNow = false, this.zone, @JsonKey(name: 'street_landmark') this.streetLandmark, @JsonKey(name: 'municipality_id', readValue: _readMunicipalityId) this.municipalityId = 'urdaneta', @JsonKey(name: 'barangay_id', readValue: _readBarangayId) this.barangayId, @JsonKey(name: 'city_municipality') this.cityMunicipality, this.province, this.latitude, this.longitude, @JsonKey(name: 'location_accuracy') this.locationAccuracy = 'approximate', this.location, this.barangay, this.severity = 'medium', @JsonKey(name: 'people_affected')@NullableIntConverter() this.peopleAffected, @JsonKey(name: 'is_emergency') this.isEmergency = false, this.status = 'submitted', @JsonKey(name: 'assigned_department') this.assignedDepartment, @JsonKey(name: 'admin_remarks') this.adminRemarks, @JsonKey(name: 'category_confidence') this.categoryConfidence, @JsonKey(name: 'model_version') this.modelVersion, @JsonKey(name: 'category_source') this.categorySource, @JsonKey(name: 'model_probability') this.modelProbability, @JsonKey(name: 'top2_gap') this.top2Gap, @JsonKey(name: 'needs_category_review') this.needsCategoryReview, @JsonKey(name: 'review_reasons') final  List<String> reviewReasons = const [], @JsonKey(name: 'is_multi_issue') this.isMultiIssue = false, @JsonKey(name: 'rules_applied') final  List<String> rulesApplied = const [], this.priority, @JsonKey(name: 'priority_score')@NullableIntConverter() this.priorityScore, @JsonKey(name: 'priority_level') this.priorityLevel, @JsonKey(name: 'suggested_priority_score') this.suggestedPriorityScore, @JsonKey(name: 'suggested_priority_level') this.suggestedPriorityLevel, @JsonKey(name: 'queue_priority_score') this.queuePriorityScore, @JsonKey(name: 'queue_priority_level') this.queuePriorityLevel, @JsonKey(name: 'queue_priority_rank')@NullableIntConverter() this.queuePriorityRank, @JsonKey(name: 'staff_priority_level') this.staffPriorityLevel, @JsonKey(name: 'priority_source') this.prioritySource, @JsonKey(name: 'priority_is_advisory') this.priorityIsAdvisory = true, @JsonKey(name: 'needs_priority_review') this.needsPriorityReview = true, @JsonKey(name: 'priority_review_reasons') final  List<String> priorityReviewReasons = const [], @JsonKey(name: 'linked_report_count') this.linkedReportCount = 1, @JsonKey(name: 'linked_urgency_boost') this.linkedUrgencyBoost = 0, @JsonKey(name: 'is_incident_representative') this.isIncidentRepresentative = true, @JsonKey(name: 'priority_model_version') this.priorityModelVersion, @JsonKey(name: 'priority_model_validated') this.priorityModelValidated = false, @JsonKey(name: 'priority_calibration_version') this.priorityCalibrationVersion, @JsonKey(name: 'emergency_probability') this.emergencyProbability, @JsonKey(name: 'priority_components') final  Map<String, double> priorityComponents = const {}, @JsonKey(name: 'priority_policy_version') this.priorityPolicyVersion, @JsonKey(name: 'priority_rules_applied') final  List<String> priorityRulesApplied = const [], @JsonKey(name: 'priority_reasons') final  List<String>? priorityReasons, @JsonKey(name: 'base_score')@NullableIntConverter() this.baseScore, @JsonKey(name: 'hotspot_score')@NullableIntConverter() this.hotspotScore, @JsonKey(name: 'urgency_score') this.urgencyScore, @JsonKey(name: 'recommended_department') this.recommendedDepartment, @JsonKey(name: 'department_confidence') this.departmentConfidence, @JsonKey(name: 'routing_reasons') final  List<String>? routingReasons, @JsonKey(name: 'needs_department_review') this.needsDepartmentReview, @JsonKey(name: 'department_key') this.departmentKey, @JsonKey(name: 'department_display') this.departmentDisplay, @JsonKey(name: 'department_probability') this.departmentProbability, @JsonKey(name: 'department_top2_gap') this.departmentTop2Gap, @JsonKey(name: 'suggested_departments') final  List<DepartmentSuggestion> suggestedDepartments = const [], @JsonKey(name: 'assigned_department_key') this.assignedDepartmentKey, @JsonKey(name: 'department_source') this.departmentSource, @JsonKey(name: 'department_is_advisory') this.departmentIsAdvisory = true, @JsonKey(name: 'department_review_reasons') final  List<String> departmentReviewReasons = const [], @JsonKey(name: 'department_model_version') this.departmentModelVersion, @JsonKey(name: 'department_model_validated') this.departmentModelValidated = false, @JsonKey(name: 'department_calibration_version') this.departmentCalibrationVersion, @JsonKey(name: 'department_registry_version') this.departmentRegistryVersion, @JsonKey(name: 'department_policy_version') this.departmentPolicyVersion, @JsonKey(name: 'department_rules_applied') final  List<String> departmentRulesApplied = const [], @JsonKey(name: 'credibility_score') this.credibilityScore, @JsonKey(name: 'incident_group_id') this.incidentGroupId, @JsonKey(name: 'sentiment_score') this.sentimentScore, @JsonKey(name: 'auto_category_suggestion') this.autoCategorySuggestion, final  List<ReportImage> images = const [], @JsonKey(name: 'resolved_proof_image_ids') final  List<String> resolvedProofImageIds = const [], @JsonKey(name: 'closure_signature_image_id') this.closureSignatureImageId, @JsonKey(name: 'closure_signature_document_ids') final  List<String> closureSignatureDocumentIds = const [], @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt, @JsonKey(name: 'submitted_at') this.submittedAt, @JsonKey(name: 'verified_at') this.verifiedAt, @JsonKey(name: 'resolved_at') this.resolvedAt, @JsonKey(name: 'citizen_verified_at') this.citizenVerifiedAt, @JsonKey(name: 'citizen_satisfaction')@NullableIntConverter() this.citizenSatisfaction, @JsonKey(name: 'citizen_closure_note') this.citizenClosureNote, @JsonKey(name: 'on_chain_id')@NullableStringConverter() this.onChainId, @JsonKey(name: 'on_chain_hash') this.onChainHash, @JsonKey(name: 'blockchain_txn_hash') this.blockchainTxnHash, @JsonKey(name: 'blockchain_synced') this.blockchainSynced = false}): _reviewReasons = reviewReasons,_rulesApplied = rulesApplied,_priorityReviewReasons = priorityReviewReasons,_priorityComponents = priorityComponents,_priorityRulesApplied = priorityRulesApplied,_priorityReasons = priorityReasons,_routingReasons = routingReasons,_suggestedDepartments = suggestedDepartments,_departmentReviewReasons = departmentReviewReasons,_departmentRulesApplied = departmentRulesApplied,_images = images,_resolvedProofImageIds = resolvedProofImageIds,_closureSignatureDocumentIds = closureSignatureDocumentIds;
   factory _Report.fromJson(Map<String, dynamic> json) => _$ReportFromJson(json);
 
 @override final  String id;
@@ -564,14 +886,20 @@ class _Report implements Report {
 @override@JsonKey(name: 'user_id') final  String? userId;
 // Report Details
 @override final  String? category;
+@override@JsonKey(name: 'category_key') final  String? categoryKey;
+@override@JsonKey(name: 'category_display') final  String? categoryDisplay;
+@override@JsonKey(name: 'category_label_snapshot') final  String? categoryLabelSnapshot;
+@override@JsonKey(name: 'taxonomy_version') final  String? taxonomyVersion;
 @override@JsonKey(name: 'incident_type') final  String? incidentType;
 @override final  String? title;
-@override final  String description;
+@override@JsonKey() final  String description;
 @override@JsonKey(name: 'incident_datetime') final  String? incidentDatetime;
 @override@JsonKey(name: 'is_happening_now') final  bool isHappeningNow;
 // Location Information
 @override final  String? zone;
 @override@JsonKey(name: 'street_landmark') final  String? streetLandmark;
+@override@JsonKey(name: 'municipality_id', readValue: _readMunicipalityId) final  String municipalityId;
+@override@JsonKey(name: 'barangay_id', readValue: _readBarangayId) final  String? barangayId;
 @override@JsonKey(name: 'city_municipality') final  String? cityMunicipality;
 @override final  String? province;
 @override final  String? latitude;
@@ -582,7 +910,7 @@ class _Report implements Report {
 @override final  String? barangay;
 // Severity & Impact
 @override@JsonKey() final  String severity;
-@override@JsonKey(name: 'people_affected') final  int? peopleAffected;
+@override@JsonKey(name: 'people_affected')@NullableIntConverter() final  int? peopleAffected;
 @override@JsonKey(name: 'is_emergency') final  bool isEmergency;
 // System Fields
 @override@JsonKey() final  String status;
@@ -590,9 +918,67 @@ class _Report implements Report {
 @override@JsonKey(name: 'admin_remarks') final  String? adminRemarks;
 // AI Fields
 @override@JsonKey(name: 'category_confidence') final  double? categoryConfidence;
+@override@JsonKey(name: 'model_version') final  String? modelVersion;
+@override@JsonKey(name: 'category_source') final  String? categorySource;
+@override@JsonKey(name: 'model_probability') final  double? modelProbability;
+@override@JsonKey(name: 'top2_gap') final  double? top2Gap;
+@override@JsonKey(name: 'needs_category_review') final  bool? needsCategoryReview;
+ final  List<String> _reviewReasons;
+@override@JsonKey(name: 'review_reasons') List<String> get reviewReasons {
+  if (_reviewReasons is EqualUnmodifiableListView) return _reviewReasons;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_reviewReasons);
+}
+
+@override@JsonKey(name: 'is_multi_issue') final  bool isMultiIssue;
+ final  List<String> _rulesApplied;
+@override@JsonKey(name: 'rules_applied') List<String> get rulesApplied {
+  if (_rulesApplied is EqualUnmodifiableListView) return _rulesApplied;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_rulesApplied);
+}
+
 @override final  String? priority;
-@override@JsonKey(name: 'priority_score') final  int? priorityScore;
+@override@JsonKey(name: 'priority_score')@NullableIntConverter() final  int? priorityScore;
 @override@JsonKey(name: 'priority_level') final  String? priorityLevel;
+@override@JsonKey(name: 'suggested_priority_score') final  double? suggestedPriorityScore;
+@override@JsonKey(name: 'suggested_priority_level') final  String? suggestedPriorityLevel;
+@override@JsonKey(name: 'queue_priority_score') final  double? queuePriorityScore;
+@override@JsonKey(name: 'queue_priority_level') final  String? queuePriorityLevel;
+@override@JsonKey(name: 'queue_priority_rank')@NullableIntConverter() final  int? queuePriorityRank;
+@override@JsonKey(name: 'staff_priority_level') final  String? staffPriorityLevel;
+@override@JsonKey(name: 'priority_source') final  String? prioritySource;
+@override@JsonKey(name: 'priority_is_advisory') final  bool priorityIsAdvisory;
+@override@JsonKey(name: 'needs_priority_review') final  bool needsPriorityReview;
+ final  List<String> _priorityReviewReasons;
+@override@JsonKey(name: 'priority_review_reasons') List<String> get priorityReviewReasons {
+  if (_priorityReviewReasons is EqualUnmodifiableListView) return _priorityReviewReasons;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_priorityReviewReasons);
+}
+
+@override@JsonKey(name: 'linked_report_count') final  int linkedReportCount;
+@override@JsonKey(name: 'linked_urgency_boost') final  int linkedUrgencyBoost;
+@override@JsonKey(name: 'is_incident_representative') final  bool isIncidentRepresentative;
+@override@JsonKey(name: 'priority_model_version') final  String? priorityModelVersion;
+@override@JsonKey(name: 'priority_model_validated') final  bool priorityModelValidated;
+@override@JsonKey(name: 'priority_calibration_version') final  String? priorityCalibrationVersion;
+@override@JsonKey(name: 'emergency_probability') final  double? emergencyProbability;
+ final  Map<String, double> _priorityComponents;
+@override@JsonKey(name: 'priority_components') Map<String, double> get priorityComponents {
+  if (_priorityComponents is EqualUnmodifiableMapView) return _priorityComponents;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_priorityComponents);
+}
+
+@override@JsonKey(name: 'priority_policy_version') final  String? priorityPolicyVersion;
+ final  List<String> _priorityRulesApplied;
+@override@JsonKey(name: 'priority_rules_applied') List<String> get priorityRulesApplied {
+  if (_priorityRulesApplied is EqualUnmodifiableListView) return _priorityRulesApplied;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_priorityRulesApplied);
+}
+
  final  List<String>? _priorityReasons;
 @override@JsonKey(name: 'priority_reasons') List<String>? get priorityReasons {
   final value = _priorityReasons;
@@ -602,17 +988,56 @@ class _Report implements Report {
   return EqualUnmodifiableListView(value);
 }
 
-@override@JsonKey(name: 'base_score') final  int? baseScore;
-@override@JsonKey(name: 'hotspot_score') final  int? hotspotScore;
+@override@JsonKey(name: 'base_score')@NullableIntConverter() final  int? baseScore;
+@override@JsonKey(name: 'hotspot_score')@NullableIntConverter() final  int? hotspotScore;
 @override@JsonKey(name: 'urgency_score') final  double? urgencyScore;
-@override@JsonKey(name: 'duplicate_state') final  String? duplicateState;
-@override@JsonKey(name: 'related_report_id') final  String? relatedReportId;
-@override@JsonKey(name: 'duplicate_score') final  double? duplicateScore;
-@override@JsonKey(name: 'duplicate_confidence') final  String? duplicateConfidence;
-@override@JsonKey(name: 'duplicate_text_similarity') final  double? duplicateTextSimilarity;
-@override@JsonKey(name: 'duplicate_location_similarity') final  double? duplicateLocationSimilarity;
-@override@JsonKey(name: 'duplicate_explanation') final  String? duplicateExplanation;
-@override@JsonKey(name: 'related_issue_id') final  String? relatedIssueId;
+@override@JsonKey(name: 'recommended_department') final  String? recommendedDepartment;
+@override@JsonKey(name: 'department_confidence') final  double? departmentConfidence;
+ final  List<String>? _routingReasons;
+@override@JsonKey(name: 'routing_reasons') List<String>? get routingReasons {
+  final value = _routingReasons;
+  if (value == null) return null;
+  if (_routingReasons is EqualUnmodifiableListView) return _routingReasons;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(value);
+}
+
+@override@JsonKey(name: 'needs_department_review') final  bool? needsDepartmentReview;
+@override@JsonKey(name: 'department_key') final  String? departmentKey;
+@override@JsonKey(name: 'department_display') final  String? departmentDisplay;
+@override@JsonKey(name: 'department_probability') final  double? departmentProbability;
+@override@JsonKey(name: 'department_top2_gap') final  double? departmentTop2Gap;
+ final  List<DepartmentSuggestion> _suggestedDepartments;
+@override@JsonKey(name: 'suggested_departments') List<DepartmentSuggestion> get suggestedDepartments {
+  if (_suggestedDepartments is EqualUnmodifiableListView) return _suggestedDepartments;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_suggestedDepartments);
+}
+
+@override@JsonKey(name: 'assigned_department_key') final  String? assignedDepartmentKey;
+@override@JsonKey(name: 'department_source') final  String? departmentSource;
+@override@JsonKey(name: 'department_is_advisory') final  bool departmentIsAdvisory;
+ final  List<String> _departmentReviewReasons;
+@override@JsonKey(name: 'department_review_reasons') List<String> get departmentReviewReasons {
+  if (_departmentReviewReasons is EqualUnmodifiableListView) return _departmentReviewReasons;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_departmentReviewReasons);
+}
+
+@override@JsonKey(name: 'department_model_version') final  String? departmentModelVersion;
+@override@JsonKey(name: 'department_model_validated') final  bool departmentModelValidated;
+@override@JsonKey(name: 'department_calibration_version') final  String? departmentCalibrationVersion;
+@override@JsonKey(name: 'department_registry_version') final  String? departmentRegistryVersion;
+@override@JsonKey(name: 'department_policy_version') final  String? departmentPolicyVersion;
+ final  List<String> _departmentRulesApplied;
+@override@JsonKey(name: 'department_rules_applied') List<String> get departmentRulesApplied {
+  if (_departmentRulesApplied is EqualUnmodifiableListView) return _departmentRulesApplied;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_departmentRulesApplied);
+}
+
+@override@JsonKey(name: 'credibility_score') final  double? credibilityScore;
+@override@JsonKey(name: 'incident_group_id') final  String? incidentGroupId;
 @override@JsonKey(name: 'sentiment_score') final  double? sentimentScore;
 @override@JsonKey(name: 'auto_category_suggestion') final  String? autoCategorySuggestion;
 // Images
@@ -624,14 +1049,33 @@ class _Report implements Report {
   return EqualUnmodifiableListView(_images);
 }
 
+ final  List<String> _resolvedProofImageIds;
+@override@JsonKey(name: 'resolved_proof_image_ids') List<String> get resolvedProofImageIds {
+  if (_resolvedProofImageIds is EqualUnmodifiableListView) return _resolvedProofImageIds;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_resolvedProofImageIds);
+}
+
+@override@JsonKey(name: 'closure_signature_image_id') final  String? closureSignatureImageId;
+ final  List<String> _closureSignatureDocumentIds;
+@override@JsonKey(name: 'closure_signature_document_ids') List<String> get closureSignatureDocumentIds {
+  if (_closureSignatureDocumentIds is EqualUnmodifiableListView) return _closureSignatureDocumentIds;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_closureSignatureDocumentIds);
+}
+
 // Timestamps
 @override@JsonKey(name: 'created_at') final  String? createdAt;
 @override@JsonKey(name: 'updated_at') final  String? updatedAt;
 @override@JsonKey(name: 'submitted_at') final  String? submittedAt;
 @override@JsonKey(name: 'verified_at') final  String? verifiedAt;
 @override@JsonKey(name: 'resolved_at') final  String? resolvedAt;
+// Citizen Closure
+@override@JsonKey(name: 'citizen_verified_at') final  String? citizenVerifiedAt;
+@override@JsonKey(name: 'citizen_satisfaction')@NullableIntConverter() final  int? citizenSatisfaction;
+@override@JsonKey(name: 'citizen_closure_note') final  String? citizenClosureNote;
 // Blockchain Integration
-@override@JsonKey(name: 'on_chain_id') final  int? onChainId;
+@override@JsonKey(name: 'on_chain_id')@NullableStringConverter() final  String? onChainId;
 @override@JsonKey(name: 'on_chain_hash') final  String? onChainHash;
 @override@JsonKey(name: 'blockchain_txn_hash') final  String? blockchainTxnHash;
 @override@JsonKey(name: 'blockchain_synced') final  bool blockchainSynced;
@@ -649,16 +1093,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Report&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.category, category) || other.category == category)&&(identical(other.incidentType, incidentType) || other.incidentType == incidentType)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.incidentDatetime, incidentDatetime) || other.incidentDatetime == incidentDatetime)&&(identical(other.isHappeningNow, isHappeningNow) || other.isHappeningNow == isHappeningNow)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.streetLandmark, streetLandmark) || other.streetLandmark == streetLandmark)&&(identical(other.cityMunicipality, cityMunicipality) || other.cityMunicipality == cityMunicipality)&&(identical(other.province, province) || other.province == province)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.locationAccuracy, locationAccuracy) || other.locationAccuracy == locationAccuracy)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.severity, severity) || other.severity == severity)&&(identical(other.peopleAffected, peopleAffected) || other.peopleAffected == peopleAffected)&&(identical(other.isEmergency, isEmergency) || other.isEmergency == isEmergency)&&(identical(other.status, status) || other.status == status)&&(identical(other.assignedDepartment, assignedDepartment) || other.assignedDepartment == assignedDepartment)&&(identical(other.adminRemarks, adminRemarks) || other.adminRemarks == adminRemarks)&&(identical(other.categoryConfidence, categoryConfidence) || other.categoryConfidence == categoryConfidence)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.priorityScore, priorityScore) || other.priorityScore == priorityScore)&&(identical(other.priorityLevel, priorityLevel) || other.priorityLevel == priorityLevel)&&const DeepCollectionEquality().equals(other._priorityReasons, _priorityReasons)&&(identical(other.baseScore, baseScore) || other.baseScore == baseScore)&&(identical(other.hotspotScore, hotspotScore) || other.hotspotScore == hotspotScore)&&(identical(other.urgencyScore, urgencyScore) || other.urgencyScore == urgencyScore)&&(identical(other.duplicateState, duplicateState) || other.duplicateState == duplicateState)&&(identical(other.relatedReportId, relatedReportId) || other.relatedReportId == relatedReportId)&&(identical(other.duplicateScore, duplicateScore) || other.duplicateScore == duplicateScore)&&(identical(other.duplicateConfidence, duplicateConfidence) || other.duplicateConfidence == duplicateConfidence)&&(identical(other.duplicateTextSimilarity, duplicateTextSimilarity) || other.duplicateTextSimilarity == duplicateTextSimilarity)&&(identical(other.duplicateLocationSimilarity, duplicateLocationSimilarity) || other.duplicateLocationSimilarity == duplicateLocationSimilarity)&&(identical(other.duplicateExplanation, duplicateExplanation) || other.duplicateExplanation == duplicateExplanation)&&(identical(other.relatedIssueId, relatedIssueId) || other.relatedIssueId == relatedIssueId)&&(identical(other.sentimentScore, sentimentScore) || other.sentimentScore == sentimentScore)&&(identical(other.autoCategorySuggestion, autoCategorySuggestion) || other.autoCategorySuggestion == autoCategorySuggestion)&&const DeepCollectionEquality().equals(other._images, _images)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.submittedAt, submittedAt) || other.submittedAt == submittedAt)&&(identical(other.verifiedAt, verifiedAt) || other.verifiedAt == verifiedAt)&&(identical(other.resolvedAt, resolvedAt) || other.resolvedAt == resolvedAt)&&(identical(other.onChainId, onChainId) || other.onChainId == onChainId)&&(identical(other.onChainHash, onChainHash) || other.onChainHash == onChainHash)&&(identical(other.blockchainTxnHash, blockchainTxnHash) || other.blockchainTxnHash == blockchainTxnHash)&&(identical(other.blockchainSynced, blockchainSynced) || other.blockchainSynced == blockchainSynced));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Report&&(identical(other.id, id) || other.id == id)&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.category, category) || other.category == category)&&(identical(other.categoryKey, categoryKey) || other.categoryKey == categoryKey)&&(identical(other.categoryDisplay, categoryDisplay) || other.categoryDisplay == categoryDisplay)&&(identical(other.categoryLabelSnapshot, categoryLabelSnapshot) || other.categoryLabelSnapshot == categoryLabelSnapshot)&&(identical(other.taxonomyVersion, taxonomyVersion) || other.taxonomyVersion == taxonomyVersion)&&(identical(other.incidentType, incidentType) || other.incidentType == incidentType)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.incidentDatetime, incidentDatetime) || other.incidentDatetime == incidentDatetime)&&(identical(other.isHappeningNow, isHappeningNow) || other.isHappeningNow == isHappeningNow)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.streetLandmark, streetLandmark) || other.streetLandmark == streetLandmark)&&(identical(other.municipalityId, municipalityId) || other.municipalityId == municipalityId)&&(identical(other.barangayId, barangayId) || other.barangayId == barangayId)&&(identical(other.cityMunicipality, cityMunicipality) || other.cityMunicipality == cityMunicipality)&&(identical(other.province, province) || other.province == province)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.locationAccuracy, locationAccuracy) || other.locationAccuracy == locationAccuracy)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.severity, severity) || other.severity == severity)&&(identical(other.peopleAffected, peopleAffected) || other.peopleAffected == peopleAffected)&&(identical(other.isEmergency, isEmergency) || other.isEmergency == isEmergency)&&(identical(other.status, status) || other.status == status)&&(identical(other.assignedDepartment, assignedDepartment) || other.assignedDepartment == assignedDepartment)&&(identical(other.adminRemarks, adminRemarks) || other.adminRemarks == adminRemarks)&&(identical(other.categoryConfidence, categoryConfidence) || other.categoryConfidence == categoryConfidence)&&(identical(other.modelVersion, modelVersion) || other.modelVersion == modelVersion)&&(identical(other.categorySource, categorySource) || other.categorySource == categorySource)&&(identical(other.modelProbability, modelProbability) || other.modelProbability == modelProbability)&&(identical(other.top2Gap, top2Gap) || other.top2Gap == top2Gap)&&(identical(other.needsCategoryReview, needsCategoryReview) || other.needsCategoryReview == needsCategoryReview)&&const DeepCollectionEquality().equals(other._reviewReasons, _reviewReasons)&&(identical(other.isMultiIssue, isMultiIssue) || other.isMultiIssue == isMultiIssue)&&const DeepCollectionEquality().equals(other._rulesApplied, _rulesApplied)&&(identical(other.priority, priority) || other.priority == priority)&&(identical(other.priorityScore, priorityScore) || other.priorityScore == priorityScore)&&(identical(other.priorityLevel, priorityLevel) || other.priorityLevel == priorityLevel)&&(identical(other.suggestedPriorityScore, suggestedPriorityScore) || other.suggestedPriorityScore == suggestedPriorityScore)&&(identical(other.suggestedPriorityLevel, suggestedPriorityLevel) || other.suggestedPriorityLevel == suggestedPriorityLevel)&&(identical(other.queuePriorityScore, queuePriorityScore) || other.queuePriorityScore == queuePriorityScore)&&(identical(other.queuePriorityLevel, queuePriorityLevel) || other.queuePriorityLevel == queuePriorityLevel)&&(identical(other.queuePriorityRank, queuePriorityRank) || other.queuePriorityRank == queuePriorityRank)&&(identical(other.staffPriorityLevel, staffPriorityLevel) || other.staffPriorityLevel == staffPriorityLevel)&&(identical(other.prioritySource, prioritySource) || other.prioritySource == prioritySource)&&(identical(other.priorityIsAdvisory, priorityIsAdvisory) || other.priorityIsAdvisory == priorityIsAdvisory)&&(identical(other.needsPriorityReview, needsPriorityReview) || other.needsPriorityReview == needsPriorityReview)&&const DeepCollectionEquality().equals(other._priorityReviewReasons, _priorityReviewReasons)&&(identical(other.linkedReportCount, linkedReportCount) || other.linkedReportCount == linkedReportCount)&&(identical(other.linkedUrgencyBoost, linkedUrgencyBoost) || other.linkedUrgencyBoost == linkedUrgencyBoost)&&(identical(other.isIncidentRepresentative, isIncidentRepresentative) || other.isIncidentRepresentative == isIncidentRepresentative)&&(identical(other.priorityModelVersion, priorityModelVersion) || other.priorityModelVersion == priorityModelVersion)&&(identical(other.priorityModelValidated, priorityModelValidated) || other.priorityModelValidated == priorityModelValidated)&&(identical(other.priorityCalibrationVersion, priorityCalibrationVersion) || other.priorityCalibrationVersion == priorityCalibrationVersion)&&(identical(other.emergencyProbability, emergencyProbability) || other.emergencyProbability == emergencyProbability)&&const DeepCollectionEquality().equals(other._priorityComponents, _priorityComponents)&&(identical(other.priorityPolicyVersion, priorityPolicyVersion) || other.priorityPolicyVersion == priorityPolicyVersion)&&const DeepCollectionEquality().equals(other._priorityRulesApplied, _priorityRulesApplied)&&const DeepCollectionEquality().equals(other._priorityReasons, _priorityReasons)&&(identical(other.baseScore, baseScore) || other.baseScore == baseScore)&&(identical(other.hotspotScore, hotspotScore) || other.hotspotScore == hotspotScore)&&(identical(other.urgencyScore, urgencyScore) || other.urgencyScore == urgencyScore)&&(identical(other.recommendedDepartment, recommendedDepartment) || other.recommendedDepartment == recommendedDepartment)&&(identical(other.departmentConfidence, departmentConfidence) || other.departmentConfidence == departmentConfidence)&&const DeepCollectionEquality().equals(other._routingReasons, _routingReasons)&&(identical(other.needsDepartmentReview, needsDepartmentReview) || other.needsDepartmentReview == needsDepartmentReview)&&(identical(other.departmentKey, departmentKey) || other.departmentKey == departmentKey)&&(identical(other.departmentDisplay, departmentDisplay) || other.departmentDisplay == departmentDisplay)&&(identical(other.departmentProbability, departmentProbability) || other.departmentProbability == departmentProbability)&&(identical(other.departmentTop2Gap, departmentTop2Gap) || other.departmentTop2Gap == departmentTop2Gap)&&const DeepCollectionEquality().equals(other._suggestedDepartments, _suggestedDepartments)&&(identical(other.assignedDepartmentKey, assignedDepartmentKey) || other.assignedDepartmentKey == assignedDepartmentKey)&&(identical(other.departmentSource, departmentSource) || other.departmentSource == departmentSource)&&(identical(other.departmentIsAdvisory, departmentIsAdvisory) || other.departmentIsAdvisory == departmentIsAdvisory)&&const DeepCollectionEquality().equals(other._departmentReviewReasons, _departmentReviewReasons)&&(identical(other.departmentModelVersion, departmentModelVersion) || other.departmentModelVersion == departmentModelVersion)&&(identical(other.departmentModelValidated, departmentModelValidated) || other.departmentModelValidated == departmentModelValidated)&&(identical(other.departmentCalibrationVersion, departmentCalibrationVersion) || other.departmentCalibrationVersion == departmentCalibrationVersion)&&(identical(other.departmentRegistryVersion, departmentRegistryVersion) || other.departmentRegistryVersion == departmentRegistryVersion)&&(identical(other.departmentPolicyVersion, departmentPolicyVersion) || other.departmentPolicyVersion == departmentPolicyVersion)&&const DeepCollectionEquality().equals(other._departmentRulesApplied, _departmentRulesApplied)&&(identical(other.credibilityScore, credibilityScore) || other.credibilityScore == credibilityScore)&&(identical(other.incidentGroupId, incidentGroupId) || other.incidentGroupId == incidentGroupId)&&(identical(other.sentimentScore, sentimentScore) || other.sentimentScore == sentimentScore)&&(identical(other.autoCategorySuggestion, autoCategorySuggestion) || other.autoCategorySuggestion == autoCategorySuggestion)&&const DeepCollectionEquality().equals(other._images, _images)&&const DeepCollectionEquality().equals(other._resolvedProofImageIds, _resolvedProofImageIds)&&(identical(other.closureSignatureImageId, closureSignatureImageId) || other.closureSignatureImageId == closureSignatureImageId)&&const DeepCollectionEquality().equals(other._closureSignatureDocumentIds, _closureSignatureDocumentIds)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.submittedAt, submittedAt) || other.submittedAt == submittedAt)&&(identical(other.verifiedAt, verifiedAt) || other.verifiedAt == verifiedAt)&&(identical(other.resolvedAt, resolvedAt) || other.resolvedAt == resolvedAt)&&(identical(other.citizenVerifiedAt, citizenVerifiedAt) || other.citizenVerifiedAt == citizenVerifiedAt)&&(identical(other.citizenSatisfaction, citizenSatisfaction) || other.citizenSatisfaction == citizenSatisfaction)&&(identical(other.citizenClosureNote, citizenClosureNote) || other.citizenClosureNote == citizenClosureNote)&&(identical(other.onChainId, onChainId) || other.onChainId == onChainId)&&(identical(other.onChainHash, onChainHash) || other.onChainHash == onChainHash)&&(identical(other.blockchainTxnHash, blockchainTxnHash) || other.blockchainTxnHash == blockchainTxnHash)&&(identical(other.blockchainSynced, blockchainSynced) || other.blockchainSynced == blockchainSynced));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,id,reportId,userId,category,incidentType,title,description,incidentDatetime,isHappeningNow,zone,streetLandmark,cityMunicipality,province,latitude,longitude,locationAccuracy,location,barangay,severity,peopleAffected,isEmergency,status,assignedDepartment,adminRemarks,categoryConfidence,priority,priorityScore,priorityLevel,const DeepCollectionEquality().hash(_priorityReasons),baseScore,hotspotScore,urgencyScore,duplicateState,relatedReportId,duplicateScore,duplicateConfidence,duplicateTextSimilarity,duplicateLocationSimilarity,duplicateExplanation,relatedIssueId,sentimentScore,autoCategorySuggestion,const DeepCollectionEquality().hash(_images),createdAt,updatedAt,submittedAt,verifiedAt,resolvedAt,onChainId,onChainHash,blockchainTxnHash,blockchainSynced]);
+int get hashCode => Object.hashAll([runtimeType,id,reportId,userId,category,categoryKey,categoryDisplay,categoryLabelSnapshot,taxonomyVersion,incidentType,title,description,incidentDatetime,isHappeningNow,zone,streetLandmark,municipalityId,barangayId,cityMunicipality,province,latitude,longitude,locationAccuracy,location,barangay,severity,peopleAffected,isEmergency,status,assignedDepartment,adminRemarks,categoryConfidence,modelVersion,categorySource,modelProbability,top2Gap,needsCategoryReview,const DeepCollectionEquality().hash(_reviewReasons),isMultiIssue,const DeepCollectionEquality().hash(_rulesApplied),priority,priorityScore,priorityLevel,suggestedPriorityScore,suggestedPriorityLevel,queuePriorityScore,queuePriorityLevel,queuePriorityRank,staffPriorityLevel,prioritySource,priorityIsAdvisory,needsPriorityReview,const DeepCollectionEquality().hash(_priorityReviewReasons),linkedReportCount,linkedUrgencyBoost,isIncidentRepresentative,priorityModelVersion,priorityModelValidated,priorityCalibrationVersion,emergencyProbability,const DeepCollectionEquality().hash(_priorityComponents),priorityPolicyVersion,const DeepCollectionEquality().hash(_priorityRulesApplied),const DeepCollectionEquality().hash(_priorityReasons),baseScore,hotspotScore,urgencyScore,recommendedDepartment,departmentConfidence,const DeepCollectionEquality().hash(_routingReasons),needsDepartmentReview,departmentKey,departmentDisplay,departmentProbability,departmentTop2Gap,const DeepCollectionEquality().hash(_suggestedDepartments),assignedDepartmentKey,departmentSource,departmentIsAdvisory,const DeepCollectionEquality().hash(_departmentReviewReasons),departmentModelVersion,departmentModelValidated,departmentCalibrationVersion,departmentRegistryVersion,departmentPolicyVersion,const DeepCollectionEquality().hash(_departmentRulesApplied),credibilityScore,incidentGroupId,sentimentScore,autoCategorySuggestion,const DeepCollectionEquality().hash(_images),const DeepCollectionEquality().hash(_resolvedProofImageIds),closureSignatureImageId,const DeepCollectionEquality().hash(_closureSignatureDocumentIds),createdAt,updatedAt,submittedAt,verifiedAt,resolvedAt,citizenVerifiedAt,citizenSatisfaction,citizenClosureNote,onChainId,onChainHash,blockchainTxnHash,blockchainSynced]);
 
 @override
 String toString() {
-  return 'Report(id: $id, reportId: $reportId, userId: $userId, category: $category, incidentType: $incidentType, title: $title, description: $description, incidentDatetime: $incidentDatetime, isHappeningNow: $isHappeningNow, zone: $zone, streetLandmark: $streetLandmark, cityMunicipality: $cityMunicipality, province: $province, latitude: $latitude, longitude: $longitude, locationAccuracy: $locationAccuracy, location: $location, barangay: $barangay, severity: $severity, peopleAffected: $peopleAffected, isEmergency: $isEmergency, status: $status, assignedDepartment: $assignedDepartment, adminRemarks: $adminRemarks, categoryConfidence: $categoryConfidence, priority: $priority, priorityScore: $priorityScore, priorityLevel: $priorityLevel, priorityReasons: $priorityReasons, baseScore: $baseScore, hotspotScore: $hotspotScore, urgencyScore: $urgencyScore, duplicateState: $duplicateState, relatedReportId: $relatedReportId, duplicateScore: $duplicateScore, duplicateConfidence: $duplicateConfidence, duplicateTextSimilarity: $duplicateTextSimilarity, duplicateLocationSimilarity: $duplicateLocationSimilarity, duplicateExplanation: $duplicateExplanation, relatedIssueId: $relatedIssueId, sentimentScore: $sentimentScore, autoCategorySuggestion: $autoCategorySuggestion, images: $images, createdAt: $createdAt, updatedAt: $updatedAt, submittedAt: $submittedAt, verifiedAt: $verifiedAt, resolvedAt: $resolvedAt, onChainId: $onChainId, onChainHash: $onChainHash, blockchainTxnHash: $blockchainTxnHash, blockchainSynced: $blockchainSynced)';
+  return 'Report(id: $id, reportId: $reportId, userId: $userId, category: $category, categoryKey: $categoryKey, categoryDisplay: $categoryDisplay, categoryLabelSnapshot: $categoryLabelSnapshot, taxonomyVersion: $taxonomyVersion, incidentType: $incidentType, title: $title, description: $description, incidentDatetime: $incidentDatetime, isHappeningNow: $isHappeningNow, zone: $zone, streetLandmark: $streetLandmark, municipalityId: $municipalityId, barangayId: $barangayId, cityMunicipality: $cityMunicipality, province: $province, latitude: $latitude, longitude: $longitude, locationAccuracy: $locationAccuracy, location: $location, barangay: $barangay, severity: $severity, peopleAffected: $peopleAffected, isEmergency: $isEmergency, status: $status, assignedDepartment: $assignedDepartment, adminRemarks: $adminRemarks, categoryConfidence: $categoryConfidence, modelVersion: $modelVersion, categorySource: $categorySource, modelProbability: $modelProbability, top2Gap: $top2Gap, needsCategoryReview: $needsCategoryReview, reviewReasons: $reviewReasons, isMultiIssue: $isMultiIssue, rulesApplied: $rulesApplied, priority: $priority, priorityScore: $priorityScore, priorityLevel: $priorityLevel, suggestedPriorityScore: $suggestedPriorityScore, suggestedPriorityLevel: $suggestedPriorityLevel, queuePriorityScore: $queuePriorityScore, queuePriorityLevel: $queuePriorityLevel, queuePriorityRank: $queuePriorityRank, staffPriorityLevel: $staffPriorityLevel, prioritySource: $prioritySource, priorityIsAdvisory: $priorityIsAdvisory, needsPriorityReview: $needsPriorityReview, priorityReviewReasons: $priorityReviewReasons, linkedReportCount: $linkedReportCount, linkedUrgencyBoost: $linkedUrgencyBoost, isIncidentRepresentative: $isIncidentRepresentative, priorityModelVersion: $priorityModelVersion, priorityModelValidated: $priorityModelValidated, priorityCalibrationVersion: $priorityCalibrationVersion, emergencyProbability: $emergencyProbability, priorityComponents: $priorityComponents, priorityPolicyVersion: $priorityPolicyVersion, priorityRulesApplied: $priorityRulesApplied, priorityReasons: $priorityReasons, baseScore: $baseScore, hotspotScore: $hotspotScore, urgencyScore: $urgencyScore, recommendedDepartment: $recommendedDepartment, departmentConfidence: $departmentConfidence, routingReasons: $routingReasons, needsDepartmentReview: $needsDepartmentReview, departmentKey: $departmentKey, departmentDisplay: $departmentDisplay, departmentProbability: $departmentProbability, departmentTop2Gap: $departmentTop2Gap, suggestedDepartments: $suggestedDepartments, assignedDepartmentKey: $assignedDepartmentKey, departmentSource: $departmentSource, departmentIsAdvisory: $departmentIsAdvisory, departmentReviewReasons: $departmentReviewReasons, departmentModelVersion: $departmentModelVersion, departmentModelValidated: $departmentModelValidated, departmentCalibrationVersion: $departmentCalibrationVersion, departmentRegistryVersion: $departmentRegistryVersion, departmentPolicyVersion: $departmentPolicyVersion, departmentRulesApplied: $departmentRulesApplied, credibilityScore: $credibilityScore, incidentGroupId: $incidentGroupId, sentimentScore: $sentimentScore, autoCategorySuggestion: $autoCategorySuggestion, images: $images, resolvedProofImageIds: $resolvedProofImageIds, closureSignatureImageId: $closureSignatureImageId, closureSignatureDocumentIds: $closureSignatureDocumentIds, createdAt: $createdAt, updatedAt: $updatedAt, submittedAt: $submittedAt, verifiedAt: $verifiedAt, resolvedAt: $resolvedAt, citizenVerifiedAt: $citizenVerifiedAt, citizenSatisfaction: $citizenSatisfaction, citizenClosureNote: $citizenClosureNote, onChainId: $onChainId, onChainHash: $onChainHash, blockchainTxnHash: $blockchainTxnHash, blockchainSynced: $blockchainSynced)';
 }
 
 
@@ -669,7 +1113,7 @@ abstract mixin class _$ReportCopyWith<$Res> implements $ReportCopyWith<$Res> {
   factory _$ReportCopyWith(_Report value, $Res Function(_Report) _then) = __$ReportCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String? category,@JsonKey(name: 'incident_type') String? incidentType, String? title, String description,@JsonKey(name: 'incident_datetime') String? incidentDatetime,@JsonKey(name: 'is_happening_now') bool isHappeningNow, String? zone,@JsonKey(name: 'street_landmark') String? streetLandmark,@JsonKey(name: 'city_municipality') String? cityMunicipality, String? province, String? latitude, String? longitude,@JsonKey(name: 'location_accuracy') String locationAccuracy, String? location, String? barangay, String severity,@JsonKey(name: 'people_affected') int? peopleAffected,@JsonKey(name: 'is_emergency') bool isEmergency, String status,@JsonKey(name: 'assigned_department') String? assignedDepartment,@JsonKey(name: 'admin_remarks') String? adminRemarks,@JsonKey(name: 'category_confidence') double? categoryConfidence, String? priority,@JsonKey(name: 'priority_score') int? priorityScore,@JsonKey(name: 'priority_level') String? priorityLevel,@JsonKey(name: 'priority_reasons') List<String>? priorityReasons,@JsonKey(name: 'base_score') int? baseScore,@JsonKey(name: 'hotspot_score') int? hotspotScore,@JsonKey(name: 'urgency_score') double? urgencyScore,@JsonKey(name: 'duplicate_state') String? duplicateState,@JsonKey(name: 'related_report_id') String? relatedReportId,@JsonKey(name: 'duplicate_score') double? duplicateScore,@JsonKey(name: 'duplicate_confidence') String? duplicateConfidence,@JsonKey(name: 'duplicate_text_similarity') double? duplicateTextSimilarity,@JsonKey(name: 'duplicate_location_similarity') double? duplicateLocationSimilarity,@JsonKey(name: 'duplicate_explanation') String? duplicateExplanation,@JsonKey(name: 'related_issue_id') String? relatedIssueId,@JsonKey(name: 'sentiment_score') double? sentimentScore,@JsonKey(name: 'auto_category_suggestion') String? autoCategorySuggestion, List<ReportImage> images,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt,@JsonKey(name: 'submitted_at') String? submittedAt,@JsonKey(name: 'verified_at') String? verifiedAt,@JsonKey(name: 'resolved_at') String? resolvedAt,@JsonKey(name: 'on_chain_id') int? onChainId,@JsonKey(name: 'on_chain_hash') String? onChainHash,@JsonKey(name: 'blockchain_txn_hash') String? blockchainTxnHash,@JsonKey(name: 'blockchain_synced') bool blockchainSynced
+ String id,@JsonKey(name: 'report_id') String? reportId,@JsonKey(name: 'user_id') String? userId, String? category,@JsonKey(name: 'category_key') String? categoryKey,@JsonKey(name: 'category_display') String? categoryDisplay,@JsonKey(name: 'category_label_snapshot') String? categoryLabelSnapshot,@JsonKey(name: 'taxonomy_version') String? taxonomyVersion,@JsonKey(name: 'incident_type') String? incidentType, String? title, String description,@JsonKey(name: 'incident_datetime') String? incidentDatetime,@JsonKey(name: 'is_happening_now') bool isHappeningNow, String? zone,@JsonKey(name: 'street_landmark') String? streetLandmark,@JsonKey(name: 'municipality_id', readValue: _readMunicipalityId) String municipalityId,@JsonKey(name: 'barangay_id', readValue: _readBarangayId) String? barangayId,@JsonKey(name: 'city_municipality') String? cityMunicipality, String? province, String? latitude, String? longitude,@JsonKey(name: 'location_accuracy') String locationAccuracy, String? location, String? barangay, String severity,@JsonKey(name: 'people_affected')@NullableIntConverter() int? peopleAffected,@JsonKey(name: 'is_emergency') bool isEmergency, String status,@JsonKey(name: 'assigned_department') String? assignedDepartment,@JsonKey(name: 'admin_remarks') String? adminRemarks,@JsonKey(name: 'category_confidence') double? categoryConfidence,@JsonKey(name: 'model_version') String? modelVersion,@JsonKey(name: 'category_source') String? categorySource,@JsonKey(name: 'model_probability') double? modelProbability,@JsonKey(name: 'top2_gap') double? top2Gap,@JsonKey(name: 'needs_category_review') bool? needsCategoryReview,@JsonKey(name: 'review_reasons') List<String> reviewReasons,@JsonKey(name: 'is_multi_issue') bool isMultiIssue,@JsonKey(name: 'rules_applied') List<String> rulesApplied, String? priority,@JsonKey(name: 'priority_score')@NullableIntConverter() int? priorityScore,@JsonKey(name: 'priority_level') String? priorityLevel,@JsonKey(name: 'suggested_priority_score') double? suggestedPriorityScore,@JsonKey(name: 'suggested_priority_level') String? suggestedPriorityLevel,@JsonKey(name: 'queue_priority_score') double? queuePriorityScore,@JsonKey(name: 'queue_priority_level') String? queuePriorityLevel,@JsonKey(name: 'queue_priority_rank')@NullableIntConverter() int? queuePriorityRank,@JsonKey(name: 'staff_priority_level') String? staffPriorityLevel,@JsonKey(name: 'priority_source') String? prioritySource,@JsonKey(name: 'priority_is_advisory') bool priorityIsAdvisory,@JsonKey(name: 'needs_priority_review') bool needsPriorityReview,@JsonKey(name: 'priority_review_reasons') List<String> priorityReviewReasons,@JsonKey(name: 'linked_report_count') int linkedReportCount,@JsonKey(name: 'linked_urgency_boost') int linkedUrgencyBoost,@JsonKey(name: 'is_incident_representative') bool isIncidentRepresentative,@JsonKey(name: 'priority_model_version') String? priorityModelVersion,@JsonKey(name: 'priority_model_validated') bool priorityModelValidated,@JsonKey(name: 'priority_calibration_version') String? priorityCalibrationVersion,@JsonKey(name: 'emergency_probability') double? emergencyProbability,@JsonKey(name: 'priority_components') Map<String, double> priorityComponents,@JsonKey(name: 'priority_policy_version') String? priorityPolicyVersion,@JsonKey(name: 'priority_rules_applied') List<String> priorityRulesApplied,@JsonKey(name: 'priority_reasons') List<String>? priorityReasons,@JsonKey(name: 'base_score')@NullableIntConverter() int? baseScore,@JsonKey(name: 'hotspot_score')@NullableIntConverter() int? hotspotScore,@JsonKey(name: 'urgency_score') double? urgencyScore,@JsonKey(name: 'recommended_department') String? recommendedDepartment,@JsonKey(name: 'department_confidence') double? departmentConfidence,@JsonKey(name: 'routing_reasons') List<String>? routingReasons,@JsonKey(name: 'needs_department_review') bool? needsDepartmentReview,@JsonKey(name: 'department_key') String? departmentKey,@JsonKey(name: 'department_display') String? departmentDisplay,@JsonKey(name: 'department_probability') double? departmentProbability,@JsonKey(name: 'department_top2_gap') double? departmentTop2Gap,@JsonKey(name: 'suggested_departments') List<DepartmentSuggestion> suggestedDepartments,@JsonKey(name: 'assigned_department_key') String? assignedDepartmentKey,@JsonKey(name: 'department_source') String? departmentSource,@JsonKey(name: 'department_is_advisory') bool departmentIsAdvisory,@JsonKey(name: 'department_review_reasons') List<String> departmentReviewReasons,@JsonKey(name: 'department_model_version') String? departmentModelVersion,@JsonKey(name: 'department_model_validated') bool departmentModelValidated,@JsonKey(name: 'department_calibration_version') String? departmentCalibrationVersion,@JsonKey(name: 'department_registry_version') String? departmentRegistryVersion,@JsonKey(name: 'department_policy_version') String? departmentPolicyVersion,@JsonKey(name: 'department_rules_applied') List<String> departmentRulesApplied,@JsonKey(name: 'credibility_score') double? credibilityScore,@JsonKey(name: 'incident_group_id') String? incidentGroupId,@JsonKey(name: 'sentiment_score') double? sentimentScore,@JsonKey(name: 'auto_category_suggestion') String? autoCategorySuggestion, List<ReportImage> images,@JsonKey(name: 'resolved_proof_image_ids') List<String> resolvedProofImageIds,@JsonKey(name: 'closure_signature_image_id') String? closureSignatureImageId,@JsonKey(name: 'closure_signature_document_ids') List<String> closureSignatureDocumentIds,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt,@JsonKey(name: 'submitted_at') String? submittedAt,@JsonKey(name: 'verified_at') String? verifiedAt,@JsonKey(name: 'resolved_at') String? resolvedAt,@JsonKey(name: 'citizen_verified_at') String? citizenVerifiedAt,@JsonKey(name: 'citizen_satisfaction')@NullableIntConverter() int? citizenSatisfaction,@JsonKey(name: 'citizen_closure_note') String? citizenClosureNote,@JsonKey(name: 'on_chain_id')@NullableStringConverter() String? onChainId,@JsonKey(name: 'on_chain_hash') String? onChainHash,@JsonKey(name: 'blockchain_txn_hash') String? blockchainTxnHash,@JsonKey(name: 'blockchain_synced') bool blockchainSynced
 });
 
 
@@ -686,12 +1130,16 @@ class __$ReportCopyWithImpl<$Res>
 
 /// Create a copy of Report
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? category = freezed,Object? incidentType = freezed,Object? title = freezed,Object? description = null,Object? incidentDatetime = freezed,Object? isHappeningNow = null,Object? zone = freezed,Object? streetLandmark = freezed,Object? cityMunicipality = freezed,Object? province = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? locationAccuracy = null,Object? location = freezed,Object? barangay = freezed,Object? severity = null,Object? peopleAffected = freezed,Object? isEmergency = null,Object? status = null,Object? assignedDepartment = freezed,Object? adminRemarks = freezed,Object? categoryConfidence = freezed,Object? priority = freezed,Object? priorityScore = freezed,Object? priorityLevel = freezed,Object? priorityReasons = freezed,Object? baseScore = freezed,Object? hotspotScore = freezed,Object? urgencyScore = freezed,Object? duplicateState = freezed,Object? relatedReportId = freezed,Object? duplicateScore = freezed,Object? duplicateConfidence = freezed,Object? duplicateTextSimilarity = freezed,Object? duplicateLocationSimilarity = freezed,Object? duplicateExplanation = freezed,Object? relatedIssueId = freezed,Object? sentimentScore = freezed,Object? autoCategorySuggestion = freezed,Object? images = null,Object? createdAt = freezed,Object? updatedAt = freezed,Object? submittedAt = freezed,Object? verifiedAt = freezed,Object? resolvedAt = freezed,Object? onChainId = freezed,Object? onChainHash = freezed,Object? blockchainTxnHash = freezed,Object? blockchainSynced = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? reportId = freezed,Object? userId = freezed,Object? category = freezed,Object? categoryKey = freezed,Object? categoryDisplay = freezed,Object? categoryLabelSnapshot = freezed,Object? taxonomyVersion = freezed,Object? incidentType = freezed,Object? title = freezed,Object? description = null,Object? incidentDatetime = freezed,Object? isHappeningNow = null,Object? zone = freezed,Object? streetLandmark = freezed,Object? municipalityId = null,Object? barangayId = freezed,Object? cityMunicipality = freezed,Object? province = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? locationAccuracy = null,Object? location = freezed,Object? barangay = freezed,Object? severity = null,Object? peopleAffected = freezed,Object? isEmergency = null,Object? status = null,Object? assignedDepartment = freezed,Object? adminRemarks = freezed,Object? categoryConfidence = freezed,Object? modelVersion = freezed,Object? categorySource = freezed,Object? modelProbability = freezed,Object? top2Gap = freezed,Object? needsCategoryReview = freezed,Object? reviewReasons = null,Object? isMultiIssue = null,Object? rulesApplied = null,Object? priority = freezed,Object? priorityScore = freezed,Object? priorityLevel = freezed,Object? suggestedPriorityScore = freezed,Object? suggestedPriorityLevel = freezed,Object? queuePriorityScore = freezed,Object? queuePriorityLevel = freezed,Object? queuePriorityRank = freezed,Object? staffPriorityLevel = freezed,Object? prioritySource = freezed,Object? priorityIsAdvisory = null,Object? needsPriorityReview = null,Object? priorityReviewReasons = null,Object? linkedReportCount = null,Object? linkedUrgencyBoost = null,Object? isIncidentRepresentative = null,Object? priorityModelVersion = freezed,Object? priorityModelValidated = null,Object? priorityCalibrationVersion = freezed,Object? emergencyProbability = freezed,Object? priorityComponents = null,Object? priorityPolicyVersion = freezed,Object? priorityRulesApplied = null,Object? priorityReasons = freezed,Object? baseScore = freezed,Object? hotspotScore = freezed,Object? urgencyScore = freezed,Object? recommendedDepartment = freezed,Object? departmentConfidence = freezed,Object? routingReasons = freezed,Object? needsDepartmentReview = freezed,Object? departmentKey = freezed,Object? departmentDisplay = freezed,Object? departmentProbability = freezed,Object? departmentTop2Gap = freezed,Object? suggestedDepartments = null,Object? assignedDepartmentKey = freezed,Object? departmentSource = freezed,Object? departmentIsAdvisory = null,Object? departmentReviewReasons = null,Object? departmentModelVersion = freezed,Object? departmentModelValidated = null,Object? departmentCalibrationVersion = freezed,Object? departmentRegistryVersion = freezed,Object? departmentPolicyVersion = freezed,Object? departmentRulesApplied = null,Object? credibilityScore = freezed,Object? incidentGroupId = freezed,Object? sentimentScore = freezed,Object? autoCategorySuggestion = freezed,Object? images = null,Object? resolvedProofImageIds = null,Object? closureSignatureImageId = freezed,Object? closureSignatureDocumentIds = null,Object? createdAt = freezed,Object? updatedAt = freezed,Object? submittedAt = freezed,Object? verifiedAt = freezed,Object? resolvedAt = freezed,Object? citizenVerifiedAt = freezed,Object? citizenSatisfaction = freezed,Object? citizenClosureNote = freezed,Object? onChainId = freezed,Object? onChainHash = freezed,Object? blockchainTxnHash = freezed,Object? blockchainSynced = null,}) {
   return _then(_Report(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,reportId: freezed == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
 as String?,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String?,category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
+as String?,categoryKey: freezed == categoryKey ? _self.categoryKey : categoryKey // ignore: cast_nullable_to_non_nullable
+as String?,categoryDisplay: freezed == categoryDisplay ? _self.categoryDisplay : categoryDisplay // ignore: cast_nullable_to_non_nullable
+as String?,categoryLabelSnapshot: freezed == categoryLabelSnapshot ? _self.categoryLabelSnapshot : categoryLabelSnapshot // ignore: cast_nullable_to_non_nullable
+as String?,taxonomyVersion: freezed == taxonomyVersion ? _self.taxonomyVersion : taxonomyVersion // ignore: cast_nullable_to_non_nullable
 as String?,incidentType: freezed == incidentType ? _self.incidentType : incidentType // ignore: cast_nullable_to_non_nullable
 as String?,title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,description: null == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
@@ -699,6 +1147,8 @@ as String,incidentDatetime: freezed == incidentDatetime ? _self.incidentDatetime
 as String?,isHappeningNow: null == isHappeningNow ? _self.isHappeningNow : isHappeningNow // ignore: cast_nullable_to_non_nullable
 as bool,zone: freezed == zone ? _self.zone : zone // ignore: cast_nullable_to_non_nullable
 as String?,streetLandmark: freezed == streetLandmark ? _self.streetLandmark : streetLandmark // ignore: cast_nullable_to_non_nullable
+as String?,municipalityId: null == municipalityId ? _self.municipalityId : municipalityId // ignore: cast_nullable_to_non_nullable
+as String,barangayId: freezed == barangayId ? _self.barangayId : barangayId // ignore: cast_nullable_to_non_nullable
 as String?,cityMunicipality: freezed == cityMunicipality ? _self.cityMunicipality : cityMunicipality // ignore: cast_nullable_to_non_nullable
 as String?,province: freezed == province ? _self.province : province // ignore: cast_nullable_to_non_nullable
 as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
@@ -713,31 +1163,78 @@ as bool,status: null == status ? _self.status : status // ignore: cast_nullable_
 as String,assignedDepartment: freezed == assignedDepartment ? _self.assignedDepartment : assignedDepartment // ignore: cast_nullable_to_non_nullable
 as String?,adminRemarks: freezed == adminRemarks ? _self.adminRemarks : adminRemarks // ignore: cast_nullable_to_non_nullable
 as String?,categoryConfidence: freezed == categoryConfidence ? _self.categoryConfidence : categoryConfidence // ignore: cast_nullable_to_non_nullable
-as double?,priority: freezed == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
+as double?,modelVersion: freezed == modelVersion ? _self.modelVersion : modelVersion // ignore: cast_nullable_to_non_nullable
+as String?,categorySource: freezed == categorySource ? _self.categorySource : categorySource // ignore: cast_nullable_to_non_nullable
+as String?,modelProbability: freezed == modelProbability ? _self.modelProbability : modelProbability // ignore: cast_nullable_to_non_nullable
+as double?,top2Gap: freezed == top2Gap ? _self.top2Gap : top2Gap // ignore: cast_nullable_to_non_nullable
+as double?,needsCategoryReview: freezed == needsCategoryReview ? _self.needsCategoryReview : needsCategoryReview // ignore: cast_nullable_to_non_nullable
+as bool?,reviewReasons: null == reviewReasons ? _self._reviewReasons : reviewReasons // ignore: cast_nullable_to_non_nullable
+as List<String>,isMultiIssue: null == isMultiIssue ? _self.isMultiIssue : isMultiIssue // ignore: cast_nullable_to_non_nullable
+as bool,rulesApplied: null == rulesApplied ? _self._rulesApplied : rulesApplied // ignore: cast_nullable_to_non_nullable
+as List<String>,priority: freezed == priority ? _self.priority : priority // ignore: cast_nullable_to_non_nullable
 as String?,priorityScore: freezed == priorityScore ? _self.priorityScore : priorityScore // ignore: cast_nullable_to_non_nullable
 as int?,priorityLevel: freezed == priorityLevel ? _self.priorityLevel : priorityLevel // ignore: cast_nullable_to_non_nullable
-as String?,priorityReasons: freezed == priorityReasons ? _self._priorityReasons : priorityReasons // ignore: cast_nullable_to_non_nullable
+as String?,suggestedPriorityScore: freezed == suggestedPriorityScore ? _self.suggestedPriorityScore : suggestedPriorityScore // ignore: cast_nullable_to_non_nullable
+as double?,suggestedPriorityLevel: freezed == suggestedPriorityLevel ? _self.suggestedPriorityLevel : suggestedPriorityLevel // ignore: cast_nullable_to_non_nullable
+as String?,queuePriorityScore: freezed == queuePriorityScore ? _self.queuePriorityScore : queuePriorityScore // ignore: cast_nullable_to_non_nullable
+as double?,queuePriorityLevel: freezed == queuePriorityLevel ? _self.queuePriorityLevel : queuePriorityLevel // ignore: cast_nullable_to_non_nullable
+as String?,queuePriorityRank: freezed == queuePriorityRank ? _self.queuePriorityRank : queuePriorityRank // ignore: cast_nullable_to_non_nullable
+as int?,staffPriorityLevel: freezed == staffPriorityLevel ? _self.staffPriorityLevel : staffPriorityLevel // ignore: cast_nullable_to_non_nullable
+as String?,prioritySource: freezed == prioritySource ? _self.prioritySource : prioritySource // ignore: cast_nullable_to_non_nullable
+as String?,priorityIsAdvisory: null == priorityIsAdvisory ? _self.priorityIsAdvisory : priorityIsAdvisory // ignore: cast_nullable_to_non_nullable
+as bool,needsPriorityReview: null == needsPriorityReview ? _self.needsPriorityReview : needsPriorityReview // ignore: cast_nullable_to_non_nullable
+as bool,priorityReviewReasons: null == priorityReviewReasons ? _self._priorityReviewReasons : priorityReviewReasons // ignore: cast_nullable_to_non_nullable
+as List<String>,linkedReportCount: null == linkedReportCount ? _self.linkedReportCount : linkedReportCount // ignore: cast_nullable_to_non_nullable
+as int,linkedUrgencyBoost: null == linkedUrgencyBoost ? _self.linkedUrgencyBoost : linkedUrgencyBoost // ignore: cast_nullable_to_non_nullable
+as int,isIncidentRepresentative: null == isIncidentRepresentative ? _self.isIncidentRepresentative : isIncidentRepresentative // ignore: cast_nullable_to_non_nullable
+as bool,priorityModelVersion: freezed == priorityModelVersion ? _self.priorityModelVersion : priorityModelVersion // ignore: cast_nullable_to_non_nullable
+as String?,priorityModelValidated: null == priorityModelValidated ? _self.priorityModelValidated : priorityModelValidated // ignore: cast_nullable_to_non_nullable
+as bool,priorityCalibrationVersion: freezed == priorityCalibrationVersion ? _self.priorityCalibrationVersion : priorityCalibrationVersion // ignore: cast_nullable_to_non_nullable
+as String?,emergencyProbability: freezed == emergencyProbability ? _self.emergencyProbability : emergencyProbability // ignore: cast_nullable_to_non_nullable
+as double?,priorityComponents: null == priorityComponents ? _self._priorityComponents : priorityComponents // ignore: cast_nullable_to_non_nullable
+as Map<String, double>,priorityPolicyVersion: freezed == priorityPolicyVersion ? _self.priorityPolicyVersion : priorityPolicyVersion // ignore: cast_nullable_to_non_nullable
+as String?,priorityRulesApplied: null == priorityRulesApplied ? _self._priorityRulesApplied : priorityRulesApplied // ignore: cast_nullable_to_non_nullable
+as List<String>,priorityReasons: freezed == priorityReasons ? _self._priorityReasons : priorityReasons // ignore: cast_nullable_to_non_nullable
 as List<String>?,baseScore: freezed == baseScore ? _self.baseScore : baseScore // ignore: cast_nullable_to_non_nullable
 as int?,hotspotScore: freezed == hotspotScore ? _self.hotspotScore : hotspotScore // ignore: cast_nullable_to_non_nullable
 as int?,urgencyScore: freezed == urgencyScore ? _self.urgencyScore : urgencyScore // ignore: cast_nullable_to_non_nullable
-as double?,duplicateState: freezed == duplicateState ? _self.duplicateState : duplicateState // ignore: cast_nullable_to_non_nullable
-as String?,relatedReportId: freezed == relatedReportId ? _self.relatedReportId : relatedReportId // ignore: cast_nullable_to_non_nullable
-as String?,duplicateScore: freezed == duplicateScore ? _self.duplicateScore : duplicateScore // ignore: cast_nullable_to_non_nullable
-as double?,duplicateConfidence: freezed == duplicateConfidence ? _self.duplicateConfidence : duplicateConfidence // ignore: cast_nullable_to_non_nullable
-as String?,duplicateTextSimilarity: freezed == duplicateTextSimilarity ? _self.duplicateTextSimilarity : duplicateTextSimilarity // ignore: cast_nullable_to_non_nullable
-as double?,duplicateLocationSimilarity: freezed == duplicateLocationSimilarity ? _self.duplicateLocationSimilarity : duplicateLocationSimilarity // ignore: cast_nullable_to_non_nullable
-as double?,duplicateExplanation: freezed == duplicateExplanation ? _self.duplicateExplanation : duplicateExplanation // ignore: cast_nullable_to_non_nullable
-as String?,relatedIssueId: freezed == relatedIssueId ? _self.relatedIssueId : relatedIssueId // ignore: cast_nullable_to_non_nullable
+as double?,recommendedDepartment: freezed == recommendedDepartment ? _self.recommendedDepartment : recommendedDepartment // ignore: cast_nullable_to_non_nullable
+as String?,departmentConfidence: freezed == departmentConfidence ? _self.departmentConfidence : departmentConfidence // ignore: cast_nullable_to_non_nullable
+as double?,routingReasons: freezed == routingReasons ? _self._routingReasons : routingReasons // ignore: cast_nullable_to_non_nullable
+as List<String>?,needsDepartmentReview: freezed == needsDepartmentReview ? _self.needsDepartmentReview : needsDepartmentReview // ignore: cast_nullable_to_non_nullable
+as bool?,departmentKey: freezed == departmentKey ? _self.departmentKey : departmentKey // ignore: cast_nullable_to_non_nullable
+as String?,departmentDisplay: freezed == departmentDisplay ? _self.departmentDisplay : departmentDisplay // ignore: cast_nullable_to_non_nullable
+as String?,departmentProbability: freezed == departmentProbability ? _self.departmentProbability : departmentProbability // ignore: cast_nullable_to_non_nullable
+as double?,departmentTop2Gap: freezed == departmentTop2Gap ? _self.departmentTop2Gap : departmentTop2Gap // ignore: cast_nullable_to_non_nullable
+as double?,suggestedDepartments: null == suggestedDepartments ? _self._suggestedDepartments : suggestedDepartments // ignore: cast_nullable_to_non_nullable
+as List<DepartmentSuggestion>,assignedDepartmentKey: freezed == assignedDepartmentKey ? _self.assignedDepartmentKey : assignedDepartmentKey // ignore: cast_nullable_to_non_nullable
+as String?,departmentSource: freezed == departmentSource ? _self.departmentSource : departmentSource // ignore: cast_nullable_to_non_nullable
+as String?,departmentIsAdvisory: null == departmentIsAdvisory ? _self.departmentIsAdvisory : departmentIsAdvisory // ignore: cast_nullable_to_non_nullable
+as bool,departmentReviewReasons: null == departmentReviewReasons ? _self._departmentReviewReasons : departmentReviewReasons // ignore: cast_nullable_to_non_nullable
+as List<String>,departmentModelVersion: freezed == departmentModelVersion ? _self.departmentModelVersion : departmentModelVersion // ignore: cast_nullable_to_non_nullable
+as String?,departmentModelValidated: null == departmentModelValidated ? _self.departmentModelValidated : departmentModelValidated // ignore: cast_nullable_to_non_nullable
+as bool,departmentCalibrationVersion: freezed == departmentCalibrationVersion ? _self.departmentCalibrationVersion : departmentCalibrationVersion // ignore: cast_nullable_to_non_nullable
+as String?,departmentRegistryVersion: freezed == departmentRegistryVersion ? _self.departmentRegistryVersion : departmentRegistryVersion // ignore: cast_nullable_to_non_nullable
+as String?,departmentPolicyVersion: freezed == departmentPolicyVersion ? _self.departmentPolicyVersion : departmentPolicyVersion // ignore: cast_nullable_to_non_nullable
+as String?,departmentRulesApplied: null == departmentRulesApplied ? _self._departmentRulesApplied : departmentRulesApplied // ignore: cast_nullable_to_non_nullable
+as List<String>,credibilityScore: freezed == credibilityScore ? _self.credibilityScore : credibilityScore // ignore: cast_nullable_to_non_nullable
+as double?,incidentGroupId: freezed == incidentGroupId ? _self.incidentGroupId : incidentGroupId // ignore: cast_nullable_to_non_nullable
 as String?,sentimentScore: freezed == sentimentScore ? _self.sentimentScore : sentimentScore // ignore: cast_nullable_to_non_nullable
 as double?,autoCategorySuggestion: freezed == autoCategorySuggestion ? _self.autoCategorySuggestion : autoCategorySuggestion // ignore: cast_nullable_to_non_nullable
 as String?,images: null == images ? _self._images : images // ignore: cast_nullable_to_non_nullable
-as List<ReportImage>,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as List<ReportImage>,resolvedProofImageIds: null == resolvedProofImageIds ? _self._resolvedProofImageIds : resolvedProofImageIds // ignore: cast_nullable_to_non_nullable
+as List<String>,closureSignatureImageId: freezed == closureSignatureImageId ? _self.closureSignatureImageId : closureSignatureImageId // ignore: cast_nullable_to_non_nullable
+as String?,closureSignatureDocumentIds: null == closureSignatureDocumentIds ? _self._closureSignatureDocumentIds : closureSignatureDocumentIds // ignore: cast_nullable_to_non_nullable
+as List<String>,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as String?,submittedAt: freezed == submittedAt ? _self.submittedAt : submittedAt // ignore: cast_nullable_to_non_nullable
 as String?,verifiedAt: freezed == verifiedAt ? _self.verifiedAt : verifiedAt // ignore: cast_nullable_to_non_nullable
 as String?,resolvedAt: freezed == resolvedAt ? _self.resolvedAt : resolvedAt // ignore: cast_nullable_to_non_nullable
+as String?,citizenVerifiedAt: freezed == citizenVerifiedAt ? _self.citizenVerifiedAt : citizenVerifiedAt // ignore: cast_nullable_to_non_nullable
+as String?,citizenSatisfaction: freezed == citizenSatisfaction ? _self.citizenSatisfaction : citizenSatisfaction // ignore: cast_nullable_to_non_nullable
+as int?,citizenClosureNote: freezed == citizenClosureNote ? _self.citizenClosureNote : citizenClosureNote // ignore: cast_nullable_to_non_nullable
 as String?,onChainId: freezed == onChainId ? _self.onChainId : onChainId // ignore: cast_nullable_to_non_nullable
-as int?,onChainHash: freezed == onChainHash ? _self.onChainHash : onChainHash // ignore: cast_nullable_to_non_nullable
+as String?,onChainHash: freezed == onChainHash ? _self.onChainHash : onChainHash // ignore: cast_nullable_to_non_nullable
 as String?,blockchainTxnHash: freezed == blockchainTxnHash ? _self.blockchainTxnHash : blockchainTxnHash // ignore: cast_nullable_to_non_nullable
 as String?,blockchainSynced: null == blockchainSynced ? _self.blockchainSynced : blockchainSynced // ignore: cast_nullable_to_non_nullable
 as bool,
@@ -753,9 +1250,9 @@ mixin _$CreateReportRequest {
 
 // Report Details (Section A)
  String? get category;@JsonKey(name: 'incident_type') String? get incidentType; String? get title; String get description;@JsonKey(name: 'incident_datetime') String? get incidentDatetime;@JsonKey(name: 'is_happening_now') bool get isHappeningNow;// Location Information (Section B)
- String? get zone;@JsonKey(name: 'street_landmark') String? get streetLandmark;@JsonKey(name: 'city_municipality') String? get cityMunicipality; String? get province; String? get latitude; String? get longitude;@JsonKey(name: 'location_accuracy') String get locationAccuracy;// Legacy fields for backwards compatibility
+ String? get zone;@JsonKey(name: 'street_landmark') String? get streetLandmark;@JsonKey(name: 'municipality_id') String get municipalityId;@JsonKey(name: 'barangay_id') String? get barangayId;@JsonKey(name: 'city_municipality') String? get cityMunicipality; String? get province; String? get latitude; String? get longitude;@JsonKey(name: 'location_accuracy') String get locationAccuracy;// Legacy fields for backwards compatibility
  String? get location; String? get barangay;// Consent & Declaration
-@JsonKey(name: 'declaration_confirmed') bool get declarationConfirmed;@JsonKey(name: 'data_processing_consent') bool get dataProcessingConsent;
+@JsonKey(name: 'declaration_confirmed') bool get declarationConfirmed;@JsonKey(name: 'data_processing_consent') bool get dataProcessingConsent;@JsonKey(name: 'is_emergency') bool get isEmergency;
 /// Create a copy of CreateReportRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -768,16 +1265,16 @@ $CreateReportRequestCopyWith<CreateReportRequest> get copyWith => _$CreateReport
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateReportRequest&&(identical(other.category, category) || other.category == category)&&(identical(other.incidentType, incidentType) || other.incidentType == incidentType)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.incidentDatetime, incidentDatetime) || other.incidentDatetime == incidentDatetime)&&(identical(other.isHappeningNow, isHappeningNow) || other.isHappeningNow == isHappeningNow)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.streetLandmark, streetLandmark) || other.streetLandmark == streetLandmark)&&(identical(other.cityMunicipality, cityMunicipality) || other.cityMunicipality == cityMunicipality)&&(identical(other.province, province) || other.province == province)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.locationAccuracy, locationAccuracy) || other.locationAccuracy == locationAccuracy)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.declarationConfirmed, declarationConfirmed) || other.declarationConfirmed == declarationConfirmed)&&(identical(other.dataProcessingConsent, dataProcessingConsent) || other.dataProcessingConsent == dataProcessingConsent));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CreateReportRequest&&(identical(other.category, category) || other.category == category)&&(identical(other.incidentType, incidentType) || other.incidentType == incidentType)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.incidentDatetime, incidentDatetime) || other.incidentDatetime == incidentDatetime)&&(identical(other.isHappeningNow, isHappeningNow) || other.isHappeningNow == isHappeningNow)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.streetLandmark, streetLandmark) || other.streetLandmark == streetLandmark)&&(identical(other.municipalityId, municipalityId) || other.municipalityId == municipalityId)&&(identical(other.barangayId, barangayId) || other.barangayId == barangayId)&&(identical(other.cityMunicipality, cityMunicipality) || other.cityMunicipality == cityMunicipality)&&(identical(other.province, province) || other.province == province)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.locationAccuracy, locationAccuracy) || other.locationAccuracy == locationAccuracy)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.declarationConfirmed, declarationConfirmed) || other.declarationConfirmed == declarationConfirmed)&&(identical(other.dataProcessingConsent, dataProcessingConsent) || other.dataProcessingConsent == dataProcessingConsent)&&(identical(other.isEmergency, isEmergency) || other.isEmergency == isEmergency));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,category,incidentType,title,description,incidentDatetime,isHappeningNow,zone,streetLandmark,cityMunicipality,province,latitude,longitude,locationAccuracy,location,barangay,declarationConfirmed,dataProcessingConsent);
+int get hashCode => Object.hashAll([runtimeType,category,incidentType,title,description,incidentDatetime,isHappeningNow,zone,streetLandmark,municipalityId,barangayId,cityMunicipality,province,latitude,longitude,locationAccuracy,location,barangay,declarationConfirmed,dataProcessingConsent,isEmergency]);
 
 @override
 String toString() {
-  return 'CreateReportRequest(category: $category, incidentType: $incidentType, title: $title, description: $description, incidentDatetime: $incidentDatetime, isHappeningNow: $isHappeningNow, zone: $zone, streetLandmark: $streetLandmark, cityMunicipality: $cityMunicipality, province: $province, latitude: $latitude, longitude: $longitude, locationAccuracy: $locationAccuracy, location: $location, barangay: $barangay, declarationConfirmed: $declarationConfirmed, dataProcessingConsent: $dataProcessingConsent)';
+  return 'CreateReportRequest(category: $category, incidentType: $incidentType, title: $title, description: $description, incidentDatetime: $incidentDatetime, isHappeningNow: $isHappeningNow, zone: $zone, streetLandmark: $streetLandmark, municipalityId: $municipalityId, barangayId: $barangayId, cityMunicipality: $cityMunicipality, province: $province, latitude: $latitude, longitude: $longitude, locationAccuracy: $locationAccuracy, location: $location, barangay: $barangay, declarationConfirmed: $declarationConfirmed, dataProcessingConsent: $dataProcessingConsent, isEmergency: $isEmergency)';
 }
 
 
@@ -788,7 +1285,7 @@ abstract mixin class $CreateReportRequestCopyWith<$Res>  {
   factory $CreateReportRequestCopyWith(CreateReportRequest value, $Res Function(CreateReportRequest) _then) = _$CreateReportRequestCopyWithImpl;
 @useResult
 $Res call({
- String? category,@JsonKey(name: 'incident_type') String? incidentType, String? title, String description,@JsonKey(name: 'incident_datetime') String? incidentDatetime,@JsonKey(name: 'is_happening_now') bool isHappeningNow, String? zone,@JsonKey(name: 'street_landmark') String? streetLandmark,@JsonKey(name: 'city_municipality') String? cityMunicipality, String? province, String? latitude, String? longitude,@JsonKey(name: 'location_accuracy') String locationAccuracy, String? location, String? barangay,@JsonKey(name: 'declaration_confirmed') bool declarationConfirmed,@JsonKey(name: 'data_processing_consent') bool dataProcessingConsent
+ String? category,@JsonKey(name: 'incident_type') String? incidentType, String? title, String description,@JsonKey(name: 'incident_datetime') String? incidentDatetime,@JsonKey(name: 'is_happening_now') bool isHappeningNow, String? zone,@JsonKey(name: 'street_landmark') String? streetLandmark,@JsonKey(name: 'municipality_id') String municipalityId,@JsonKey(name: 'barangay_id') String? barangayId,@JsonKey(name: 'city_municipality') String? cityMunicipality, String? province, String? latitude, String? longitude,@JsonKey(name: 'location_accuracy') String locationAccuracy, String? location, String? barangay,@JsonKey(name: 'declaration_confirmed') bool declarationConfirmed,@JsonKey(name: 'data_processing_consent') bool dataProcessingConsent,@JsonKey(name: 'is_emergency') bool isEmergency
 });
 
 
@@ -805,7 +1302,7 @@ class _$CreateReportRequestCopyWithImpl<$Res>
 
 /// Create a copy of CreateReportRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? category = freezed,Object? incidentType = freezed,Object? title = freezed,Object? description = null,Object? incidentDatetime = freezed,Object? isHappeningNow = null,Object? zone = freezed,Object? streetLandmark = freezed,Object? cityMunicipality = freezed,Object? province = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? locationAccuracy = null,Object? location = freezed,Object? barangay = freezed,Object? declarationConfirmed = null,Object? dataProcessingConsent = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? category = freezed,Object? incidentType = freezed,Object? title = freezed,Object? description = null,Object? incidentDatetime = freezed,Object? isHappeningNow = null,Object? zone = freezed,Object? streetLandmark = freezed,Object? municipalityId = null,Object? barangayId = freezed,Object? cityMunicipality = freezed,Object? province = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? locationAccuracy = null,Object? location = freezed,Object? barangay = freezed,Object? declarationConfirmed = null,Object? dataProcessingConsent = null,Object? isEmergency = null,}) {
   return _then(_self.copyWith(
 category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as String?,incidentType: freezed == incidentType ? _self.incidentType : incidentType // ignore: cast_nullable_to_non_nullable
@@ -815,6 +1312,8 @@ as String,incidentDatetime: freezed == incidentDatetime ? _self.incidentDatetime
 as String?,isHappeningNow: null == isHappeningNow ? _self.isHappeningNow : isHappeningNow // ignore: cast_nullable_to_non_nullable
 as bool,zone: freezed == zone ? _self.zone : zone // ignore: cast_nullable_to_non_nullable
 as String?,streetLandmark: freezed == streetLandmark ? _self.streetLandmark : streetLandmark // ignore: cast_nullable_to_non_nullable
+as String?,municipalityId: null == municipalityId ? _self.municipalityId : municipalityId // ignore: cast_nullable_to_non_nullable
+as String,barangayId: freezed == barangayId ? _self.barangayId : barangayId // ignore: cast_nullable_to_non_nullable
 as String?,cityMunicipality: freezed == cityMunicipality ? _self.cityMunicipality : cityMunicipality // ignore: cast_nullable_to_non_nullable
 as String?,province: freezed == province ? _self.province : province // ignore: cast_nullable_to_non_nullable
 as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
@@ -824,6 +1323,7 @@ as String,location: freezed == location ? _self.location : location // ignore: c
 as String?,barangay: freezed == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
 as String?,declarationConfirmed: null == declarationConfirmed ? _self.declarationConfirmed : declarationConfirmed // ignore: cast_nullable_to_non_nullable
 as bool,dataProcessingConsent: null == dataProcessingConsent ? _self.dataProcessingConsent : dataProcessingConsent // ignore: cast_nullable_to_non_nullable
+as bool,isEmergency: null == isEmergency ? _self.isEmergency : isEmergency // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -906,10 +1406,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? category, @JsonKey(name: 'incident_type')  String? incidentType,  String? title,  String description, @JsonKey(name: 'incident_datetime')  String? incidentDatetime, @JsonKey(name: 'is_happening_now')  bool isHappeningNow,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? latitude,  String? longitude, @JsonKey(name: 'location_accuracy')  String locationAccuracy,  String? location,  String? barangay, @JsonKey(name: 'declaration_confirmed')  bool declarationConfirmed, @JsonKey(name: 'data_processing_consent')  bool dataProcessingConsent)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? category, @JsonKey(name: 'incident_type')  String? incidentType,  String? title,  String description, @JsonKey(name: 'incident_datetime')  String? incidentDatetime, @JsonKey(name: 'is_happening_now')  bool isHappeningNow,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'municipality_id')  String municipalityId, @JsonKey(name: 'barangay_id')  String? barangayId, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? latitude,  String? longitude, @JsonKey(name: 'location_accuracy')  String locationAccuracy,  String? location,  String? barangay, @JsonKey(name: 'declaration_confirmed')  bool declarationConfirmed, @JsonKey(name: 'data_processing_consent')  bool dataProcessingConsent, @JsonKey(name: 'is_emergency')  bool isEmergency)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CreateReportRequest() when $default != null:
-return $default(_that.category,_that.incidentType,_that.title,_that.description,_that.incidentDatetime,_that.isHappeningNow,_that.zone,_that.streetLandmark,_that.cityMunicipality,_that.province,_that.latitude,_that.longitude,_that.locationAccuracy,_that.location,_that.barangay,_that.declarationConfirmed,_that.dataProcessingConsent);case _:
+return $default(_that.category,_that.incidentType,_that.title,_that.description,_that.incidentDatetime,_that.isHappeningNow,_that.zone,_that.streetLandmark,_that.municipalityId,_that.barangayId,_that.cityMunicipality,_that.province,_that.latitude,_that.longitude,_that.locationAccuracy,_that.location,_that.barangay,_that.declarationConfirmed,_that.dataProcessingConsent,_that.isEmergency);case _:
   return orElse();
 
 }
@@ -927,10 +1427,10 @@ return $default(_that.category,_that.incidentType,_that.title,_that.description,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? category, @JsonKey(name: 'incident_type')  String? incidentType,  String? title,  String description, @JsonKey(name: 'incident_datetime')  String? incidentDatetime, @JsonKey(name: 'is_happening_now')  bool isHappeningNow,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? latitude,  String? longitude, @JsonKey(name: 'location_accuracy')  String locationAccuracy,  String? location,  String? barangay, @JsonKey(name: 'declaration_confirmed')  bool declarationConfirmed, @JsonKey(name: 'data_processing_consent')  bool dataProcessingConsent)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? category, @JsonKey(name: 'incident_type')  String? incidentType,  String? title,  String description, @JsonKey(name: 'incident_datetime')  String? incidentDatetime, @JsonKey(name: 'is_happening_now')  bool isHappeningNow,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'municipality_id')  String municipalityId, @JsonKey(name: 'barangay_id')  String? barangayId, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? latitude,  String? longitude, @JsonKey(name: 'location_accuracy')  String locationAccuracy,  String? location,  String? barangay, @JsonKey(name: 'declaration_confirmed')  bool declarationConfirmed, @JsonKey(name: 'data_processing_consent')  bool dataProcessingConsent, @JsonKey(name: 'is_emergency')  bool isEmergency)  $default,) {final _that = this;
 switch (_that) {
 case _CreateReportRequest():
-return $default(_that.category,_that.incidentType,_that.title,_that.description,_that.incidentDatetime,_that.isHappeningNow,_that.zone,_that.streetLandmark,_that.cityMunicipality,_that.province,_that.latitude,_that.longitude,_that.locationAccuracy,_that.location,_that.barangay,_that.declarationConfirmed,_that.dataProcessingConsent);}
+return $default(_that.category,_that.incidentType,_that.title,_that.description,_that.incidentDatetime,_that.isHappeningNow,_that.zone,_that.streetLandmark,_that.municipalityId,_that.barangayId,_that.cityMunicipality,_that.province,_that.latitude,_that.longitude,_that.locationAccuracy,_that.location,_that.barangay,_that.declarationConfirmed,_that.dataProcessingConsent,_that.isEmergency);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -944,10 +1444,10 @@ return $default(_that.category,_that.incidentType,_that.title,_that.description,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? category, @JsonKey(name: 'incident_type')  String? incidentType,  String? title,  String description, @JsonKey(name: 'incident_datetime')  String? incidentDatetime, @JsonKey(name: 'is_happening_now')  bool isHappeningNow,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? latitude,  String? longitude, @JsonKey(name: 'location_accuracy')  String locationAccuracy,  String? location,  String? barangay, @JsonKey(name: 'declaration_confirmed')  bool declarationConfirmed, @JsonKey(name: 'data_processing_consent')  bool dataProcessingConsent)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? category, @JsonKey(name: 'incident_type')  String? incidentType,  String? title,  String description, @JsonKey(name: 'incident_datetime')  String? incidentDatetime, @JsonKey(name: 'is_happening_now')  bool isHappeningNow,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'municipality_id')  String municipalityId, @JsonKey(name: 'barangay_id')  String? barangayId, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? latitude,  String? longitude, @JsonKey(name: 'location_accuracy')  String locationAccuracy,  String? location,  String? barangay, @JsonKey(name: 'declaration_confirmed')  bool declarationConfirmed, @JsonKey(name: 'data_processing_consent')  bool dataProcessingConsent, @JsonKey(name: 'is_emergency')  bool isEmergency)?  $default,) {final _that = this;
 switch (_that) {
 case _CreateReportRequest() when $default != null:
-return $default(_that.category,_that.incidentType,_that.title,_that.description,_that.incidentDatetime,_that.isHappeningNow,_that.zone,_that.streetLandmark,_that.cityMunicipality,_that.province,_that.latitude,_that.longitude,_that.locationAccuracy,_that.location,_that.barangay,_that.declarationConfirmed,_that.dataProcessingConsent);case _:
+return $default(_that.category,_that.incidentType,_that.title,_that.description,_that.incidentDatetime,_that.isHappeningNow,_that.zone,_that.streetLandmark,_that.municipalityId,_that.barangayId,_that.cityMunicipality,_that.province,_that.latitude,_that.longitude,_that.locationAccuracy,_that.location,_that.barangay,_that.declarationConfirmed,_that.dataProcessingConsent,_that.isEmergency);case _:
   return null;
 
 }
@@ -959,19 +1459,21 @@ return $default(_that.category,_that.incidentType,_that.title,_that.description,
 @JsonSerializable()
 
 class _CreateReportRequest implements CreateReportRequest {
-  const _CreateReportRequest({this.category, @JsonKey(name: 'incident_type') this.incidentType, this.title, required this.description, @JsonKey(name: 'incident_datetime') this.incidentDatetime, @JsonKey(name: 'is_happening_now') this.isHappeningNow = false, this.zone, @JsonKey(name: 'street_landmark') this.streetLandmark, @JsonKey(name: 'city_municipality') this.cityMunicipality, this.province, this.latitude, this.longitude, @JsonKey(name: 'location_accuracy') this.locationAccuracy = 'approximate', this.location, this.barangay, @JsonKey(name: 'declaration_confirmed') this.declarationConfirmed = true, @JsonKey(name: 'data_processing_consent') this.dataProcessingConsent = true});
+  const _CreateReportRequest({this.category, @JsonKey(name: 'incident_type') this.incidentType, this.title, this.description = '', @JsonKey(name: 'incident_datetime') this.incidentDatetime, @JsonKey(name: 'is_happening_now') this.isHappeningNow = false, this.zone, @JsonKey(name: 'street_landmark') this.streetLandmark, @JsonKey(name: 'municipality_id') this.municipalityId = 'urdaneta', @JsonKey(name: 'barangay_id') this.barangayId, @JsonKey(name: 'city_municipality') this.cityMunicipality, this.province, this.latitude, this.longitude, @JsonKey(name: 'location_accuracy') this.locationAccuracy = 'approximate', this.location, this.barangay, @JsonKey(name: 'declaration_confirmed') this.declarationConfirmed = true, @JsonKey(name: 'data_processing_consent') this.dataProcessingConsent = true, @JsonKey(name: 'is_emergency') this.isEmergency = false});
   factory _CreateReportRequest.fromJson(Map<String, dynamic> json) => _$CreateReportRequestFromJson(json);
 
 // Report Details (Section A)
 @override final  String? category;
 @override@JsonKey(name: 'incident_type') final  String? incidentType;
 @override final  String? title;
-@override final  String description;
+@override@JsonKey() final  String description;
 @override@JsonKey(name: 'incident_datetime') final  String? incidentDatetime;
 @override@JsonKey(name: 'is_happening_now') final  bool isHappeningNow;
 // Location Information (Section B)
 @override final  String? zone;
 @override@JsonKey(name: 'street_landmark') final  String? streetLandmark;
+@override@JsonKey(name: 'municipality_id') final  String municipalityId;
+@override@JsonKey(name: 'barangay_id') final  String? barangayId;
 @override@JsonKey(name: 'city_municipality') final  String? cityMunicipality;
 @override final  String? province;
 @override final  String? latitude;
@@ -983,6 +1485,7 @@ class _CreateReportRequest implements CreateReportRequest {
 // Consent & Declaration
 @override@JsonKey(name: 'declaration_confirmed') final  bool declarationConfirmed;
 @override@JsonKey(name: 'data_processing_consent') final  bool dataProcessingConsent;
+@override@JsonKey(name: 'is_emergency') final  bool isEmergency;
 
 /// Create a copy of CreateReportRequest
 /// with the given fields replaced by the non-null parameter values.
@@ -997,16 +1500,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateReportRequest&&(identical(other.category, category) || other.category == category)&&(identical(other.incidentType, incidentType) || other.incidentType == incidentType)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.incidentDatetime, incidentDatetime) || other.incidentDatetime == incidentDatetime)&&(identical(other.isHappeningNow, isHappeningNow) || other.isHappeningNow == isHappeningNow)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.streetLandmark, streetLandmark) || other.streetLandmark == streetLandmark)&&(identical(other.cityMunicipality, cityMunicipality) || other.cityMunicipality == cityMunicipality)&&(identical(other.province, province) || other.province == province)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.locationAccuracy, locationAccuracy) || other.locationAccuracy == locationAccuracy)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.declarationConfirmed, declarationConfirmed) || other.declarationConfirmed == declarationConfirmed)&&(identical(other.dataProcessingConsent, dataProcessingConsent) || other.dataProcessingConsent == dataProcessingConsent));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CreateReportRequest&&(identical(other.category, category) || other.category == category)&&(identical(other.incidentType, incidentType) || other.incidentType == incidentType)&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.incidentDatetime, incidentDatetime) || other.incidentDatetime == incidentDatetime)&&(identical(other.isHappeningNow, isHappeningNow) || other.isHappeningNow == isHappeningNow)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.streetLandmark, streetLandmark) || other.streetLandmark == streetLandmark)&&(identical(other.municipalityId, municipalityId) || other.municipalityId == municipalityId)&&(identical(other.barangayId, barangayId) || other.barangayId == barangayId)&&(identical(other.cityMunicipality, cityMunicipality) || other.cityMunicipality == cityMunicipality)&&(identical(other.province, province) || other.province == province)&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.locationAccuracy, locationAccuracy) || other.locationAccuracy == locationAccuracy)&&(identical(other.location, location) || other.location == location)&&(identical(other.barangay, barangay) || other.barangay == barangay)&&(identical(other.declarationConfirmed, declarationConfirmed) || other.declarationConfirmed == declarationConfirmed)&&(identical(other.dataProcessingConsent, dataProcessingConsent) || other.dataProcessingConsent == dataProcessingConsent)&&(identical(other.isEmergency, isEmergency) || other.isEmergency == isEmergency));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,category,incidentType,title,description,incidentDatetime,isHappeningNow,zone,streetLandmark,cityMunicipality,province,latitude,longitude,locationAccuracy,location,barangay,declarationConfirmed,dataProcessingConsent);
+int get hashCode => Object.hashAll([runtimeType,category,incidentType,title,description,incidentDatetime,isHappeningNow,zone,streetLandmark,municipalityId,barangayId,cityMunicipality,province,latitude,longitude,locationAccuracy,location,barangay,declarationConfirmed,dataProcessingConsent,isEmergency]);
 
 @override
 String toString() {
-  return 'CreateReportRequest(category: $category, incidentType: $incidentType, title: $title, description: $description, incidentDatetime: $incidentDatetime, isHappeningNow: $isHappeningNow, zone: $zone, streetLandmark: $streetLandmark, cityMunicipality: $cityMunicipality, province: $province, latitude: $latitude, longitude: $longitude, locationAccuracy: $locationAccuracy, location: $location, barangay: $barangay, declarationConfirmed: $declarationConfirmed, dataProcessingConsent: $dataProcessingConsent)';
+  return 'CreateReportRequest(category: $category, incidentType: $incidentType, title: $title, description: $description, incidentDatetime: $incidentDatetime, isHappeningNow: $isHappeningNow, zone: $zone, streetLandmark: $streetLandmark, municipalityId: $municipalityId, barangayId: $barangayId, cityMunicipality: $cityMunicipality, province: $province, latitude: $latitude, longitude: $longitude, locationAccuracy: $locationAccuracy, location: $location, barangay: $barangay, declarationConfirmed: $declarationConfirmed, dataProcessingConsent: $dataProcessingConsent, isEmergency: $isEmergency)';
 }
 
 
@@ -1017,7 +1520,7 @@ abstract mixin class _$CreateReportRequestCopyWith<$Res> implements $CreateRepor
   factory _$CreateReportRequestCopyWith(_CreateReportRequest value, $Res Function(_CreateReportRequest) _then) = __$CreateReportRequestCopyWithImpl;
 @override @useResult
 $Res call({
- String? category,@JsonKey(name: 'incident_type') String? incidentType, String? title, String description,@JsonKey(name: 'incident_datetime') String? incidentDatetime,@JsonKey(name: 'is_happening_now') bool isHappeningNow, String? zone,@JsonKey(name: 'street_landmark') String? streetLandmark,@JsonKey(name: 'city_municipality') String? cityMunicipality, String? province, String? latitude, String? longitude,@JsonKey(name: 'location_accuracy') String locationAccuracy, String? location, String? barangay,@JsonKey(name: 'declaration_confirmed') bool declarationConfirmed,@JsonKey(name: 'data_processing_consent') bool dataProcessingConsent
+ String? category,@JsonKey(name: 'incident_type') String? incidentType, String? title, String description,@JsonKey(name: 'incident_datetime') String? incidentDatetime,@JsonKey(name: 'is_happening_now') bool isHappeningNow, String? zone,@JsonKey(name: 'street_landmark') String? streetLandmark,@JsonKey(name: 'municipality_id') String municipalityId,@JsonKey(name: 'barangay_id') String? barangayId,@JsonKey(name: 'city_municipality') String? cityMunicipality, String? province, String? latitude, String? longitude,@JsonKey(name: 'location_accuracy') String locationAccuracy, String? location, String? barangay,@JsonKey(name: 'declaration_confirmed') bool declarationConfirmed,@JsonKey(name: 'data_processing_consent') bool dataProcessingConsent,@JsonKey(name: 'is_emergency') bool isEmergency
 });
 
 
@@ -1034,7 +1537,7 @@ class __$CreateReportRequestCopyWithImpl<$Res>
 
 /// Create a copy of CreateReportRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? category = freezed,Object? incidentType = freezed,Object? title = freezed,Object? description = null,Object? incidentDatetime = freezed,Object? isHappeningNow = null,Object? zone = freezed,Object? streetLandmark = freezed,Object? cityMunicipality = freezed,Object? province = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? locationAccuracy = null,Object? location = freezed,Object? barangay = freezed,Object? declarationConfirmed = null,Object? dataProcessingConsent = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? category = freezed,Object? incidentType = freezed,Object? title = freezed,Object? description = null,Object? incidentDatetime = freezed,Object? isHappeningNow = null,Object? zone = freezed,Object? streetLandmark = freezed,Object? municipalityId = null,Object? barangayId = freezed,Object? cityMunicipality = freezed,Object? province = freezed,Object? latitude = freezed,Object? longitude = freezed,Object? locationAccuracy = null,Object? location = freezed,Object? barangay = freezed,Object? declarationConfirmed = null,Object? dataProcessingConsent = null,Object? isEmergency = null,}) {
   return _then(_CreateReportRequest(
 category: freezed == category ? _self.category : category // ignore: cast_nullable_to_non_nullable
 as String?,incidentType: freezed == incidentType ? _self.incidentType : incidentType // ignore: cast_nullable_to_non_nullable
@@ -1044,6 +1547,8 @@ as String,incidentDatetime: freezed == incidentDatetime ? _self.incidentDatetime
 as String?,isHappeningNow: null == isHappeningNow ? _self.isHappeningNow : isHappeningNow // ignore: cast_nullable_to_non_nullable
 as bool,zone: freezed == zone ? _self.zone : zone // ignore: cast_nullable_to_non_nullable
 as String?,streetLandmark: freezed == streetLandmark ? _self.streetLandmark : streetLandmark // ignore: cast_nullable_to_non_nullable
+as String?,municipalityId: null == municipalityId ? _self.municipalityId : municipalityId // ignore: cast_nullable_to_non_nullable
+as String,barangayId: freezed == barangayId ? _self.barangayId : barangayId // ignore: cast_nullable_to_non_nullable
 as String?,cityMunicipality: freezed == cityMunicipality ? _self.cityMunicipality : cityMunicipality // ignore: cast_nullable_to_non_nullable
 as String?,province: freezed == province ? _self.province : province // ignore: cast_nullable_to_non_nullable
 as String?,latitude: freezed == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
@@ -1053,6 +1558,7 @@ as String,location: freezed == location ? _self.location : location // ignore: c
 as String?,barangay: freezed == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
 as String?,declarationConfirmed: null == declarationConfirmed ? _self.declarationConfirmed : declarationConfirmed // ignore: cast_nullable_to_non_nullable
 as bool,dataProcessingConsent: null == dataProcessingConsent ? _self.dataProcessingConsent : dataProcessingConsent // ignore: cast_nullable_to_non_nullable
+as bool,isEmergency: null == isEmergency ? _self.isEmergency : isEmergency // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -1064,7 +1570,7 @@ as bool,
 /// @nodoc
 mixin _$UpdateReportRequest {
 
- String? get title; String? get description; String? get category;@JsonKey(name: 'incident_type') String? get incidentType; String? get zone;@JsonKey(name: 'street_landmark') String? get streetLandmark;@JsonKey(name: 'city_municipality') String? get cityMunicipality; String? get province;// Legacy
+ String? get title; String? get description; String? get category;@JsonKey(name: 'incident_type') String? get incidentType; String? get zone;@JsonKey(name: 'street_landmark') String? get streetLandmark;@JsonKey(name: 'municipality_id') String? get municipalityId;@JsonKey(name: 'barangay_id') String? get barangayId;@JsonKey(name: 'city_municipality') String? get cityMunicipality; String? get province;// Legacy
  String? get barangay;
 /// Create a copy of UpdateReportRequest
 /// with the given fields replaced by the non-null parameter values.
@@ -1078,16 +1584,16 @@ $UpdateReportRequestCopyWith<UpdateReportRequest> get copyWith => _$UpdateReport
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdateReportRequest&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.category, category) || other.category == category)&&(identical(other.incidentType, incidentType) || other.incidentType == incidentType)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.streetLandmark, streetLandmark) || other.streetLandmark == streetLandmark)&&(identical(other.cityMunicipality, cityMunicipality) || other.cityMunicipality == cityMunicipality)&&(identical(other.province, province) || other.province == province)&&(identical(other.barangay, barangay) || other.barangay == barangay));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdateReportRequest&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.category, category) || other.category == category)&&(identical(other.incidentType, incidentType) || other.incidentType == incidentType)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.streetLandmark, streetLandmark) || other.streetLandmark == streetLandmark)&&(identical(other.municipalityId, municipalityId) || other.municipalityId == municipalityId)&&(identical(other.barangayId, barangayId) || other.barangayId == barangayId)&&(identical(other.cityMunicipality, cityMunicipality) || other.cityMunicipality == cityMunicipality)&&(identical(other.province, province) || other.province == province)&&(identical(other.barangay, barangay) || other.barangay == barangay));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,title,description,category,incidentType,zone,streetLandmark,cityMunicipality,province,barangay);
+int get hashCode => Object.hash(runtimeType,title,description,category,incidentType,zone,streetLandmark,municipalityId,barangayId,cityMunicipality,province,barangay);
 
 @override
 String toString() {
-  return 'UpdateReportRequest(title: $title, description: $description, category: $category, incidentType: $incidentType, zone: $zone, streetLandmark: $streetLandmark, cityMunicipality: $cityMunicipality, province: $province, barangay: $barangay)';
+  return 'UpdateReportRequest(title: $title, description: $description, category: $category, incidentType: $incidentType, zone: $zone, streetLandmark: $streetLandmark, municipalityId: $municipalityId, barangayId: $barangayId, cityMunicipality: $cityMunicipality, province: $province, barangay: $barangay)';
 }
 
 
@@ -1098,7 +1604,7 @@ abstract mixin class $UpdateReportRequestCopyWith<$Res>  {
   factory $UpdateReportRequestCopyWith(UpdateReportRequest value, $Res Function(UpdateReportRequest) _then) = _$UpdateReportRequestCopyWithImpl;
 @useResult
 $Res call({
- String? title, String? description, String? category,@JsonKey(name: 'incident_type') String? incidentType, String? zone,@JsonKey(name: 'street_landmark') String? streetLandmark,@JsonKey(name: 'city_municipality') String? cityMunicipality, String? province, String? barangay
+ String? title, String? description, String? category,@JsonKey(name: 'incident_type') String? incidentType, String? zone,@JsonKey(name: 'street_landmark') String? streetLandmark,@JsonKey(name: 'municipality_id') String? municipalityId,@JsonKey(name: 'barangay_id') String? barangayId,@JsonKey(name: 'city_municipality') String? cityMunicipality, String? province, String? barangay
 });
 
 
@@ -1115,7 +1621,7 @@ class _$UpdateReportRequestCopyWithImpl<$Res>
 
 /// Create a copy of UpdateReportRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? title = freezed,Object? description = freezed,Object? category = freezed,Object? incidentType = freezed,Object? zone = freezed,Object? streetLandmark = freezed,Object? cityMunicipality = freezed,Object? province = freezed,Object? barangay = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? title = freezed,Object? description = freezed,Object? category = freezed,Object? incidentType = freezed,Object? zone = freezed,Object? streetLandmark = freezed,Object? municipalityId = freezed,Object? barangayId = freezed,Object? cityMunicipality = freezed,Object? province = freezed,Object? barangay = freezed,}) {
   return _then(_self.copyWith(
 title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
@@ -1123,6 +1629,8 @@ as String?,category: freezed == category ? _self.category : category // ignore: 
 as String?,incidentType: freezed == incidentType ? _self.incidentType : incidentType // ignore: cast_nullable_to_non_nullable
 as String?,zone: freezed == zone ? _self.zone : zone // ignore: cast_nullable_to_non_nullable
 as String?,streetLandmark: freezed == streetLandmark ? _self.streetLandmark : streetLandmark // ignore: cast_nullable_to_non_nullable
+as String?,municipalityId: freezed == municipalityId ? _self.municipalityId : municipalityId // ignore: cast_nullable_to_non_nullable
+as String?,barangayId: freezed == barangayId ? _self.barangayId : barangayId // ignore: cast_nullable_to_non_nullable
 as String?,cityMunicipality: freezed == cityMunicipality ? _self.cityMunicipality : cityMunicipality // ignore: cast_nullable_to_non_nullable
 as String?,province: freezed == province ? _self.province : province // ignore: cast_nullable_to_non_nullable
 as String?,barangay: freezed == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
@@ -1208,10 +1716,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? title,  String? description,  String? category, @JsonKey(name: 'incident_type')  String? incidentType,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? barangay)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? title,  String? description,  String? category, @JsonKey(name: 'incident_type')  String? incidentType,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'municipality_id')  String? municipalityId, @JsonKey(name: 'barangay_id')  String? barangayId, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? barangay)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UpdateReportRequest() when $default != null:
-return $default(_that.title,_that.description,_that.category,_that.incidentType,_that.zone,_that.streetLandmark,_that.cityMunicipality,_that.province,_that.barangay);case _:
+return $default(_that.title,_that.description,_that.category,_that.incidentType,_that.zone,_that.streetLandmark,_that.municipalityId,_that.barangayId,_that.cityMunicipality,_that.province,_that.barangay);case _:
   return orElse();
 
 }
@@ -1229,10 +1737,10 @@ return $default(_that.title,_that.description,_that.category,_that.incidentType,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? title,  String? description,  String? category, @JsonKey(name: 'incident_type')  String? incidentType,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? barangay)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? title,  String? description,  String? category, @JsonKey(name: 'incident_type')  String? incidentType,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'municipality_id')  String? municipalityId, @JsonKey(name: 'barangay_id')  String? barangayId, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? barangay)  $default,) {final _that = this;
 switch (_that) {
 case _UpdateReportRequest():
-return $default(_that.title,_that.description,_that.category,_that.incidentType,_that.zone,_that.streetLandmark,_that.cityMunicipality,_that.province,_that.barangay);}
+return $default(_that.title,_that.description,_that.category,_that.incidentType,_that.zone,_that.streetLandmark,_that.municipalityId,_that.barangayId,_that.cityMunicipality,_that.province,_that.barangay);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -1246,10 +1754,10 @@ return $default(_that.title,_that.description,_that.category,_that.incidentType,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? title,  String? description,  String? category, @JsonKey(name: 'incident_type')  String? incidentType,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? barangay)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? title,  String? description,  String? category, @JsonKey(name: 'incident_type')  String? incidentType,  String? zone, @JsonKey(name: 'street_landmark')  String? streetLandmark, @JsonKey(name: 'municipality_id')  String? municipalityId, @JsonKey(name: 'barangay_id')  String? barangayId, @JsonKey(name: 'city_municipality')  String? cityMunicipality,  String? province,  String? barangay)?  $default,) {final _that = this;
 switch (_that) {
 case _UpdateReportRequest() when $default != null:
-return $default(_that.title,_that.description,_that.category,_that.incidentType,_that.zone,_that.streetLandmark,_that.cityMunicipality,_that.province,_that.barangay);case _:
+return $default(_that.title,_that.description,_that.category,_that.incidentType,_that.zone,_that.streetLandmark,_that.municipalityId,_that.barangayId,_that.cityMunicipality,_that.province,_that.barangay);case _:
   return null;
 
 }
@@ -1261,7 +1769,7 @@ return $default(_that.title,_that.description,_that.category,_that.incidentType,
 @JsonSerializable()
 
 class _UpdateReportRequest implements UpdateReportRequest {
-  const _UpdateReportRequest({this.title, this.description, this.category, @JsonKey(name: 'incident_type') this.incidentType, this.zone, @JsonKey(name: 'street_landmark') this.streetLandmark, @JsonKey(name: 'city_municipality') this.cityMunicipality, this.province, this.barangay});
+  const _UpdateReportRequest({this.title, this.description, this.category, @JsonKey(name: 'incident_type') this.incidentType, this.zone, @JsonKey(name: 'street_landmark') this.streetLandmark, @JsonKey(name: 'municipality_id') this.municipalityId, @JsonKey(name: 'barangay_id') this.barangayId, @JsonKey(name: 'city_municipality') this.cityMunicipality, this.province, this.barangay});
   factory _UpdateReportRequest.fromJson(Map<String, dynamic> json) => _$UpdateReportRequestFromJson(json);
 
 @override final  String? title;
@@ -1270,6 +1778,8 @@ class _UpdateReportRequest implements UpdateReportRequest {
 @override@JsonKey(name: 'incident_type') final  String? incidentType;
 @override final  String? zone;
 @override@JsonKey(name: 'street_landmark') final  String? streetLandmark;
+@override@JsonKey(name: 'municipality_id') final  String? municipalityId;
+@override@JsonKey(name: 'barangay_id') final  String? barangayId;
 @override@JsonKey(name: 'city_municipality') final  String? cityMunicipality;
 @override final  String? province;
 // Legacy
@@ -1288,16 +1798,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UpdateReportRequest&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.category, category) || other.category == category)&&(identical(other.incidentType, incidentType) || other.incidentType == incidentType)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.streetLandmark, streetLandmark) || other.streetLandmark == streetLandmark)&&(identical(other.cityMunicipality, cityMunicipality) || other.cityMunicipality == cityMunicipality)&&(identical(other.province, province) || other.province == province)&&(identical(other.barangay, barangay) || other.barangay == barangay));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UpdateReportRequest&&(identical(other.title, title) || other.title == title)&&(identical(other.description, description) || other.description == description)&&(identical(other.category, category) || other.category == category)&&(identical(other.incidentType, incidentType) || other.incidentType == incidentType)&&(identical(other.zone, zone) || other.zone == zone)&&(identical(other.streetLandmark, streetLandmark) || other.streetLandmark == streetLandmark)&&(identical(other.municipalityId, municipalityId) || other.municipalityId == municipalityId)&&(identical(other.barangayId, barangayId) || other.barangayId == barangayId)&&(identical(other.cityMunicipality, cityMunicipality) || other.cityMunicipality == cityMunicipality)&&(identical(other.province, province) || other.province == province)&&(identical(other.barangay, barangay) || other.barangay == barangay));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,title,description,category,incidentType,zone,streetLandmark,cityMunicipality,province,barangay);
+int get hashCode => Object.hash(runtimeType,title,description,category,incidentType,zone,streetLandmark,municipalityId,barangayId,cityMunicipality,province,barangay);
 
 @override
 String toString() {
-  return 'UpdateReportRequest(title: $title, description: $description, category: $category, incidentType: $incidentType, zone: $zone, streetLandmark: $streetLandmark, cityMunicipality: $cityMunicipality, province: $province, barangay: $barangay)';
+  return 'UpdateReportRequest(title: $title, description: $description, category: $category, incidentType: $incidentType, zone: $zone, streetLandmark: $streetLandmark, municipalityId: $municipalityId, barangayId: $barangayId, cityMunicipality: $cityMunicipality, province: $province, barangay: $barangay)';
 }
 
 
@@ -1308,7 +1818,7 @@ abstract mixin class _$UpdateReportRequestCopyWith<$Res> implements $UpdateRepor
   factory _$UpdateReportRequestCopyWith(_UpdateReportRequest value, $Res Function(_UpdateReportRequest) _then) = __$UpdateReportRequestCopyWithImpl;
 @override @useResult
 $Res call({
- String? title, String? description, String? category,@JsonKey(name: 'incident_type') String? incidentType, String? zone,@JsonKey(name: 'street_landmark') String? streetLandmark,@JsonKey(name: 'city_municipality') String? cityMunicipality, String? province, String? barangay
+ String? title, String? description, String? category,@JsonKey(name: 'incident_type') String? incidentType, String? zone,@JsonKey(name: 'street_landmark') String? streetLandmark,@JsonKey(name: 'municipality_id') String? municipalityId,@JsonKey(name: 'barangay_id') String? barangayId,@JsonKey(name: 'city_municipality') String? cityMunicipality, String? province, String? barangay
 });
 
 
@@ -1325,7 +1835,7 @@ class __$UpdateReportRequestCopyWithImpl<$Res>
 
 /// Create a copy of UpdateReportRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? title = freezed,Object? description = freezed,Object? category = freezed,Object? incidentType = freezed,Object? zone = freezed,Object? streetLandmark = freezed,Object? cityMunicipality = freezed,Object? province = freezed,Object? barangay = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? title = freezed,Object? description = freezed,Object? category = freezed,Object? incidentType = freezed,Object? zone = freezed,Object? streetLandmark = freezed,Object? municipalityId = freezed,Object? barangayId = freezed,Object? cityMunicipality = freezed,Object? province = freezed,Object? barangay = freezed,}) {
   return _then(_UpdateReportRequest(
 title: freezed == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String?,description: freezed == description ? _self.description : description // ignore: cast_nullable_to_non_nullable
@@ -1333,6 +1843,8 @@ as String?,category: freezed == category ? _self.category : category // ignore: 
 as String?,incidentType: freezed == incidentType ? _self.incidentType : incidentType // ignore: cast_nullable_to_non_nullable
 as String?,zone: freezed == zone ? _self.zone : zone // ignore: cast_nullable_to_non_nullable
 as String?,streetLandmark: freezed == streetLandmark ? _self.streetLandmark : streetLandmark // ignore: cast_nullable_to_non_nullable
+as String?,municipalityId: freezed == municipalityId ? _self.municipalityId : municipalityId // ignore: cast_nullable_to_non_nullable
+as String?,barangayId: freezed == barangayId ? _self.barangayId : barangayId // ignore: cast_nullable_to_non_nullable
 as String?,cityMunicipality: freezed == cityMunicipality ? _self.cityMunicipality : cityMunicipality // ignore: cast_nullable_to_non_nullable
 as String?,province: freezed == province ? _self.province : province // ignore: cast_nullable_to_non_nullable
 as String?,barangay: freezed == barangay ? _self.barangay : barangay // ignore: cast_nullable_to_non_nullable
@@ -2204,7 +2716,7 @@ as int,
 /// @nodoc
 mixin _$ReportFormOptions {
 
- List<Map<String, dynamic>> get categories; List<Map<String, dynamic>> get statuses;@JsonKey(name: 'severity_levels') List<Map<String, dynamic>> get severityLevels;
+@JsonKey(name: 'taxonomy_version') String get taxonomyVersion;@JsonKey(fromJson: _categoryOptionsFromJson, toJson: _categoryOptionsToJson) List<ReportCategoryOption> get categories; List<Map<String, dynamic>> get statuses;@JsonKey(name: 'severity_levels') List<Map<String, dynamic>> get severityLevels;
 /// Create a copy of ReportFormOptions
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2217,16 +2729,16 @@ $ReportFormOptionsCopyWith<ReportFormOptions> get copyWith => _$ReportFormOption
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportFormOptions&&const DeepCollectionEquality().equals(other.categories, categories)&&const DeepCollectionEquality().equals(other.statuses, statuses)&&const DeepCollectionEquality().equals(other.severityLevels, severityLevels));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportFormOptions&&(identical(other.taxonomyVersion, taxonomyVersion) || other.taxonomyVersion == taxonomyVersion)&&const DeepCollectionEquality().equals(other.categories, categories)&&const DeepCollectionEquality().equals(other.statuses, statuses)&&const DeepCollectionEquality().equals(other.severityLevels, severityLevels));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(categories),const DeepCollectionEquality().hash(statuses),const DeepCollectionEquality().hash(severityLevels));
+int get hashCode => Object.hash(runtimeType,taxonomyVersion,const DeepCollectionEquality().hash(categories),const DeepCollectionEquality().hash(statuses),const DeepCollectionEquality().hash(severityLevels));
 
 @override
 String toString() {
-  return 'ReportFormOptions(categories: $categories, statuses: $statuses, severityLevels: $severityLevels)';
+  return 'ReportFormOptions(taxonomyVersion: $taxonomyVersion, categories: $categories, statuses: $statuses, severityLevels: $severityLevels)';
 }
 
 
@@ -2237,7 +2749,7 @@ abstract mixin class $ReportFormOptionsCopyWith<$Res>  {
   factory $ReportFormOptionsCopyWith(ReportFormOptions value, $Res Function(ReportFormOptions) _then) = _$ReportFormOptionsCopyWithImpl;
 @useResult
 $Res call({
- List<Map<String, dynamic>> categories, List<Map<String, dynamic>> statuses,@JsonKey(name: 'severity_levels') List<Map<String, dynamic>> severityLevels
+@JsonKey(name: 'taxonomy_version') String taxonomyVersion,@JsonKey(fromJson: _categoryOptionsFromJson, toJson: _categoryOptionsToJson) List<ReportCategoryOption> categories, List<Map<String, dynamic>> statuses,@JsonKey(name: 'severity_levels') List<Map<String, dynamic>> severityLevels
 });
 
 
@@ -2254,10 +2766,11 @@ class _$ReportFormOptionsCopyWithImpl<$Res>
 
 /// Create a copy of ReportFormOptions
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? categories = null,Object? statuses = null,Object? severityLevels = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? taxonomyVersion = null,Object? categories = null,Object? statuses = null,Object? severityLevels = null,}) {
   return _then(_self.copyWith(
-categories: null == categories ? _self.categories : categories // ignore: cast_nullable_to_non_nullable
-as List<Map<String, dynamic>>,statuses: null == statuses ? _self.statuses : statuses // ignore: cast_nullable_to_non_nullable
+taxonomyVersion: null == taxonomyVersion ? _self.taxonomyVersion : taxonomyVersion // ignore: cast_nullable_to_non_nullable
+as String,categories: null == categories ? _self.categories : categories // ignore: cast_nullable_to_non_nullable
+as List<ReportCategoryOption>,statuses: null == statuses ? _self.statuses : statuses // ignore: cast_nullable_to_non_nullable
 as List<Map<String, dynamic>>,severityLevels: null == severityLevels ? _self.severityLevels : severityLevels // ignore: cast_nullable_to_non_nullable
 as List<Map<String, dynamic>>,
   ));
@@ -2341,10 +2854,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Map<String, dynamic>> categories,  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels')  List<Map<String, dynamic>> severityLevels)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'taxonomy_version')  String taxonomyVersion, @JsonKey(fromJson: _categoryOptionsFromJson, toJson: _categoryOptionsToJson)  List<ReportCategoryOption> categories,  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels')  List<Map<String, dynamic>> severityLevels)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ReportFormOptions() when $default != null:
-return $default(_that.categories,_that.statuses,_that.severityLevels);case _:
+return $default(_that.taxonomyVersion,_that.categories,_that.statuses,_that.severityLevels);case _:
   return orElse();
 
 }
@@ -2362,10 +2875,10 @@ return $default(_that.categories,_that.statuses,_that.severityLevels);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Map<String, dynamic>> categories,  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels')  List<Map<String, dynamic>> severityLevels)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'taxonomy_version')  String taxonomyVersion, @JsonKey(fromJson: _categoryOptionsFromJson, toJson: _categoryOptionsToJson)  List<ReportCategoryOption> categories,  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels')  List<Map<String, dynamic>> severityLevels)  $default,) {final _that = this;
 switch (_that) {
 case _ReportFormOptions():
-return $default(_that.categories,_that.statuses,_that.severityLevels);}
+return $default(_that.taxonomyVersion,_that.categories,_that.statuses,_that.severityLevels);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -2379,10 +2892,10 @@ return $default(_that.categories,_that.statuses,_that.severityLevels);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Map<String, dynamic>> categories,  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels')  List<Map<String, dynamic>> severityLevels)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'taxonomy_version')  String taxonomyVersion, @JsonKey(fromJson: _categoryOptionsFromJson, toJson: _categoryOptionsToJson)  List<ReportCategoryOption> categories,  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels')  List<Map<String, dynamic>> severityLevels)?  $default,) {final _that = this;
 switch (_that) {
 case _ReportFormOptions() when $default != null:
-return $default(_that.categories,_that.statuses,_that.severityLevels);case _:
+return $default(_that.taxonomyVersion,_that.categories,_that.statuses,_that.severityLevels);case _:
   return null;
 
 }
@@ -2394,11 +2907,12 @@ return $default(_that.categories,_that.statuses,_that.severityLevels);case _:
 @JsonSerializable()
 
 class _ReportFormOptions implements ReportFormOptions {
-  const _ReportFormOptions({required final  List<Map<String, dynamic>> categories, required final  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels') required final  List<Map<String, dynamic>> severityLevels}): _categories = categories,_statuses = statuses,_severityLevels = severityLevels;
+  const _ReportFormOptions({@JsonKey(name: 'taxonomy_version') this.taxonomyVersion = 'taxonomy_v1', @JsonKey(fromJson: _categoryOptionsFromJson, toJson: _categoryOptionsToJson) required final  List<ReportCategoryOption> categories, required final  List<Map<String, dynamic>> statuses, @JsonKey(name: 'severity_levels') required final  List<Map<String, dynamic>> severityLevels}): _categories = categories,_statuses = statuses,_severityLevels = severityLevels;
   factory _ReportFormOptions.fromJson(Map<String, dynamic> json) => _$ReportFormOptionsFromJson(json);
 
- final  List<Map<String, dynamic>> _categories;
-@override List<Map<String, dynamic>> get categories {
+@override@JsonKey(name: 'taxonomy_version') final  String taxonomyVersion;
+ final  List<ReportCategoryOption> _categories;
+@override@JsonKey(fromJson: _categoryOptionsFromJson, toJson: _categoryOptionsToJson) List<ReportCategoryOption> get categories {
   if (_categories is EqualUnmodifiableListView) return _categories;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_categories);
@@ -2432,16 +2946,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReportFormOptions&&const DeepCollectionEquality().equals(other._categories, _categories)&&const DeepCollectionEquality().equals(other._statuses, _statuses)&&const DeepCollectionEquality().equals(other._severityLevels, _severityLevels));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ReportFormOptions&&(identical(other.taxonomyVersion, taxonomyVersion) || other.taxonomyVersion == taxonomyVersion)&&const DeepCollectionEquality().equals(other._categories, _categories)&&const DeepCollectionEquality().equals(other._statuses, _statuses)&&const DeepCollectionEquality().equals(other._severityLevels, _severityLevels));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_statuses),const DeepCollectionEquality().hash(_severityLevels));
+int get hashCode => Object.hash(runtimeType,taxonomyVersion,const DeepCollectionEquality().hash(_categories),const DeepCollectionEquality().hash(_statuses),const DeepCollectionEquality().hash(_severityLevels));
 
 @override
 String toString() {
-  return 'ReportFormOptions(categories: $categories, statuses: $statuses, severityLevels: $severityLevels)';
+  return 'ReportFormOptions(taxonomyVersion: $taxonomyVersion, categories: $categories, statuses: $statuses, severityLevels: $severityLevels)';
 }
 
 
@@ -2452,7 +2966,7 @@ abstract mixin class _$ReportFormOptionsCopyWith<$Res> implements $ReportFormOpt
   factory _$ReportFormOptionsCopyWith(_ReportFormOptions value, $Res Function(_ReportFormOptions) _then) = __$ReportFormOptionsCopyWithImpl;
 @override @useResult
 $Res call({
- List<Map<String, dynamic>> categories, List<Map<String, dynamic>> statuses,@JsonKey(name: 'severity_levels') List<Map<String, dynamic>> severityLevels
+@JsonKey(name: 'taxonomy_version') String taxonomyVersion,@JsonKey(fromJson: _categoryOptionsFromJson, toJson: _categoryOptionsToJson) List<ReportCategoryOption> categories, List<Map<String, dynamic>> statuses,@JsonKey(name: 'severity_levels') List<Map<String, dynamic>> severityLevels
 });
 
 
@@ -2469,10 +2983,11 @@ class __$ReportFormOptionsCopyWithImpl<$Res>
 
 /// Create a copy of ReportFormOptions
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? categories = null,Object? statuses = null,Object? severityLevels = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? taxonomyVersion = null,Object? categories = null,Object? statuses = null,Object? severityLevels = null,}) {
   return _then(_ReportFormOptions(
-categories: null == categories ? _self._categories : categories // ignore: cast_nullable_to_non_nullable
-as List<Map<String, dynamic>>,statuses: null == statuses ? _self._statuses : statuses // ignore: cast_nullable_to_non_nullable
+taxonomyVersion: null == taxonomyVersion ? _self.taxonomyVersion : taxonomyVersion // ignore: cast_nullable_to_non_nullable
+as String,categories: null == categories ? _self._categories : categories // ignore: cast_nullable_to_non_nullable
+as List<ReportCategoryOption>,statuses: null == statuses ? _self._statuses : statuses // ignore: cast_nullable_to_non_nullable
 as List<Map<String, dynamic>>,severityLevels: null == severityLevels ? _self._severityLevels : severityLevels // ignore: cast_nullable_to_non_nullable
 as List<Map<String, dynamic>>,
   ));

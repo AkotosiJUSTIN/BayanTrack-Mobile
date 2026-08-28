@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'data/notifications_repository.dart' as legacy;
+import '../../core/network/dio_provider.dart';
 import 'data/notifications_repository_impl.dart';
 import 'domain/notifications_repository.dart';
 import 'domain/usecases/get_notifications_usecase.dart';
@@ -12,8 +12,7 @@ import 'domain/usecases/update_preferences_usecase.dart';
 /// Provides the [NotificationsRepository] implementation.
 final notificationsDomainRepositoryProvider = Provider<NotificationsRepository>(
   (ref) {
-    final legacyRepo = ref.watch(legacy.notificationsRepositoryProvider);
-    return NotificationsRepositoryImpl(legacyRepo);
+    return NotificationsRepositoryImpl(ref.watch(dioProvider));
   },
 );
 

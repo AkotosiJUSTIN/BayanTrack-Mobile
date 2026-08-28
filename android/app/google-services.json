@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "665007959776",
+    "project_id": "bayantrack-ff24a",
+    "storage_bucket": "bayantrack-ff24a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:665007959776:android:c3f325f178eec3796c6a85",
+        "android_client_info": {
+          "package_name": "com.example.bayantrack_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjgnx7825u1Tj10nwC2GcdN-Zv8BwB9o8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

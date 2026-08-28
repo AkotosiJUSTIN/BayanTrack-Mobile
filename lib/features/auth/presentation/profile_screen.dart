@@ -4,7 +4,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/providers/connectivity_provider.dart';
+import '../../../core/providers/locale_provider.dart';
 import '../../../core/providers/theme_provider.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../kyc/domain/entities/kyc_enums.dart';
 import '../../kyc/presentation/kyc_controller.dart';
 import '../../kyc/presentation/kyc_form_screen.dart';
@@ -18,6 +20,7 @@ import 'auth_wrapper.dart';
 import 'profile_controller.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
+import 'verification_widgets.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -27,10 +30,11 @@ class ProfileScreen extends ConsumerWidget {
     final profileAsync = ref.watch(profileControllerProvider);
     final statsAsync = ref.watch(profileStatsControllerProvider);
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(l10n.profile),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -59,7 +63,7 @@ class ProfileScreen extends ConsumerWidget {
                           _buildProfileHeader(context, profile, theme),
                       loading: () =>
                           const Center(child: CircularProgressIndicator()),
-                      error: (err, _) => Center(child: Text('Error: $err')),
+                      error: (err, _) => Center(child: Text('${l10n.error}: $err')),
                     ),
                     const SizedBox(height: 24),
 
@@ -99,7 +103,10 @@ class ProfileScreen extends ConsumerWidget {
                         return Padding(
                           padding: const EdgeInsets.all(16),
                           child: Text(
-                            'Version ${snapshot.data!.version} (${snapshot.data!.buildNumber})',
+                            l10n.version(
+                              snapshot.data!.version,
+                              snapshot.data!.buildNumber,
+                            ),
                             style: TextStyle(
                               fontSize: 12,
                               color: Theme.of(context).colorScheme.outline,
@@ -124,6 +131,8 @@ class ProfileScreen extends ConsumerWidget {
     UserProfile profile,
     ThemeData theme,
   ) {
+    final l10n = AppLocalizations.of(context)!;
+
     // Get initials, handling empty names
     String getInitials() {
       final firstInitial = profile.firstName.isNotEmpty
@@ -149,12 +158,26 @@ class ProfileScreen extends ConsumerWidget {
         CircleAvatar(
           radius: 50,
           backgroundColor: AppColors.primary,
-          backgroundImage:
-              profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty
-              ? NetworkImage(ApiConstants.getImageUrl(profile.avatarUrl!))
-              : null,
           child: profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty
-              ? null
+              ? ClipOval(
+                  child: Image.network(
+                    ApiConstants.getImageUrl(profile.avatarUrl!),
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                    semanticLabel: '${getDisplayName()} ${l10n.profilePicture}',
+                    errorBuilder: (_, _, _) => Center(
+                      child: Text(
+                        getInitials(),
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
               : Text(
                   getInitials(),
                   style: const TextStyle(
@@ -177,9 +200,30 @@ class ProfileScreen extends ConsumerWidget {
             color: theme.colorScheme.outline,
           ),
         ),
+        if (profile.phone != null && profile.phone!.isNotEmpty)
+          Text(
+            profile.phone!,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.outline,
+            ),
+          ),
+        if (profile.avatarStorageStatus == 'degraded')
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              l10n.profilePictureBackupPending,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.tertiary,
+              ),
+            ),
+          ),
         const SizedBox(height: 8),
         Chip(
-          label: Text(profile.role.toUpperCase()),
+          label: Text(
+            profile.role.toLowerCase() == 'citizen'
+                ? l10n.citizen
+                : profile.role.toUpperCase(),
+          ),
           backgroundColor: AppColors.primary.withValues(alpha: 0.1),
           labelStyle: TextStyle(color: AppColors.primary),
         ),
@@ -197,19 +241,19 @@ class ProfileScreen extends ConsumerWidget {
       children: [
         _buildStatItem(
           context,
-          'Reports',
+          AppLocalizations.of(context)!.reports,
           stats['total']?.toString() ?? '0',
           theme,
         ),
         _buildStatItem(
           context,
-          'Resolved',
+          AppLocalizations.of(context)!.resolved,
           stats['resolved']?.toString() ?? '0',
           theme,
         ),
         _buildStatItem(
           context,
-          'Pending',
+          AppLocalizations.of(context)!.pending,
           stats['pending']?.toString() ?? '0',
           theme,
         ),
@@ -246,12 +290,14 @@ class ProfileScreen extends ConsumerWidget {
     return Consumer(
       builder: (context, ref, _) {
         final themeMode = ref.watch(themeModeProvider);
+        final locale = ref.watch(appLocaleProvider);
+        final l10n = AppLocalizations.of(context)!;
         return Card(
           child: Column(
             children: [
               ListTile(
                 leading: const Icon(Icons.person_outline),
-                title: const Text('Edit Profile'),
+                title: Text(l10n.editProfile),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () async {
                   await Navigator.of(context).push(
@@ -267,7 +313,7 @@ class ProfileScreen extends ConsumerWidget {
               const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.lock_outline),
-                title: const Text('Change Password'),
+                title: Text(l10n.changePassword),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   Navigator.of(context).push(
@@ -280,7 +326,7 @@ class ProfileScreen extends ConsumerWidget {
               const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.notifications_outlined),
-                title: const Text('Notification Settings'),
+                title: Text(l10n.notificationSettings),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   Navigator.of(context).push(
@@ -299,13 +345,13 @@ class ProfileScreen extends ConsumerWidget {
                       ? Icons.light_mode
                       : Icons.brightness_auto,
                 ),
-                title: const Text('Theme'),
+                title: Text(l10n.theme),
                 subtitle: Text(
                   themeMode == ThemeMode.dark
-                      ? 'Dark Mode'
+                      ? l10n.darkMode
                       : themeMode == ThemeMode.light
-                      ? 'Light Mode'
-                      : 'System Default',
+                      ? l10n.lightMode
+                      : l10n.systemDefault,
                   style: TextStyle(
                     fontSize: 12,
                     color: Theme.of(context).colorScheme.outline,
@@ -313,6 +359,20 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => ref.read(themeModeProvider.notifier).toggleTheme(),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.translate),
+                title: Text(l10n.language),
+                subtitle: Text(
+                  locale.languageCode == 'fil' ? l10n.filipino : l10n.english,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _showLanguagePicker(context, ref, locale),
               ),
             ],
           ),
@@ -359,7 +419,7 @@ class ProfileScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'User Verification',
+                      AppLocalizations.of(context)!.userVerification,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -367,7 +427,10 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      permissions.getStatusMessage(),
+                      localizedVerificationStatusMessage(
+                        permissions,
+                        AppLocalizations.of(context)!,
+                      ),
                       style: TextStyle(fontSize: 14, color: statusColor),
                     ),
                     if (!permissions.isVerified) ...[
@@ -382,7 +445,7 @@ class ProfileScreen extends ConsumerWidget {
                           backgroundColor: AppColors.alertMedium,
                           foregroundColor: Colors.white,
                         ),
-                        child: const Text('Verify Identity'),
+                        child: Text(AppLocalizations.of(context)!.verifyIdentity),
                       ),
                     ],
                   ],
@@ -471,19 +534,20 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: Text(l10n.logout),
+        content: Text(l10n.logoutConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+            child: Text(l10n.logout, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -499,5 +563,44 @@ class ProfileScreen extends ConsumerWidget {
         (route) => false,
       );
     }
+  }
+
+  Future<void> _showLanguagePicker(
+    BuildContext context,
+    WidgetRef ref,
+    Locale currentLocale,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<Locale>(
+              title: Text(l10n.english),
+              value: const Locale('en'),
+              groupValue: currentLocale,
+              onChanged: (locale) async {
+                if (locale == null) return;
+                await ref.read(appLocaleProvider.notifier).setLocale(locale);
+                if (sheetContext.mounted) Navigator.pop(sheetContext);
+              },
+            ),
+            RadioListTile<Locale>(
+              title: Text(l10n.filipino),
+              value: const Locale('fil'),
+              groupValue: currentLocale,
+              onChanged: (locale) async {
+                if (locale == null) return;
+                await ref.read(appLocaleProvider.notifier).setLocale(locale);
+                if (sheetContext.mounted) Navigator.pop(sheetContext);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

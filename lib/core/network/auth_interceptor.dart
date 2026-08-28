@@ -59,7 +59,9 @@ class AuthInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     debugPrint(
-      '[AuthInterceptor] Error: ${err.response?.statusCode} ${err.requestOptions.path}',
+      '[AuthInterceptor] Error: status=${err.response?.statusCode} '
+      'type=${err.type} msg=${err.message} '
+      'path=${err.requestOptions.path}',
     );
     // Only handle 401 Unauthorized
     if (err.response?.statusCode != 401) {
@@ -91,7 +93,7 @@ class AuthInterceptor extends Interceptor {
       // Attempt token refresh
       final response = await _dio.post(
         ApiConstants.refresh,
-        data: {'refresh_token': refreshToken},
+        data: {'refresh_token': refreshToken, 'client_type': 'mobile'},
       );
 
       final newAccessToken = response.data['access_token'] as String;

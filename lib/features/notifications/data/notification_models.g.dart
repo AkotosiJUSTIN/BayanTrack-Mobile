@@ -12,7 +12,11 @@ _AppNotification _$AppNotificationFromJson(Map<String, dynamic> json) =>
       title: json['title'] as String,
       message: json['message'] as String,
       type:
-          $enumDecodeNullable(_$NotificationTypeEnumMap, json['type']) ??
+          $enumDecodeNullable(
+            _$NotificationTypeEnumMap,
+            json['type'],
+            unknownValue: NotificationType.system,
+          ) ??
           NotificationType.system,
       isRead: json['is_read'] as bool? ?? false,
       reportId: json['related_report_id'] as String?,
@@ -31,9 +35,12 @@ Map<String, dynamic> _$AppNotificationToJson(_AppNotification instance) =>
     };
 
 const _$NotificationTypeEnumMap = {
+  NotificationType.reportSubmitted: 'report_submitted',
   NotificationType.statusChange: 'status_change',
   NotificationType.comment: 'comment',
   NotificationType.assignment: 'assignment',
+  NotificationType.reportUpdated: 'report_updated',
+  NotificationType.kycUpdate: 'kyc_update',
   NotificationType.system: 'system',
 };
 
@@ -44,6 +51,7 @@ _PaginatedNotifications _$PaginatedNotificationsFromJson(
       .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
       .toList(),
   count: (json['count'] as num?)?.toInt() ?? 0,
+  total: (json['total'] as num?)?.toInt(),
   unreadCount: (json['unread_count'] as num?)?.toInt() ?? 0,
   next: json['next'] as String?,
   previous: json['previous'] as String?,
@@ -54,6 +62,7 @@ Map<String, dynamic> _$PaginatedNotificationsToJson(
 ) => <String, dynamic>{
   'notifications': instance.results,
   'count': instance.count,
+  'total': instance.total,
   'unread_count': instance.unreadCount,
   'next': instance.next,
   'previous': instance.previous,
@@ -71,26 +80,6 @@ _NotificationPreferences _$NotificationPreferencesFromJson(
 
 Map<String, dynamic> _$NotificationPreferencesToJson(
   _NotificationPreferences instance,
-) => <String, dynamic>{
-  'email_enabled': instance.emailEnabled,
-  'push_enabled': instance.pushEnabled,
-  'notify_on_status_change': instance.notifyOnStatusChange,
-  'notify_on_comment': instance.notifyOnComment,
-  'notify_on_assignment': instance.notifyOnAssignment,
-};
-
-_UpdatePreferencesRequest _$UpdatePreferencesRequestFromJson(
-  Map<String, dynamic> json,
-) => _UpdatePreferencesRequest(
-  emailEnabled: json['email_enabled'] as bool?,
-  pushEnabled: json['push_enabled'] as bool?,
-  notifyOnStatusChange: json['notify_on_status_change'] as bool?,
-  notifyOnComment: json['notify_on_comment'] as bool?,
-  notifyOnAssignment: json['notify_on_assignment'] as bool?,
-);
-
-Map<String, dynamic> _$UpdatePreferencesRequestToJson(
-  _UpdatePreferencesRequest instance,
 ) => <String, dynamic>{
   'email_enabled': instance.emailEnabled,
   'push_enabled': instance.pushEnabled,

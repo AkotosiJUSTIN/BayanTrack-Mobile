@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:timeago/timeago.dart' as timeago;
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../reports/domain/entities/report.dart';
 import '../../../reports/domain/entities/report_enums.dart';
 import '../../../reports/presentation/widgets/priority_badge.dart';
+import '../../../reports/presentation/report_labels.dart';
 
 /// Report card widget for home screen matching the design mockup.
 /// Shows thumbnail, category, title, location, time, and status badge.
@@ -18,6 +19,8 @@ class HomeReportCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final linkedReportCount = report.linkedReportCount;
+    final l10n = AppLocalizations.of(context)!;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -39,11 +42,11 @@ class HomeReportCard extends StatelessWidget {
                       : AppColors.lightSurfaceVariant,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: report.images.isNotEmpty
+                child: report.coreImages.isNotEmpty
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
-                          ApiConstants.getImageUrl(report.images.first.url),
+                          ApiConstants.getImageUrl(report.coreImages.first.url),
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => _buildPlaceholderIcon(),
                         ),
@@ -62,7 +65,8 @@ class HomeReportCard extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            (report.category?.displayName ?? 'UNCATEGORIZED').toUpperCase(),
+                            localizedReportCategory(report.category, l10n)
+                                .toUpperCase(),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -73,17 +77,41 @@ class HomeReportCard extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
-                        _buildStatusBadge(isDark),
+                        _buildStatusBadge(context, isDark),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    
+
                     // Priority badge (if available)
-                    if (report.priorityLevel != null) ...[
-                      PriorityBadge(
-                        priorityLevel: report.priorityLevel,
-                        fontSize: 10,
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    if (report.displayPriorityLevel != null) ...[
+                      Row(
+                        children: [
+                          PriorityBadge(
+                            priorityLevel: report.displayPriorityLevel,
+                            fontSize: 10,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 3,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            report.priorityIsAdvisory
+                                ? l10n.aiSuggestion
+                                : l10n.queuePriority,
+                            style: theme.textTheme.labelSmall,
+                          ),
+                          if (linkedReportCount > 1 &&
+                              report.isIncidentRepresentative) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              l10n.linkedReports(linkedReportCount),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 4),
                     ],
@@ -112,7 +140,7 @@ class HomeReportCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            report.zone ?? 'Unknown location',
+                            report.zone ?? l10n.unknownLocation,
                             style: theme.textTheme.bodySmall,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -127,7 +155,7 @@ class HomeReportCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          _formatTimeAgo(report.createdAt),
+                          _formatTimeAgo(context, report.createdAt),
                           style: theme.textTheme.bodySmall,
                         ),
                       ],
@@ -150,42 +178,58 @@ class HomeReportCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusBadge(bool isDark) {
+  Widget _buildStatusBadge(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context)!;
     final (bgColor, textColor, label) = switch (report.status) {
       ReportStatus.submitted => (
-        isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
-        isDark ? AppColors.pendingTextDark : AppColors.pendingText,
-        'Submitted',
+        isDark ? const Color(0xFF78350F) : const Color(0xFFFEF3C7), // Amber
+        isDark ? const Color(0xFFFCD34D) : const Color(0xFFB45309),
+        l10n.submitted,
       ),
       ReportStatus.underReview => (
-        isDark ? AppColors.pendingBgDark : AppColors.pendingBg,
-        isDark ? AppColors.pendingTextDark : AppColors.pendingText,
-        'Under Review',
+        isDark ? const Color(0xFF581C87) : const Color(0xFFF3E8FF), // Violet
+        isDark ? const Color(0xFFD8B4FE) : const Color(0xFF7C3AED),
+        l10n.underReview,
       ),
       ReportStatus.inProgress => (
         isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
         isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
-        'In Progress',
+        l10n.inProgress,
+      ),
+      ReportStatus.escalated => (
+        isDark ? const Color(0xFF581C87) : const Color(0xFFF3E8FF), // Violet
+        isDark ? const Color(0xFFD8B4FE) : const Color(0xFF7C3AED),
+        l10n.underReview,
+      ),
+      ReportStatus.endorsed => (
+        isDark ? const Color(0xFF581C87) : const Color(0xFFF3E8FF), // Violet
+        isDark ? const Color(0xFFD8B4FE) : const Color(0xFF7C3AED),
+        l10n.underReview,
       ),
       ReportStatus.resolved => (
         isDark ? AppColors.resolvedBgDark : AppColors.resolvedBg,
         isDark ? AppColors.resolvedTextDark : AppColors.resolvedText,
-        'Resolved',
+        l10n.resolvedStatus,
+      ),
+      ReportStatus.closed => (
+        isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9), // Gray
+        isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+        l10n.closed,
       ),
       ReportStatus.rejected => (
         isDark ? AppColors.rejectedBgDark : AppColors.rejectedBg,
         isDark ? AppColors.rejectedTextDark : AppColors.rejectedText,
-        'Rejected',
+        l10n.rejected,
       ),
       ReportStatus.verified => (
-        isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
-        isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
-        'Verified',
+        isDark ? const Color(0xFF581C87) : const Color(0xFFF3E8FF), // Violet
+        isDark ? const Color(0xFFD8B4FE) : const Color(0xFF7C3AED),
+        l10n.underReview,
       ),
       ReportStatus.assigned => (
-        isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
-        isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
-        'Assigned',
+        isDark ? const Color(0xFF581C87) : const Color(0xFFF3E8FF), // Violet
+        isDark ? const Color(0xFFD8B4FE) : const Color(0xFF7C3AED),
+        l10n.underReview,
       ),
     };
 
@@ -206,9 +250,12 @@ class HomeReportCard extends StatelessWidget {
     );
   }
 
-  String _formatTimeAgo(DateTime? date) {
-    if (date == null) return 'Unknown';
-    return timeago.format(date);
+  String _formatTimeAgo(BuildContext context, DateTime? date) {
+    return localizedRelativeTime(
+      context,
+      date,
+      AppLocalizations.of(context)!,
+    );
   }
 
   Color _getCategoryColor(ReportCategory? category) {

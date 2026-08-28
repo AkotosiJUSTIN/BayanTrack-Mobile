@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:timeago/timeago.dart' as timeago;
 import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/data/user_permissions.dart';
@@ -11,6 +10,8 @@ import '../domain/entities/notification_type.dart';
 import '../domain/entities/paginated_notifications.dart';
 import 'notifications_controller.dart';
 import '../../../core/presentation/widgets/empty_content_placeholder.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../reports/presentation/report_labels.dart';
 
 /// Notifications screen showing list of notifications with read/unread states.
 class NotificationsScreen extends ConsumerWidget {
@@ -22,10 +23,11 @@ class NotificationsScreen extends ConsumerWidget {
     final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Notifications'),
+        title: Text(l10n.notifications),
         actions: [
           // Mark all as read button
           notificationsAsync.maybeWhen(
@@ -38,11 +40,11 @@ class NotificationsScreen extends ConsumerWidget {
                       if (context.mounted) {
                         AppToast.success(
                           context,
-                          'All notifications marked as read',
+                          l10n.allNotificationsRead,
                         );
                       }
                     },
-                    child: const Text('Mark all read'),
+                    child: Text(l10n.markAllRead),
                   )
                 : const SizedBox.shrink(),
             orElse: () => const SizedBox.shrink(),
@@ -79,7 +81,7 @@ class NotificationsScreen extends ConsumerWidget {
     bool isDark,
   ) {
     if (data.results.isEmpty) {
-      return _buildEmptyState(theme, ref);
+      return _buildEmptyState(context, theme, ref);
     }
 
     return ListView.separated(
@@ -99,11 +101,15 @@ class NotificationsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme, WidgetRef ref) {
+  Widget _buildEmptyState(
+    BuildContext context,
+    ThemeData theme,
+    WidgetRef ref,
+  ) {
     return EmptyContentPlaceholder(
       icon: Icons.notifications_off_outlined,
-      title: 'All caught up!',
-      message: 'You have no new notifications at the moment.',
+      title: AppLocalizations.of(context)!.allCaughtUp,
+      message: AppLocalizations.of(context)!.noNewNotifications,
       onRetry: () => ref.invalidate(notificationsControllerProvider),
     );
   }
@@ -121,7 +127,7 @@ class NotificationsScreen extends ConsumerWidget {
           Icon(Icons.error_outline, size: 64, color: AppColors.alertHigh),
           const SizedBox(height: 16),
           Text(
-            'Failed to load notifications',
+            AppLocalizations.of(context)!.failedLoadNotifications,
             style: theme.textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
@@ -136,7 +142,7 @@ class NotificationsScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () => ref.invalidate(notificationsControllerProvider),
-            child: const Text('Retry'),
+            child: Text(AppLocalizations.of(context)!.retry),
           ),
         ],
       ),
@@ -177,6 +183,7 @@ class _NotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context)!;
 
     return ListTile(
       tileColor: notification.isRead
@@ -208,8 +215,8 @@ class _NotificationTile extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             notification.createdAt != null
-                ? timeago.format(notification.createdAt!)
-                : '',
+                ? localizedRelativeTime(context, notification.createdAt, l10n)
+                : l10n.unknownTime,
             style: theme.textTheme.bodySmall?.copyWith(
               color: isDark
                   ? AppColors.darkTextSecondary
@@ -238,6 +245,9 @@ class _NotificationTile extends StatelessWidget {
     Color color;
 
     switch (notification.type) {
+      case NotificationType.reportSubmitted:
+        icon = Icons.upload_file;
+        color = AppColors.primary;
       case NotificationType.statusChange:
         icon = Icons.sync;
         color = AppColors.primary;
@@ -247,6 +257,12 @@ class _NotificationTile extends StatelessWidget {
       case NotificationType.assignment:
         icon = Icons.assignment_ind;
         color = AppColors.success;
+      case NotificationType.reportUpdated:
+        icon = Icons.edit_note;
+        color = AppColors.primary;
+      case NotificationType.kycUpdate:
+        icon = Icons.verified_user;
+        color = AppColors.alertMedium;
       case NotificationType.system:
         icon = Icons.info;
         color = isDark

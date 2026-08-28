@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import '../../../core/domain/result.dart';
+import '../data/auth_models.dart';
 import 'entities/user.dart';
 import 'entities/auth_tokens.dart';
 
@@ -20,6 +23,7 @@ abstract interface class AuthRepository {
     required String passwordConfirm,
     required String firstName,
     required String lastName,
+    required String barangayId,
   });
 
   /// Refresh access token using refresh token
@@ -38,8 +42,16 @@ abstract interface class AuthRepository {
   Future<Result<User>> updateProfile({
     String? firstName,
     String? lastName,
-    String? avatarUrl,
+    String? phone,
+    int? expectedRevision,
   });
+
+  Future<Result<User>> uploadAvatar(
+    File imageFile, {
+    void Function(int sent, int total)? onSendProgress,
+  });
+
+  Future<Result<User>> removeAvatar();
 
   /// Change password
   Future<Result<void>> changePassword({
@@ -62,5 +74,19 @@ abstract interface class AuthRepository {
     required String resetToken,
     required String newPassword,
     required String newPasswordConfirm,
+  });
+
+  /// Get supported municipality metadata for report submission.
+  Future<Result<List<MunicipalityModel>>> getMunicipalities();
+
+  /// Get barangays belonging to one municipality.
+  Future<Result<List<BarangayModel>>> getBarangays({
+    String municipalityId = 'urdaneta',
+  });
+
+  /// Get optional named places near a report coordinate.
+  Future<Result<List<NearbyLandmarkModel>>> getNearbyLandmarks({
+    required double latitude,
+    required double longitude,
   });
 }

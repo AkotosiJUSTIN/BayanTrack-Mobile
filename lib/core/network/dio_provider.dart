@@ -15,7 +15,7 @@ Dio dioRaw(Ref ref) {
       baseUrl: ApiConstants.baseUrl,
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(minutes: 5),
+      sendTimeout: const Duration(minutes: 10),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -32,7 +32,7 @@ Dio dio(Ref ref) {
       baseUrl: ApiConstants.baseUrl,
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(minutes: 5),
+      sendTimeout: const Duration(minutes: 10),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

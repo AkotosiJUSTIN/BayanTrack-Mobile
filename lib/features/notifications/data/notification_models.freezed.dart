@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AppNotification {
 
-@JsonKey(name: 'id') String get id; String get title; String get message; NotificationType get type;@JsonKey(name: 'is_read') bool get isRead;@JsonKey(name: 'related_report_id') String? get reportId;@JsonKey(name: 'created_at') String? get createdAt;
+@JsonKey(name: 'id') String get id; String get title; String get message;@JsonKey(unknownEnumValue: NotificationType.system) NotificationType get type;@JsonKey(name: 'is_read') bool get isRead;@JsonKey(name: 'related_report_id') String? get reportId;@JsonKey(name: 'created_at') String? get createdAt;
 /// Create a copy of AppNotification
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $AppNotificationCopyWith<$Res>  {
   factory $AppNotificationCopyWith(AppNotification value, $Res Function(AppNotification) _then) = _$AppNotificationCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'id') String id, String title, String message, NotificationType type,@JsonKey(name: 'is_read') bool isRead,@JsonKey(name: 'related_report_id') String? reportId,@JsonKey(name: 'created_at') String? createdAt
+@JsonKey(name: 'id') String id, String title, String message,@JsonKey(unknownEnumValue: NotificationType.system) NotificationType type,@JsonKey(name: 'is_read') bool isRead,@JsonKey(name: 'related_report_id') String? reportId,@JsonKey(name: 'created_at') String? createdAt
 });
 
 
@@ -156,7 +156,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'id')  String id,  String title,  String message,  NotificationType type, @JsonKey(name: 'is_read')  bool isRead, @JsonKey(name: 'related_report_id')  String? reportId, @JsonKey(name: 'created_at')  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'id')  String id,  String title,  String message, @JsonKey(unknownEnumValue: NotificationType.system)  NotificationType type, @JsonKey(name: 'is_read')  bool isRead, @JsonKey(name: 'related_report_id')  String? reportId, @JsonKey(name: 'created_at')  String? createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppNotification() when $default != null:
 return $default(_that.id,_that.title,_that.message,_that.type,_that.isRead,_that.reportId,_that.createdAt);case _:
@@ -177,7 +177,7 @@ return $default(_that.id,_that.title,_that.message,_that.type,_that.isRead,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'id')  String id,  String title,  String message,  NotificationType type, @JsonKey(name: 'is_read')  bool isRead, @JsonKey(name: 'related_report_id')  String? reportId, @JsonKey(name: 'created_at')  String? createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'id')  String id,  String title,  String message, @JsonKey(unknownEnumValue: NotificationType.system)  NotificationType type, @JsonKey(name: 'is_read')  bool isRead, @JsonKey(name: 'related_report_id')  String? reportId, @JsonKey(name: 'created_at')  String? createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _AppNotification():
 return $default(_that.id,_that.title,_that.message,_that.type,_that.isRead,_that.reportId,_that.createdAt);}
@@ -194,7 +194,7 @@ return $default(_that.id,_that.title,_that.message,_that.type,_that.isRead,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'id')  String id,  String title,  String message,  NotificationType type, @JsonKey(name: 'is_read')  bool isRead, @JsonKey(name: 'related_report_id')  String? reportId, @JsonKey(name: 'created_at')  String? createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'id')  String id,  String title,  String message, @JsonKey(unknownEnumValue: NotificationType.system)  NotificationType type, @JsonKey(name: 'is_read')  bool isRead, @JsonKey(name: 'related_report_id')  String? reportId, @JsonKey(name: 'created_at')  String? createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _AppNotification() when $default != null:
 return $default(_that.id,_that.title,_that.message,_that.type,_that.isRead,_that.reportId,_that.createdAt);case _:
@@ -209,13 +209,13 @@ return $default(_that.id,_that.title,_that.message,_that.type,_that.isRead,_that
 @JsonSerializable()
 
 class _AppNotification implements AppNotification {
-  const _AppNotification({@JsonKey(name: 'id') required this.id, required this.title, required this.message, this.type = NotificationType.system, @JsonKey(name: 'is_read') this.isRead = false, @JsonKey(name: 'related_report_id') this.reportId, @JsonKey(name: 'created_at') this.createdAt});
+  const _AppNotification({@JsonKey(name: 'id') required this.id, required this.title, required this.message, @JsonKey(unknownEnumValue: NotificationType.system) this.type = NotificationType.system, @JsonKey(name: 'is_read') this.isRead = false, @JsonKey(name: 'related_report_id') this.reportId, @JsonKey(name: 'created_at') this.createdAt});
   factory _AppNotification.fromJson(Map<String, dynamic> json) => _$AppNotificationFromJson(json);
 
 @override@JsonKey(name: 'id') final  String id;
 @override final  String title;
 @override final  String message;
-@override@JsonKey() final  NotificationType type;
+@override@JsonKey(unknownEnumValue: NotificationType.system) final  NotificationType type;
 @override@JsonKey(name: 'is_read') final  bool isRead;
 @override@JsonKey(name: 'related_report_id') final  String? reportId;
 @override@JsonKey(name: 'created_at') final  String? createdAt;
@@ -253,7 +253,7 @@ abstract mixin class _$AppNotificationCopyWith<$Res> implements $AppNotification
   factory _$AppNotificationCopyWith(_AppNotification value, $Res Function(_AppNotification) _then) = __$AppNotificationCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'id') String id, String title, String message, NotificationType type,@JsonKey(name: 'is_read') bool isRead,@JsonKey(name: 'related_report_id') String? reportId,@JsonKey(name: 'created_at') String? createdAt
+@JsonKey(name: 'id') String id, String title, String message,@JsonKey(unknownEnumValue: NotificationType.system) NotificationType type,@JsonKey(name: 'is_read') bool isRead,@JsonKey(name: 'related_report_id') String? reportId,@JsonKey(name: 'created_at') String? createdAt
 });
 
 
@@ -290,7 +290,7 @@ as String?,
 /// @nodoc
 mixin _$PaginatedNotifications {
 
-@JsonKey(name: 'notifications') List<AppNotification> get results; int get count;@JsonKey(name: 'unread_count') int get unreadCount; String? get next; String? get previous;
+@JsonKey(name: 'notifications') List<AppNotification> get results; int get count; int? get total;@JsonKey(name: 'unread_count') int get unreadCount; String? get next; String? get previous;
 /// Create a copy of PaginatedNotifications
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -303,16 +303,16 @@ $PaginatedNotificationsCopyWith<PaginatedNotifications> get copyWith => _$Pagina
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PaginatedNotifications&&const DeepCollectionEquality().equals(other.results, results)&&(identical(other.count, count) || other.count == count)&&(identical(other.unreadCount, unreadCount) || other.unreadCount == unreadCount)&&(identical(other.next, next) || other.next == next)&&(identical(other.previous, previous) || other.previous == previous));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PaginatedNotifications&&const DeepCollectionEquality().equals(other.results, results)&&(identical(other.count, count) || other.count == count)&&(identical(other.total, total) || other.total == total)&&(identical(other.unreadCount, unreadCount) || other.unreadCount == unreadCount)&&(identical(other.next, next) || other.next == next)&&(identical(other.previous, previous) || other.previous == previous));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(results),count,unreadCount,next,previous);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(results),count,total,unreadCount,next,previous);
 
 @override
 String toString() {
-  return 'PaginatedNotifications(results: $results, count: $count, unreadCount: $unreadCount, next: $next, previous: $previous)';
+  return 'PaginatedNotifications(results: $results, count: $count, total: $total, unreadCount: $unreadCount, next: $next, previous: $previous)';
 }
 
 
@@ -323,7 +323,7 @@ abstract mixin class $PaginatedNotificationsCopyWith<$Res>  {
   factory $PaginatedNotificationsCopyWith(PaginatedNotifications value, $Res Function(PaginatedNotifications) _then) = _$PaginatedNotificationsCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'notifications') List<AppNotification> results, int count,@JsonKey(name: 'unread_count') int unreadCount, String? next, String? previous
+@JsonKey(name: 'notifications') List<AppNotification> results, int count, int? total,@JsonKey(name: 'unread_count') int unreadCount, String? next, String? previous
 });
 
 
@@ -340,11 +340,12 @@ class _$PaginatedNotificationsCopyWithImpl<$Res>
 
 /// Create a copy of PaginatedNotifications
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? results = null,Object? count = null,Object? unreadCount = null,Object? next = freezed,Object? previous = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? results = null,Object? count = null,Object? total = freezed,Object? unreadCount = null,Object? next = freezed,Object? previous = freezed,}) {
   return _then(_self.copyWith(
 results: null == results ? _self.results : results // ignore: cast_nullable_to_non_nullable
 as List<AppNotification>,count: null == count ? _self.count : count // ignore: cast_nullable_to_non_nullable
-as int,unreadCount: null == unreadCount ? _self.unreadCount : unreadCount // ignore: cast_nullable_to_non_nullable
+as int,total: freezed == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
+as int?,unreadCount: null == unreadCount ? _self.unreadCount : unreadCount // ignore: cast_nullable_to_non_nullable
 as int,next: freezed == next ? _self.next : next // ignore: cast_nullable_to_non_nullable
 as String?,previous: freezed == previous ? _self.previous : previous // ignore: cast_nullable_to_non_nullable
 as String?,
@@ -429,10 +430,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'notifications')  List<AppNotification> results,  int count, @JsonKey(name: 'unread_count')  int unreadCount,  String? next,  String? previous)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'notifications')  List<AppNotification> results,  int count,  int? total, @JsonKey(name: 'unread_count')  int unreadCount,  String? next,  String? previous)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PaginatedNotifications() when $default != null:
-return $default(_that.results,_that.count,_that.unreadCount,_that.next,_that.previous);case _:
+return $default(_that.results,_that.count,_that.total,_that.unreadCount,_that.next,_that.previous);case _:
   return orElse();
 
 }
@@ -450,10 +451,10 @@ return $default(_that.results,_that.count,_that.unreadCount,_that.next,_that.pre
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'notifications')  List<AppNotification> results,  int count, @JsonKey(name: 'unread_count')  int unreadCount,  String? next,  String? previous)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'notifications')  List<AppNotification> results,  int count,  int? total, @JsonKey(name: 'unread_count')  int unreadCount,  String? next,  String? previous)  $default,) {final _that = this;
 switch (_that) {
 case _PaginatedNotifications():
-return $default(_that.results,_that.count,_that.unreadCount,_that.next,_that.previous);}
+return $default(_that.results,_that.count,_that.total,_that.unreadCount,_that.next,_that.previous);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -467,10 +468,10 @@ return $default(_that.results,_that.count,_that.unreadCount,_that.next,_that.pre
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'notifications')  List<AppNotification> results,  int count, @JsonKey(name: 'unread_count')  int unreadCount,  String? next,  String? previous)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'notifications')  List<AppNotification> results,  int count,  int? total, @JsonKey(name: 'unread_count')  int unreadCount,  String? next,  String? previous)?  $default,) {final _that = this;
 switch (_that) {
 case _PaginatedNotifications() when $default != null:
-return $default(_that.results,_that.count,_that.unreadCount,_that.next,_that.previous);case _:
+return $default(_that.results,_that.count,_that.total,_that.unreadCount,_that.next,_that.previous);case _:
   return null;
 
 }
@@ -482,7 +483,7 @@ return $default(_that.results,_that.count,_that.unreadCount,_that.next,_that.pre
 @JsonSerializable()
 
 class _PaginatedNotifications implements PaginatedNotifications {
-  const _PaginatedNotifications({@JsonKey(name: 'notifications') required final  List<AppNotification> results, this.count = 0, @JsonKey(name: 'unread_count') this.unreadCount = 0, this.next, this.previous}): _results = results;
+  const _PaginatedNotifications({@JsonKey(name: 'notifications') required final  List<AppNotification> results, this.count = 0, this.total, @JsonKey(name: 'unread_count') this.unreadCount = 0, this.next, this.previous}): _results = results;
   factory _PaginatedNotifications.fromJson(Map<String, dynamic> json) => _$PaginatedNotificationsFromJson(json);
 
  final  List<AppNotification> _results;
@@ -493,6 +494,7 @@ class _PaginatedNotifications implements PaginatedNotifications {
 }
 
 @override@JsonKey() final  int count;
+@override final  int? total;
 @override@JsonKey(name: 'unread_count') final  int unreadCount;
 @override final  String? next;
 @override final  String? previous;
@@ -510,16 +512,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PaginatedNotifications&&const DeepCollectionEquality().equals(other._results, _results)&&(identical(other.count, count) || other.count == count)&&(identical(other.unreadCount, unreadCount) || other.unreadCount == unreadCount)&&(identical(other.next, next) || other.next == next)&&(identical(other.previous, previous) || other.previous == previous));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PaginatedNotifications&&const DeepCollectionEquality().equals(other._results, _results)&&(identical(other.count, count) || other.count == count)&&(identical(other.total, total) || other.total == total)&&(identical(other.unreadCount, unreadCount) || other.unreadCount == unreadCount)&&(identical(other.next, next) || other.next == next)&&(identical(other.previous, previous) || other.previous == previous));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_results),count,unreadCount,next,previous);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_results),count,total,unreadCount,next,previous);
 
 @override
 String toString() {
-  return 'PaginatedNotifications(results: $results, count: $count, unreadCount: $unreadCount, next: $next, previous: $previous)';
+  return 'PaginatedNotifications(results: $results, count: $count, total: $total, unreadCount: $unreadCount, next: $next, previous: $previous)';
 }
 
 
@@ -530,7 +532,7 @@ abstract mixin class _$PaginatedNotificationsCopyWith<$Res> implements $Paginate
   factory _$PaginatedNotificationsCopyWith(_PaginatedNotifications value, $Res Function(_PaginatedNotifications) _then) = __$PaginatedNotificationsCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'notifications') List<AppNotification> results, int count,@JsonKey(name: 'unread_count') int unreadCount, String? next, String? previous
+@JsonKey(name: 'notifications') List<AppNotification> results, int count, int? total,@JsonKey(name: 'unread_count') int unreadCount, String? next, String? previous
 });
 
 
@@ -547,11 +549,12 @@ class __$PaginatedNotificationsCopyWithImpl<$Res>
 
 /// Create a copy of PaginatedNotifications
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? results = null,Object? count = null,Object? unreadCount = null,Object? next = freezed,Object? previous = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? results = null,Object? count = null,Object? total = freezed,Object? unreadCount = null,Object? next = freezed,Object? previous = freezed,}) {
   return _then(_PaginatedNotifications(
 results: null == results ? _self._results : results // ignore: cast_nullable_to_non_nullable
 as List<AppNotification>,count: null == count ? _self.count : count // ignore: cast_nullable_to_non_nullable
-as int,unreadCount: null == unreadCount ? _self.unreadCount : unreadCount // ignore: cast_nullable_to_non_nullable
+as int,total: freezed == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
+as int?,unreadCount: null == unreadCount ? _self.unreadCount : unreadCount // ignore: cast_nullable_to_non_nullable
 as int,next: freezed == next ? _self.next : next // ignore: cast_nullable_to_non_nullable
 as String?,previous: freezed == previous ? _self.previous : previous // ignore: cast_nullable_to_non_nullable
 as String?,
@@ -824,275 +827,6 @@ as bool,notifyOnStatusChange: null == notifyOnStatusChange ? _self.notifyOnStatu
 as bool,notifyOnComment: null == notifyOnComment ? _self.notifyOnComment : notifyOnComment // ignore: cast_nullable_to_non_nullable
 as bool,notifyOnAssignment: null == notifyOnAssignment ? _self.notifyOnAssignment : notifyOnAssignment // ignore: cast_nullable_to_non_nullable
 as bool,
-  ));
-}
-
-
-}
-
-
-/// @nodoc
-mixin _$UpdatePreferencesRequest {
-
-@JsonKey(name: 'email_enabled') bool? get emailEnabled;@JsonKey(name: 'push_enabled') bool? get pushEnabled;@JsonKey(name: 'notify_on_status_change') bool? get notifyOnStatusChange;@JsonKey(name: 'notify_on_comment') bool? get notifyOnComment;@JsonKey(name: 'notify_on_assignment') bool? get notifyOnAssignment;
-/// Create a copy of UpdatePreferencesRequest
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$UpdatePreferencesRequestCopyWith<UpdatePreferencesRequest> get copyWith => _$UpdatePreferencesRequestCopyWithImpl<UpdatePreferencesRequest>(this as UpdatePreferencesRequest, _$identity);
-
-  /// Serializes this UpdatePreferencesRequest to a JSON map.
-  Map<String, dynamic> toJson();
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UpdatePreferencesRequest&&(identical(other.emailEnabled, emailEnabled) || other.emailEnabled == emailEnabled)&&(identical(other.pushEnabled, pushEnabled) || other.pushEnabled == pushEnabled)&&(identical(other.notifyOnStatusChange, notifyOnStatusChange) || other.notifyOnStatusChange == notifyOnStatusChange)&&(identical(other.notifyOnComment, notifyOnComment) || other.notifyOnComment == notifyOnComment)&&(identical(other.notifyOnAssignment, notifyOnAssignment) || other.notifyOnAssignment == notifyOnAssignment));
-}
-
-@JsonKey(includeFromJson: false, includeToJson: false)
-@override
-int get hashCode => Object.hash(runtimeType,emailEnabled,pushEnabled,notifyOnStatusChange,notifyOnComment,notifyOnAssignment);
-
-@override
-String toString() {
-  return 'UpdatePreferencesRequest(emailEnabled: $emailEnabled, pushEnabled: $pushEnabled, notifyOnStatusChange: $notifyOnStatusChange, notifyOnComment: $notifyOnComment, notifyOnAssignment: $notifyOnAssignment)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $UpdatePreferencesRequestCopyWith<$Res>  {
-  factory $UpdatePreferencesRequestCopyWith(UpdatePreferencesRequest value, $Res Function(UpdatePreferencesRequest) _then) = _$UpdatePreferencesRequestCopyWithImpl;
-@useResult
-$Res call({
-@JsonKey(name: 'email_enabled') bool? emailEnabled,@JsonKey(name: 'push_enabled') bool? pushEnabled,@JsonKey(name: 'notify_on_status_change') bool? notifyOnStatusChange,@JsonKey(name: 'notify_on_comment') bool? notifyOnComment,@JsonKey(name: 'notify_on_assignment') bool? notifyOnAssignment
-});
-
-
-
-
-}
-/// @nodoc
-class _$UpdatePreferencesRequestCopyWithImpl<$Res>
-    implements $UpdatePreferencesRequestCopyWith<$Res> {
-  _$UpdatePreferencesRequestCopyWithImpl(this._self, this._then);
-
-  final UpdatePreferencesRequest _self;
-  final $Res Function(UpdatePreferencesRequest) _then;
-
-/// Create a copy of UpdatePreferencesRequest
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? emailEnabled = freezed,Object? pushEnabled = freezed,Object? notifyOnStatusChange = freezed,Object? notifyOnComment = freezed,Object? notifyOnAssignment = freezed,}) {
-  return _then(_self.copyWith(
-emailEnabled: freezed == emailEnabled ? _self.emailEnabled : emailEnabled // ignore: cast_nullable_to_non_nullable
-as bool?,pushEnabled: freezed == pushEnabled ? _self.pushEnabled : pushEnabled // ignore: cast_nullable_to_non_nullable
-as bool?,notifyOnStatusChange: freezed == notifyOnStatusChange ? _self.notifyOnStatusChange : notifyOnStatusChange // ignore: cast_nullable_to_non_nullable
-as bool?,notifyOnComment: freezed == notifyOnComment ? _self.notifyOnComment : notifyOnComment // ignore: cast_nullable_to_non_nullable
-as bool?,notifyOnAssignment: freezed == notifyOnAssignment ? _self.notifyOnAssignment : notifyOnAssignment // ignore: cast_nullable_to_non_nullable
-as bool?,
-  ));
-}
-
-}
-
-
-/// Adds pattern-matching-related methods to [UpdatePreferencesRequest].
-extension UpdatePreferencesRequestPatterns on UpdatePreferencesRequest {
-/// A variant of `map` that fallback to returning `orElse`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _UpdatePreferencesRequest value)?  $default,{required TResult orElse(),}){
-final _that = this;
-switch (_that) {
-case _UpdatePreferencesRequest() when $default != null:
-return $default(_that);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// Callbacks receives the raw object, upcasted.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case final Subclass2 value:
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _UpdatePreferencesRequest value)  $default,){
-final _that = this;
-switch (_that) {
-case _UpdatePreferencesRequest():
-return $default(_that);}
-}
-/// A variant of `map` that fallback to returning `null`.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case final Subclass value:
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _UpdatePreferencesRequest value)?  $default,){
-final _that = this;
-switch (_that) {
-case _UpdatePreferencesRequest() when $default != null:
-return $default(_that);case _:
-  return null;
-
-}
-}
-/// A variant of `when` that fallback to an `orElse` callback.
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return orElse();
-/// }
-/// ```
-
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'email_enabled')  bool? emailEnabled, @JsonKey(name: 'push_enabled')  bool? pushEnabled, @JsonKey(name: 'notify_on_status_change')  bool? notifyOnStatusChange, @JsonKey(name: 'notify_on_comment')  bool? notifyOnComment, @JsonKey(name: 'notify_on_assignment')  bool? notifyOnAssignment)?  $default,{required TResult orElse(),}) {final _that = this;
-switch (_that) {
-case _UpdatePreferencesRequest() when $default != null:
-return $default(_that.emailEnabled,_that.pushEnabled,_that.notifyOnStatusChange,_that.notifyOnComment,_that.notifyOnAssignment);case _:
-  return orElse();
-
-}
-}
-/// A `switch`-like method, using callbacks.
-///
-/// As opposed to `map`, this offers destructuring.
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case Subclass2(:final field2):
-///     return ...;
-/// }
-/// ```
-
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'email_enabled')  bool? emailEnabled, @JsonKey(name: 'push_enabled')  bool? pushEnabled, @JsonKey(name: 'notify_on_status_change')  bool? notifyOnStatusChange, @JsonKey(name: 'notify_on_comment')  bool? notifyOnComment, @JsonKey(name: 'notify_on_assignment')  bool? notifyOnAssignment)  $default,) {final _that = this;
-switch (_that) {
-case _UpdatePreferencesRequest():
-return $default(_that.emailEnabled,_that.pushEnabled,_that.notifyOnStatusChange,_that.notifyOnComment,_that.notifyOnAssignment);}
-}
-/// A variant of `when` that fallback to returning `null`
-///
-/// It is equivalent to doing:
-/// ```dart
-/// switch (sealedClass) {
-///   case Subclass(:final field):
-///     return ...;
-///   case _:
-///     return null;
-/// }
-/// ```
-
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'email_enabled')  bool? emailEnabled, @JsonKey(name: 'push_enabled')  bool? pushEnabled, @JsonKey(name: 'notify_on_status_change')  bool? notifyOnStatusChange, @JsonKey(name: 'notify_on_comment')  bool? notifyOnComment, @JsonKey(name: 'notify_on_assignment')  bool? notifyOnAssignment)?  $default,) {final _that = this;
-switch (_that) {
-case _UpdatePreferencesRequest() when $default != null:
-return $default(_that.emailEnabled,_that.pushEnabled,_that.notifyOnStatusChange,_that.notifyOnComment,_that.notifyOnAssignment);case _:
-  return null;
-
-}
-}
-
-}
-
-/// @nodoc
-@JsonSerializable()
-
-class _UpdatePreferencesRequest implements UpdatePreferencesRequest {
-  const _UpdatePreferencesRequest({@JsonKey(name: 'email_enabled') this.emailEnabled, @JsonKey(name: 'push_enabled') this.pushEnabled, @JsonKey(name: 'notify_on_status_change') this.notifyOnStatusChange, @JsonKey(name: 'notify_on_comment') this.notifyOnComment, @JsonKey(name: 'notify_on_assignment') this.notifyOnAssignment});
-  factory _UpdatePreferencesRequest.fromJson(Map<String, dynamic> json) => _$UpdatePreferencesRequestFromJson(json);
-
-@override@JsonKey(name: 'email_enabled') final  bool? emailEnabled;
-@override@JsonKey(name: 'push_enabled') final  bool? pushEnabled;
-@override@JsonKey(name: 'notify_on_status_change') final  bool? notifyOnStatusChange;
-@override@JsonKey(name: 'notify_on_comment') final  bool? notifyOnComment;
-@override@JsonKey(name: 'notify_on_assignment') final  bool? notifyOnAssignment;
-
-/// Create a copy of UpdatePreferencesRequest
-/// with the given fields replaced by the non-null parameter values.
-@override @JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-_$UpdatePreferencesRequestCopyWith<_UpdatePreferencesRequest> get copyWith => __$UpdatePreferencesRequestCopyWithImpl<_UpdatePreferencesRequest>(this, _$identity);
-
-@override
-Map<String, dynamic> toJson() {
-  return _$UpdatePreferencesRequestToJson(this, );
-}
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UpdatePreferencesRequest&&(identical(other.emailEnabled, emailEnabled) || other.emailEnabled == emailEnabled)&&(identical(other.pushEnabled, pushEnabled) || other.pushEnabled == pushEnabled)&&(identical(other.notifyOnStatusChange, notifyOnStatusChange) || other.notifyOnStatusChange == notifyOnStatusChange)&&(identical(other.notifyOnComment, notifyOnComment) || other.notifyOnComment == notifyOnComment)&&(identical(other.notifyOnAssignment, notifyOnAssignment) || other.notifyOnAssignment == notifyOnAssignment));
-}
-
-@JsonKey(includeFromJson: false, includeToJson: false)
-@override
-int get hashCode => Object.hash(runtimeType,emailEnabled,pushEnabled,notifyOnStatusChange,notifyOnComment,notifyOnAssignment);
-
-@override
-String toString() {
-  return 'UpdatePreferencesRequest(emailEnabled: $emailEnabled, pushEnabled: $pushEnabled, notifyOnStatusChange: $notifyOnStatusChange, notifyOnComment: $notifyOnComment, notifyOnAssignment: $notifyOnAssignment)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class _$UpdatePreferencesRequestCopyWith<$Res> implements $UpdatePreferencesRequestCopyWith<$Res> {
-  factory _$UpdatePreferencesRequestCopyWith(_UpdatePreferencesRequest value, $Res Function(_UpdatePreferencesRequest) _then) = __$UpdatePreferencesRequestCopyWithImpl;
-@override @useResult
-$Res call({
-@JsonKey(name: 'email_enabled') bool? emailEnabled,@JsonKey(name: 'push_enabled') bool? pushEnabled,@JsonKey(name: 'notify_on_status_change') bool? notifyOnStatusChange,@JsonKey(name: 'notify_on_comment') bool? notifyOnComment,@JsonKey(name: 'notify_on_assignment') bool? notifyOnAssignment
-});
-
-
-
-
-}
-/// @nodoc
-class __$UpdatePreferencesRequestCopyWithImpl<$Res>
-    implements _$UpdatePreferencesRequestCopyWith<$Res> {
-  __$UpdatePreferencesRequestCopyWithImpl(this._self, this._then);
-
-  final _UpdatePreferencesRequest _self;
-  final $Res Function(_UpdatePreferencesRequest) _then;
-
-/// Create a copy of UpdatePreferencesRequest
-/// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? emailEnabled = freezed,Object? pushEnabled = freezed,Object? notifyOnStatusChange = freezed,Object? notifyOnComment = freezed,Object? notifyOnAssignment = freezed,}) {
-  return _then(_UpdatePreferencesRequest(
-emailEnabled: freezed == emailEnabled ? _self.emailEnabled : emailEnabled // ignore: cast_nullable_to_non_nullable
-as bool?,pushEnabled: freezed == pushEnabled ? _self.pushEnabled : pushEnabled // ignore: cast_nullable_to_non_nullable
-as bool?,notifyOnStatusChange: freezed == notifyOnStatusChange ? _self.notifyOnStatusChange : notifyOnStatusChange // ignore: cast_nullable_to_non_nullable
-as bool?,notifyOnComment: freezed == notifyOnComment ? _self.notifyOnComment : notifyOnComment // ignore: cast_nullable_to_non_nullable
-as bool?,notifyOnAssignment: freezed == notifyOnAssignment ? _self.notifyOnAssignment : notifyOnAssignment // ignore: cast_nullable_to_non_nullable
-as bool?,
   ));
 }
 
