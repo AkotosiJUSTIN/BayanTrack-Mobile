@@ -117,6 +117,7 @@
   "allCaughtUp": "Wala ka nang kailangang habulin!",
   "noNewNotifications": "Wala kang bagong notification sa ngayon.",
   "failedLoadNotifications": "Hindi ma-load ang mga notification",
+  "notificationsNetworkError": "Hindi ma-load ang mga notification. Suriin ang iyong internet connection at subukan muli.",
   "newReport": "Bagong Ulat",
   "reportTitle": "Pamagat",
   "reportLocation": "Lokasyon",

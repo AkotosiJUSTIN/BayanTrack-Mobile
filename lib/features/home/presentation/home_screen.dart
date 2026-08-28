@@ -49,8 +49,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     'escalated',
   ];
 
-  String? get _selectedStatus =>
-      _statusFilters[_selectedStatusFilterIndex];
+  String? get _selectedStatus => _statusFilters[_selectedStatusFilterIndex];
   String _selectedSort = 'date';
   bool get _hasNextPage => _currentPage < _totalPages;
 
@@ -236,7 +235,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     children: [
                       count,
                       const SizedBox(height: 8),
-                      viewSelector,
+                      SizedBox(width: double.infinity, child: viewSelector),
                     ],
                   );
                 }
@@ -244,7 +243,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 return Row(
                   children: [
                     Expanded(child: count),
-                    viewSelector,
+                    Flexible(child: viewSelector),
                   ],
                 );
               },
@@ -368,7 +367,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     if (_loadError != null && _reports.isEmpty) {
-      return _buildErrorState(theme, _loadError!);
+      return _buildErrorState(theme);
     }
 
     if (_reports.isEmpty) {
@@ -429,13 +428,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         spacing: 12,
                         runSpacing: 8,
                         children: [
-                          _buildLegendItem(l10n.submitted, AppColors.alertMedium),
+                          _buildLegendItem(
+                            l10n.submitted,
+                            AppColors.alertMedium,
+                          ),
                           _buildLegendItem(
                             l10n.inProgress,
                             const Color(0xFF3B82F6),
                           ),
                           _buildLegendItem(l10n.escalated, AppColors.alertHigh),
-                          _buildLegendItem(l10n.resolvedStatus, AppColors.success),
+                          _buildLegendItem(
+                            l10n.resolvedStatus,
+                            AppColors.success,
+                          ),
                         ],
                       ),
                     ),
@@ -470,7 +475,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     if (_loadError != null && _reports.isEmpty) {
-      return _buildErrorState(theme, _loadError!);
+      return _buildErrorState(theme);
     }
 
     if (_reports.isEmpty) {
@@ -522,7 +527,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: CircularProgressIndicator(strokeWidth: 2.5),
               )
             : Text(
-                _hasNextPage ? AppLocalizations.of(context)!.scrollLoadMore : AppLocalizations.of(context)!.noMoreReports,
+                _hasNextPage
+                    ? AppLocalizations.of(context)!.scrollLoadMore
+                    : AppLocalizations.of(context)!.noMoreReports,
                 style: theme.textTheme.bodySmall,
               ),
       ),
@@ -621,29 +628,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildErrorState(ThemeData theme, String error) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 64, color: AppColors.alertHigh),
-          const SizedBox(height: 16),
-          Text(AppLocalizations.of(context)!.unableLoadReports, style: theme.textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              AppLocalizations.of(context)!.reportsNetworkError,
-              style: theme.textTheme.bodySmall,
-              textAlign: TextAlign.center,
+  Widget _buildErrorState(ThemeData theme) {
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: AppColors.alertHigh),
+                const SizedBox(height: 16),
+                Text(
+                  AppLocalizations.of(context)!.unableLoadReports,
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    AppLocalizations.of(context)!.reportsNetworkError,
+                    style: theme.textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                FilledButton.tonal(
+                  onPressed: _onRefresh,
+                  child: Text(AppLocalizations.of(context)!.retry),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          FilledButton.tonal(
-            onPressed: _onRefresh,
-            child: Text(AppLocalizations.of(context)!.retry),
-          ),
-        ],
+        ),
       ),
     );
   }

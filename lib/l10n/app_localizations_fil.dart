@@ -377,6 +377,10 @@ class AppLocalizationsFil extends AppLocalizations {
   String get failedLoadNotifications => 'Hindi ma-load ang mga notification';
 
   @override
+  String get notificationsNetworkError =>
+      'Hindi ma-load ang mga notification. Suriin ang iyong internet connection at subukan muli.';
+
+  @override
   String get newReport => 'Bagong Ulat';
 
   @override

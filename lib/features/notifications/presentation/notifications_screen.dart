@@ -41,10 +41,7 @@ class NotificationsScreen extends ConsumerWidget {
                             .read(notificationsControllerProvider.notifier)
                             .markAllAsRead();
                         if (context.mounted) {
-                          AppToast.success(
-                            context,
-                            l10n.allNotificationsRead,
-                          );
+                          AppToast.success(context, l10n.allNotificationsRead);
                         }
                       },
                       child: Text(l10n.markAllRead),
@@ -135,7 +132,7 @@ class NotificationsScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
-              error.toString(),
+              AppLocalizations.of(context)!.notificationsNetworkError,
               style: theme.textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
@@ -196,9 +193,7 @@ class _NotificationTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         side: notification.isRead
             ? BorderSide.none
-            : BorderSide(
-                color: AppColors.primary.withValues(alpha: 0.24),
-              ),
+            : BorderSide(color: AppColors.primary.withValues(alpha: 0.24)),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       minVerticalPadding: 12,

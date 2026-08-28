@@ -117,6 +117,7 @@
   "allCaughtUp": "All caught up!",
   "noNewNotifications": "You have no new notifications at the moment.",
   "failedLoadNotifications": "Failed to load notifications",
+  "notificationsNetworkError": "We’re having trouble loading notifications. Please check your internet connection and try again.",
   "newReport": "New Report",
   "reportTitle": "Title",
   "reportLocation": "Location",

@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart' show Override;
 
 class _ReportsRepositoryMock extends Mock implements ReportsRepository {}
 
@@ -130,5 +131,30 @@ void main() {
     expect(find.text('Mark all read'), findsOneWidget);
     expect(find.text('Report update'), findsOneWidget);
     expect(find.text('Your report is now under review.'), findsOneWidget);
+  });
+
+  testWidgets('Notifications hides raw failures behind localized retry copy', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        home: const NotificationsScreen(),
+        overrides: [
+          notificationsControllerProvider.overrideWithBuild(
+            (_, _) async => throw Exception('private backend details'),
+          ),
+          userPermissionsProvider.overrideWithValue(UserPermissions(null)),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(
+        'We’re having trouble loading notifications. Please check your internet connection and try again.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('private backend details'), findsNothing);
   });
 }

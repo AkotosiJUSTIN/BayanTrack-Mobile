@@ -373,6 +373,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get failedLoadNotifications => 'Failed to load notifications';
 
   @override
+  String get notificationsNetworkError =>
+      'We’re having trouble loading notifications. Please check your internet connection and try again.';
+
+  @override
   String get newReport => 'New Report';
 
   @override

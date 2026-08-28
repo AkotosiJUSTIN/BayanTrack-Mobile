@@ -788,6 +788,12 @@ abstract class AppLocalizations {
   /// **'Failed to load notifications'**
   String get failedLoadNotifications;
 
+  /// No description provided for @notificationsNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'We’re having trouble loading notifications. Please check your internet connection and try again.'**
+  String get notificationsNetworkError;
+
   /// No description provided for @newReport.
   ///
   /// In en, this message translates to:
