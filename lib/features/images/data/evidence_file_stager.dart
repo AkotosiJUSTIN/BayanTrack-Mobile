@@ -4,23 +4,101 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
 var _draftSequence = 0;
+const _draftDirectoryName = 'report_evidence_drafts';
+const _draftMarkerName = '.bayantrack_evidence_drafts';
 
 Future<File> stageEvidenceFile(
   XFile source, {
   Directory? stagingDirectory,
 }) async {
-  final root = stagingDirectory ?? await getTemporaryDirectory();
+  final root = stagingDirectory ?? await getApplicationSupportDirectory();
   final directory = Directory(
-    '${root.path}${Platform.pathSeparator}report_evidence_drafts',
+    '${root.path}${Platform.pathSeparator}$_draftDirectoryName',
   );
   await directory.create(recursive: true);
+  final marker = File(
+    '${directory.path}${Platform.pathSeparator}$_draftMarkerName',
+  );
+  if (!await marker.exists()) await marker.create();
 
   final extension = _safeExtension(source.name);
   final target = File(
     '${directory.path}${Platform.pathSeparator}draft_${DateTime.now().microsecondsSinceEpoch}_${_draftSequence++}$extension',
   );
-  await source.saveTo(target.path);
-  return target;
+  final partial = File('${target.path}.part');
+  try {
+    final sourceSize = await source.length();
+    if (sourceSize == 0) {
+      throw const FileSystemException('Evidence draft is empty');
+    }
+    await source.saveTo(partial.path);
+    if (await partial.length() != sourceSize) {
+      throw const FileSystemException('Evidence draft verification failed');
+    }
+    return await partial.rename(target.path);
+  } on FileSystemException {
+    if (await partial.exists()) await partial.delete();
+    if (await target.exists()) await target.delete();
+    rethrow;
+  }
+}
+
+Future<void> discardEvidenceDraft(File file) async {
+  if (!await isEvidenceDraft(file)) return;
+
+  try {
+    if (await file.exists()) await file.delete();
+  } on FileSystemException {
+    // A stale draft can be cleaned up during a later report flow.
+  }
+}
+
+Future<bool> isEvidenceDraft(File file) async {
+  final parentSegments = file.parent.uri.pathSegments
+      .where((segment) => segment.isNotEmpty)
+      .toList();
+  if (parentSegments.isEmpty ||
+      parentSegments.last == 'report_evidence_drafts' &&
+          !file.uri.pathSegments.last.startsWith('draft_')) {
+    return false;
+  }
+  if (parentSegments.last != _draftDirectoryName) return false;
+  final marker = File(
+    '${file.parent.path}${Platform.pathSeparator}$_draftMarkerName',
+  );
+  return marker.exists();
+}
+
+Future<void> discardEvidenceDrafts(Iterable<File> files) async {
+  for (final file in files) {
+    await discardEvidenceDraft(file);
+  }
+}
+
+Future<void> cleanupStaleEvidenceDrafts({
+  Directory? stagingDirectory,
+  Iterable<String> retainedPaths = const [],
+  Duration maxAge = const Duration(days: 7),
+  DateTime Function()? now,
+}) async {
+  final root = stagingDirectory ?? await getApplicationSupportDirectory();
+  final directory = Directory(
+    '${root.path}${Platform.pathSeparator}$_draftDirectoryName',
+  );
+  if (!await directory.exists()) return;
+
+  final retained = retainedPaths.map((path) => File(path).absolute.path).toSet();
+  final cutoff = (now ?? DateTime.now)().subtract(maxAge);
+  await for (final entity in directory.list()) {
+    if (entity is! File || retained.contains(entity.absolute.path)) continue;
+    final name = entity.uri.pathSegments.last;
+    if (!name.startsWith('draft_')) continue;
+    try {
+      if ((await entity.lastModified()).isBefore(cutoff)) await entity.delete();
+    } on FileSystemException {
+      // Cleanup is best-effort and will run again during a later flow.
+    }
+  }
 }
 
 String _safeExtension(String name) {

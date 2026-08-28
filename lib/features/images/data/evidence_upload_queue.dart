@@ -8,6 +8,8 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'evidence_file_stager.dart';
+
 enum EvidenceUploadState {
   pending,
   uploading,
@@ -227,6 +229,11 @@ class EvidenceUploadQueue extends ChangeNotifier {
     _initialized = true;
     await _persist();
     await _cleanupTerminalFiles();
+    await _cleanupOrphanedUploadFiles();
+    await cleanupStaleEvidenceDrafts(
+      stagingDirectory: _uploadDirectory.parent,
+      retainedPaths: _intents.map((item) => item.localFilePath),
+    );
     _notify();
   }
 
@@ -243,7 +250,9 @@ class EvidenceUploadQueue extends ChangeNotifier {
       _activeUserId = userId;
     }
     await _uploadDirectory.create(recursive: true);
-    final added = <EvidenceUploadIntent>[];
+    final prepared = <EvidenceUploadIntent>[];
+    final copiedFiles = <File>[];
+    var hasPrimary = false;
 
     for (var index = 0; index < files.length; index++) {
       final source = files[index];
@@ -251,6 +260,7 @@ class EvidenceUploadQueue extends ChangeNotifier {
       final target = File(
         '${_uploadDirectory.path}${Platform.pathSeparator}$id${_safeExtension(source)}',
       );
+      var queuedFilePath = source.path;
       var uploadState = EvidenceUploadState.pending;
       EvidenceUploadError? error;
       try {
@@ -258,28 +268,56 @@ class EvidenceUploadQueue extends ChangeNotifier {
           uploadState = EvidenceUploadState.missingLocalFile;
           error = EvidenceUploadError.missingLocalFile;
         } else {
-          await source.copy(target.path);
+          final sourceSize = await source.length();
+          if (sourceSize == 0) {
+            uploadState = EvidenceUploadState.missingLocalFile;
+            error = EvidenceUploadError.missingLocalFile;
+          } else if (!await isEvidenceDraft(source)) {
+            final partial = File('${target.path}.part');
+            await source.copy(partial.path);
+            if (await partial.length() != sourceSize) {
+              throw const FileSystemException(
+                'Evidence copy verification failed',
+              );
+            }
+            await partial.rename(target.path);
+            queuedFilePath = target.path;
+            copiedFiles.add(target);
+          }
         }
       } on FileSystemException {
+        await _deleteOwnedFile('${target.path}.part');
+        await _deleteOwnedFile(target.path);
         uploadState = EvidenceUploadState.missingLocalFile;
         error = EvidenceUploadError.missingLocalFile;
       }
 
+      final isPrimary = uploadState == EvidenceUploadState.pending && !hasPrimary;
+      hasPrimary = hasPrimary || isPrimary;
       final intent = EvidenceUploadIntent(
         id: id,
         ownerUserId: userId,
         reportId: reportId,
-        localFilePath: target.path,
-        isPrimary: index == 0,
+        localFilePath: queuedFilePath,
+        isPrimary: isPrimary,
         state: uploadState,
         error: error,
       );
-      _intents.add(intent);
-      added.add(intent);
-      await _persist();
-      _notify();
+      prepared.add(intent);
     }
-    return List.unmodifiable(added);
+
+    _intents.addAll(prepared);
+    try {
+      await _persist();
+    } catch (_) {
+      _intents.removeRange(_intents.length - prepared.length, _intents.length);
+      for (final file in copiedFiles) {
+        await _deleteOwnedFile(file.path);
+      }
+      rethrow;
+    }
+    _notify();
+    return List.unmodifiable(prepared);
   }
 
   Future<void> resume(String userId) async {
@@ -559,10 +597,13 @@ class EvidenceUploadQueue extends ChangeNotifier {
 
   Future<void> _persist() async {
     if (!_initialized || _disposed) return;
-    await _preferences.setString(
+    final saved = await _preferences.setString(
       _storageKey,
       jsonEncode(_intents.map((item) => item.toJson()).toList()),
     );
+    if (!saved) {
+      throw const FileSystemException('Evidence queue metadata was not saved');
+    }
   }
 
   Future<void> _cleanupTerminalFiles() async {
@@ -577,11 +618,26 @@ class EvidenceUploadQueue extends ChangeNotifier {
   Future<void> _deleteOwnedFile(String path) async {
     final ownedRoot = _uploadDirectory.absolute.path;
     final file = File(path).absolute;
+    if (await isEvidenceDraft(file)) {
+      await discardEvidenceDraft(file);
+      return;
+    }
     if (!file.path.startsWith('$ownedRoot${Platform.pathSeparator}')) return;
     try {
       if (await file.exists()) await file.delete();
     } on FileSystemException {
       // A later restore retries terminal-file cleanup.
+    }
+  }
+
+  Future<void> _cleanupOrphanedUploadFiles() async {
+    if (!await _uploadDirectory.exists()) return;
+    final retained = _intents
+        .map((item) => File(item.localFilePath).absolute.path)
+        .toSet();
+    await for (final entity in _uploadDirectory.list()) {
+      if (entity is! File || retained.contains(entity.absolute.path)) continue;
+      await _deleteOwnedFile(entity.path);
     }
   }
 

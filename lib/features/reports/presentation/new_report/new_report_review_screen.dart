@@ -47,10 +47,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     if (municipality == null ||
         (municipality.id != defaultMunicipalityId &&
             !municipality.hasUsableBounds)) {
-      AppToast.warning(
-        context,
-        l10n.cityMetadataUnavailable,
-      );
+      AppToast.warning(context, l10n.cityMetadataUnavailable);
       return;
     }
 
@@ -66,10 +63,7 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     }
 
     if (!state.canSubmit) {
-      AppToast.warning(
-        context,
-        l10n.consentRequired,
-      );
+      AppToast.warning(context, l10n.consentRequired);
       return;
     }
 
@@ -109,12 +103,17 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     }
 
     var evidenceState = EvidenceUploadState.pending;
+    var evidenceHandedOff = false;
     try {
       final intents = await uploadQueue.enqueue(
         userId: userId,
         reportId: createdReportId,
         files: state.selectedImages,
       );
+      if (intents.length != state.selectedImages.length) {
+        throw StateError('Evidence queue did not accept every selected image');
+      }
+      evidenceHandedOff = true;
       if (intents.any(
         (intent) => intent.state == EvidenceUploadState.missingLocalFile,
       )) {
@@ -127,16 +126,21 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
     }
 
     if (!mounted) return;
-    ref.read(newReportControllerProvider.notifier).reset();
+    final controller = ref.read(newReportControllerProvider.notifier);
+    if (evidenceHandedOff) {
+      controller.resetAfterEvidenceHandoff();
+    } else {
+      controller.reset();
+    }
     ref.invalidate(reportsControllerProvider);
     ref.read(myReportsRefreshProvider.notifier).increment();
     if (evidenceState == EvidenceUploadState.pending) {
-      AppToast.success(context, l10n.evidenceUploadsPending(state.selectedImages.length));
-    } else {
-      AppToast.warning(
+      AppToast.success(
         context,
-        l10n.evidenceUploadFailed,
+        l10n.evidenceUploadsPending(state.selectedImages.length),
       );
+    } else {
+      AppToast.warning(context, l10n.evidenceUploadFailed);
     }
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
@@ -156,239 +160,241 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ReportFlowProgress(step: 4, total: 4),
-          Expanded(
-            child: SingleChildScrollView(
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.only(bottom: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ReportFlowHeader(
-                    title: l10n.reviewSubmit,
-                    guidance: l10n.reviewSubmissionDescription,
-                  ),
+            Expanded(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.only(bottom: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ReportFlowHeader(
+                      title: l10n.reviewSubmit,
+                      guidance: l10n.reviewSubmissionDescription,
+                    ),
 
-                  // ===== IMAGES PREVIEW =====
-                  _buildSection(
-                    icon: Icons.photo_library,
-                    title: l10n.photos,
-                    trailing: l10n.photoCount(state.selectedImages.length),
-                    content: SizedBox(
-                      height: 80,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: state.selectedImages.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 8),
-                        itemBuilder: (context, index) {
-                          return Semantics(
-                            container: true,
-                            image: true,
-                            label: l10n.photoCount(index + 1),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.file(
-                                state.selectedImages[index],
-                                width: 80,
-                                height: 80,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => Icon(
-                                  Icons.broken_image_outlined,
+                    // ===== IMAGES PREVIEW =====
+                    _buildSection(
+                      icon: Icons.photo_library,
+                      title: l10n.photos,
+                      trailing: l10n.photoCount(state.selectedImages.length),
+                      content: SizedBox(
+                        height: 80,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: state.selectedImages.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: 8),
+                          itemBuilder: (context, index) {
+                            return Semantics(
+                              container: true,
+                              image: true,
+                              label: l10n.photoCount(index + 1),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.file(
+                                  state.selectedImages[index],
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => Icon(
+                                    Icons.broken_image_outlined,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ===== TITLE (IF PROVIDED) =====
+                    if (state.title != null && state.title!.isNotEmpty)
+                      _buildSection(
+                        icon: Icons.title,
+                        title: l10n.reportTitle,
+                        trailing: null,
+                        content: _buildInfoRow(l10n.reportTitle, state.title!),
+                      ),
+                    if (state.title != null && state.title!.isNotEmpty)
+                      const SizedBox(height: 16),
+
+                    // ===== LOCATION PREVIEW =====
+                    _buildSection(
+                      icon: Icons.location_on,
+                      title: l10n.reportLocation,
+                      trailing: state.hasLocation
+                          ? l10n.locationSet
+                          : l10n.locationNotSet,
+                      content: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (state.zone != null && state.zone!.isNotEmpty)
+                            _buildInfoRow(l10n.zone, state.zone!),
+                          if (state.streetLandmark != null &&
+                              state.streetLandmark!.isNotEmpty)
+                            _buildInfoRow(
+                              l10n.streetLandmark,
+                              state.streetLandmark!,
+                            ),
+                          if (state.location != null &&
+                              state.location!.isNotEmpty)
+                            _buildInfoRow(
+                              l10n.address,
+                              _displayLocation(state.location!),
+                            ),
+                          if (state.latitude != null && state.longitude != null)
+                            _buildInfoRow(
+                              l10n.gps,
+                              '${state.latitude!.toStringAsFixed(6)}, ${state.longitude!.toStringAsFixed(6)}',
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ===== REPORT TIMING =====
+                    _buildSection(
+                      icon: Icons.schedule,
+                      title: l10n.reportTiming,
+                      trailing: null,
+                      content: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildInfoRow(
+                            l10n.isHappeningNow,
+                            state.isHappeningNow ? l10n.yes : l10n.no,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ===== DESCRIPTION PREVIEW =====
+                    _buildSection(
+                      icon: Icons.description,
+                      title: l10n.reportDescription,
+                      trailing: null,
+                      content: Text(
+                        state.description,
+                        style: theme.textTheme.bodyMedium,
+                        maxLines: 6,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: ReportFlowSection(
+                        title: l10n.declarationConsent,
+                        trailing: l10n.requiredShort,
+                        icon: Icons.fact_check_outlined,
+                        child: Column(
+                          children: [
+                            CheckboxListTile(
+                              value: state.declarationConfirmed,
+                              onChanged: (v) => controller
+                                  .setDeclarationConfirmed(v ?? false),
+                              title: Text(l10n.confirmAccurate),
+                              subtitle: Text(
+                                l10n.declarationText,
+                                style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
                               ),
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: EdgeInsets.zero,
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ===== TITLE (IF PROVIDED) =====
-                  if (state.title != null && state.title!.isNotEmpty)
-                    _buildSection(
-                      icon: Icons.title,
-                      title: l10n.reportTitle,
-                      trailing: null,
-                      content: _buildInfoRow(l10n.reportTitle, state.title!),
-                    ),
-                  if (state.title != null && state.title!.isNotEmpty)
-                    const SizedBox(height: 16),
-
-                  // ===== LOCATION PREVIEW =====
-                  _buildSection(
-                    icon: Icons.location_on,
-                    title: l10n.reportLocation,
-                    trailing: state.hasLocation
-                        ? l10n.locationSet
-                        : l10n.locationNotSet,
-                    content: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (state.zone != null && state.zone!.isNotEmpty)
-                          _buildInfoRow(l10n.zone, state.zone!),
-                        if (state.streetLandmark != null &&
-                            state.streetLandmark!.isNotEmpty)
-                          _buildInfoRow(
-                            l10n.streetLandmark,
-                            state.streetLandmark!,
-                          ),
-                        if (state.location != null &&
-                            state.location!.isNotEmpty)
-                          _buildInfoRow(
-                            l10n.address,
-                            _displayLocation(state.location!),
-                          ),
-                        if (state.latitude != null && state.longitude != null)
-                          _buildInfoRow(
-                            l10n.gps,
-                            '${state.latitude!.toStringAsFixed(6)}, ${state.longitude!.toStringAsFixed(6)}',
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ===== REPORT TIMING =====
-                  _buildSection(
-                    icon: Icons.schedule,
-                    title: l10n.reportTiming,
-                    trailing: null,
-                    content: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildInfoRow(
-                          l10n.isHappeningNow,
-                          state.isHappeningNow ? l10n.yes : l10n.no,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ===== DESCRIPTION PREVIEW =====
-                  _buildSection(
-                    icon: Icons.description,
-                    title: l10n.reportDescription,
-                    trailing: null,
-                    content: Text(
-                      state.description,
-                      style: theme.textTheme.bodyMedium,
-                      maxLines: 6,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: ReportFlowSection(
-                      title: l10n.declarationConsent,
-                      trailing: l10n.requiredShort,
-                      icon: Icons.fact_check_outlined,
-                      child: Column(
-                        children: [
-                          CheckboxListTile(
-                            value: state.declarationConfirmed,
-                            onChanged: (v) => controller
-                                .setDeclarationConfirmed(v ?? false),
-                            title: Text(l10n.confirmAccurate),
-                            subtitle: Text(
-                              l10n.declarationText,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            controlAffinity: ListTileControlAffinity.leading,
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                          CheckboxListTile(
-                            value: state.dataProcessingConsent,
-                            onChanged: (v) => controller
-                                .setDataProcessingConsent(v ?? false),
-                            title: Text(l10n.consentDataProcessing),
-                            subtitle: Text(
-                              l10n.consentText,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            controlAffinity: ListTileControlAffinity.leading,
-                            contentPadding: EdgeInsets.zero,
-                          ),
-                          if (!state.hasConsent)
-                            Semantics(
-                              liveRegion: true,
-                              label: l10n.consentRequired,
-                              child: Container(
-                                margin: const EdgeInsets.only(top: 8),
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.errorContainer,
-                                  borderRadius: BorderRadius.circular(8),
+                            CheckboxListTile(
+                              value: state.dataProcessingConsent,
+                              onChanged: (v) => controller
+                                  .setDataProcessingConsent(v ?? false),
+                              title: Text(l10n.consentDataProcessing),
+                              subtitle: Text(
+                                l10n.consentText,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
                                 ),
-                                child: Row(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Icon(
-                                      Icons.info_outline,
-                                      color: theme.colorScheme.onErrorContainer,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        l10n.consentRequired,
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                              color: theme.colorScheme
-                                                  .onErrorContainer,
-                                              fontWeight: FontWeight.w600,
-                                            ),
+                              ),
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            if (!state.hasConsent)
+                              Semantics(
+                                liveRegion: true,
+                                label: l10n.consentRequired,
+                                child: Container(
+                                  margin: const EdgeInsets.only(top: 8),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.errorContainer,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        Icons.info_outline,
+                                        color:
+                                            theme.colorScheme.onErrorContainer,
+                                        size: 20,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          l10n.consentRequired,
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: theme
+                                                    .colorScheme
+                                                    .onErrorContainer,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
 
-          ReportFlowBottomBar(
-            child: _isSubmitting
-                ? Semantics(
-                    liveRegion: true,
-                    label: _statusMessage,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        if (_statusMessage.isNotEmpty) ...[
-                          const SizedBox(width: 12),
-                          Flexible(child: Text(_statusMessage)),
+            ReportFlowBottomBar(
+              child: _isSubmitting
+                  ? Semantics(
+                      liveRegion: true,
+                      label: _statusMessage,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          if (_statusMessage.isNotEmpty) ...[
+                            const SizedBox(width: 12),
+                            Flexible(child: Text(_statusMessage)),
+                          ],
                         ],
-                      ],
+                      ),
+                    )
+                  : ElevatedButton(
+                      onPressed: state.canSubmit ? _submitReport : null,
+                      child: Text(l10n.submitReport),
                     ),
-                  )
-                : ElevatedButton(
-                    onPressed: state.canSubmit ? _submitReport : null,
-                    child: Text(l10n.submitReport),
-                  ),
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
       ),
     );
   }

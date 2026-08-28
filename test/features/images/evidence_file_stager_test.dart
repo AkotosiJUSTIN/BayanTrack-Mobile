@@ -26,7 +26,41 @@ void main() {
     );
 
     expect(staged.path, isNot(source.path));
+    expect(staged.parent.path, endsWith('report_evidence_drafts'));
     expect(staged.path, endsWith('.png'));
     expect(await staged.readAsBytes(), bytes);
   });
+
+  test('deletes only files owned by evidence draft storage', () async {
+    final source = File('${root.path}${Platform.pathSeparator}picked.jpg');
+    await source.writeAsBytes(List<int>.filled(16, 1));
+    final staged = await stageEvidenceFile(
+      XFile(source.path),
+      stagingDirectory: root,
+    );
+
+    await discardEvidenceDraft(staged);
+    await discardEvidenceDraft(source);
+
+    expect(await staged.exists(), isFalse);
+    expect(await source.exists(), isTrue);
+  });
+
+  test(
+    'rejects an empty picker file without leaving a partial draft',
+    () async {
+      final source = File('${root.path}${Platform.pathSeparator}empty.jpg');
+      await source.create();
+
+      await expectLater(
+        stageEvidenceFile(XFile(source.path), stagingDirectory: root),
+        throwsA(isA<FileSystemException>()),
+      );
+
+      final drafts = Directory(
+        '${root.path}${Platform.pathSeparator}report_evidence_drafts',
+      );
+      expect(await drafts.list().toList(), isEmpty);
+    },
+  );
 }

@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/constants/urdaneta_geo.dart';
 import '../../../auth/data/auth_models.dart';
+import '../../../images/data/evidence_file_stager.dart';
 import '../../data/report_models.dart';
 import '../../domain/entities/report.dart' as domain;
 import '../../reports_di.dart';
@@ -183,7 +185,10 @@ class NewReportController extends _$NewReportController {
   // ==================== IMAGES ====================
 
   void addImage(File image) {
-    if (state.selectedImages.length >= maxImages) return;
+    if (state.selectedImages.length >= maxImages) {
+      unawaited(discardEvidenceDraft(image));
+      return;
+    }
     state = state.copyWith(selectedImages: [...state.selectedImages, image]);
   }
 
@@ -191,16 +196,21 @@ class NewReportController extends _$NewReportController {
     final remaining = maxImages - state.selectedImages.length;
     final toAdd = images.take(remaining).toList();
     state = state.copyWith(selectedImages: [...state.selectedImages, ...toAdd]);
+    unawaited(discardEvidenceDrafts(images.skip(remaining)));
   }
 
   void removeImage(int index) {
     if (index < 0 || index >= state.selectedImages.length) return;
-    final updated = List<File>.from(state.selectedImages)..removeAt(index);
+    final updated = List<File>.from(state.selectedImages);
+    final removed = updated.removeAt(index);
     state = state.copyWith(selectedImages: updated);
+    unawaited(discardEvidenceDraft(removed));
   }
 
   void clearImages() {
+    final images = state.selectedImages;
     state = state.copyWith(selectedImages: []);
+    unawaited(discardEvidenceDrafts(images));
   }
 
   // ==================== REPORT DETAILS (Section A) ====================
@@ -473,6 +483,12 @@ class NewReportController extends _$NewReportController {
 
   /// Reset the entire form
   void reset() {
+    final images = state.selectedImages;
+    state = const NewReportState();
+    unawaited(discardEvidenceDrafts(images));
+  }
+
+  void resetAfterEvidenceHandoff() {
     state = const NewReportState();
   }
 }

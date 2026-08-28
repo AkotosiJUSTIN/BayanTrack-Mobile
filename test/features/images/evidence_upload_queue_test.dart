@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:bayantrack_mobile/features/images/data/evidence_file_stager.dart';
 import 'package:bayantrack_mobile/features/images/data/evidence_upload_queue.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -108,6 +110,34 @@ void main() {
   });
 
   test(
+    'verified queue copy survives removal of picker and draft files',
+    () async {
+      authenticated = false;
+      final picked = await source('picked.jpg');
+      final staged = await stageEvidenceFile(
+        XFile(picked.path),
+        stagingDirectory: root,
+      );
+      await picked.delete();
+      final subject = queue(upload: _successfulUpload);
+
+      final added = await subject.enqueue(
+        userId: 'user-a',
+        reportId: 'report-1',
+        files: [staged],
+      );
+
+      expect(await staged.exists(), isFalse);
+      expect(await File(added.single.localFilePath).exists(), isTrue);
+      expect(await File(added.single.localFilePath).length(), 32);
+
+      authenticated = true;
+      await subject.resume('user-a');
+      expect(subject.state.single.state, EvidenceUploadState.completed);
+    },
+  );
+
+  test(
     'retry reuses one evidence key, never recreates report, and completed stays done',
     () async {
       var calls = 0;
@@ -175,6 +205,28 @@ void main() {
     await subject.resume('user-a');
 
     expect(subject.state.last.state, EvidenceUploadState.missingLocalFile);
+  });
+
+  test('empty draft is preserved when durable ingestion fails', () async {
+    final draftDirectory = Directory(
+      '${root.path}${Platform.pathSeparator}report_evidence_drafts',
+    );
+    await draftDirectory.create();
+    final staged = File(
+      '${draftDirectory.path}${Platform.pathSeparator}draft_empty.jpg',
+    );
+    await staged.create();
+    final subject = queue(upload: _successfulUpload);
+
+    final added = await subject.enqueue(
+      userId: 'user-a',
+      reportId: 'report-1',
+      files: [staged],
+    );
+
+    expect(added.single.state, EvidenceUploadState.missingLocalFile);
+    expect(await staged.exists(), isTrue);
+    expect(await File(added.single.localFilePath).exists(), isFalse);
   });
 
   test('logout and account change isolate intents', () async {
