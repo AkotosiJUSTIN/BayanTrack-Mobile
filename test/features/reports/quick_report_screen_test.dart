@@ -475,7 +475,8 @@ void main() {
     expect(createReport.lastIsQuickReport, isTrue);
 
     await tester.tap(find.text('Done'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(observer.popCount, 1);
     expect(find.text('Home'), findsOneWidget);

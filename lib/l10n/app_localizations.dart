@@ -794,6 +794,12 @@ abstract class AppLocalizations {
   /// **'We’re having trouble loading notifications. Please check your internet connection and try again.'**
   String get notificationsNetworkError;
 
+  /// No description provided for @notificationsUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update notifications. Please try again.'**
+  String get notificationsUpdateFailed;
+
   /// No description provided for @newReport.
   ///
   /// In en, this message translates to:
@@ -1502,6 +1508,54 @@ abstract class AppLocalizations {
   /// **'Search reports…'**
   String get searchReports;
 
+  /// No description provided for @browseReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse public reports'**
+  String get browseReports;
+
+  /// No description provided for @homeGuidance.
+  ///
+  /// In en, this message translates to:
+  /// **'See what is happening around you and follow community updates.'**
+  String get homeGuidance;
+
+  /// No description provided for @filterByStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by status'**
+  String get filterByStatus;
+
+  /// No description provided for @myReportsGuidance.
+  ///
+  /// In en, this message translates to:
+  /// **'Track reports you submitted and any next steps.'**
+  String get myReportsGuidance;
+
+  /// No description provided for @reportsAwaitingReview.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} awaiting your confirmation'**
+  String reportsAwaitingReview(int count);
+
+  /// No description provided for @notificationsGuidance.
+  ///
+  /// In en, this message translates to:
+  /// **'Updates about your reports and verification appear here.'**
+  String get notificationsGuidance;
+
+  /// No description provided for @unread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get unread;
+
+  /// No description provided for @unreadNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} unread'**
+  String unreadNotifications(int count);
+
   /// No description provided for @reportCount.
   ///
   /// In en, this message translates to:
@@ -1657,6 +1711,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Evidence upload completed.'**
   String get evidenceUploadCompleted;
+
+  /// No description provided for @accountSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Account & security'**
+  String get accountSecurity;
+
+  /// No description provided for @preferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get preferences;
+
+  /// No description provided for @noInternetConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection'**
+  String get noInternetConnection;
 
   /// No description provided for @dismiss.
   ///

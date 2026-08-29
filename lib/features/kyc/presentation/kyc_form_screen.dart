@@ -1076,14 +1076,16 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       children: [
         Text(
           l10n.uploadGovId,
-          style: TextStyle(color: Theme.of(context).colorScheme.outline),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           l10n.maxImageFormats,
           style: TextStyle(
             fontSize: 12,
-            color: Theme.of(context).colorScheme.outline,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 16),
@@ -1114,7 +1116,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             ),
             style: TextStyle(
               fontSize: 12,
-              color: Theme.of(context).colorScheme.outline,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -1157,7 +1159,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           l10n.holdIdInstruction,
           style: TextStyle(
             fontSize: 12,
-            color: Theme.of(context).colorScheme.outline,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -1267,7 +1269,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         color: theme.colorScheme.primaryContainer.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.25),
+          color: theme.colorScheme.primary.withValues(alpha: 0.18),
         ),
       ),
       child: Row(
@@ -1339,7 +1341,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       decoration: BoxDecoration(
         color: theme.colorScheme.errorContainer.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.error.withValues(alpha: 0.3)),
+        border: Border.all(color: theme.colorScheme.error.withValues(alpha: 0.22)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1419,7 +1421,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
                   height: 150,
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surfaceContainerHighest,
-                    border: Border.all(color: theme.colorScheme.outline),
+                    border: Border.all(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.42),
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(

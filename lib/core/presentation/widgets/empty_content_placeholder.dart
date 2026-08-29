@@ -32,16 +32,21 @@ class EmptyContentPlaceholder extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
                 color: isDark
                     ? AppColors.darkSurfaceVariant
                     : AppColors.lightSurfaceVariant,
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: (isDark ? AppColors.darkBorder : AppColors.lightBorder)
+                      .withValues(alpha: 0.35),
+                ),
               ),
               child: Icon(
                 icon,
-                size: 48,
+                size: 32,
                 color: isDark
                     ? AppColors.darkTextSecondary
                     : AppColors.lightTextSecondary,

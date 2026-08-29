@@ -8,6 +8,7 @@ import 'auth_controller.dart';
 import 'login_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
+import '../../../core/presentation/widgets/app_toast.dart';
 import '../../notifications/push_service.dart';
 import '../../notifications/local_notification_service.dart';
 import '../../notifications/presentation/notifications_controller.dart';
@@ -198,9 +199,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
             ref.invalidate(notificationsControllerProvider);
             await LocalNotificationService.showFromRemoteMessage(message);
             if (!context.mounted) return;
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text('$title: $body')));
+            AppToast.info(context, '$title: $body');
           });
 
           // When a user taps a notification and app opens from background

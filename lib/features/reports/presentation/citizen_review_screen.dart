@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:signature/signature.dart';
 
 import '../../../core/constants/api_constants.dart';
+import '../../../core/presentation/widgets/app_toast.dart';
+import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/string_utils.dart';
 import '../../../l10n/app_localizations.dart';
@@ -169,7 +171,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
               ? l10n.reportConfirmedResolved
               : l10n.reportReopenedEscalated);
 
-      _showSnackBar(message);
+      AppToast.success(context, message);
 
       // Refresh the detail view and pop back
       ref.invalidate(reportDetailControllerProvider(widget.report.id));
@@ -179,17 +181,6 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
-  }
-
-  void _showSnackBar(String message, {bool error = false}) {
-    final colorScheme = Theme.of(context).colorScheme;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: error ? colorScheme.error : colorScheme.inverseSurface,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   // ── Build ──────────────────────────────────────────────────────────────────
@@ -343,14 +334,8 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
 
   Widget _buildResolutionCard(ThemeData theme) {
     final l10n = AppLocalizations.of(context);
-    return Container(
-      width: double.infinity,
+    return CivicSurface(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -381,14 +366,8 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
   Widget _buildResponseEvidence(ThemeData theme) {
     final l10n = AppLocalizations.of(context);
     final evidence = widget.report.resolvedProofImages;
-    return Container(
-      width: double.infinity,
+    return CivicSurface(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -502,7 +481,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                       size: 32,
                       color: starIndex <= _rating
                           ? Colors.amber.shade600
-                          : theme.colorScheme.outline,
+                          : theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -713,7 +692,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                   final error = await _submit(satisfied: true);
                   if (!mounted) return;
                   if (error != null) {
-                    _showSnackBar(error, error: true);
+                    AppToast.error(context, error);
                   } else {
                     Navigator.of(context).pop(true);
                   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/providers/connectivity_provider.dart';
@@ -33,93 +34,82 @@ class ProfileScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.profile),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: l10n.logout,
-            onPressed: () => _confirmLogout(context, ref),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(l10n.profile)),
       body: Column(
         children: [
-          // Offline banner
           const OfflineBanner(),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
                 ref.invalidate(profileControllerProvider);
                 ref.invalidate(profileStatsControllerProvider);
+                try {
+                  await Future.wait([
+                    ref.read(profileControllerProvider.future),
+                    ref.read(profileStatsControllerProvider.future),
+                  ]);
+                } catch (_) {
+                  // The refreshed sections render their own retry states.
+                }
               },
-              child: SingleChildScrollView(
+              child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    // User Info
-                    profileAsync.when(
-                      data: (profile) =>
-                          _buildProfileHeader(context, profile, theme),
-                      loading: () =>
-                          const Center(child: CircularProgressIndicator()),
-                      error: (_, _) =>
-                          _buildProfileError(context, ref, theme),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // KYC Status Card
-                    Consumer(
-                      builder: (context, ref, _) {
-                        final kycStatusAsync = ref.watch(
-                          kycStatusControllerProvider,
-                        );
-                        return kycStatusAsync.when(
-                          data: (kycStatus) =>
-                              _buildKycStatusCard(context, ref, kycStatus),
-                          loading: () => const SizedBox.shrink(),
-                          error: (_, _) => const SizedBox.shrink(),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Stats
-                    statsAsync.when(
-                      data: (stats) => _buildStatsRow(context, stats, theme),
-                      loading: () => const SizedBox(height: 80),
-                      error: (_, _) => const SizedBox.shrink(),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Menu
-                    _buildMenu(context),
-                    const SizedBox(height: 16),
-
-                    // App version
-                    FutureBuilder<PackageInfo>(
-                      future: PackageInfo.fromPlatform(),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) return const SizedBox.shrink();
-                        return Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Text(
-                            l10n.version(
-                              snapshot.data!.version,
-                              snapshot.data!.buildNumber,
-                            ),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.outline,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                children: [
+                  profileAsync.when(
+                    data: (profile) =>
+                        _buildProfileHeader(context, profile, theme),
+                    loading: () => const _ProfileSkeleton(),
+                    error: (_, _) => _buildProfileError(context, ref, theme),
+                  ),
+                  const SizedBox(height: 20),
+                  statsAsync.when(
+                    data: (stats) => _buildStatsRow(context, stats, theme),
+                    loading: () => const _StatsSkeleton(),
+                    error: (_, _) => const SizedBox.shrink(),
+                  ),
+                  const SizedBox(height: 24),
+                  CivicSectionHeading(title: l10n.userVerification),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final kycStatusAsync = ref.watch(
+                        kycStatusControllerProvider,
+                      );
+                      return kycStatusAsync.when(
+                        data: (kycStatus) =>
+                            _buildKycStatusCard(context, ref, kycStatus),
+                        loading: () => const CivicSkeletonBlock(height: 108),
+                        error: (_, _) =>
+                            _buildKycStatusCard(context, ref, null),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  CivicSectionHeading(title: l10n.accountSecurity),
+                  _buildAccountMenu(context),
+                  const SizedBox(height: 24),
+                  CivicSectionHeading(title: l10n.preferences),
+                  _buildPreferencesMenu(context),
+                  const SizedBox(height: 24),
+                  _buildLogoutTile(context, ref),
+                  const SizedBox(height: 16),
+                  FutureBuilder<PackageInfo>(
+                    future: PackageInfo.fromPlatform(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return const SizedBox.shrink();
+                      return Text(
+                        l10n.version(
+                          snapshot.data!.version,
+                          snapshot.data!.buildNumber,
+                        ),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           ),
@@ -155,23 +145,14 @@ class ProfileScreen extends ConsumerWidget {
       return name.isNotEmpty ? name : profile.email.split('@').first;
     }
 
-    final isDark = theme.brightness == Brightness.dark;
     final initials = getInitials();
     final displayName = getDisplayName();
     final roleLabel = profile.role.toLowerCase() == 'citizen'
         ? l10n.citizen
         : profile.role.toUpperCase();
 
-    return Container(
-      width: double.infinity,
+    return CivicSurface(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -227,7 +208,7 @@ class ProfileScreen extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.outline,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 if (profile.phone != null && profile.phone!.isNotEmpty)
@@ -236,7 +217,7 @@ class ProfileScreen extends ConsumerWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.outline,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 if (profile.avatarStorageStatus == 'degraded')
@@ -245,7 +226,7 @@ class ProfileScreen extends ConsumerWidget {
                     child: Text(
                       l10n.profilePictureBackupPending,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.tertiary,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -262,7 +243,7 @@ class ProfileScreen extends ConsumerWidget {
                   child: Text(
                     roleLabel,
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: isDark
+                      color: theme.brightness == Brightness.dark
                           ? AppColors.primaryLight
                           : AppColors.primaryDark,
                       fontWeight: FontWeight.w700,
@@ -306,18 +287,9 @@ class ProfileScreen extends ConsumerWidget {
     ThemeData theme,
   ) {
     final l10n = AppLocalizations.of(context)!;
-    final isDark = theme.brightness == Brightness.dark;
-    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
-    return Container(
+    return CivicSurface(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: isDark ? 0.45 : 0.7,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
-      ),
       child: Row(
         children: [
           Expanded(
@@ -382,21 +354,18 @@ class ProfileScreen extends ConsumerWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.outline,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildMenu(BuildContext context) {
+  Widget _buildAccountMenu(BuildContext context) {
     return Consumer(
       builder: (context, ref, _) {
-        final themeMode = ref.watch(themeModeProvider);
-        final locale = ref.watch(appLocaleProvider);
         final l10n = AppLocalizations.of(context)!;
-        return Card(
-          margin: EdgeInsets.zero,
+        return CivicSurface(
           child: Column(
             children: [
               ListTile(
@@ -414,7 +383,7 @@ class ProfileScreen extends ConsumerWidget {
                   ref.invalidate(profileControllerProvider);
                 },
               ),
-              const Divider(height: 1),
+              const Divider(height: 1, indent: 72),
               ListTile(
                 leading: const Icon(Icons.lock_outline),
                 title: Text(l10n.changePassword),
@@ -427,7 +396,22 @@ class ProfileScreen extends ConsumerWidget {
                   );
                 },
               ),
-              const Divider(height: 1),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPreferencesMenu(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final themeMode = ref.watch(themeModeProvider);
+        final locale = ref.watch(appLocaleProvider);
+        final l10n = AppLocalizations.of(context)!;
+        return CivicSurface(
+          child: Column(
+            children: [
               ListTile(
                 leading: const Icon(Icons.notifications_outlined),
                 title: Text(l10n.notificationSettings),
@@ -458,7 +442,7 @@ class ProfileScreen extends ConsumerWidget {
                       : l10n.systemDefault,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Theme.of(context).colorScheme.outline,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 trailing: const Icon(Icons.chevron_right),
@@ -466,13 +450,14 @@ class ProfileScreen extends ConsumerWidget {
               ),
               const Divider(height: 1),
               ListTile(
+                key: const ValueKey('profile-language'),
                 leading: const Icon(Icons.translate),
                 title: Text(l10n.language),
                 subtitle: Text(
                   locale.languageCode == 'fil' ? l10n.filipino : l10n.english,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Theme.of(context).colorScheme.outline,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 trailing: const Icon(Icons.chevron_right),
@@ -485,13 +470,34 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildLogoutTile(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    return CivicSurface(
+      child: ListTile(
+        minVerticalPadding: 12,
+        leading: Icon(Icons.logout, color: theme.colorScheme.error),
+        title: Text(
+          l10n.logout,
+          style: TextStyle(
+            color: theme.colorScheme.error,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        onTap: () => _confirmLogout(context, ref),
+      ),
+    );
+  }
+
   Widget _buildKycStatusCard(
     BuildContext context,
     WidgetRef ref,
     KycStatusEntity? kycStatus,
   ) {
     final permissions = ref.watch(userPermissionsProvider);
-    final statusColor = _getKycStatusColor(kycStatus?.status);
+    final theme = Theme.of(context);
+    final statusColor = _getKycStatusColor(theme, kycStatus?.status);
+    final l10n = AppLocalizations.of(context)!;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -530,18 +536,17 @@ class ProfileScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          AppLocalizations.of(context)!.userVerification,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w700),
+                          l10n.userVerification,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          localizedVerificationStatusMessage(
-                            permissions,
-                            AppLocalizations.of(context)!,
+                          localizedVerificationStatusMessage(permissions, l10n),
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: statusColor,
                           ),
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: statusColor),
                         ),
                       ],
                     ),
@@ -552,21 +557,15 @@ class ProfileScreen extends ConsumerWidget {
               if (!permissions.isVerified) ...[
                 const SizedBox(height: 14),
                 FilledButton.icon(
-                  onPressed: () => _navigateToVerificationAction(
-                    context,
-                    ref,
-                    permissions,
-                  ),
+                  onPressed: () =>
+                      _navigateToVerificationAction(context, ref, permissions),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.alertMedium,
-                    foregroundColor: Colors.white,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
                   ),
                   icon: const Icon(Icons.verified_user_outlined),
                   label: Text(
-                    localizedVerificationActionLabel(
-                      permissions,
-                      AppLocalizations.of(context)!,
-                    ),
+                    localizedVerificationActionLabel(permissions, l10n),
                   ),
                 ),
               ],
@@ -577,20 +576,25 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Color _getKycStatusColor(KycVerificationStatus? status) {
-    if (status == null) return AppColors.alertMedium;
+  Color _getKycStatusColor(ThemeData theme, KycVerificationStatus? status) {
+    final isDark = theme.brightness == Brightness.dark;
+    if (status == null) {
+      return isDark ? AppColors.pendingTextDark : AppColors.pendingText;
+    }
 
     switch (status) {
       case KycVerificationStatus.verified:
-        return AppColors.success;
+        return isDark ? AppColors.resolvedTextDark : AppColors.resolvedText;
       case KycVerificationStatus.pending:
-        return AppColors.alertMedium;
+        return isDark ? AppColors.pendingTextDark : AppColors.pendingText;
       case KycVerificationStatus.rejected:
       case KycVerificationStatus.resubmitRequested:
       case KycVerificationStatus.suspended:
-        return AppColors.alertHigh;
+        return isDark ? AppColors.rejectedTextDark : AppColors.rejectedText;
       case KycVerificationStatus.unverified:
-        return AppColors.lightTextSecondary;
+        return isDark
+            ? AppColors.darkTextSecondary
+            : AppColors.lightTextSecondary;
     }
   }
 
@@ -717,6 +721,60 @@ class ProfileScreen extends ConsumerWidget {
               },
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileSkeleton extends StatelessWidget {
+  const _ProfileSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return CivicSurface(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const CivicSkeletonBlock(width: 64, height: 64, radius: 32),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CivicSkeletonBlock(width: 150, height: 18),
+                const SizedBox(height: 10),
+                const CivicSkeletonBlock(width: 190, height: 14),
+                const SizedBox(height: 8),
+                const CivicSkeletonBlock(width: 92, height: 24, radius: 8),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatsSkeleton extends StatelessWidget {
+  const _StatsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return CivicSurface(
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(
+          3,
+          (_) => const Column(
+            children: [
+              CivicSkeletonBlock(width: 34, height: 20),
+              SizedBox(height: 8),
+              CivicSkeletonBlock(width: 52, height: 13),
+            ],
+          ),
         ),
       ),
     );
