@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../core/theme/app_colors.dart';
+import '../domain/entities/report.dart';
 import '../domain/entities/report_enums.dart';
 
 String localizedReportCategory(
@@ -8,7 +10,8 @@ String localizedReportCategory(
   AppLocalizations l10n, {
   String? fallback,
 }) => switch (category) {
-  ReportCategory.engineeringInfrastructure => l10n.categoryEngineeringInfrastructure,
+  ReportCategory.engineeringInfrastructure =>
+    l10n.categoryEngineeringInfrastructure,
   ReportCategory.floodDisaster => l10n.categoryFloodDisaster,
   ReportCategory.wasteEnvironment => l10n.categoryWasteEnvironment,
   ReportCategory.publicSafety => l10n.categoryPublicSafety,
@@ -38,6 +41,23 @@ String localizedPriorityLabel(PriorityLevel level, AppLocalizations l10n) =>
       PriorityLevel.low => l10n.priorityLow,
       PriorityLevel.veryLow => l10n.priorityVeryLow,
     };
+
+String localizedPriorityAuthority(Report report, AppLocalizations l10n) {
+  if (report.queuePriorityLevel != null) return l10n.queuePriority;
+  if (report.displayPriorityLevel != null) return l10n.aiSuggestion;
+  return l10n.aiSuggestionPending;
+}
+
+Color reportMapStatusColor(ReportStatus status) => switch (status) {
+  ReportStatus.submitted ||
+  ReportStatus.underReview ||
+  ReportStatus.verified ||
+  ReportStatus.assigned => AppColors.alertMedium,
+  ReportStatus.inProgress => const Color(0xFF3B82F6),
+  ReportStatus.escalated || ReportStatus.endorsed => AppColors.alertHigh,
+  ReportStatus.resolved || ReportStatus.closed => AppColors.success,
+  ReportStatus.rejected => AppColors.alertHigh,
+};
 
 String localizedRelativeTime(
   BuildContext context,

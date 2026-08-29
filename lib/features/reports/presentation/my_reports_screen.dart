@@ -352,7 +352,9 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
                 child: CircularProgressIndicator(strokeWidth: 2.5),
               )
             : Text(
-                _hasNextPage ? AppLocalizations.of(context)!.scrollLoadMore : AppLocalizations.of(context)!.noMoreReports,
+                _hasNextPage
+                    ? AppLocalizations.of(context)!.scrollLoadMore
+                    : AppLocalizations.of(context)!.noMoreReports,
                 style: theme.textTheme.bodySmall,
               ),
       ),
@@ -360,18 +362,12 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   }
 
   List<_ReportSectionItem> _buildSectionItems(List<Report> reports) {
-    // Sort by date descending, then by priority descending (critical first)
+    // Personal history stays chronological regardless of operational priority.
     final sorted = [...reports]
       ..sort((a, b) {
         final aDate = a.createdAt ?? DateTime(0);
         final bDate = b.createdAt ?? DateTime(0);
-        final aDay = DateTime(aDate.year, aDate.month, aDate.day);
-        final bDay = DateTime(bDate.year, bDate.month, bDate.day);
-        final dateCmp = bDay.compareTo(aDay);
-        if (dateCmp != 0) return dateCmp;
-        final aPriority = a.queuePriorityLevel?.index ?? -1;
-        final bPriority = b.queuePriorityLevel?.index ?? -1;
-        return bPriority.compareTo(aPriority);
+        return bDate.compareTo(aDate);
       });
 
     final items = <_ReportSectionItem>[];
@@ -423,7 +419,10 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
         children: [
           Icon(Icons.error_outline, size: 64, color: AppColors.alertHigh),
           const SizedBox(height: 16),
-          Text(AppLocalizations.of(context)!.unableLoadReports, style: theme.textTheme.titleMedium),
+          Text(
+            AppLocalizations.of(context)!.unableLoadReports,
+            style: theme.textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),

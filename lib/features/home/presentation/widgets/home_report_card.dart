@@ -21,6 +21,7 @@ class HomeReportCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final linkedReportCount = report.linkedReportCount;
     final l10n = AppLocalizations.of(context)!;
+    final priorityAuthority = localizedPriorityAuthority(report, l10n);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -65,8 +66,10 @@ class HomeReportCard extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            localizedReportCategory(report.category, l10n)
-                                .toUpperCase(),
+                            localizedReportCategory(
+                              report.category,
+                              l10n,
+                            ).toUpperCase(),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -82,23 +85,28 @@ class HomeReportCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
 
-                    // Priority badge (if available)
-                    if (report.displayPriorityLevel != null) ...[
+                    // Always show the effective priority, including Unscored.
+                    ...[
                       Row(
                         children: [
-                          PriorityBadge(
-                            priorityLevel: report.displayPriorityLevel,
-                            fontSize: 10,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 3,
+                          if (report.displayPriorityLevel != null)
+                            PriorityBadge(
+                              priorityLevel: report.displayPriorityLevel,
+                              authorityLabel: priorityAuthority,
+                              fontSize: 10,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 3,
+                              ),
+                            )
+                          else
+                            Text(
+                              l10n.unscored,
+                              style: theme.textTheme.labelSmall,
                             ),
-                          ),
                           const SizedBox(width: 6),
                           Text(
-                            report.priorityIsAdvisory
-                                ? l10n.aiSuggestion
-                                : l10n.queuePriority,
+                            priorityAuthority,
                             style: theme.textTheme.labelSmall,
                           ),
                           if (linkedReportCount > 1 &&
@@ -251,11 +259,7 @@ class HomeReportCard extends StatelessWidget {
   }
 
   String _formatTimeAgo(BuildContext context, DateTime? date) {
-    return localizedRelativeTime(
-      context,
-      date,
-      AppLocalizations.of(context)!,
-    );
+    return localizedRelativeTime(context, date, AppLocalizations.of(context)!);
   }
 
   Color _getCategoryColor(ReportCategory? category) {

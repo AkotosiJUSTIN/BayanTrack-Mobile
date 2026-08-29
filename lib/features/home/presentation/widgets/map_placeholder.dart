@@ -56,7 +56,7 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
                 onTap: widget.onMarkerTap == null
                     ? null
                     : () => widget.onMarkerTap!(report),
-                child: _buildMarker(_colorForStatus(report.status)),
+                child: _buildMarker(reportMapStatusColor(report.status)),
               ),
             ),
           ),
@@ -171,29 +171,11 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
           Icon(Icons.info_outline, color: AppColors.primary, size: 18),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              l10n.noReportsYet,
-              style: theme.textTheme.bodySmall,
-            ),
+            child: Text(l10n.noReportsYet, style: theme.textTheme.bodySmall),
           ),
         ],
       ),
     );
-  }
-
-  Color _colorForStatus(ReportStatus status) {
-    return switch (status) {
-      ReportStatus.submitted => AppColors.alertMedium,
-      ReportStatus.underReview => AppColors.alertMedium,
-      ReportStatus.verified => AppColors.alertMedium,
-      ReportStatus.assigned => AppColors.alertMedium,
-      ReportStatus.inProgress => const Color(0xFF3B82F6), // Blue
-      ReportStatus.escalated => AppColors.alertMedium,
-      ReportStatus.endorsed => AppColors.alertMedium,
-      ReportStatus.resolved => AppColors.success,
-      ReportStatus.closed => AppColors.success,
-      ReportStatus.rejected => AppColors.alertHigh,
-    };
   }
 
   String _buildTooltipMessage(Report report, AppLocalizations l10n) {

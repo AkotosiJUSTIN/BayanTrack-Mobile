@@ -8,6 +8,7 @@ class PriorityBadge extends StatelessWidget {
   final PriorityLevel? priorityLevel;
   final int? priorityScore;
   final bool showScores;
+  final String? authorityLabel;
   final double fontSize;
   final EdgeInsets padding;
 
@@ -16,6 +17,7 @@ class PriorityBadge extends StatelessWidget {
     required this.priorityLevel,
     this.priorityScore,
     this.showScores = false,
+    this.authorityLabel,
     this.fontSize = 11,
     this.padding = const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
   });
@@ -34,7 +36,7 @@ class PriorityBadge extends StatelessWidget {
 
     return Semantics(
       container: true,
-      label: '${l10n.operationalPriority}: $label',
+      label: '${authorityLabel ?? l10n.operationalPriority}: $label',
       child: Container(
         padding: padding,
         decoration: BoxDecoration(

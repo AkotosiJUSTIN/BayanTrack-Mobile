@@ -50,7 +50,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   ];
 
   String? get _selectedStatus => _statusFilters[_selectedStatusFilterIndex];
-  String _selectedSort = 'date';
+  final String _selectedSort = 'priority';
   bool get _hasNextPage => _currentPage < _totalPages;
 
   @override
@@ -430,16 +430,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         children: [
                           _buildLegendItem(
                             l10n.submitted,
-                            AppColors.alertMedium,
+                            reportMapStatusColor(ReportStatus.submitted),
                           ),
                           _buildLegendItem(
                             l10n.inProgress,
-                            const Color(0xFF3B82F6),
+                            reportMapStatusColor(ReportStatus.inProgress),
                           ),
-                          _buildLegendItem(l10n.escalated, AppColors.alertHigh),
+                          _buildLegendItem(
+                            l10n.escalated,
+                            reportMapStatusColor(ReportStatus.escalated),
+                          ),
                           _buildLegendItem(
                             l10n.resolvedStatus,
-                            AppColors.success,
+                            reportMapStatusColor(ReportStatus.resolved),
                           ),
                         ],
                       ),
@@ -561,7 +564,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   List<_ReportSectionItem> _buildPrioritySections(List<Report> reports) {
-    // Sort critical → high → medium → low → very low → unscored
+    // Keep emergencies first, then Quick Reports, then effective priority.
     const order = [
       PriorityLevel.critical,
       PriorityLevel.high,
@@ -572,32 +575,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final sorted = [...reports];
     sorted.sort((a, b) {
-      final aIdx = a.queuePriorityLevel == null
-          ? order.length
-          : order.indexOf(a.queuePriorityLevel!);
-      final bIdx = b.queuePriorityLevel == null
-          ? order.length
-          : order.indexOf(b.queuePriorityLevel!);
-      return aIdx.compareTo(bIdx);
+      final aGroup = a.isEmergency ? 0 : (a.isQuickReport ? 1 : 2);
+      final bGroup = b.isEmergency ? 0 : (b.isQuickReport ? 1 : 2);
+      final groupComparison = aGroup.compareTo(bGroup);
+      if (groupComparison != 0) return groupComparison;
+      final aLevel = a.displayPriorityLevel;
+      final bLevel = b.displayPriorityLevel;
+      final aIdx = aLevel == null ? order.length : order.indexOf(aLevel);
+      final bIdx = bLevel == null ? order.length : order.indexOf(bLevel);
+      final priorityComparison = aIdx.compareTo(bIdx);
+      if (priorityComparison != 0) return priorityComparison;
+      final boostComparison = b.linkedUrgencyBoost.compareTo(
+        a.linkedUrgencyBoost,
+      );
+      if (boostComparison != 0) return boostComparison;
+      return (a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0)).compareTo(
+        b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0),
+      );
     });
 
     final items = <_ReportSectionItem>[];
-    PriorityLevel? previousLevel;
-    bool unscored = false;
+    String? previousGroup;
 
     for (final report in sorted) {
-      final level = report.queuePriorityLevel;
-      if (level != previousLevel || (level == null && !unscored)) {
+      final group = report.isEmergency
+          ? 'emergency'
+          : report.isQuickReport
+          ? 'quick'
+          : (report.displayPriorityLevel?.name ?? 'unscored');
+      if (group != previousGroup) {
         final l10n = AppLocalizations.of(context)!;
-        final label = level != null
-            ? l10n.priorityLevel(
-                5 - order.indexOf(level),
-                localizedPriorityLabel(level, l10n),
-              )
-            : AppLocalizations.of(context)!.unscored;
+        final label = switch (group) {
+          'emergency' => l10n.emergencyReport,
+          'quick' => l10n.quickReport,
+          'unscored' => l10n.unscored,
+          _ => localizedPriorityLabel(report.displayPriorityLevel!, l10n),
+        };
         items.add(_ReportSectionItem.header(label));
-        previousLevel = level;
-        if (level == null) unscored = true;
+        previousGroup = group;
       }
       items.add(_ReportSectionItem.report(report));
     }

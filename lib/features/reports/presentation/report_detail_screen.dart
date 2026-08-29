@@ -304,10 +304,14 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                       style: theme.textTheme.labelMedium,
                     ),
                   ),
-                PriorityBadge(
-                  priorityLevel: report.displayPriorityLevel,
-                  showScores: false,
-                ),
+                if (report.displayPriorityLevel != null)
+                  PriorityBadge(
+                    priorityLevel: report.displayPriorityLevel,
+                    authorityLabel: localizedPriorityAuthority(report, l10n),
+                    showScores: false,
+                  )
+                else
+                  Text(l10n.unscored, style: theme.textTheme.labelMedium),
               ],
             ),
           ),
@@ -316,15 +320,12 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             spacing: 16,
             runSpacing: 6,
             children: [
-              if (report.displayPriorityLevel != null)
-                Text(
-                  report.priorityIsAdvisory
-                      ? l10n.aiSuggestionPending
-                      : l10n.operationalPriority,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+              Text(
+                localizedPriorityAuthority(report, l10n),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
+              ),
               if (linkedReportCount > 1 && report.isIncidentRepresentative)
                 Text(
                   l10n.confirmedLinkedReports(linkedReportCount),
