@@ -381,6 +381,10 @@ class AppLocalizationsFil extends AppLocalizations {
       'Hindi ma-load ang mga notification. Suriin ang iyong internet connection at subukan muli.';
 
   @override
+  String get notificationsUpdateFailed =>
+      'Hindi ma-update ang mga notification. Subukan muli.';
+
+  @override
   String get newReport => 'Bagong Ulat';
 
   @override
@@ -766,6 +770,37 @@ class AppLocalizationsFil extends AppLocalizations {
   String get searchReports => 'Maghanap ng mga ulat…';
 
   @override
+  String get browseReports => 'Tingnan ang mga pampublikong ulat';
+
+  @override
+  String get homeGuidance =>
+      'Tingnan ang mga nangyayari sa paligid at subaybayan ang mga update sa komunidad.';
+
+  @override
+  String get filterByStatus => 'I-filter ayon sa status';
+
+  @override
+  String get myReportsGuidance =>
+      'Subaybayan ang mga ulat na isinumite mo at mga susunod na hakbang.';
+
+  @override
+  String reportsAwaitingReview(int count) {
+    return '$count naghihintay ng kumpirmasyon mo';
+  }
+
+  @override
+  String get notificationsGuidance =>
+      'Dito makikita ang mga update tungkol sa iyong mga ulat at verification.';
+
+  @override
+  String get unread => 'Hindi pa nababasa';
+
+  @override
+  String unreadNotifications(int count) {
+    return '$count hindi pa nababasa';
+  }
+
+  @override
   String reportCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -867,6 +902,15 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get evidenceUploadCompleted => 'Tapos na ang pag-upload ng ebidensya.';
+
+  @override
+  String get accountSecurity => 'Account at seguridad';
+
+  @override
+  String get preferences => 'Mga preference';
+
+  @override
+  String get noInternetConnection => 'Walang koneksyon sa internet';
 
   @override
   String get dismiss => 'I-dismiss';

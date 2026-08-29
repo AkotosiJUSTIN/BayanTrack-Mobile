@@ -8,12 +8,15 @@ import 'package:bayantrack_mobile/features/notifications/domain/entities/paginat
 import 'package:bayantrack_mobile/features/notifications/presentation/notifications_controller.dart';
 import 'package:bayantrack_mobile/features/notifications/presentation/notifications_screen.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/paginated_reports.dart';
+import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart';
+import 'package:bayantrack_mobile/features/reports/domain/entities/report_enums.dart';
 import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dart';
 import 'package:bayantrack_mobile/features/reports/domain/usecases/get_my_reports_usecase.dart';
 import 'package:bayantrack_mobile/features/reports/domain/usecases/get_reports_usecase.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/my_reports_screen.dart';
 import 'package:bayantrack_mobile/features/reports/reports_di.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
+import 'package:bayantrack_mobile/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,10 +25,25 @@ import 'package:riverpod_annotation/riverpod_annotation.dart' show Override;
 
 class _ReportsRepositoryMock extends Mock implements ReportsRepository {}
 
-Widget _app({required Widget home, required List<Override> overrides}) {
+class _FailingNotificationsController extends NotificationsController {
+  @override
+  Future<PaginatedNotifications> build() async {
+    throw Exception('private backend details');
+  }
+}
+
+Widget _app({
+  required Widget home,
+  required List<Override> overrides,
+  ThemeData? theme,
+  Locale? locale,
+}) {
   return ProviderScope(
+    retry: (_, _) => null,
     overrides: overrides,
     child: MaterialApp(
+      theme: theme,
+      locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       home: home,
@@ -66,8 +84,54 @@ void main() {
 
     expect(find.byType(SegmentedButton<bool>), findsOneWidget);
     expect(find.text('Map'), findsOneWidget);
-    expect(find.text('Status'), findsOneWidget);
+    expect(find.text('Filter by status'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets('Home stays usable on compact and large-text phones', (
+    tester,
+  ) async {
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    tester.view.devicePixelRatio = 3;
+
+    final repository = _ReportsRepositoryMock();
+    when(
+      () => repository.getReports(
+        page: any(named: 'page'),
+        pageSize: any(named: 'pageSize'),
+        status: any(named: 'status'),
+        zone: any(named: 'zone'),
+        category: any(named: 'category'),
+        sortBy: any(named: 'sortBy'),
+      ),
+    ).thenAnswer(
+      (_) async => const Err<PaginatedReports>(ServerFailure('Unavailable')),
+    );
+
+    for (final size in [const Size(320, 568), const Size(412, 915)]) {
+      tester.view.physicalSize = size * 3;
+      await tester.pumpWidget(
+        _app(
+          home: Builder(
+            builder: (context) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(1.3)),
+              child: const HomeScreen(),
+            ),
+          ),
+          overrides: [
+            getReportsUseCaseProvider.overrideWithValue(
+              GetReportsUseCase(repository: repository),
+            ),
+            userPermissionsProvider.overrideWithValue(UserPermissions(null)),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
   });
 
   testWidgets('My Reports keeps status context and retry on failure', (
@@ -98,8 +162,52 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Status'), findsOneWidget);
+    expect(find.text('Filter by status'), findsOneWidget);
     expect(find.text('Retry'), findsOneWidget);
+  });
+
+  testWidgets('My Reports highlights reports awaiting citizen confirmation', (
+    tester,
+  ) async {
+    final repository = _ReportsRepositoryMock();
+    when(
+      () => repository.getMyReports(
+        page: 1,
+        pageSize: 20,
+        status: null,
+        sortBy: 'date',
+      ),
+    ).thenAnswer(
+      (_) async => Success<PaginatedReports>(
+        PaginatedReports(
+          results: [
+            Report(
+              id: 'report-1',
+              description: 'Resolved streetlight issue',
+              status: ReportStatus.resolved,
+              createdAt: DateTime(2026, 8, 29),
+            ),
+          ],
+          total: 1,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      _app(
+        home: const MyReportsScreen(),
+        overrides: [
+          getMyReportsUseCaseProvider.overrideWithValue(
+            GetMyReportsUseCase(repository: repository),
+          ),
+          userPermissionsProvider.overrideWithValue(UserPermissions(null)),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 awaiting your confirmation'), findsOneWidget);
+    expect(find.text('Awaiting your confirmation'), findsOneWidget);
   });
 
   testWidgets('Notifications keeps unread actions and readable message rows', (
@@ -140,8 +248,8 @@ void main() {
       _app(
         home: const NotificationsScreen(),
         overrides: [
-          notificationsControllerProvider.overrideWithBuild(
-            (_, _) async => throw Exception('private backend details'),
+          notificationsControllerProvider.overrideWith(
+            _FailingNotificationsController.new,
           ),
           userPermissionsProvider.overrideWithValue(UserPermissions(null)),
         ],
@@ -156,5 +264,40 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('private backend details'), findsNothing);
+  });
+
+  testWidgets('Notifications stays readable on a narrow Filipino dark screen', (
+    tester,
+  ) async {
+    addTearDown(tester.view.reset);
+    tester.view.physicalSize = const Size(960, 1600);
+    tester.view.devicePixelRatio = 3;
+
+    const notification = NotificationEntity(
+      id: 'notification-1',
+      title: 'Pagbabago ng ulat',
+      message: 'Sinusuri na ang iyong ulat.',
+      type: NotificationType.statusChange,
+    );
+    await tester.pumpWidget(
+      _app(
+        home: const NotificationsScreen(),
+        theme: AppTheme.dark,
+        locale: const Locale('fil'),
+        overrides: [
+          notificationsControllerProvider.overrideWithBuild(
+            (_, _) async => const PaginatedNotifications(
+              results: [notification],
+              unreadCount: 1,
+            ),
+          ),
+          userPermissionsProvider.overrideWithValue(UserPermissions(null)),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hindi pa nababasa'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

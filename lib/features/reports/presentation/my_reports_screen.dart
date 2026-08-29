@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../core/presentation/widgets/empty_content_placeholder.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/verification_widgets.dart';
+import '../../home/presentation/widgets/home_report_card.dart';
 import '../domain/entities/report.dart';
+import '../domain/entities/report_enums.dart';
 import '../presentation/report_detail_screen.dart';
 import '../presentation/reports_controller.dart';
 import '../reports_di.dart';
-import '../../home/presentation/widgets/home_report_card.dart';
 
 /// My Reports screen showing user's submitted reports.
 class MyReportsScreen extends ConsumerStatefulWidget {
@@ -62,9 +65,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     super.dispose();
   }
 
-  Future<void> _onRefresh() async {
-    await _loadInitialReports();
-  }
+  Future<void> _onRefresh() => _loadInitialReports();
 
   Future<void> _loadInitialReports() async {
     setState(() {
@@ -77,8 +78,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
       _reports.clear();
     });
 
-    final getMyReports = ref.read(getMyReportsUseCaseProvider);
-    final result = await getMyReports(
+    final result = await ref.read(getMyReportsUseCaseProvider)(
       page: 1,
       status: _selectedStatus,
       sortBy: _selectedSort,
@@ -109,11 +109,8 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     if (_isInitialLoading || _isLoadingMore || !_hasNextPage) return;
 
     setState(() => _isLoadingMore = true);
-
-    final nextPage = _currentPage + 1;
-    final getMyReports = ref.read(getMyReportsUseCaseProvider);
-    final result = await getMyReports(
-      page: nextPage,
+    final result = await ref.read(getMyReportsUseCaseProvider)(
+      page: _currentPage + 1,
       status: _selectedStatus,
       sortBy: _selectedSort,
     );
@@ -122,11 +119,10 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
 
     result.when(
       success: (data) {
-        final existingIds = _reports.map((r) => r.id).toSet();
+        final existingIds = _reports.map((report) => report.id).toSet();
         final newReports = data.results
             .where((report) => !existingIds.contains(report.id))
             .toList();
-
         setState(() {
           _reports.addAll(newReports);
           _currentPage = data.page;
@@ -135,18 +131,14 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
           _isLoadingMore = false;
         });
       },
-      failure: (_) {
-        setState(() => _isLoadingMore = false);
-      },
+      failure: (_) => setState(() => _isLoadingMore = false),
     );
   }
 
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     final threshold = _scrollController.position.maxScrollExtent - 320;
-    if (_scrollController.position.pixels >= threshold) {
-      _loadNextPage();
-    }
+    if (_scrollController.position.pixels >= threshold) _loadNextPage();
   }
 
   Future<void> _openReportDetail(String reportId) async {
@@ -160,9 +152,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
         ),
       );
     } finally {
-      if (mounted) {
-        setState(() => _isNavigatingToReportDetail = false);
-      }
+      if (mounted) setState(() => _isNavigatingToReportDetail = false);
     }
   }
 
@@ -170,19 +160,23 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   Widget build(BuildContext context) {
     final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
-    // Auto-reload when a new report is submitted from the new-report flow.
-    // The review screen calls increment() on MyReportsRefreshNotifier on success.
     ref.listen<int>(myReportsRefreshProvider, (previous, next) {
-      if (next > (previous ?? 0)) {
-        _loadInitialReports();
-      }
+      if (next > (previous ?? 0)) _loadInitialReports();
     });
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.myReports)),
+      appBar: AppBar(
+        title: Text(l10n.myReports),
+        actions: [
+          IconButton(
+            tooltip: l10n.retry,
+            onPressed: _onRefresh,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         child: CustomScrollView(
@@ -192,117 +186,167 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
             SliverToBoxAdapter(
               child: VerificationBanner(permissions: permissions),
             ),
+            SliverToBoxAdapter(child: _buildOverview(theme, l10n)),
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                child: Text(
-                  l10n.reportCount(_totalReports),
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
+              child: CivicSectionHeading(title: l10n.filterByStatus),
             ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                child: Text(
-                  l10n.status,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.lightTextSecondary,
-                  ),
-                ),
-              ),
-            ),
+            SliverToBoxAdapter(child: _buildFilters(theme, l10n)),
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 48,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _filters.length,
-                  itemBuilder: (context, index) {
-                    final isSelected = _selectedFilter == index;
-
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        selected: isSelected,
-                        label: Text(_filterLabel(_filters[index], l10n)),
-                        selectedColor: AppColors.primary,
-                        backgroundColor: isDark
-                            ? AppColors.darkSurface
-                            : AppColors.lightSurface,
-                        labelStyle: TextStyle(
-                          color: isSelected
-                              ? Colors.white
-                              : (isDark
-                                    ? AppColors.darkTextPrimary
-                                    : AppColors.lightTextPrimary),
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.normal,
-                        ),
-                        side: BorderSide(
-                          color: isSelected
-                              ? AppColors.primary
-                              : (isDark
-                                    ? AppColors.darkBorder
-                                    : AppColors.lightBorder),
-                        ),
-                        onSelected: (_) {
-                          setState(() {
-                            _selectedFilter = index;
-                          });
-                          _loadInitialReports();
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
-            _buildSliverContent(theme),
+            _buildSliverContent(theme, l10n),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSliverContent(ThemeData theme) {
+  Widget _buildOverview(ThemeData theme, AppLocalizations l10n) {
+    final reviewCount = _reports
+        .where(
+          (report) =>
+              report.status == ReportStatus.resolved &&
+              report.citizenVerifiedAt == null,
+        )
+        .length;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: CivicSurface(
+        padding: const EdgeInsets.all(16),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final details = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.reportHistory,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.reportCount(_totalReports),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.myReportsGuidance,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            );
+            if (reviewCount == 0) return details;
+
+            final review = CivicStatusChip(
+              label: l10n.reportsAwaitingReview(reviewCount),
+              color: _resolvedColor(theme),
+              icon: Icons.rate_review_outlined,
+            );
+            if (constraints.maxWidth < 420) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [details, const SizedBox(height: 12), review],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: details),
+                review,
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilters(ThemeData theme, AppLocalizations l10n) {
+    final isDark = theme.brightness == Brightness.dark;
+    return SizedBox(
+      height: 48,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _filters.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final selected = _selectedFilter == index;
+          return Semantics(
+            button: true,
+            selected: selected,
+            label: _filterLabel(_filters[index], l10n),
+            child: ChoiceChip(
+              selected: selected,
+              label: Text(_filterLabel(_filters[index], l10n)),
+              selectedColor: theme.colorScheme.primary,
+              backgroundColor: isDark
+                  ? AppColors.darkSurface
+                  : AppColors.lightBackground,
+              side: BorderSide(
+                color: selected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.outline,
+              ),
+              labelStyle: TextStyle(
+                color: selected
+                    ? theme.colorScheme.onPrimary
+                    : theme.colorScheme.onSurface,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+              onSelected: (_) {
+                setState(() => _selectedFilter = index);
+                _loadInitialReports();
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSliverContent(ThemeData theme, AppLocalizations l10n) {
     if (_isInitialLoading) {
-      return const SliverFillRemaining(
-        hasScrollBody: false,
-        child: Center(child: CircularProgressIndicator()),
+      return SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverList.builder(
+          itemCount: 3,
+          itemBuilder: (_, _) => const _ReportSkeleton(),
+        ),
       );
     }
 
     if (_loadError != null && _reports.isEmpty) {
       return SliverFillRemaining(
-        hasScrollBody: false,
-        child: _buildErrorState(theme, _loadError!),
+        hasScrollBody: true,
+        child: _buildErrorState(theme, l10n),
       );
     }
 
     if (_reports.isEmpty) {
       return SliverFillRemaining(
         hasScrollBody: false,
-        child: _buildEmptyState(theme),
+        child: EmptyContentPlaceholder(
+          icon: Icons.assignment_outlined,
+          title: l10n.noReportsFound,
+          message: l10n.noReportsForFilter,
+          onRetry: _onRefresh,
+        ),
       );
     }
 
     final sectionItems = _buildSectionItems(_reports);
-
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      sliver: SliverList(
-        delegate: SliverChildBuilderDelegate((context, index) {
+      sliver: SliverList.builder(
+        itemCount: sectionItems.length + 1,
+        itemBuilder: (context, index) {
           if (index == sectionItems.length) {
-            return _buildListFooter(theme);
+            return _buildListFooter(theme, l10n);
           }
 
           final item = sectionItems[index];
@@ -321,27 +365,15 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
           final report = item.report!;
           return HomeReportCard(
             report: report,
+            showCitizenReviewState: true,
             onTap: () => _openReportDetail(report.id),
           );
-        }, childCount: sectionItems.length + 1),
+        },
       ),
     );
   }
 
-  String _filterLabel(String? status, AppLocalizations l10n) {
-    return switch (status) {
-      null => l10n.all,
-      'submitted' => l10n.submitted,
-      'under_review' => l10n.underReview,
-      'in_progress' => l10n.inProgress,
-      'resolved' => l10n.resolvedStatus,
-      'closed' => l10n.closed,
-      'rejected' => l10n.rejected,
-      _ => l10n.status,
-    };
-  }
-
-  Widget _buildListFooter(ThemeData theme) {
+  Widget _buildListFooter(ThemeData theme, AppLocalizations l10n) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
       child: Center(
@@ -352,106 +384,158 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
                 child: CircularProgressIndicator(strokeWidth: 2.5),
               )
             : Text(
-                _hasNextPage ? AppLocalizations.of(context)!.scrollLoadMore : AppLocalizations.of(context)!.noMoreReports,
+                _hasNextPage ? l10n.scrollLoadMore : l10n.noMoreReports,
                 style: theme.textTheme.bodySmall,
               ),
       ),
     );
   }
 
+  String _filterLabel(String? status, AppLocalizations l10n) =>
+      switch (status) {
+        null => l10n.all,
+        'submitted' => l10n.submitted,
+        'under_review' => l10n.underReview,
+        'in_progress' => l10n.inProgress,
+        'resolved' => l10n.resolvedStatus,
+        'closed' => l10n.closed,
+        'rejected' => l10n.rejected,
+        _ => l10n.status,
+      };
+
   List<_ReportSectionItem> _buildSectionItems(List<Report> reports) {
-    // Sort by date descending, then by priority descending (critical first)
     final sorted = [...reports]
       ..sort((a, b) {
         final aDate = a.createdAt ?? DateTime(0);
         final bDate = b.createdAt ?? DateTime(0);
-        final aDay = DateTime(aDate.year, aDate.month, aDate.day);
-        final bDay = DateTime(bDate.year, bDate.month, bDate.day);
-        final dateCmp = bDay.compareTo(aDay);
-        if (dateCmp != 0) return dateCmp;
-        final aPriority = a.queuePriorityLevel?.index ?? -1;
-        final bPriority = b.queuePriorityLevel?.index ?? -1;
-        return bPriority.compareTo(aPriority);
+        final dateCompare = bDate.compareTo(aDate);
+        if (dateCompare != 0) return dateCompare;
+        return (b.queuePriorityLevel?.index ?? -1).compareTo(
+          a.queuePriorityLevel?.index ?? -1,
+        );
       });
 
     final items = <_ReportSectionItem>[];
     DateTime? previousDate;
-
     for (final report in sorted) {
       final createdAt = report.createdAt;
       final reportDate = createdAt == null
           ? null
           : DateTime(createdAt.year, createdAt.month, createdAt.day);
-
       if (reportDate != previousDate) {
         items.add(_ReportSectionItem.header(_sectionLabelForDate(reportDate)));
         previousDate = reportDate;
       }
       items.add(_ReportSectionItem.report(report));
     }
-
     return items;
   }
 
   String _sectionLabelForDate(DateTime? date) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     if (date == null) return l10n.unknownDate;
-
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
-
     if (date == today) return l10n.today;
     if (date == yesterday) return l10n.yesterday;
-
     return MaterialLocalizations.of(context).formatMediumDate(date);
   }
 
-  Widget _buildEmptyState(ThemeData theme) {
-    return EmptyContentPlaceholder(
-      icon: Icons.assignment_outlined,
-      title: AppLocalizations.of(context)!.noReportsFound,
-      message: AppLocalizations.of(context)!.noReportsForFilter,
-      onRetry: _onRefresh,
+  Widget _buildErrorState(ThemeData theme, AppLocalizations l10n) {
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 56,
+                    color: theme.colorScheme.error,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.unableLoadReports,
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.reportsNetworkError,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton.tonal(
+                    onPressed: _onRefresh,
+                    child: Text(l10n.retry),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildErrorState(ThemeData theme, String error) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 64, color: AppColors.alertHigh),
-          const SizedBox(height: 16),
-          Text(AppLocalizations.of(context)!.unableLoadReports, style: theme.textTheme.titleMedium),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              AppLocalizations.of(context)!.reportsNetworkError,
-              style: theme.textTheme.bodySmall,
-              textAlign: TextAlign.center,
+  Color _resolvedColor(ThemeData theme) => theme.brightness == Brightness.dark
+      ? AppColors.resolvedTextDark
+      : AppColors.resolvedText;
+}
+
+class _ReportSkeleton extends StatelessWidget {
+  const _ReportSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: CivicSurface(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const CivicSkeletonBlock(width: 52, height: 52),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const CivicSkeletonBlock(width: 120, height: 14),
+                  const SizedBox(height: 10),
+                  const CivicSkeletonBlock(height: 18),
+                  const SizedBox(height: 8),
+                  CivicSkeletonBlock(
+                    width: MediaQuery.sizeOf(context).width * 0.48,
+                    height: 14,
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton.tonal(
-            onPressed: _onRefresh,
-            child: Text(AppLocalizations.of(context)!.retry),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
 class _ReportSectionItem {
+  const _ReportSectionItem._({this.header, this.report});
+
   final String? header;
   final Report? report;
 
-  const _ReportSectionItem._({this.header, this.report});
-
   factory _ReportSectionItem.header(String text) =>
       _ReportSectionItem._(header: text);
+
   factory _ReportSectionItem.report(Report report) =>
       _ReportSectionItem._(report: report);
 

@@ -21,7 +21,7 @@ class NotificationsPlaceholder extends StatelessWidget {
             Icon(
               Icons.notifications_outlined,
               size: 64,
-              color: theme.colorScheme.outline,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
             const SizedBox(height: 16),
             Text(l10n.notifications, style: theme.textTheme.headlineSmall),
@@ -29,7 +29,7 @@ class NotificationsPlaceholder extends StatelessWidget {
             Text(
               l10n.notificationsUnavailable,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.outline,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
@@ -74,7 +74,7 @@ class ProfilePlaceholder extends StatelessWidget {
             Icon(
               Icons.person_outline,
               size: 64,
-              color: theme.colorScheme.outline,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
             const SizedBox(height: 16),
             Text(l10n.profile, style: theme.textTheme.headlineSmall),
@@ -82,7 +82,7 @@ class ProfilePlaceholder extends StatelessWidget {
             Text(
               l10n.comingSoon,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.outline,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ],

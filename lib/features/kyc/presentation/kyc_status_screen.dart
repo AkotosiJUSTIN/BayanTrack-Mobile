@@ -80,9 +80,7 @@ class KycStatusScreen extends ConsumerWidget {
                       ),
                     );
                     if (result == true) {
-                      ref
-                          .read(kycStatusControllerProvider.notifier)
-                          .refresh();
+                      ref.read(kycStatusControllerProvider.notifier).refresh();
                     }
                   },
                   icon: const Icon(Icons.assignment_outlined),
@@ -109,8 +107,7 @@ class KycStatusScreen extends ConsumerWidget {
     final statusColor = _getStatusColor(context, kycStatus.status);
 
     return RefreshIndicator(
-      onRefresh: () =>
-          ref.read(kycStatusControllerProvider.notifier).refresh(),
+      onRefresh: () => ref.read(kycStatusControllerProvider.notifier).refresh(),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
@@ -127,7 +124,7 @@ class KycStatusScreen extends ConsumerWidget {
                     color: statusColor.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: statusColor.withValues(alpha: 0.28),
+                      color: statusColor.withValues(alpha: 0.18),
                     ),
                   ),
                   child: Column(
@@ -233,7 +230,9 @@ class KycStatusScreen extends ConsumerWidget {
                       color: theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: theme.colorScheme.outlineVariant,
+                        color: theme.colorScheme.outline.withValues(
+                          alpha: 0.28,
+                        ),
                       ),
                     ),
                     child: Column(
@@ -379,7 +378,7 @@ class KycStatusScreen extends ConsumerWidget {
         color: theme.colorScheme.primaryContainer.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.25),
+          color: theme.colorScheme.primary.withValues(alpha: 0.18),
         ),
       ),
       child: Row(
@@ -417,11 +416,8 @@ class KycStatusScreen extends ConsumerWidget {
       context,
       icon: Icons.assignment_late_outlined,
       color: theme.colorScheme.onSurfaceVariant,
-     title: l10n.noVerificationSubmitted,
-     child: Text(
-        l10n.verificationNotice,
-       style: theme.textTheme.bodyMedium,
-      ),
+      title: l10n.noVerificationSubmitted,
+      child: Text(l10n.verificationNotice, style: theme.textTheme.bodyMedium),
     );
   }
 
@@ -439,7 +435,7 @@ class KycStatusScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.28)),
+        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -504,10 +500,7 @@ class KycStatusScreen extends ConsumerWidget {
             context,
             MaterialPageRoute(
               builder: (context) => isResubmit
-                  ? KycFormScreen(
-                      isResubmission: true,
-                      existingKyc: kycStatus,
-                    )
+                  ? KycFormScreen(isResubmission: true, existingKyc: kycStatus)
                   : const KycFormScreen(),
             ),
           );
@@ -519,13 +512,11 @@ class KycStatusScreen extends ConsumerWidget {
         label: Text(
           isResubmit
               ? kycStatus.resubmissionCount > 0
-                  ? '${l10n.resubmitDocuments} (${l10n.retry} ${kycStatus.resubmissionCount + 1})'
-                  : l10n.resubmitDocuments
+                    ? '${l10n.resubmitDocuments} (${l10n.retry} ${kycStatus.resubmissionCount + 1})'
+                    : l10n.resubmitDocuments
               : l10n.verifyIdentity,
         ),
-        style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(52),
-        ),
+        style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
       ),
     );
   }
@@ -603,17 +594,15 @@ class KycStatusScreen extends ConsumerWidget {
     }
   }
 
-  String _statusLabel(
-    KycVerificationStatus status,
-    AppLocalizations l10n,
-  ) => switch (status) {
-    KycVerificationStatus.unverified => l10n.unverifiedLabel,
-    KycVerificationStatus.pending => l10n.pendingReview,
-    KycVerificationStatus.verified => l10n.kycVerified,
-    KycVerificationStatus.rejected => l10n.rejected,
-    KycVerificationStatus.resubmitRequested => l10n.resubmitRequestedLabel,
-    KycVerificationStatus.suspended => l10n.suspendedLabel,
-  };
+  String _statusLabel(KycVerificationStatus status, AppLocalizations l10n) =>
+      switch (status) {
+        KycVerificationStatus.unverified => l10n.unverifiedLabel,
+        KycVerificationStatus.pending => l10n.pendingReview,
+        KycVerificationStatus.verified => l10n.kycVerified,
+        KycVerificationStatus.rejected => l10n.rejected,
+        KycVerificationStatus.resubmitRequested => l10n.resubmitRequestedLabel,
+        KycVerificationStatus.suspended => l10n.suspendedLabel,
+      };
 
   String _idTypeLabel(IdType value, AppLocalizations l10n) => switch (value) {
     IdType.passport => l10n.idPassport,

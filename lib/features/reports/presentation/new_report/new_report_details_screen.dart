@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/presentation/widgets/app_toast.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../auth/presentation/barangays_provider.dart';
@@ -220,9 +221,10 @@ class _NewReportDetailsScreenState
                                     title: Text(l10n.isHappeningNow),
                                     subtitle: Text(
                                       l10n.incidentOngoingSubtitle,
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: scheme.onSurfaceVariant,
-                                      ),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: scheme.onSurfaceVariant,
+                                          ),
                                     ),
                                     value: state.isHappeningNow,
                                     onChanged: controller.setIsHappeningNow,
@@ -287,19 +289,16 @@ class _NewReportDetailsScreenState
                                                   name: selected.name,
                                                   province: selected.province,
                                                 );
-                                                _streetLandmarkController.clear();
-                                                ScaffoldMessenger.of(
+                                                _streetLandmarkController
+                                                    .clear();
+                                                AppToast.info(
                                                   context,
-                                                ).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      l10n.placeLocationPin,
-                                                    ),
-                                                  ),
+                                                  l10n.placeLocationPin,
                                                 );
                                                 Navigator.of(context).pop();
                                               },
-                                              validator: (value) => value == null
+                                              validator: (value) =>
+                                                  value == null
                                                   ? l10n.pleaseSelectCity
                                                   : null,
                                             ),
@@ -307,9 +306,7 @@ class _NewReportDetailsScreenState
                                             const LinearProgressIndicator(),
                                         error: (error, stack) => Text(
                                           l10n.cityMetadataUnavailable,
-                                          style: TextStyle(
-                                            color: scheme.error,
-                                          ),
+                                          style: TextStyle(color: scheme.error),
                                         ),
                                       ),
                                   const SizedBox(height: 16),
@@ -405,7 +402,9 @@ class _NewReportDetailsScreenState
                                         ],
                                       ),
                                     ),
-                                  if (state.nearbyLandmarkSuggestions.isNotEmpty)
+                                  if (state
+                                      .nearbyLandmarkSuggestions
+                                      .isNotEmpty)
                                     Padding(
                                       padding: const EdgeInsets.only(top: 8),
                                       child: Wrap(
@@ -421,7 +420,8 @@ class _NewReportDetailsScreenState
                                                 ),
                                                 label: Text(suggestion),
                                                 onPressed: () {
-                                                  _streetLandmarkController.text =
+                                                  _streetLandmarkController
+                                                          .text =
                                                       suggestion;
                                                   controller.setStreetLandmark(
                                                     suggestion,

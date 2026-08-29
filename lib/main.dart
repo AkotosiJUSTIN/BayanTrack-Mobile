@@ -66,7 +66,6 @@ class MyApp extends ConsumerWidget {
       title: 'BayanTrack',
       debugShowCheckedModeBanner: false,
       navigatorKey: _navigatorKey,
-      scaffoldMessengerKey: _scaffoldMessengerKey,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
@@ -78,7 +77,5 @@ class MyApp extends ConsumerWidget {
   }
 }
 
-// Navigator and messenger keys used for push navigation and snackbars
+// Navigator key used for push navigation.
 final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
-final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
-    GlobalKey<ScaffoldMessengerState>();

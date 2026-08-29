@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../core/presentation/widgets/empty_content_placeholder.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
@@ -40,6 +41,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _listScrollController = ScrollController();
   final List<Report> _reports = [];
 
+  List<Report> get _visibleReports {
+    final query = _searchController.text.trim().toLowerCase();
+    if (query.isEmpty) return _reports;
+
+    return _reports
+        .where((report) {
+          final values = [
+            report.title,
+            report.description,
+            report.zone,
+            report.streetLandmark,
+            report.barangay,
+            report.cityMunicipality,
+            report.categoryDisplay,
+          ];
+          return values.any(
+            (value) => value?.toLowerCase().contains(query) ?? false,
+          );
+        })
+        .toList(growable: false);
+  }
+
   final List<String?> _statusFilters = const [
     null,
     'submitted',
@@ -50,7 +73,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   ];
 
   String? get _selectedStatus => _statusFilters[_selectedStatusFilterIndex];
-  String _selectedSort = 'date';
+  final String _selectedSort = 'date';
   bool get _hasNextPage => _currentPage < _totalPages;
 
   @override
@@ -191,7 +214,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context)!;
 
     // Auto-refresh when a new report is created
@@ -202,86 +224,179 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.home)),
-      body: Column(
-        children: [
-          VerificationBanner(permissions: permissions),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                labelText: l10n.searchReports,
-                prefixIcon: const Icon(Icons.search),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
+      appBar: AppBar(
+        title: Text(l10n.home),
+        actions: [
+          IconButton(
+            tooltip: l10n.retry,
+            onPressed: _onRefresh,
+            icon: const Icon(Icons.refresh),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final viewSelector = _buildViewSelector(l10n);
-                final count = Text(
-                  l10n.reportCount(_totalReports),
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                );
+        ],
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final textScale = MediaQuery.textScalerOf(context).scale(1);
+          final shouldScrollHeader =
+              constraints.maxHeight < 640 || textScale > 1.15;
+          final header = _buildHomeHeader(permissions, theme, l10n);
 
-                if (constraints.maxWidth < 360) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      count,
-                      const SizedBox(height: 8),
-                      SizedBox(width: double.infinity, child: viewSelector),
-                    ],
-                  );
-                }
-
-                return Row(
-                  children: [
-                    Expanded(child: count),
-                    Flexible(child: viewSelector),
-                  ],
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                l10n.status,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
+          return Column(
+            children: [
+              if (shouldScrollHeader)
+                SizedBox(
+                  height: constraints.maxHeight * 0.48,
+                  child: SingleChildScrollView(child: header),
+                )
+              else
+                header,
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _onRefresh,
+                  child: _isMapView
+                      ? _buildMapView(theme)
+                      : _buildListView(theme),
                 ),
               ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildHomeHeader(
+    UserPermissions permissions,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
+    final isDark = theme.brightness == Brightness.dark;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        VerificationBanner(permissions: permissions),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              labelText: l10n.searchReports,
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchController.text.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: MaterialLocalizations.of(
+                        context,
+                      ).deleteButtonTooltip,
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {});
+                      },
+                      icon: const Icon(Icons.clear),
+                    ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
-          SizedBox(
-            height: 48,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _statusFilters.length,
-              itemBuilder: (context, index) {
-                final isSelected = _selectedStatusFilterIndex == index;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    selected: isSelected,
-                    label: Text(
-                      _statusFilterLabel(_statusFilters[index], l10n),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Semantics(
+                  header: true,
+                  child: Text(
+                    l10n.browseReports,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  l10n.homeGuidance,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final viewSelector = _buildViewSelector(l10n);
+              final reportCount = _searchController.text.trim().isEmpty
+                  ? _totalReports
+                  : _visibleReports.length;
+              final count = Text(
+                l10n.reportCount(reportCount),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              );
+
+              if (constraints.maxWidth < 360) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    count,
+                    const SizedBox(height: 8),
+                    SizedBox(width: double.infinity, child: viewSelector),
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: count),
+                  Flexible(child: viewSelector),
+                ],
+              );
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              l10n.filterByStatus,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: isDark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.lightTextSecondary,
+              ),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 48,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _statusFilters.length,
+            itemBuilder: (context, index) {
+              final isSelected = _selectedStatusFilterIndex == index;
+              final label = _statusFilterLabel(_statusFilters[index], l10n);
+              return Semantics(
+                button: true,
+                selected: isSelected,
+                label: label,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    selected: isSelected,
+                    label: Text(label),
                     selectedColor: AppColors.primary,
                     backgroundColor: isDark
                         ? AppColors.darkSurface
-                        : AppColors.lightSurface,
+                        : AppColors.lightBackground,
                     labelStyle: TextStyle(
                       color: isSelected
                           ? Colors.white
@@ -300,25 +415,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 : AppColors.lightBorder),
                     ),
                     onSelected: (_) {
-                      setState(() {
-                        _selectedStatusFilterIndex = index;
-                      });
+                      setState(() => _selectedStatusFilterIndex = index);
                       _loadInitialReports();
                     },
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _onRefresh,
-              child: _isMapView ? _buildMapView(theme) : _buildListView(theme),
-            ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 12),
+      ],
     );
   }
 
@@ -363,7 +470,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     if (_isInitialLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return _buildLoadingState();
     }
 
     if (_loadError != null && _reports.isEmpty) {
@@ -374,7 +481,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return _buildEmptyState(theme);
     }
 
-    final mapReports = _reports
+    final mapReports = _visibleReports
         .where((report) => report.status != ReportStatus.closed)
         .toList(growable: false);
     final municipalityIds = mapReports
@@ -471,7 +578,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildListView(ThemeData theme) {
     if (_isInitialLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return _buildLoadingState();
     }
 
     if (_loadError != null && _reports.isEmpty) {
@@ -482,7 +589,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return _buildEmptyState(theme);
     }
 
-    final sectionItems = _buildSectionItems(_reports);
+    final sectionItems = _buildSectionItems(_visibleReports);
 
     return ListView.builder(
       controller: _listScrollController,
@@ -628,6 +735,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  Widget _buildLoadingState() {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      children: [
+        if (_isMapView)
+          const CivicSkeletonBlock(height: 280, radius: 16)
+        else ...[
+          const _HomeSkeletonCard(),
+          const SizedBox(height: 12),
+          const _HomeSkeletonCard(),
+          const SizedBox(height: 12),
+          const _HomeSkeletonCard(),
+        ],
+      ],
+    );
+  }
+
   Widget _buildErrorState(ThemeData theme) {
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
@@ -679,4 +804,37 @@ class _ReportSectionItem {
       _ReportSectionItem._(report: report);
 
   bool get isHeader => header != null;
+}
+
+class _HomeSkeletonCard extends StatelessWidget {
+  const _HomeSkeletonCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return CivicSurface(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const CivicSkeletonBlock(width: 52, height: 52),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CivicSkeletonBlock(width: 120, height: 14),
+                const SizedBox(height: 10),
+                const CivicSkeletonBlock(height: 18),
+                const SizedBox(height: 8),
+                CivicSkeletonBlock(
+                  width: MediaQuery.sizeOf(context).width * 0.48,
+                  height: 14,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

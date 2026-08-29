@@ -46,7 +46,9 @@ abstract final class AppColors {
   static const Color lightSurface = Color(0xFFF8FAFC); // Slate 50
   static const Color lightSurfaceVariant = Color(0xFFF1F5F9); // Slate 100
   static const Color lightTextPrimary = Color(0xFF0F172A); // Slate 900
-  static const Color lightTextSecondary = Color(0xFF64748B); // Slate 500
+  static const Color lightTextSecondary = Color(0xFF475569); // Slate 600
+  static const Color lightTextTertiary = Color(0xFF5B6B82); // Blue slate 550
+  static const Color lightTextDisabled = Color(0xFF94A3B8); // Slate 400
   static const Color lightBorder = Color(0xFFCBD5E1); // Slate 300
   static const Color lightInputFill = Color(0xFFF1F5F9); // Slate 100
 
@@ -58,7 +60,9 @@ abstract final class AppColors {
   static const Color darkSurface = Color(0xFF1E293B); // Slate 800
   static const Color darkSurfaceVariant = Color(0xFF334155); // Slate 700
   static const Color darkTextPrimary = Color(0xFFF8FAFC); // Slate 50
-  static const Color darkTextSecondary = Color(0xFF94A3B8); // Slate 400
+  static const Color darkTextSecondary = Color(0xFFCBD5E1); // Slate 300
+  static const Color darkTextTertiary = Color(0xFF94A3B8); // Slate 400
+  static const Color darkTextDisabled = Color(0xFF64748B); // Slate 500
   static const Color darkBorder = Color(0xFF475569); // Slate 600
   static const Color darkInputFill = Color(0xFF1E293B); // Slate 800
 

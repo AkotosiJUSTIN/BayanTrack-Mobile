@@ -377,6 +377,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'We’re having trouble loading notifications. Please check your internet connection and try again.';
 
   @override
+  String get notificationsUpdateFailed =>
+      'Could not update notifications. Please try again.';
+
+  @override
   String get newReport => 'New Report';
 
   @override
@@ -761,6 +765,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchReports => 'Search reports…';
 
   @override
+  String get browseReports => 'Browse public reports';
+
+  @override
+  String get homeGuidance =>
+      'See what is happening around you and follow community updates.';
+
+  @override
+  String get filterByStatus => 'Filter by status';
+
+  @override
+  String get myReportsGuidance =>
+      'Track reports you submitted and any next steps.';
+
+  @override
+  String reportsAwaitingReview(int count) {
+    return '$count awaiting your confirmation';
+  }
+
+  @override
+  String get notificationsGuidance =>
+      'Updates about your reports and verification appear here.';
+
+  @override
+  String get unread => 'Unread';
+
+  @override
+  String unreadNotifications(int count) {
+    return '$count unread';
+  }
+
+  @override
   String reportCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -869,6 +904,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get evidenceUploadCompleted => 'Evidence upload completed.';
+
+  @override
+  String get accountSecurity => 'Account & security';
+
+  @override
+  String get preferences => 'Preferences';
+
+  @override
+  String get noInternetConnection => 'No internet connection';
 
   @override
   String get dismiss => 'Dismiss';

@@ -3,6 +3,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../core/presentation/widgets/app_toast.dart';
+import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/maps/municipality_map.dart';
@@ -292,7 +294,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                       color: theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: theme.colorScheme.outlineVariant,
+                        color: theme.colorScheme.outline.withValues(
+                          alpha: 0.26,
+                        ),
                       ),
                     ),
                     child: Text(
@@ -551,7 +555,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                 color: AppColors.primaryVariant.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.primaryVariant.withValues(alpha: 0.3),
+                  color: AppColors.primaryVariant.withValues(alpha: 0.2),
                 ),
               ),
               child: Column(
@@ -692,14 +696,8 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           title: l10n.status,
         ),
         const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
+        CivicSurface(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: theme.colorScheme.outlineVariant),
-          ),
           child: Column(
             children: [
               if (report.createdAt != null)
@@ -784,7 +782,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           decoration: BoxDecoration(
             color: successColor.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: successColor.withValues(alpha: 0.3)),
+            border: Border.all(color: successColor.withValues(alpha: 0.2)),
           ),
           child: Row(
             children: [
@@ -814,7 +812,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
         decoration: BoxDecoration(
           color: successColor.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: successColor.withValues(alpha: 0.4)),
+          border: Border.all(color: successColor.withValues(alpha: 0.24)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -872,13 +870,8 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
   Widget _buildBlockchainSection(ThemeData theme, bool isDark, Report report) {
     final l10n = AppLocalizations.of(context);
-    return Container(
+    return CivicSurface(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1152,9 +1145,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       });
 
       if (result == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.verificationFailed)));
+        AppToast.error(context, l10n.verificationFailed);
       }
     }
   }

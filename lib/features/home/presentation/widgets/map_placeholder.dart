@@ -163,7 +163,8 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
         color: theme.scaffoldBackgroundColor.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          color: (isDark ? AppColors.darkBorder : AppColors.lightBorder)
+              .withValues(alpha: 0.35),
         ),
       ),
       child: Row(

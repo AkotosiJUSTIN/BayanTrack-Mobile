@@ -70,7 +70,7 @@ class LoadingOverlay extends StatelessWidget {
                   Text(
                     '${(progress! * 100).toInt()}%',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],

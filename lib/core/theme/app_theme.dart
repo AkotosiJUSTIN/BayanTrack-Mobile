@@ -13,11 +13,13 @@ abstract final class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: _lightColorScheme,
-      scaffoldBackgroundColor: AppColors.lightBackground,
+      scaffoldBackgroundColor: AppColors.lightSurfaceVariant,
       textTheme: _textTheme(
         AppColors.lightTextPrimary,
         AppColors.lightTextSecondary,
+        AppColors.lightTextTertiary,
       ),
+      disabledColor: AppColors.lightTextDisabled,
       appBarTheme: _appBarTheme(isLight: true),
       inputDecorationTheme: _inputDecorationTheme(isLight: true),
       elevatedButtonTheme: _elevatedButtonTheme(),
@@ -27,7 +29,7 @@ abstract final class AppTheme {
       bottomNavigationBarTheme: _bottomNavTheme(isLight: true),
       floatingActionButtonTheme: _fabTheme(),
       dividerTheme: DividerThemeData(
-        color: AppColors.lightBorder,
+        color: AppColors.lightBorder.withValues(alpha: 0.58),
         thickness: 1,
       ),
       checkboxTheme: CheckboxThemeData(
@@ -71,7 +73,9 @@ abstract final class AppTheme {
       textTheme: _textTheme(
         AppColors.darkTextPrimary,
         AppColors.darkTextSecondary,
+        AppColors.darkTextTertiary,
       ),
+      disabledColor: AppColors.darkTextDisabled,
       appBarTheme: _appBarTheme(isLight: false),
       inputDecorationTheme: _inputDecorationTheme(isLight: false),
       elevatedButtonTheme: _elevatedButtonTheme(),
@@ -80,7 +84,10 @@ abstract final class AppTheme {
       cardTheme: _cardTheme(isLight: false),
       bottomNavigationBarTheme: _bottomNavTheme(isLight: false),
       floatingActionButtonTheme: _fabTheme(),
-      dividerTheme: DividerThemeData(color: AppColors.darkBorder, thickness: 1),
+      dividerTheme: DividerThemeData(
+        color: AppColors.darkBorder.withValues(alpha: 0.52),
+        thickness: 1,
+      ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
@@ -118,8 +125,9 @@ abstract final class AppTheme {
     onPrimary: Colors.white,
     secondary: AppColors.accent,
     onSecondary: Colors.white,
-    surface: AppColors.lightSurface,
+    surface: AppColors.lightBackground,
     onSurface: AppColors.lightTextPrimary,
+    onSurfaceVariant: AppColors.lightTextSecondary,
     error: AppColors.alertHigh,
     onError: Colors.white,
     outline: AppColors.lightBorder,
@@ -132,6 +140,7 @@ abstract final class AppTheme {
     onSecondary: Colors.white,
     surface: AppColors.darkSurface,
     onSurface: AppColors.darkTextPrimary,
+    onSurfaceVariant: AppColors.darkTextSecondary,
     error: AppColors.alertHighLight,
     onError: Colors.white,
     outline: AppColors.darkBorder,
@@ -141,7 +150,7 @@ abstract final class AppTheme {
   // TEXT THEME
   // ─────────────────────────────────────────────────────────
 
-  static TextTheme _textTheme(Color primary, Color secondary) {
+  static TextTheme _textTheme(Color primary, Color secondary, Color tertiary) {
     return GoogleFonts.manropeTextTheme().copyWith(
       displayLarge: GoogleFonts.inter(
         fontSize: 32,
@@ -208,7 +217,7 @@ abstract final class AppTheme {
       labelSmall: GoogleFonts.manrope(
         fontSize: 11,
         fontWeight: FontWeight.w500,
-        color: secondary,
+        color: tertiary,
         letterSpacing: 0.5,
       ),
     );
@@ -223,7 +232,7 @@ abstract final class AppTheme {
       elevation: 0,
       centerTitle: true,
       backgroundColor: isLight
-          ? AppColors.lightBackground
+          ? AppColors.lightSurface
           : AppColors.darkBackground,
       foregroundColor: isLight
           ? AppColors.lightTextPrimary
@@ -247,7 +256,7 @@ abstract final class AppTheme {
     final borderRadius = BorderRadius.circular(12);
     final borderColor = isLight ? AppColors.lightBorder : AppColors.darkBorder;
     final fillColor = isLight
-        ? AppColors.lightInputFill
+        ? AppColors.lightBackground
         : AppColors.darkInputFill;
     final hintColor = isLight
         ? AppColors.lightTextSecondary
@@ -346,12 +355,17 @@ abstract final class AppTheme {
 
   static CardThemeData _cardTheme({required bool isLight}) {
     return CardThemeData(
-      elevation: 0,
-      color: isLight ? AppColors.lightSurface : AppColors.darkSurface,
+      elevation: isLight ? 1 : 0,
+      color: isLight ? AppColors.lightBackground : AppColors.darkSurface,
+      shadowColor: isLight
+          ? AppColors.lightTextPrimary.withValues(alpha: 0.1)
+          : Colors.transparent,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
-          color: isLight ? AppColors.lightBorder : AppColors.darkBorder,
+          color: (isLight ? AppColors.lightBorder : AppColors.darkBorder)
+              .withValues(alpha: isLight ? 0.42 : 0.28),
           width: 1,
         ),
       ),
