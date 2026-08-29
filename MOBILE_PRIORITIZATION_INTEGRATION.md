@@ -91,7 +91,7 @@ safety_floor
 rubric_total
 ```
 
-These values come from a deterministic `severity_rubric_v2` calculation. They
+These values come from a deterministic `severity_rubric_v3` calculation. They
 are not individual outputs or attributions from the neural priority model.
 The full factor explanation currently appears in the Web staff report detail
 view. Mobile retains the map so future citizen-facing presentation can use the
