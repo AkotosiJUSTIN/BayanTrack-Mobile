@@ -9,8 +9,8 @@ import '../../../l10n/app_localizations.dart';
 import '../../auth/presentation/auth_wrapper.dart';
 
 abstract final class _OnboardingColors {
-  static const deepBlue = Color(0xFF064BEE);
-  static const richOrange = Color(0xFFF86A05);
+  static const deepBlue = AppColors.brandBlue;
+  static const richOrange = AppColors.brandOrange;
 
   static bool isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;
@@ -175,7 +175,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 _OnboardingFooter(
                   currentPage: _currentPage,
                   pageCount: _pageCount,
-                  primaryLabel: isLastPage ? l10n.getStarted : l10n.continueLabel,
+                  primaryLabel: isLastPage
+                      ? l10n.getStarted
+                      : l10n.continueLabel,
                   onBackOrSkip: _currentPage > 0 ? _onBack : _finishOnboarding,
                   onNext: _onNext,
                 ),
@@ -237,7 +239,8 @@ class _LanguageSelectionPage extends StatelessWidget {
             const SizedBox(height: 28),
             ...options.map((option) {
               final (locale, label) = option;
-              final selected = selectedLocale.languageCode == locale.languageCode;
+              final selected =
+                  selectedLocale.languageCode == locale.languageCode;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Semantics(
@@ -250,7 +253,9 @@ class _LanguageSelectionPage extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(56),
                       side: BorderSide(
-                        color: selected ? brandBlue : _OnboardingColors.border(context),
+                        color: selected
+                            ? brandBlue
+                            : _OnboardingColors.border(context),
                         width: selected ? 2 : 1,
                       ),
                       backgroundColor: selected
@@ -269,7 +274,8 @@ class _LanguageSelectionPage extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (selected) Icon(Icons.check_circle, color: brandBlue),
+                        if (selected)
+                          Icon(Icons.check_circle, color: brandBlue),
                       ],
                     ),
                   ),
@@ -598,10 +604,9 @@ class _OnboardingFooter extends StatelessWidget {
               children: List.generate(pageCount, (index) {
                 final isActive = currentPage == index;
                 return Semantics(
-                  label: AppLocalizations.of(context)!.pageOf(
-                    index + 1,
-                    pageCount,
-                  ),
+                  label: AppLocalizations.of(
+                    context,
+                  )!.pageOf(index + 1, pageCount),
                   selected: isActive,
                   child: ExcludeSemantics(
                     child: AnimatedContainer(

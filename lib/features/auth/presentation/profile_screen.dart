@@ -66,7 +66,14 @@ class ProfileScreen extends ConsumerWidget {
                   statsAsync.when(
                     data: (stats) => _buildStatsRow(context, stats, theme),
                     loading: () => const _StatsSkeleton(),
-                    error: (_, _) => const SizedBox.shrink(),
+                    error: (_, _) => Center(
+                      child: TextButton.icon(
+                        onPressed: () =>
+                            ref.invalidate(profileStatsControllerProvider),
+                        icon: const Icon(Icons.refresh, size: 18),
+                        label: Text(l10n.retry),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   CivicSectionHeading(title: l10n.userVerification),

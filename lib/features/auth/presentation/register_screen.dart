@@ -10,8 +10,8 @@ import '../../../l10n/app_localizations.dart';
 import 'auth_controller.dart';
 import 'barangays_provider.dart';
 
-const _brandBlue = Color(0xFF064BEE);
-const _brandOrange = Color(0xFFF86A05);
+const _brandBlue = AppColors.brandBlue;
+const _brandOrange = AppColors.brandOrange;
 
 /// Registration form with compact Bantay artwork.
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -53,7 +53,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
 
     if (_selectedBarangayId == null) {
-      AppToast.warning(context, AppLocalizations.of(context)!.pleaseSelectBarangay);
+      AppToast.warning(
+        context,
+        AppLocalizations.of(context)!.pleaseSelectBarangay,
+      );
       return;
     }
 
@@ -231,8 +234,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       hintText: l10n.enterYourFirstName,
                       prefixIcon: const Icon(Icons.person_outline),
                     ),
-                    validator: (value) =>
-                        Validators.lettersOnly(value, fieldName: l10n.firstName, l10n: l10n),
+                    validator: (value) => Validators.lettersOnly(
+                      value,
+                      fieldName: l10n.firstName,
+                      l10n: l10n,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -260,8 +266,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       hintText: l10n.enterYourLastName,
                       prefixIcon: const Icon(Icons.person_outline),
                     ),
-                    validator: (value) =>
-                        Validators.lettersOnly(value, fieldName: l10n.lastName, l10n: l10n),
+                    validator: (value) => Validators.lettersOnly(
+                      value,
+                      fieldName: l10n.lastName,
+                      l10n: l10n,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -323,7 +332,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               },
                       ),
                     ),
-                    validator: (value) => Validators.password(value, l10n: l10n),
+                    validator: (value) =>
+                        Validators.password(value, l10n: l10n),
                   ),
                 ),
                 ValueListenableBuilder<TextEditingValue>(
@@ -580,9 +590,7 @@ class _PolicyDialogState extends State<_PolicyDialog> {
             ),
             const SizedBox(height: 12),
             Text(
-              _canAccept
-                  ? l10n.policyCanAccept
-                  : l10n.policyScrollToAccept,
+              _canAccept ? l10n.policyCanAccept : l10n.policyScrollToAccept,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],

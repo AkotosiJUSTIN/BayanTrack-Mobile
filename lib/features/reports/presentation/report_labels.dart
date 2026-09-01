@@ -53,7 +53,7 @@ Color reportMapStatusColor(ReportStatus status) => switch (status) {
   ReportStatus.underReview ||
   ReportStatus.verified ||
   ReportStatus.assigned => AppColors.alertMedium,
-  ReportStatus.inProgress => const Color(0xFF3B82F6),
+  ReportStatus.inProgress => AppColors.primaryLight,
   ReportStatus.escalated || ReportStatus.endorsed => AppColors.alertHigh,
   ReportStatus.resolved || ReportStatus.closed => AppColors.success,
   ReportStatus.rejected => AppColors.alertHigh,

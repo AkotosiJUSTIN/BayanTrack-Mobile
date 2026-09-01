@@ -109,30 +109,37 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     if (_isInitialLoading || _isLoadingMore || !_hasNextPage) return;
 
     setState(() => _isLoadingMore = true);
-    final result = await ref.read(getMyReportsUseCaseProvider)(
-      page: _currentPage + 1,
-      status: _selectedStatus,
-      sortBy: _selectedSort,
-    );
+    try {
+      final result = await ref.read(getMyReportsUseCaseProvider)(
+        page: _currentPage + 1,
+        status: _selectedStatus,
+        sortBy: _selectedSort,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    result.when(
-      success: (data) {
-        final existingIds = _reports.map((report) => report.id).toSet();
-        final newReports = data.results
-            .where((report) => !existingIds.contains(report.id))
-            .toList();
-        setState(() {
-          _reports.addAll(newReports);
-          _currentPage = data.page;
-          _totalPages = data.totalPages;
-          _totalReports = data.total;
-          _isLoadingMore = false;
-        });
-      },
-      failure: (_) => setState(() => _isLoadingMore = false),
-    );
+      result.when(
+        success: (data) {
+          final existingIds = _reports.map((report) => report.id).toSet();
+          final newReports = data.results
+              .where((report) => !existingIds.contains(report.id))
+              .toList();
+          setState(() {
+            _reports.addAll(newReports);
+            _currentPage = data.page;
+            _totalPages = data.totalPages;
+            _totalReports = data.total;
+          });
+        },
+        failure: (_) {},
+      );
+    } finally {
+      // Always clear the paging flag, even if the future throws, so
+      // infinite scroll cannot get stuck after a transient failure.
+      if (mounted) {
+        setState(() => _isLoadingMore = false);
+      }
+    }
   }
 
   void _onScroll() {

@@ -58,10 +58,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       }
     } catch (e) {
       if (mounted) {
-        AppToast.error(
-          context,
-          l10n.passwordChangeFailed,
-        );
+        AppToast.error(context, l10n.passwordChangeFailed);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -89,6 +86,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         _obscureCurrentPassword = !_obscureCurrentPassword;
                       });
                     },
+                    tooltip: _obscureCurrentPassword
+                        ? l10n.showPassword
+                        : l10n.hidePassword,
                     icon: Icon(
                       _obscureCurrentPassword
                           ? Icons.visibility_off_outlined
@@ -97,7 +97,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   ),
                 ),
                 obscureText: _obscureCurrentPassword,
-                validator: (v) => v?.isNotEmpty == true ? null : l10n.requiredShort,
+                validator: (v) =>
+                    v?.isNotEmpty == true ? null : l10n.requiredShort,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -110,6 +111,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         _obscureNewPassword = !_obscureNewPassword;
                       });
                     },
+                    tooltip: _obscureNewPassword
+                        ? l10n.showPassword
+                        : l10n.hidePassword,
                     icon: Icon(
                       _obscureNewPassword
                           ? Icons.visibility_off_outlined
@@ -143,6 +147,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         _obscureConfirmPassword = !_obscureConfirmPassword;
                       });
                     },
+                    tooltip: _obscureConfirmPassword
+                        ? l10n.showPassword
+                        : l10n.hidePassword,
                     icon: Icon(
                       _obscureConfirmPassword
                           ? Icons.visibility_off_outlined

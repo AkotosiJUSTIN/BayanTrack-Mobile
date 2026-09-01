@@ -147,39 +147,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     setState(() => _isLoadingMore = true);
 
-    final nextPage = _currentPage + 1;
-    final getReports = ref.read(getReportsUseCaseProvider);
-    final result = await getReports(
-      page: nextPage,
-      status: _selectedStatus,
-      sortBy: _selectedSort,
-    );
+    try {
+      final nextPage = _currentPage + 1;
+      final getReports = ref.read(getReportsUseCaseProvider);
+      final result = await getReports(
+        page: nextPage,
+        status: _selectedStatus,
+        sortBy: _selectedSort,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    result.when(
-      success: (data) {
-        final existingIds = _reports.map((r) => r.id).toSet();
-        // Filter out closed and rejected reports, and duplicates
-        final newReports = data.results.where((report) {
-          return report.status != ReportStatus.closed &&
-              report.status != ReportStatus.rejected &&
-              !existingIds.contains(report.id);
-        }).toList();
+      result.when(
+        success: (data) {
+          final existingIds = _reports.map((r) => r.id).toSet();
+          // Filter out closed and rejected reports, and duplicates
+          final newReports = data.results.where((report) {
+            return report.status != ReportStatus.closed &&
+                report.status != ReportStatus.rejected &&
+                !existingIds.contains(report.id);
+          }).toList();
 
-        setState(() {
-          _reports.addAll(newReports);
-          _currentPage = data.page;
-          _totalPages = data.totalPages;
-          // Set total to the count of displayed reports, not backend total
-          _totalReports = _reports.length;
-          _isLoadingMore = false;
-        });
-      },
-      failure: (_) {
+          setState(() {
+            _reports.addAll(newReports);
+            _currentPage = data.page;
+            _totalPages = data.totalPages;
+            // Set total to the count of displayed reports, not backend total
+            _totalReports = _reports.length;
+          });
+        },
+        failure: (_) {},
+      );
+    } finally {
+      // Always clear the paging flag, even if the future throws, so
+      // infinite scroll cannot get stuck after a transient failure.
+      if (mounted) {
         setState(() => _isLoadingMore = false);
-      },
-    );
+      }
+    }
   }
 
   void _onListScroll() {

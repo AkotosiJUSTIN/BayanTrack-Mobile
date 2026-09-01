@@ -6,8 +6,8 @@ import '../../../core/providers/app_preferences_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 
-const _deepBlue = Color(0xFF064BEE);
-const _richOrange = Color(0xFFF86A05);
+const _deepBlue = AppColors.brandBlue;
+const _richOrange = AppColors.brandOrange;
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});

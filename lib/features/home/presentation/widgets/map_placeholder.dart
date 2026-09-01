@@ -44,8 +44,8 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
         .map(
           (report) => Marker(
             point: LatLng(report.latitude!, report.longitude!),
-            width: 40,
-            height: 40,
+            width: 48,
+            height: 48,
             child: Tooltip(
               message: _buildTooltipMessage(report, l10n),
               waitDuration: const Duration(milliseconds: 150),
@@ -56,7 +56,12 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
                 onTap: widget.onMarkerTap == null
                     ? null
                     : () => widget.onMarkerTap!(report),
-                child: _buildMarker(reportMapStatusColor(report.status)),
+                behavior: widget.onMarkerTap == null
+                    ? HitTestBehavior.deferToChild
+                    : HitTestBehavior.opaque,
+                child: Center(
+                  child: _buildMarker(reportMapStatusColor(report.status)),
+                ),
               ),
             ),
           ),

@@ -16,6 +16,12 @@ abstract final class AppColors {
   static const Color accent = Color(0xFFF97316);
   static const Color accentLight = Color(0xFFFB923C);
 
+  /// Auth / onboarding brand palette (splash, onboarding, login, register).
+  /// Intentionally richer than [primary]/[accent] for the marketing-style
+  /// authentication surfaces; centralized here to avoid duplicated literals.
+  static const Color brandBlue = Color(0xFF064BEE);
+  static const Color brandOrange = Color(0xFFF86A05);
+
   /// Primary variant for AI features
   static const Color primaryVariant = Color(0xFF7C3AED); // Violet 600
 
