@@ -106,14 +106,17 @@ class ErrorMapper {
       return nested.map((k, v) => MapEntry(k.toString(), _flattenError(v)));
     }
 
-    // DRF format: {"field": ["error1", "error2"]}
+    // DRF format: {"field": ["error1", "error2"]} or
+    // {"field": "error"}.
     final errors = <String, String>{};
     for (final entry in body.entries) {
       if (entry.key != 'detail' &&
           entry.key != 'message' &&
           entry.key != 'error' &&
-          entry.value is List) {
-        errors[entry.key] = (entry.value as List).join(', ');
+          (entry.value is List || entry.value is String)) {
+        errors[entry.key] = entry.value is List
+            ? (entry.value as List).join(', ')
+            : entry.value.toString();
       }
     }
     return errors.isNotEmpty ? errors : null;

@@ -1536,7 +1536,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mobileNumberRequired => 'Mobile Number';
 
   @override
-  String get mobileNumberDigits => 'Mobile number must be exactly 10 digits';
+  String get mobileNumberDigits =>
+      'Enter a valid Philippine mobile number (09xxxxxxxxx or +639xxxxxxxxx)';
 
   @override
   String get houseStreet => 'House No. / Street';

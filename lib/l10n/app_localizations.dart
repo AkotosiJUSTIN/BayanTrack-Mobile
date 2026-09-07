@@ -2861,7 +2861,7 @@ abstract class AppLocalizations {
   /// No description provided for @mobileNumberDigits.
   ///
   /// In en, this message translates to:
-  /// **'Mobile number must be exactly 10 digits'**
+  /// **'Enter a valid Philippine mobile number (09xxxxxxxxx or +639xxxxxxxxx)'**
   String get mobileNumberDigits;
 
   /// No description provided for @houseStreet.

@@ -490,7 +490,7 @@
   "civilStatus": "Civil Status",
   "emailAddress": "Email Address",
   "mobileNumberRequired": "Mobile Number",
-  "mobileNumberDigits": "Mobile number must be exactly 10 digits",
+  "mobileNumberDigits": "Enter a valid Philippine mobile number (09xxxxxxxxx or +639xxxxxxxxx)",
   "houseStreet": "House No. / Street",
   "houseStreetHint": "House No., Street",
   "city": "City",

@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/utils/kyc_validators.dart';
 import '../data/kyc_models.dart';
 import '../domain/entities/kyc_form_options.dart' as domain;
 import '../domain/entities/kyc_status.dart';
@@ -267,8 +268,9 @@ class KycFormController extends _$KycFormController {
 
   // ===== B. Contact Setters =====
   void setEmail(String value) => state = state.copyWith(email: value);
-  void setMobileNumber(String value) =>
-      state = state.copyWith(mobileNumber: value);
+  void setMobileNumber(String value) => state = state.copyWith(
+    mobileNumber: KycValidators.normalizeMobileNumber(value),
+  );
 
   // ===== C. Address Setters =====
   void setStreetBarangay(String value) =>
@@ -341,7 +343,9 @@ class KycFormController extends _$KycFormController {
       nationality: existing.nationality ?? '',
       civilStatus: civilStatus,
       email: existing.email ?? '',
-      mobileNumber: existing.mobileNumber ?? '',
+      mobileNumber: KycValidators.normalizeMobileNumber(
+        existing.mobileNumber ?? '',
+      ),
       streetBarangay: existing.streetBarangay ?? '',
       cityMunicipality: existing.cityMunicipality ?? '',
       province: existing.province ?? '',
@@ -403,7 +407,7 @@ class KycFormController extends _$KycFormController {
 
       return result.when(
         success: (entity) => entity,
-        failure: (failure) => throw Exception(failure.message),
+        failure: (failure) => throw failure,
       );
     } catch (e) {
       state = state.copyWith(isSubmitting: false, error: e.toString());
@@ -462,7 +466,7 @@ class KycFormController extends _$KycFormController {
 
       return result.when(
         success: (entity) => entity,
-        failure: (failure) => throw Exception(failure.message),
+        failure: (failure) => throw failure,
       );
     } catch (e) {
       state = state.copyWith(isSubmitting: false, error: e.toString());

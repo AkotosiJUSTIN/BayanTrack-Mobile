@@ -1540,7 +1540,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get mobileNumberDigits =>
-      'Dapat eksaktong 10 digit ang numero ng mobile';
+      'Maglagay ng wastong Philippine mobile number (09xxxxxxxxx o +639xxxxxxxxx)';
 
   @override
   String get houseStreet => 'Numero ng Bahay / Kalye';

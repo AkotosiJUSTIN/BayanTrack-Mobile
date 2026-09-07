@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../../core/utils/kyc_validators.dart';
 
 part 'kyc_models.freezed.dart';
 part 'kyc_models.g.dart';
@@ -239,7 +240,7 @@ sealed class KycStatusResponse with _$KycStatusResponse {
     @JsonKey(name: 'id_front_image_url') String? idFrontImageUrl,
     @JsonKey(name: 'id_back_image_url') String? idBackImageUrl,
     @JsonKey(name: 'id_image_url') String? idImageUrl, // Legacy
-    
+
     // Selfie Images
     @JsonKey(name: 'selfie_image_url') String? selfieImageUrl,
     @JsonKey(name: 'selfie_with_id_image_url') String? selfieWithIdImageUrl,
@@ -393,7 +394,7 @@ class KycSubmitRequest {
       if (civilStatus != null) 'civil_status': civilStatus!.apiValue,
       // Contact
       'email': email,
-      'mobile_number': mobileNumber,
+      'mobile_number': KycValidators.normalizeMobileNumber(mobileNumber),
       // Address
       'street_barangay': streetBarangay,
       'city_municipality': cityMunicipality,
