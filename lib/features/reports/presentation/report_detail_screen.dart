@@ -10,7 +10,6 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/maps/municipality_map.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/presentation/barangays_provider.dart';
-import '../../auth/presentation/profile_controller.dart';
 import '../domain/entities/blockchain_verification.dart';
 import '../domain/entities/report.dart';
 import '../domain/entities/report_enums.dart';
@@ -766,12 +765,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
         : AppColors.resolvedText;
     if (report.status != ReportStatus.resolved) return const SizedBox.shrink();
 
-    // Only show to the report owner
-    final profileAsync = ref.watch(profileControllerProvider);
-    final currentUserId = profileAsync.asData?.value.id;
-    if (currentUserId == null || currentUserId != report.userId) {
-      return const SizedBox.shrink();
-    }
+    // Citizen report-detail requests are owner-authorized by the backend.
+    // The citizen-safe response deliberately omits `user_id`, so ownership
+    // must not be rechecked against the redacted mobile payload here.
 
     // --- Already reviewed: show a compact confirmation chip ---
     if (report.citizenVerifiedAt != null) {

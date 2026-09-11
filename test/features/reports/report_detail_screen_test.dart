@@ -19,11 +19,11 @@ class _TestMunicipalities extends Municipalities {
   ];
 }
 
-Report _report() => Report(
+Report _report({ReportStatus status = ReportStatus.inProgress}) => Report(
   id: 'RPT-DETAIL-UI-1',
   title: 'Blocked drainage near the market',
   description: 'Water is collecting beside the public market.',
-  status: ReportStatus.inProgress,
+  status: status,
   category: ReportCategory.floodDisaster,
   queuePriorityLevel: PriorityLevel.high,
   streetLandmark: 'Market Road gate',
@@ -35,7 +35,11 @@ Report _report() => Report(
   verifiedAt: DateTime(2026, 8, 27, 11),
 );
 
-Future<void> _pumpDetail(WidgetTester tester, {ThemeData? theme}) async {
+Future<void> _pumpDetail(
+  WidgetTester tester, {
+  ThemeData? theme,
+  Report? report,
+}) async {
   tester.view.physicalSize = const Size(360, 800);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -45,7 +49,7 @@ Future<void> _pumpDetail(WidgetTester tester, {ThemeData? theme}) async {
       overrides: [
         municipalitiesProvider.overrideWith(_TestMunicipalities.new),
         reportDetailControllerProvider.overrideWithBuild(
-          (_, _) async => _report(),
+          (_, _) async => report ?? _report(),
         ),
       ],
       child: MaterialApp(
@@ -74,6 +78,14 @@ void main() {
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('shows the citizen close action for a resolved report', (
+    tester,
+  ) async {
+    await _pumpDetail(tester, report: _report(status: ReportStatus.resolved));
+
+    expect(find.text('Review & Sign Off'), findsOneWidget);
   });
 
   testWidgets('keeps the same hierarchy in dark mode', (tester) async {
