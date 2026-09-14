@@ -568,32 +568,216 @@ class _PolicyDialogState extends State<_PolicyDialog> {
     }
   }
 
+  List<String> _policyBlocks(String content) {
+    return content
+        .split(RegExp(r'\n\s*\n'))
+        .map((block) => block.trim())
+        .where((block) => block.isNotEmpty)
+        .toList();
+  }
+
+  Widget _buildPolicyContent(BuildContext context, String content) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final blocks = _policyBlocks(content);
+    final bodyColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextSecondary;
+    final headingColor = isDark
+        ? AppColors.darkTextPrimary
+        : AppColors.lightTextPrimary;
+
+    return ListView.separated(
+      controller: _scrollController,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+      itemCount: blocks.length,
+      separatorBuilder: (_, index) {
+        final next = blocks[index + 1];
+        final isNextHeading =
+            next == next.toUpperCase() &&
+            next.length > 4 &&
+            !next.contains(RegExp(r'[.!?]'));
+        return SizedBox(height: isNextHeading ? 20 : 14);
+      },
+      itemBuilder: (context, index) {
+        final block = blocks[index];
+        final isHeading =
+            block == block.toUpperCase() &&
+            block.length > 4 &&
+            !block.contains(RegExp(r'[.!?]'));
+
+        if (isHeading) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 4,
+                height: 22,
+                margin: const EdgeInsets.only(right: 10, top: 1),
+                decoration: BoxDecoration(
+                  color: _brandOrange,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  block,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: headingColor,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        return Text(
+          block,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: bodyColor,
+            height: 1.55,
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final surface = isDark
+        ? AppColors.darkSurfaceVariant
+        : AppColors.lightSurfaceVariant;
+    final statusColor = _canAccept
+        ? AppColors.success
+        : (isDark ? AppColors.primaryLight : _brandBlue);
+
     return AlertDialog(
-      title: Text(widget.title),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
+      contentPadding: const EdgeInsets.fromLTRB(24, 10, 24, 4),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+      actionsAlignment: MainAxisAlignment.spaceBetween,
+      title: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: (isDark ? AppColors.primaryLight : _brandBlue).withValues(
+                alpha: 0.12,
+              ),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              Icons.fact_check_outlined,
+              color: isDark ? AppColors.primaryLight : _brandBlue,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l10n.policyDialogSubtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.lightTextSecondary,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
       content: SizedBox(
-        width: 360,
-        height: 320,
-        child: Column(
-          children: [
-            Expanded(
-              child: Scrollbar(
-                controller: _scrollController,
-                thumbVisibility: true,
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  child: Text(l10n.termsPolicyContent),
+        width: (MediaQuery.sizeOf(context).width - 80)
+            .clamp(240.0, 480.0)
+            .toDouble(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.58,
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 8),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: surface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color:
+                          (isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightBorder)
+                              .withValues(alpha: 0.65),
+                    ),
+                  ),
+                  child: Scrollbar(
+                    controller: _scrollController,
+                    thumbVisibility: true,
+                    radius: const Radius.circular(10),
+                    child: _buildPolicyContent(
+                      context,
+                      l10n.termsPolicyContent,
+                    ),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _canAccept ? l10n.policyCanAccept : l10n.policyScrollToAccept,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
+              const SizedBox(height: 12),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _canAccept
+                          ? Icons.check_circle_outline_rounded
+                          : Icons.swipe_down_rounded,
+                      size: 18,
+                      color: statusColor,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _canAccept
+                            ? l10n.policyCanAccept
+                            : l10n.policyScrollToAccept,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: statusColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -602,6 +786,14 @@ class _PolicyDialogState extends State<_PolicyDialog> {
           child: Text(l10n.close),
         ),
         ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _brandBlue,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
           onPressed: _canAccept ? () => Navigator.of(context).pop(true) : null,
           child: Text(l10n.accept),
         ),
