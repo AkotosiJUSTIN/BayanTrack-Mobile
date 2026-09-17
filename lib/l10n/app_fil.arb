@@ -365,7 +365,7 @@
   "@photosOfIssue": {"placeholders": {"count": {"type": "int"}}},
   "useButtonsAddPhotos": "Gamitin ang mga button sa ibaba para magdagdag ng mga larawan",
   "primaryPhoto": "Pangunahin",
-  "selectLocationDescription": "Pumili ng lungsod, pagkatapos ay gamitin ang GPS ng telepono o manual na pin sa loob ng hangganan nito.",
+  "selectLocationDescription": "Gamitin ang GPS ng telepono o manual na pin sa loob ng Urdaneta City.",
   "phoneLocation": "Lokasyon ng Telepono",
   "tapMapWithin": "I-tap ang mapa para ilagay ang pin sa loob ng {city}.",
   "@tapMapWithin": {"placeholders": {"city": {"type": "String"}}},

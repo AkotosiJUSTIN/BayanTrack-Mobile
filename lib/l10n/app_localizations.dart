@@ -2153,7 +2153,7 @@ abstract class AppLocalizations {
   /// No description provided for @selectLocationDescription.
   ///
   /// In en, this message translates to:
-  /// **'Select a city, then use phone GPS or a manual pin within its boundary.'**
+  /// **'Use phone GPS or a manual pin within Urdaneta City.'**
   String get selectLocationDescription;
 
   /// No description provided for @phoneLocation.

@@ -1143,7 +1143,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectLocationDescription =>
-      'Select a city, then use phone GPS or a manual pin within its boundary.';
+      'Use phone GPS or a manual pin within Urdaneta City.';
 
   @override
   String get phoneLocation => 'Phone Location';

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/constants/urdaneta_geo.dart';
 import '../../../../core/presentation/widgets/app_toast.dart';
 import '../../../../core/utils/municipality_geo.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -227,29 +228,20 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
                       trailing: state.hasLocation
                           ? l10n.locationSet
                           : l10n.locationNotSet,
-                      content: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (state.zone != null && state.zone!.isNotEmpty)
-                            _buildInfoRow(l10n.zone, state.zone!),
-                          if (state.streetLandmark != null &&
-                              state.streetLandmark!.isNotEmpty)
-                            _buildInfoRow(
-                              l10n.streetLandmark,
-                              state.streetLandmark!,
-                            ),
-                          if (state.location != null &&
-                              state.location!.isNotEmpty)
-                            _buildInfoRow(
-                              l10n.address,
-                              _displayLocation(state.location!),
-                            ),
-                          if (state.latitude != null && state.longitude != null)
-                            _buildInfoRow(
-                              l10n.gps,
-                              '${state.latitude!.toStringAsFixed(6)}, ${state.longitude!.toStringAsFixed(6)}',
-                            ),
-                        ],
+                      content: ReportLocationSummary(
+                        city: UrdanetaGeo.displayCityName,
+                        location: state.location,
+                        barangay: state.barangay,
+                        isResolvingBarangay: state.isResolvingBarangay,
+                        landmark: state.streetLandmark,
+                        isResolvingLandmark: state.isResolvingLandmark,
+                        landmarkLookupError: state.landmarkLookupError,
+                        landmarkLookupCompleted: state.landmarkLookupCompleted,
+                        landmarkSuggestions: state.nearbyLandmarkSuggestions,
+                        coordinates:
+                            state.latitude != null && state.longitude != null
+                            ? '${state.latitude!.toStringAsFixed(6)}, ${state.longitude!.toStringAsFixed(6)}'
+                            : null,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -439,12 +431,5 @@ class _NewReportReviewScreenState extends ConsumerState<NewReportReviewScreen> {
         ),
       ),
     );
-  }
-
-  String _displayLocation(String location) {
-    const manualSelectionPrefix = 'Manual selection: ';
-    return location.startsWith(manualSelectionPrefix)
-        ? location.substring(manualSelectionPrefix.length)
-        : location;
   }
 }

@@ -1145,7 +1145,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get selectLocationDescription =>
-      'Pumili ng lungsod, pagkatapos ay gamitin ang GPS ng telepono o manual na pin sa loob ng hangganan nito.';
+      'Gamitin ang GPS ng telepono o manual na pin sa loob ng Urdaneta City.';
 
   @override
   String get phoneLocation => 'Lokasyon ng Telepono';

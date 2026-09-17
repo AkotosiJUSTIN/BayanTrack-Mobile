@@ -45,6 +45,7 @@ class NewReportState {
   final bool isResolvingLandmark;
   final List<String> nearbyLandmarkSuggestions;
   final String? landmarkLookupError;
+  final bool landmarkLookupCompleted;
   final bool landmarkManuallyEdited;
 
   // Section C: Consent & Declaration
@@ -77,6 +78,7 @@ class NewReportState {
     this.isResolvingLandmark = false,
     this.nearbyLandmarkSuggestions = const [],
     this.landmarkLookupError,
+    this.landmarkLookupCompleted = false,
     this.landmarkManuallyEdited = false,
     this.declarationConfirmed = false,
     this.dataProcessingConsent = false,
@@ -106,6 +108,7 @@ class NewReportState {
     bool? isResolvingLandmark,
     List<String>? nearbyLandmarkSuggestions,
     String? landmarkLookupError,
+    bool? landmarkLookupCompleted,
     bool? landmarkManuallyEdited,
     bool? declarationConfirmed,
     bool? dataProcessingConsent,
@@ -115,6 +118,7 @@ class NewReportState {
     bool clearBarangay = false,
     bool clearStreetLandmark = false,
     bool clearLandmarkSuggestions = false,
+    bool clearLandmarkLookupError = false,
   }) {
     return NewReportState(
       selectedImages: selectedImages ?? this.selectedImages,
@@ -141,7 +145,12 @@ class NewReportState {
       nearbyLandmarkSuggestions: clearLocation || clearLandmarkSuggestions
           ? const []
           : nearbyLandmarkSuggestions ?? this.nearbyLandmarkSuggestions,
-      landmarkLookupError: landmarkLookupError,
+      landmarkLookupError: clearLocation || clearLandmarkLookupError
+          ? null
+          : landmarkLookupError ?? this.landmarkLookupError,
+      landmarkLookupCompleted: clearLocation
+          ? false
+          : landmarkLookupCompleted ?? this.landmarkLookupCompleted,
       landmarkManuallyEdited: clearLocation
           ? false
           : landmarkManuallyEdited ?? this.landmarkManuallyEdited,
@@ -249,6 +258,12 @@ class NewReportController extends _$NewReportController {
       latitude: latitude,
       longitude: longitude,
       location: location,
+      clearBarangay: true,
+      clearStreetLandmark: true,
+      clearLandmarkSuggestions: true,
+      clearLandmarkLookupError: true,
+      landmarkLookupCompleted: false,
+      landmarkManuallyEdited: false,
     );
   }
 
@@ -269,12 +284,16 @@ class NewReportController extends _$NewReportController {
     );
   }
 
-  void beginLandmarkLookup() {
+  void beginLandmarkLookup({bool clearManual = false}) {
     state = state.copyWith(
       isResolvingLandmark: true,
-      clearStreetLandmark: !state.landmarkManuallyEdited,
+      clearStreetLandmark: clearManual || !state.landmarkManuallyEdited,
       clearLandmarkSuggestions: true,
-      landmarkLookupError: null,
+      clearLandmarkLookupError: true,
+      landmarkLookupCompleted: false,
+      landmarkManuallyEdited: clearManual
+          ? false
+          : state.landmarkManuallyEdited,
     );
   }
 
@@ -287,7 +306,8 @@ class NewReportController extends _$NewReportController {
           ? state.streetLandmark
           : suggestion.prefill,
       nearbyLandmarkSuggestions: suggestion.choices,
-      landmarkLookupError: null,
+      clearLandmarkLookupError: true,
+      landmarkLookupCompleted: true,
     );
   }
 
@@ -295,7 +315,8 @@ class NewReportController extends _$NewReportController {
     state = state.copyWith(
       isResolvingLandmark: false,
       clearLandmarkSuggestions: true,
-      landmarkLookupError: 'Nearby landmark suggestions unavailable.',
+      landmarkLookupError: landmarkLookupUnavailable,
+      landmarkLookupCompleted: false,
     );
   }
 
@@ -326,7 +347,7 @@ class NewReportController extends _$NewReportController {
     state = state.copyWith(
       streetLandmark: streetLandmark,
       landmarkManuallyEdited: true,
-      landmarkLookupError: null,
+      clearLandmarkLookupError: true,
     );
   }
 
@@ -347,6 +368,10 @@ class NewReportController extends _$NewReportController {
       clearLocation: true,
       clearBarangay: true,
       clearLandmarkSuggestions: true,
+      clearLandmarkLookupError: true,
+      isResolvingBarangay: false,
+      isResolvingLandmark: false,
+      landmarkLookupCompleted: false,
       landmarkManuallyEdited: false,
     );
   }
@@ -409,6 +434,7 @@ class NewReportController extends _$NewReportController {
     required String municipalityId,
     String? barangayId,
     String? barangay,
+    String? streetLandmark,
     required String cityMunicipality,
     required String province,
     required double latitude,
@@ -421,6 +447,7 @@ class NewReportController extends _$NewReportController {
       isHappeningNow: true,
       zone: barangay,
       municipalityId: municipalityId,
+      streetLandmark: streetLandmark,
       barangayId: barangayId,
       barangay: barangay,
       cityMunicipality: cityMunicipality,

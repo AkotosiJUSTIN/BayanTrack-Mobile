@@ -365,7 +365,7 @@
   "@photosOfIssue": {"placeholders": {"count": {"type": "int"}}},
   "useButtonsAddPhotos": "Use the buttons below to add photos",
   "primaryPhoto": "Primary",
-  "selectLocationDescription": "Select a city, then use phone GPS or a manual pin within its boundary.",
+  "selectLocationDescription": "Use phone GPS or a manual pin within Urdaneta City.",
   "phoneLocation": "Phone Location",
   "tapMapWithin": "Tap the map to place your pin within {city}.",
   "@tapMapWithin": {"placeholders": {"city": {"type": "String"}}},

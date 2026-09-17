@@ -22,7 +22,10 @@ enum _LocationInputMode { phone, manual }
 
 /// Second step: choose location using phone GPS or manual map selection.
 class NewReportLocationScreen extends ConsumerStatefulWidget {
-  const NewReportLocationScreen({super.key});
+  const NewReportLocationScreen({super.key, this.locationOverride});
+
+  @visibleForTesting
+  final Future<Position> Function()? locationOverride;
 
   @override
   ConsumerState<NewReportLocationScreen> createState() =>
@@ -32,7 +35,7 @@ class NewReportLocationScreen extends ConsumerStatefulWidget {
 class _NewReportLocationScreenState
     extends ConsumerState<NewReportLocationScreen> {
   final MapController _mapController = MapController();
-  MunicipalityModel _selectedMunicipality = bundledUrdanetaMunicipality;
+  final MunicipalityModel _selectedMunicipality = bundledUrdanetaMunicipality;
 
   bool _isLoading = false;
   bool _isGettingPreciseLocation = false;
@@ -40,7 +43,6 @@ class _NewReportLocationScreenState
   String? _error;
   Position? _currentPosition;
   LatLng? _selectedPoint;
-  String? _pendingMetadataId;
   String? _lastBarangayResolutionKey;
   int _landmarkLookupVersion = 0;
   _LocationInputMode _locationInputMode = _LocationInputMode.phone;
@@ -54,6 +56,13 @@ class _NewReportLocationScreenState
   @override
   void initState() {
     super.initState();
+    ref
+        .read(newReportControllerProvider.notifier)
+        .setMunicipality(
+          id: defaultMunicipalityId,
+          name: UrdanetaGeo.defaultCityMunicipality,
+          province: UrdanetaGeo.defaultProvince,
+        );
     _applyDefaultLocationIfMissing();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _syncInitialSelectionToProvider();
@@ -81,64 +90,6 @@ class _NewReportLocationScreenState
     _isOutsideServiceArea = false;
   }
 
-  void _selectMunicipality(MunicipalityModel municipality) {
-    if (municipality.id == _selectedMunicipality.id) return;
-    final bounds = municipality.bounds;
-    if (bounds == null || !municipality.hasUsableBoundary) {
-      setState(() => _error = municipalityUnavailableMessage(municipality));
-      return;
-    }
-    ref
-        .read(newReportControllerProvider.notifier)
-        .setMunicipality(
-          id: municipality.id,
-          name: municipality.name,
-          province: municipality.province,
-        );
-    final center = LatLng(
-      municipality.centerLat ?? (bounds.south + bounds.north) / 2,
-      municipality.centerLng ?? (bounds.west + bounds.east) / 2,
-    );
-    setState(() {
-      _selectedMunicipality = municipality;
-      _selectedPoint = center;
-      _currentPosition = null;
-      _error = null;
-      _isOutsideServiceArea = false;
-    });
-    _setSelectedPoint(
-      center,
-      locationLabel: '${municipality.name}, ${municipality.province}',
-    );
-    if (_locationInputMode == _LocationInputMode.phone) {
-      _getCurrentLocation();
-    }
-  }
-
-  void _restoreMunicipalityMetadata(MunicipalityModel municipality) {
-    if (!mounted || municipality.id == _selectedMunicipality.id) return;
-    final state = ref.read(newReportControllerProvider);
-    final bounds = municipality.bounds;
-    if (bounds == null || !municipality.hasUsableBoundary) return;
-    final point = state.latitude != null && state.longitude != null
-        ? LatLng(state.latitude!, state.longitude!)
-        : LatLng(
-            municipality.centerLat ?? (bounds.south + bounds.north) / 2,
-            municipality.centerLng ?? (bounds.west + bounds.east) / 2,
-          );
-    setState(() {
-      _selectedMunicipality = municipality;
-      _selectedPoint = point;
-      _isOutsideServiceArea = !municipalityContains(
-        municipality,
-        point.latitude,
-        point.longitude,
-      );
-      _pendingMetadataId = null;
-    });
-    _moveCameraToSelection();
-  }
-
   void _syncInitialSelectionToProvider() {
     final state = ref.read(newReportControllerProvider);
     if (state.latitude != null && state.longitude != null) {
@@ -164,6 +115,23 @@ class _NewReportLocationScreenState
       _isLoading = true;
       _error = null;
     });
+
+    final locationOverride = widget.locationOverride;
+    if (locationOverride != null) {
+      try {
+        final position = await locationOverride();
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        _updateLocationFromPosition(position);
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          _error = '${l10n.error}: ${l10n.refreshLocation} / ${l10n.manualPin}';
+        });
+      }
+      return;
+    }
 
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -284,6 +252,7 @@ class _NewReportLocationScreenState
       point.longitude,
     )) {
       ref.read(newReportControllerProvider.notifier).clearLocation();
+      _landmarkLookupVersion++;
       setState(() {
         _isOutsideServiceArea = true;
         _selectedPoint = null;
@@ -312,8 +281,10 @@ class _NewReportLocationScreenState
 
     if (!inMunicipality) {
       ref.read(newReportControllerProvider.notifier).clearLocation();
+      _landmarkLookupVersion++;
       setState(() {
         _isOutsideServiceArea = true;
+        _selectedPoint = null;
         _error = municipalityUnavailableMessage(_selectedMunicipality);
       });
       return;
@@ -385,7 +356,7 @@ class _NewReportLocationScreenState
   Future<void> _lookupNearbyLandmarks(LatLng point) async {
     final requestVersion = ++_landmarkLookupVersion;
     final controller = ref.read(newReportControllerProvider.notifier);
-    controller.beginLandmarkLookup();
+    controller.beginLandmarkLookup(clearManual: true);
     final result = await (() async {
       try {
         return await ref
@@ -422,18 +393,6 @@ class _NewReportLocationScreenState
 
   void _onMapTap(LatLng point) {
     if (_locationInputMode != _LocationInputMode.manual) return;
-    if (!municipalityContains(
-      _selectedMunicipality,
-      point.latitude,
-      point.longitude,
-    )) {
-      setState(() {
-        _isOutsideServiceArea = true;
-        _error = municipalityUnavailableMessage(_selectedMunicipality);
-      });
-      return;
-    }
-
     _setSelectedPoint(
       point,
       locationLabel:
@@ -476,25 +435,10 @@ class _NewReportLocationScreenState
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(newReportControllerProvider);
-    final municipalitiesAsync = ref.watch(municipalitiesProvider);
     final barangaysAsync = ref.watch(
-      municipalityBarangaysProvider(state.municipalityId),
+      municipalityBarangaysProvider(defaultMunicipalityId),
     );
     _scheduleBarangayResolution(state, barangaysAsync);
-    final municipality = municipalitiesAsync.asData == null
-        ? null
-        : findMunicipalityMetadata(
-            municipalitiesAsync.asData!.value,
-            state.municipalityId,
-          );
-    if (municipality != null &&
-        municipality.id != _selectedMunicipality.id &&
-        _pendingMetadataId != municipality.id) {
-      _pendingMetadataId = municipality.id;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _restoreMunicipalityMetadata(municipality);
-      });
-    }
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final bounds = _selectedMunicipality.bounds!;
@@ -530,46 +474,11 @@ class _NewReportLocationScreenState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          municipalitiesAsync.when(
-                            data: (municipalities) =>
-                                DropdownButtonFormField<String>(
-                                  initialValue:
-                                      municipalities.any(
-                                        (item) => item.id == state.municipalityId,
-                                      )
-                                      ? state.municipalityId
-                                      : _selectedMunicipality.id,
-                                  isExpanded: true,
-                                  decoration: InputDecoration(
-                                    labelText: l10n.selectCity,
-                                    prefixIcon: const Icon(
-                                      Icons.location_city_outlined,
-                                    ),
-                                  ),
-                                  items: municipalities
-                                      .map(
-                                        (item) => DropdownMenuItem(
-                                          value: item.id,
-                                          child: Text(
-                                            '${item.name}, ${item.province}',
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                                  onChanged: (value) {
-                                    if (value == null) return;
-                                    _selectMunicipality(
-                                      municipalities.firstWhere(
-                                        (item) => item.id == value,
-                                      ),
-                                    );
-                                  },
-                                ),
-                            loading: () => const LinearProgressIndicator(),
-                            error: (error, stack) => Text(
-                              l10n.cityMetadataUnavailable,
-                              style: TextStyle(color: theme.colorScheme.error),
-                            ),
+                          ReportReadOnlyLocationField(
+                            key: const Key('full-report-city'),
+                            label: l10n.city,
+                            value: UrdanetaGeo.displayCityName,
+                            icon: Icons.location_city_outlined,
                           ),
                           const SizedBox(height: 16),
                           _buildModeSelector(),
@@ -660,7 +569,9 @@ class _NewReportLocationScreenState
                   _selectedMunicipality,
                 ),
                 cameraConstraint:
-                    MunicipalityMapCamera.constraintFor(_selectedMunicipality) ??
+                    MunicipalityMapCamera.constraintFor(
+                      _selectedMunicipality,
+                    ) ??
                     const CameraConstraint.unconstrained(),
                 onTap: (_, point) => _onMapTap(point),
               ),
@@ -684,7 +595,8 @@ class _NewReportLocationScreenState
                               Icons.location_on,
                               size: 36,
                               color:
-                                  _locationInputMode == _LocationInputMode.manual
+                                  _locationInputMode ==
+                                      _LocationInputMode.manual
                                   ? AppColors.primary
                                   : AppColors.alertHigh,
                             ),
@@ -747,9 +659,11 @@ class _NewReportLocationScreenState
     final locationStatus = state.isResolvingBarangay
         ? l10n.gettingLocation
         : barangay;
-    final semanticDetails = [method, coordinates, locationStatus]
-        .whereType<String>()
-        .join('. ');
+    final semanticDetails = [
+      method,
+      coordinates,
+      locationStatus,
+    ].whereType<String>().join('. ');
 
     return Semantics(
       container: true,

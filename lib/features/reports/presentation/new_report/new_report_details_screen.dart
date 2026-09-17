@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/presentation/widgets/app_toast.dart';
+import '../../../../core/constants/urdaneta_geo.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/utils/validators.dart';
-import '../../../auth/presentation/barangays_provider.dart';
 import 'new_report_controller.dart';
 import 'new_report_review_screen.dart';
+import 'quick_report_geo.dart';
 import 'report_flow_widgets.dart';
 
 /// Third step: Enter report details (category, incident type, description, severity)
@@ -82,6 +82,12 @@ class _NewReportDetailsScreenState
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final noNearbyLandmark =
+        state.landmarkLookupCompleted &&
+        !state.isResolvingLandmark &&
+        state.landmarkLookupError == null &&
+        state.streetLandmark?.trim().isNotEmpty != true &&
+        state.nearbyLandmarkSuggestions.isEmpty;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.newReport)),
@@ -241,74 +247,12 @@ class _NewReportDetailsScreenState
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  _buildSectionLabel(
-                                    theme,
-                                    l10n.selectCity,
-                                    isRequired: true,
+                                  ReportReadOnlyLocationField(
+                                    key: const Key('full-report-city'),
+                                    label: l10n.city,
+                                    value: UrdanetaGeo.displayCityName,
+                                    icon: Icons.location_city_outlined,
                                   ),
-                                  const SizedBox(height: 8),
-                                  ref
-                                      .watch(municipalitiesProvider)
-                                      .when(
-                                        data: (municipalities) =>
-                                            DropdownButtonFormField<String>(
-                                              initialValue:
-                                                  municipalities.any(
-                                                    (item) =>
-                                                        item.id ==
-                                                        state.municipalityId,
-                                                  )
-                                                  ? state.municipalityId
-                                                  : null,
-                                              isExpanded: true,
-                                              decoration: InputDecoration(
-                                                labelText: l10n.selectCity,
-                                                prefixIcon: const Icon(
-                                                  Icons.location_city_outlined,
-                                                ),
-                                              ),
-                                              items: municipalities
-                                                  .map(
-                                                    (item) => DropdownMenuItem(
-                                                      value: item.id,
-                                                      child: Text(
-                                                        '${item.name}, ${item.province}',
-                                                      ),
-                                                    ),
-                                                  )
-                                                  .toList(),
-                                              onChanged: (value) {
-                                                if (value == null) return;
-                                                final selected = municipalities
-                                                    .firstWhere(
-                                                      (item) =>
-                                                          item.id == value,
-                                                    );
-                                                controller.setMunicipality(
-                                                  id: selected.id,
-                                                  name: selected.name,
-                                                  province: selected.province,
-                                                );
-                                                _streetLandmarkController
-                                                    .clear();
-                                                AppToast.info(
-                                                  context,
-                                                  l10n.placeLocationPin,
-                                                );
-                                                Navigator.of(context).pop();
-                                              },
-                                              validator: (value) =>
-                                                  value == null
-                                                  ? l10n.pleaseSelectCity
-                                                  : null,
-                                            ),
-                                        loading: () =>
-                                            const LinearProgressIndicator(),
-                                        error: (error, stack) => Text(
-                                          l10n.cityMetadataUnavailable,
-                                          style: TextStyle(color: scheme.error),
-                                        ),
-                                      ),
                                   const SizedBox(height: 16),
                                   _buildSectionLabel(theme, l10n.barangay),
                                   const SizedBox(height: 8),
@@ -317,6 +261,7 @@ class _NewReportDetailsScreenState
                                     label:
                                         '${l10n.barangay}: ${state.barangay ?? l10n.barangaysUnavailable}',
                                     child: InputDecorator(
+                                      key: const Key('full-report-barangay'),
                                       decoration: const InputDecoration(
                                         prefixIcon: Icon(
                                           Icons.location_city_outlined,
@@ -379,6 +324,9 @@ class _NewReportDetailsScreenState
                                         prefixIcon: const Icon(
                                           Icons.place_outlined,
                                         ),
+                                        helperText: noNearbyLandmark
+                                            ? noNearbyLandmarkFound
+                                            : null,
                                       ),
                                     ),
                                   ),
@@ -406,31 +354,24 @@ class _NewReportDetailsScreenState
                                       .nearbyLandmarkSuggestions
                                       .isNotEmpty)
                                     Padding(
-                                      padding: const EdgeInsets.only(top: 8),
-                                      child: Wrap(
-                                        spacing: 8,
-                                        runSpacing: 4,
-                                        children: state
-                                            .nearbyLandmarkSuggestions
-                                            .map(
-                                              (suggestion) => ActionChip(
-                                                avatar: const Icon(
-                                                  Icons.place_outlined,
-                                                  size: 16,
-                                                ),
-                                                label: Text(suggestion),
-                                                onPressed: () {
-                                                  _streetLandmarkController
-                                                          .text =
-                                                      suggestion;
-                                                  controller.setStreetLandmark(
-                                                    suggestion,
-                                                  );
-                                                  _checkFormValidity();
-                                                },
-                                              ),
-                                            )
-                                            .toList(),
+                                      padding: const EdgeInsets.only(top: 10),
+                                      child: ReportLandmarkSuggestionChips(
+                                        suggestions:
+                                            state.nearbyLandmarkSuggestions,
+                                        selectedLandmark: state.streetLandmark,
+                                        onSelected: (suggestion) {
+                                          _streetLandmarkController
+                                              .value = TextEditingValue(
+                                            text: suggestion,
+                                            selection: TextSelection.collapsed(
+                                              offset: suggestion.length,
+                                            ),
+                                          );
+                                          controller.setStreetLandmark(
+                                            suggestion,
+                                          );
+                                          _checkFormValidity();
+                                        },
                                       ),
                                     ),
                                   if (state.landmarkLookupError != null)

@@ -4,8 +4,10 @@ import 'package:bayantrack_mobile/core/constants/urdaneta_barangays.dart';
 import 'package:bayantrack_mobile/core/domain/failures.dart';
 import 'package:bayantrack_mobile/core/domain/result.dart';
 import 'package:bayantrack_mobile/core/theme/app_theme.dart';
+import 'package:bayantrack_mobile/features/auth/auth_di.dart';
 import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
+import 'package:bayantrack_mobile/features/auth/domain/auth_repository.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
 import 'package:bayantrack_mobile/features/reports/data/reports_repository.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart'
@@ -14,6 +16,7 @@ import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dar
     as domain_repository;
 import 'package:bayantrack_mobile/features/reports/domain/usecases/create_report_usecase.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/new_report/quick_report_screen.dart';
+import 'package:bayantrack_mobile/features/reports/presentation/new_report/quick_report_geo.dart';
 import 'package:bayantrack_mobile/features/reports/reports_di.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +26,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart' show Override;
 
 class _TestMunicipalities extends Municipalities {
   @override
@@ -39,6 +43,8 @@ class _TestMunicipalityBarangays extends MunicipalityBarangays {
 
 class _ReportsRepositoryMock extends Mock implements ReportsRepository {}
 
+class _AuthRepositoryMock extends Mock implements AuthRepository {}
+
 class _UnusedDomainReportsRepository extends Mock
     implements domain_repository.ReportsRepository {}
 
@@ -50,6 +56,10 @@ class _TestCreateReportUseCase extends CreateReportUseCase {
   _submit;
   int callCount = 0;
   bool? lastIsQuickReport;
+  String? lastMunicipalityId;
+  String? lastBarangayId;
+  String? lastBarangay;
+  String? lastStreetLandmark;
 
   @override
   Future<Result<domain_report.Report>> call({
@@ -78,6 +88,10 @@ class _TestCreateReportUseCase extends CreateReportUseCase {
   }) {
     callCount++;
     lastIsQuickReport = isQuickReport;
+    lastMunicipalityId = municipalityId;
+    lastBarangayId = barangayId;
+    lastBarangay = barangay;
+    lastStreetLandmark = streetLandmark;
     return _submit(isQuickReport);
   }
 }
@@ -110,11 +124,14 @@ Future<void> _pumpQuickReport(
   required Future<Position> Function() locate,
   Size size = const Size(360, 800),
   double textScale = 1,
+  ThemeData? theme,
   ReportsRepository? reportsRepository,
+  AuthRepository? authRepository,
   CreateReportUseCase? createReportUseCase,
   NavigatorObserver? navigatorObserver,
   bool pushFromRoot = false,
 }) async {
+  final appTheme = theme ?? AppTheme.light;
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -125,26 +142,43 @@ Future<void> _pumpQuickReport(
     locationOverride: locate,
     showMapTiles: false,
   );
+  final auth = authRepository ?? _AuthRepositoryMock();
+  if (authRepository == null) {
+    when(
+      () => auth.getNearbyLandmarks(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+      ),
+    ).thenAnswer((_) async => const Success(<NearbyLandmarkModel>[]));
+  }
+  final overrides = <Override>[
+    userPermissionsProvider.overrideWithValue(UserPermissions(null)),
+    authRepositoryProvider.overrideWithValue(auth),
+    municipalitiesProvider.overrideWith(_TestMunicipalities.new),
+    municipalityBarangaysProvider.overrideWith(_TestMunicipalityBarangays.new),
+  ];
+  if (reportsRepository != null) {
+    overrides.add(
+      reportsRepositoryProvider.overrideWithValue(reportsRepository),
+    );
+  }
+  if (createReportUseCase != null) {
+    overrides.add(
+      createReportUseCaseProvider.overrideWithValue(createReportUseCase),
+    );
+  }
+  final navigatorObservers = <NavigatorObserver>[];
+  if (navigatorObserver != null) navigatorObservers.add(navigatorObserver);
 
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [
-        userPermissionsProvider.overrideWithValue(UserPermissions(null)),
-        municipalitiesProvider.overrideWith(_TestMunicipalities.new),
-        municipalityBarangaysProvider.overrideWith(
-          _TestMunicipalityBarangays.new,
-        ),
-        if (reportsRepository != null)
-          reportsRepositoryProvider.overrideWithValue(reportsRepository),
-        if (createReportUseCase != null)
-          createReportUseCaseProvider.overrideWithValue(createReportUseCase),
-      ],
+      overrides: overrides,
       child: MaterialApp(
         navigatorKey: navigatorKey,
-        navigatorObservers: [if (navigatorObserver != null) navigatorObserver],
+        navigatorObservers: navigatorObservers,
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
-        theme: AppTheme.light,
+        theme: appTheme,
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(
             context,
@@ -192,6 +226,291 @@ void main() {
       find.byKey(const Key('quick-report-submit')),
     );
     expect(submit.onPressed, isNotNull);
+  });
+
+  testWidgets('uses fixed Urdaneta city and resolves report metadata', (
+    tester,
+  ) async {
+    final auth = _AuthRepositoryMock();
+    when(
+      () => auth.getNearbyLandmarks(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+      ),
+    ).thenAnswer(
+      (_) async => const Success([
+        NearbyLandmarkModel(name: 'Public Market', distanceMeters: 40),
+      ]),
+    );
+
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      authRepository: auth,
+    );
+    await tester.pump();
+
+    expect(find.byKey(const Key('quick-report-city')), findsOneWidget);
+    expect(find.text('Urdaneta City'), findsOneWidget);
+    expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+    expect(find.text('Bactad East'), findsAtLeastNWidgets(1));
+    expect(find.text('Public Market'), findsOneWidget);
+  });
+
+  testWidgets('dark location surfaces use tonal layers and pill suggestions', (
+    tester,
+  ) async {
+    final auth = _AuthRepositoryMock();
+    when(
+      () => auth.getNearbyLandmarks(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+      ),
+    ).thenAnswer(
+      (_) async => const Success([
+        NearbyLandmarkModel(name: 'Clinic', distanceMeters: 40),
+        NearbyLandmarkModel(name: 'Market', distanceMeters: 90),
+      ]),
+    );
+
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      theme: AppTheme.dark,
+      size: const Size(412, 915),
+      authRepository: auth,
+    );
+    await tester.pump();
+
+    final locationCard = tester.widget<Material>(
+      find.byKey(const Key('quick-report-location-card')),
+    );
+    expect(locationCard.elevation, 0);
+    expect(
+      (locationCard.shape! as RoundedRectangleBorder).side,
+      BorderSide.none,
+    );
+
+    final cityField = tester.widget<Material>(
+      find.descendant(
+        of: find.byKey(const Key('quick-report-city')),
+        matching: find.byType(Material),
+      ),
+    );
+    expect((cityField.shape! as RoundedRectangleBorder).side, BorderSide.none);
+
+    final chips = tester.widgetList<FilterChip>(find.byType(FilterChip));
+    expect(chips, hasLength(2));
+    expect(chips.every((chip) => chip.side == BorderSide.none), isTrue);
+    expect(chips.every((chip) => chip.shape is StadiumBorder), isTrue);
+  });
+
+  testWidgets('dark outside-city callout stays soft and borderless', (
+    tester,
+  ) async {
+    await _pumpQuickReport(
+      tester,
+      locate: () async => outside,
+      theme: AppTheme.dark,
+    );
+    await tester.pump();
+
+    final callout = tester.widget<Material>(
+      find.byKey(const Key('quick-report-outside-location')),
+    );
+    expect((callout.shape! as RoundedRectangleBorder).side, BorderSide.none);
+    expect(find.text('Location is outside Urdaneta'), findsOneWidget);
+    expect(find.byKey(const Key('quick-report-switch-manual')), findsOneWidget);
+  });
+
+  testWidgets('manual pin refreshes barangay and clears old landmark', (
+    tester,
+  ) async {
+    final auth = _AuthRepositoryMock();
+    final landmarkRequests = <LatLng>[];
+    final secondLandmarkResponse =
+        Completer<Result<List<NearbyLandmarkModel>>>();
+    when(
+      () => auth.getNearbyLandmarks(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+      ),
+    ).thenAnswer((invocation) async {
+      landmarkRequests.add(
+        LatLng(
+          invocation.namedArguments[#latitude] as double,
+          invocation.namedArguments[#longitude] as double,
+        ),
+      );
+      if (landmarkRequests.length == 1) {
+        return const Success([
+          NearbyLandmarkModel(name: 'Public Market', distanceMeters: 40),
+        ]);
+      }
+      return secondLandmarkResponse.future;
+    });
+
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      authRepository: auth,
+    );
+    await tester.pump();
+    await tester.tap(find.text('Manual Pin'));
+    await tester.pump();
+
+    final onMapTap = tester
+        .widget<FlutterMap>(find.byType(FlutterMap))
+        .options
+        .onTap!;
+    onMapTap(
+      const TapPosition(Offset.zero, Offset.zero),
+      const LatLng(15.9763, 120.5776),
+    );
+    await tester.pump();
+    expect(find.text('Public Market'), findsNothing);
+    expect(find.text('Bactad East'), findsNothing);
+    expect(find.text('Bayaoas'), findsAtLeastNWidgets(1));
+    secondLandmarkResponse.complete(
+      const Success([
+        NearbyLandmarkModel(name: 'New Market', distanceMeters: 40),
+      ]),
+    );
+    await tester.pump();
+    expect(find.text('New Market'), findsOneWidget);
+    expect(landmarkRequests.length, 2);
+  });
+
+  testWidgets('landmark lookup failure is distinct from no nearby landmark', (
+    tester,
+  ) async {
+    final auth = _AuthRepositoryMock();
+    when(
+      () => auth.getNearbyLandmarks(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+      ),
+    ).thenAnswer((_) async => const Err(ServerFailure('provider unavailable')));
+
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      authRepository: auth,
+    );
+    await tester.pump();
+
+    expect(find.text(landmarkLookupUnavailable), findsOneWidget);
+    expect(find.text(noNearbyLandmarkFound), findsNothing);
+  });
+
+  testWidgets('no nearby landmark result is shown explicitly', (tester) async {
+    final auth = _AuthRepositoryMock();
+    when(
+      () => auth.getNearbyLandmarks(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+      ),
+    ).thenAnswer((_) async => const Success([]));
+
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      authRepository: auth,
+    );
+    await tester.pump();
+
+    expect(find.text(noNearbyLandmarkFound), findsOneWidget);
+    expect(find.text(landmarkLookupUnavailable), findsNothing);
+  });
+
+  testWidgets('ambiguous nearby landmarks remain explicit choices', (
+    tester,
+  ) async {
+    final auth = _AuthRepositoryMock();
+    when(
+      () => auth.getNearbyLandmarks(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+      ),
+    ).thenAnswer(
+      (_) async => const Success([
+        NearbyLandmarkModel(name: 'Clinic', distanceMeters: 40),
+        NearbyLandmarkModel(name: 'Market', distanceMeters: 90),
+      ]),
+    );
+
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      authRepository: auth,
+    );
+    await tester.pump();
+
+    expect(find.text(chooseNearbyLandmark), findsOneWidget);
+    expect(find.bySemanticsLabel('Street / Landmark: Clinic'), findsNothing);
+    final clinic = find.text('Clinic');
+    await tester.ensureVisible(clinic);
+    await tester.pump();
+    await tester.tap(clinic);
+    await tester.pump();
+    expect(find.text(chooseNearbyLandmark), findsNothing);
+    expect(find.text('Clinic'), findsNWidgets(2));
+  });
+
+  testWidgets('quick payload keeps canonical city, barangay, and landmark', (
+    tester,
+  ) async {
+    final auth = _AuthRepositoryMock();
+    when(
+      () => auth.getNearbyLandmarks(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+      ),
+    ).thenAnswer(
+      (_) async => const Success([
+        NearbyLandmarkModel(name: 'Public Market', distanceMeters: 40),
+      ]),
+    );
+    final reports = _ReportsRepositoryMock();
+    when(
+      () => reports.getNearbyReports(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+        municipalityId: any(named: 'municipalityId'),
+      ),
+    ).thenAnswer((_) async => const []);
+    final createReport = _TestCreateReportUseCase(
+      (_) async => const Success(
+        domain_report.Report(id: 'quick-1', description: 'Blocked road'),
+      ),
+    );
+
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      authRepository: auth,
+      reportsRepository: reports,
+      createReportUseCase: createReport,
+    );
+    await tester.pump();
+    await tester.enterText(
+      find.byKey(const Key('quick-report-description')),
+      'Blocked road',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('quick-report-submit')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(createReport.callCount, 1);
+    expect(createReport.lastMunicipalityId, 'urdaneta');
+    expect(createReport.lastBarangayId, 'bactad_east');
+    expect(createReport.lastBarangay, 'Bactad East');
+    expect(createReport.lastStreetLandmark, 'Public Market');
+    if (find.text('Done').evaluate().isNotEmpty) {
+      await tester.tap(find.text('Done'));
+      await tester.pump();
+    }
   });
 
   testWidgets('GPS loading, success, and failure stay near location controls', (
