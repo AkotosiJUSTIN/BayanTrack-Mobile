@@ -45,10 +45,12 @@ class _NewReportLocationScreenState
   LatLng? _selectedPoint;
   String? _lastBarangayResolutionKey;
   int _landmarkLookupVersion = 0;
+  Timer? _landmarkLookupDebounce;
   _LocationInputMode _locationInputMode = _LocationInputMode.phone;
 
   @override
   void dispose() {
+    _landmarkLookupDebounce?.cancel();
     _mapController.dispose();
     super.dispose();
   }
@@ -251,6 +253,8 @@ class _NewReportLocationScreenState
       point.latitude,
       point.longitude,
     )) {
+      _landmarkLookupDebounce?.cancel();
+      _landmarkLookupDebounce = null;
       ref.read(newReportControllerProvider.notifier).clearLocation();
       _landmarkLookupVersion++;
       setState(() {
@@ -273,6 +277,8 @@ class _NewReportLocationScreenState
     required String locationLabel,
     bool moveCamera = true,
   }) {
+    _landmarkLookupDebounce?.cancel();
+    _landmarkLookupDebounce = null;
     final inMunicipality = municipalityContains(
       _selectedMunicipality,
       point.latitude,
@@ -290,6 +296,7 @@ class _NewReportLocationScreenState
       return;
     }
 
+    final landmarkRequestVersion = ++_landmarkLookupVersion;
     final controller = ref.read(newReportControllerProvider.notifier);
     _lastBarangayResolutionKey = null;
     controller.beginBarangayResolution();
@@ -300,6 +307,7 @@ class _NewReportLocationScreenState
     );
     controller.setCityMunicipality(_selectedMunicipality.name);
     controller.setProvince(_selectedMunicipality.province);
+    controller.beginLandmarkLookup(clearManual: true);
 
     setState(() {
       _selectedPoint = point;
@@ -307,7 +315,11 @@ class _NewReportLocationScreenState
       _error = null;
     });
 
-    _lookupNearbyLandmarks(point);
+    _landmarkLookupDebounce = Timer(nearbyLandmarkDebounceDuration, () {
+      _landmarkLookupDebounce = null;
+      if (!mounted || landmarkRequestVersion != _landmarkLookupVersion) return;
+      unawaited(_lookupNearbyLandmarks(point, landmarkRequestVersion));
+    });
 
     if (moveCamera) _moveCameraToSelection();
   }
@@ -353,10 +365,8 @@ class _NewReportLocationScreenState
     });
   }
 
-  Future<void> _lookupNearbyLandmarks(LatLng point) async {
-    final requestVersion = ++_landmarkLookupVersion;
+  Future<void> _lookupNearbyLandmarks(LatLng point, int requestVersion) async {
     final controller = ref.read(newReportControllerProvider.notifier);
-    controller.beginLandmarkLookup(clearManual: true);
     final result = await (() async {
       try {
         return await ref
@@ -728,9 +738,12 @@ class _NewReportLocationScreenState
                           ),
                         ),
                         const SizedBox(width: 6),
-                        Text(
-                          l10n.gettingLocation,
-                          style: theme.textTheme.bodySmall,
+                        Flexible(
+                          child: Text(
+                            l10n.gettingLocation,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall,
+                          ),
                         ),
                       ],
                     )

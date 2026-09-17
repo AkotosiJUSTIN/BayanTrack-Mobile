@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Password strength levels — mirrors the web's StrongPasswordInput.tsx
@@ -57,14 +58,18 @@ class PasswordStrengthIndicator extends StatelessWidget {
     };
   }
 
-  Color get _strengthColor {
+  Color _strengthColor(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return switch (_level) {
       _StrengthLevel.empty => Colors.transparent,
-      _StrengthLevel.weak => const Color(0xFFEF4444),      // red-500
-      _StrengthLevel.medium => const Color(0xFFF59E0B),    // amber-500
-      _StrengthLevel.strong => const Color(0xFF2563EB),    // blue-600
-      _StrengthLevel.veryStrong => const Color(0xFF6366F1), // indigo-500
-      _StrengthLevel.superStrong => const Color(0xFF22C55E), // green-500
+      _StrengthLevel.weak => scheme.error,
+      _StrengthLevel.medium => scheme.secondary,
+      _StrengthLevel.strong => scheme.primary,
+      _StrengthLevel.veryStrong => scheme.tertiary,
+      _StrengthLevel.superStrong =>
+        Theme.of(context).brightness == Brightness.dark
+            ? AppColors.resolvedTextDark
+            : AppColors.resolvedText,
     };
   }
 
@@ -77,8 +82,11 @@ class PasswordStrengthIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
-    final mutedColor = theme.colorScheme.onSurface.withValues(alpha: 0.4);
+    final l10n = AppLocalizations.of(context);
+    final mutedColor = theme.colorScheme.onSurfaceVariant.withValues(
+      alpha: 0.72,
+    );
+    final strengthColor = _strengthColor(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,7 +103,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
                 margin: EdgeInsets.only(right: i < 4 ? 3 : 0),
                 decoration: BoxDecoration(
                   color: isActive
-                      ? _strengthColor
+                      ? strengthColor
                       : theme.colorScheme.onSurface.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(99),
                 ),
@@ -106,7 +114,10 @@ class PasswordStrengthIndicator extends StatelessWidget {
         const SizedBox(height: 10),
 
         // ── Level label ────────────────────────────────────────────────────
-        Row(
+        Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
               '${l10n.level}: ',
@@ -122,7 +133,7 @@ class PasswordStrengthIndicator extends StatelessWidget {
                 key: ValueKey(_strengthLabel(l10n)),
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: _strengthColor,
+                  color: strengthColor,
                 ),
               ),
             ),
@@ -141,18 +152,9 @@ class PasswordStrengthIndicator extends StatelessWidget {
         const SizedBox(height: 6),
 
         // ── Requirements list ──────────────────────────────────────────────
-        _RequirementRow(
-          text: l10n.minimumCharacters,
-          isMet: _hasMinLength,
-        ),
-        _RequirementRow(
-          text: l10n.lowercaseRequirement,
-          isMet: _hasLowercase,
-        ),
-        _RequirementRow(
-          text: l10n.uppercaseRequirement,
-          isMet: _hasUppercase,
-        ),
+        _RequirementRow(text: l10n.minimumCharacters, isMet: _hasMinLength),
+        _RequirementRow(text: l10n.lowercaseRequirement, isMet: _hasLowercase),
+        _RequirementRow(text: l10n.uppercaseRequirement, isMet: _hasUppercase),
         _RequirementRow(text: l10n.numberRequirement, isMet: _hasNumbers),
         _RequirementRow(
           text: l10n.specialCharacterRequirement,
@@ -172,8 +174,12 @@ class _RequirementRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final metColor = const Color(0xFF22C55E);
-    final mutedColor = theme.colorScheme.onSurface.withValues(alpha: 0.4);
+    final metColor = theme.brightness == Brightness.dark
+        ? AppColors.resolvedTextDark
+        : AppColors.resolvedText;
+    final mutedColor = theme.colorScheme.onSurfaceVariant.withValues(
+      alpha: 0.72,
+    );
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),

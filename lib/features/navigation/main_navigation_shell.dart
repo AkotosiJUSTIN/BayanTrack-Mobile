@@ -14,7 +14,10 @@ import '../reports/presentation/new_report/new_report_photos_screen.dart';
 /// Main navigation shell with bottom nav bar and center FAB.
 /// Handles tab switching between Home, My Reports, Notifications, Profile.
 class MainNavigationShell extends ConsumerStatefulWidget {
-  const MainNavigationShell({super.key});
+  const MainNavigationShell({super.key, this.screens});
+
+  @visibleForTesting
+  final List<Widget>? screens;
 
   @override
   ConsumerState<MainNavigationShell> createState() =>
@@ -28,15 +31,16 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
   @override
   void initState() {
     super.initState();
-    debugPrint('[MainNavigationShell] Initializing...');
   }
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const MyReportsScreen(),
-    const NotificationsScreen(),
-    const ProfileScreen(),
-  ];
+  late final List<Widget> _screens =
+      widget.screens ??
+      [
+        const HomeScreen(),
+        const MyReportsScreen(),
+        const NotificationsScreen(),
+        const ProfileScreen(),
+      ];
 
   void _onTabTapped(int index) {
     setState(() {
@@ -48,7 +52,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
     if (_isNavigatingToNewReport || !mounted) return;
 
     final permissions = ref.read(userPermissionsProvider);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
     if (!permissions.hasPermission(UserPermission.createReports)) {
       showVerificationRequiredDialog(context, permissions, l10n.createReport);
@@ -118,9 +122,8 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('[MainNavigationShell] Building with index: $_currentIndex');
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     final navigationHeight =
         72.0 + ((textScale - 1).clamp(0.0, 1.0) * 20).toDouble();
@@ -149,6 +152,9 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
         notchMargin: 7,
         color: theme.colorScheme.surface,
         elevation: 2,
+        padding: EdgeInsets.zero,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: theme.colorScheme.shadow.withValues(alpha: 0.08),
         child: SafeArea(
           top: false,
           child: SizedBox(
@@ -197,7 +203,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
     final isSelected = _currentIndex == index;
     final theme = Theme.of(context);
     final color = isSelected
-        ? theme.colorScheme.primary
+        ? theme.colorScheme.onPrimaryContainer
         : theme.colorScheme.onSurfaceVariant;
 
     return Expanded(
@@ -226,7 +232,7 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? theme.colorScheme.primary.withValues(alpha: 0.12)
+                          ? theme.colorScheme.primaryContainer
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(14),
                     ),

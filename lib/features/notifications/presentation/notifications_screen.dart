@@ -282,7 +282,6 @@ class _NotificationTile extends StatelessWidget {
     final scheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context);
     final visual = _notificationVisual(theme, notification.type);
-    final isDark = theme.brightness == Brightness.dark;
     final time = notification.createdAt == null
         ? l10n.unknownTime
         : localizedRelativeTime(context, notification.createdAt, l10n);
@@ -296,22 +295,18 @@ class _NotificationTile extends StatelessWidget {
             scheme.primary.withValues(alpha: 0.07),
             scheme.surface,
           );
-    final borderColor = notification.isRead
-        ? scheme.outline.withValues(alpha: isDark ? 0.22 : 0.34)
-        : scheme.primary.withValues(alpha: 0.28);
 
     return Semantics(
       button: true,
       label: semanticLabel,
       child: Material(
         color: backgroundColor,
-        elevation: isDark ? 0 : 1,
-        shadowColor: scheme.shadow.withValues(alpha: isDark ? 0 : 0.08),
-        surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: radius,
-          side: BorderSide(color: borderColor),
+        elevation: theme.brightness == Brightness.dark ? 0 : 1,
+        shadowColor: scheme.shadow.withValues(
+          alpha: theme.brightness == Brightness.dark ? 0 : 0.08,
         ),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: radius),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
@@ -340,6 +335,15 @@ class _NotificationTile extends StatelessWidget {
                         runSpacing: 6,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
+                          if (!notification.isRead)
+                            Container(
+                              width: 7,
+                              height: 7,
+                              decoration: BoxDecoration(
+                                color: scheme.primary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
                           Text(
                             notification.title,
                             style: theme.textTheme.titleSmall?.copyWith(

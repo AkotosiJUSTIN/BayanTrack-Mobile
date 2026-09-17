@@ -160,17 +160,12 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
   Widget _buildNoCoordinatesBanner(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor.withValues(alpha: 0.92),
+        color: theme.colorScheme.surface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: (isDark ? AppColors.darkBorder : AppColors.lightBorder)
-              .withValues(alpha: 0.35),
-        ),
       ),
       child: Row(
         children: [

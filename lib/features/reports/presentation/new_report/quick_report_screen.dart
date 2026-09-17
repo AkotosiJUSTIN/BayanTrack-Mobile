@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -43,6 +44,8 @@ class QuickReportScreen extends ConsumerStatefulWidget {
     this.locationOverride,
     this.showMapTiles = true,
     this.emergencyMode = false,
+    this.pickImage,
+    this.pickMultiImage,
   });
 
   @visibleForTesting
@@ -53,6 +56,12 @@ class QuickReportScreen extends ConsumerStatefulWidget {
 
   @visibleForTesting
   final bool emergencyMode;
+
+  @visibleForTesting
+  final Future<XFile?> Function(ImageSource source)? pickImage;
+
+  @visibleForTesting
+  final Future<List<XFile>> Function()? pickMultiImage;
 
   @override
   ConsumerState<QuickReportScreen> createState() => _QuickReportScreenState();
@@ -86,6 +95,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   String? _landmarkLookupError;
   bool _landmarkLookupCompleted = false;
   int _locationResolutionVersion = 0;
+  Timer? _landmarkLookupDebounce;
   _QuickLocationInputMode _locationInputMode = _QuickLocationInputMode.phone;
 
   @override
@@ -99,6 +109,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
   @override
   void dispose() {
+    _landmarkLookupDebounce?.cancel();
     _mapController.dispose();
     _descriptionController.dispose();
     super.dispose();
@@ -169,6 +180,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   }
 
   void _setSelectedPoint(LatLng point) {
+    _landmarkLookupDebounce?.cancel();
+    _landmarkLookupDebounce = null;
     final l10n = AppLocalizations.of(context);
     if (!_contains(point)) {
       _locationResolutionVersion++;
@@ -193,7 +206,11 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
     unawaited(_resolveBarangay(point, resolutionVersion));
     if (resolveLandmark) {
-      unawaited(_lookupNearbyLandmarks(point, resolutionVersion));
+      _landmarkLookupDebounce = Timer(nearbyLandmarkDebounceDuration, () {
+        _landmarkLookupDebounce = null;
+        if (!_isCurrentResolution(point, resolutionVersion)) return;
+        unawaited(_lookupNearbyLandmarks(point, resolutionVersion));
+      });
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -518,7 +535,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       return;
     }
 
-    if (_isResolvingBarangay || _isResolvingLandmark) {
+    if (_isResolvingBarangay) {
       AppToast.warning(context, l10n.waitingIncidentLocation);
       return;
     }
@@ -621,6 +638,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     }
 
     if (!mounted) return;
+    setState(() => _isSubmitting = false);
     ref.invalidate(reportsControllerProvider);
     ref.read(myReportsRefreshProvider.notifier).increment();
 
@@ -649,7 +667,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       return;
     }
 
-    if (_isResolvingBarangay || _isResolvingLandmark) {
+    if (_isResolvingBarangay) {
       AppToast.warning(context, l10n.waitingIncidentLocation);
       return;
     }
@@ -730,7 +748,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       case _EmergencyFollowUpAction.details:
         await _addEmergencyDetails(reportId);
       case _EmergencyFollowUpAction.photos:
-        await _queuePhoto(reportId);
+        await _offerPhotoUpload(reportId);
       case _EmergencyFollowUpAction.done:
         return;
     }
@@ -789,38 +807,28 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   }
 
   Future<void> _offerPhotoUpload(String reportId) async {
-    final l10n = AppLocalizations.of(context);
-    final addPhoto = await showDialog<bool>(
+    final selected = await showDialog<List<XFile>>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.reportSubmitted),
-        content: Text(l10n.addOptionalPhoto),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(l10n.done),
-          ),
-          FilledButton.icon(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            icon: const Icon(Icons.add_a_photo_outlined),
-            label: Text(l10n.addPhoto),
-          ),
-        ],
+      builder: (_) => _QuickReportEvidenceDialog(
+        pickImage: _pickImage,
+        pickMultiImage: _pickMultiImage,
       ),
     );
-    if (addPhoto != true || !mounted) return;
+    if (!mounted || selected == null || selected.isEmpty) return;
 
-    await _queuePhoto(reportId);
+    await _queuePhotos(reportId, selected);
   }
 
-  Future<void> _queuePhoto(String reportId) async {
-    final l10n = AppLocalizations.of(context);
+  Future<XFile?> _pickImage(ImageSource source) =>
+      widget.pickImage?.call(source) ??
+      ImagePicker().pickImage(source: source, imageQuality: 75);
 
-    final picked = await ImagePicker().pickImage(
-      source: ImageSource.camera,
-      imageQuality: 75,
-    );
-    if (picked == null || !mounted) return;
+  Future<List<XFile>> _pickMultiImage() =>
+      widget.pickMultiImage?.call() ??
+      ImagePicker().pickMultiImage(imageQuality: 75);
+
+  Future<void> _queuePhotos(String reportId, List<XFile> picked) async {
+    final l10n = AppLocalizations.of(context);
     final auth = ref.read(authControllerProvider);
     final userId = auth is AuthSuccess ? auth.user?.id : null;
     if (userId == null) {
@@ -828,16 +836,31 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       return;
     }
 
+    final staged = <File>[];
+    var queueAccepted = false;
     try {
-      final staged = await stageEvidenceFile(picked);
-      if (!mounted) return;
+      for (final source in picked) {
+        staged.add(await stageEvidenceFile(source));
+      }
+      if (!mounted) {
+        await discardEvidenceDrafts(staged);
+        return;
+      }
       final queue = await ref.read(evidenceUploadQueueProvider.future);
       final intents = await queue.enqueue(
         userId: userId,
         reportId: reportId,
-        files: [staged],
+        files: staged,
       );
-      if (intents.single.state == EvidenceUploadState.missingLocalFile) {
+      if (intents.length != staged.length) {
+        await discardEvidenceDrafts(staged);
+        if (mounted) AppToast.warning(context, l10n.evidenceUploadFailed);
+        return;
+      }
+      queueAccepted = true;
+      if (intents.any(
+        (intent) => intent.state == EvidenceUploadState.missingLocalFile,
+      )) {
         if (mounted) {
           AppToast.warning(context, l10n.evidenceFileMissing);
         }
@@ -845,9 +868,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       }
       unawaited(queue.resume(userId));
       if (mounted) {
-        AppToast.success(context, l10n.evidenceUploadsPending(1));
+        AppToast.success(context, l10n.evidenceUploadsPending(picked.length));
       }
     } catch (_) {
+      if (!queueAccepted) await discardEvidenceDrafts(staged);
       if (!mounted) return;
       AppToast.warning(context, l10n.evidenceUploadFailed);
     }
@@ -868,7 +892,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
           ? l10n.tapMapIncident
           : l10n.chooseIncidentLocation;
     }
-    if (_isResolvingBarangay || _isResolvingLandmark) {
+    if (_isResolvingBarangay) {
       return l10n.waitingIncidentLocation;
     }
     if (widget.emergencyMode) {
@@ -1831,6 +1855,220 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _QuickReportEvidenceDialog extends StatefulWidget {
+  const _QuickReportEvidenceDialog({
+    required this.pickImage,
+    required this.pickMultiImage,
+  });
+
+  final Future<XFile?> Function(ImageSource source) pickImage;
+  final Future<List<XFile>> Function() pickMultiImage;
+
+  @override
+  State<_QuickReportEvidenceDialog> createState() =>
+      _QuickReportEvidenceDialogState();
+}
+
+class _QuickReportEvidenceDialogState
+    extends State<_QuickReportEvidenceDialog> {
+  final List<XFile> _selected = [];
+  bool _isPicking = false;
+  String? _error;
+
+  Future<void> _addFromCamera() async {
+    if (_isPicking) return;
+    setState(() {
+      _isPicking = true;
+      _error = null;
+    });
+    try {
+      final picked = await widget.pickImage(ImageSource.camera);
+      if (!mounted || picked == null) return;
+      setState(() => _selected.add(picked));
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _error = AppLocalizations.of(context).evidenceUploadFailed,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isPicking = false);
+    }
+  }
+
+  Future<void> _addFromGallery() async {
+    if (_isPicking) return;
+    setState(() {
+      _isPicking = true;
+      _error = null;
+    });
+    try {
+      final picked = await widget.pickMultiImage();
+      if (!mounted || picked.isEmpty) return;
+      setState(() => _selected.addAll(picked));
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _error = AppLocalizations.of(context).evidenceUploadFailed,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isPicking = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return AlertDialog(
+      title: Text(l10n.reportSubmitted),
+      content: SizedBox(
+        width: 420,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 390),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(l10n.photoEvidenceSelectionHint),
+                const SizedBox(height: 14),
+                if (_selected.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerHighest.withValues(
+                        alpha: theme.brightness == Brightness.dark
+                            ? 0.52
+                            : 0.72,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.photo_library_outlined,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(l10n.noPhotosYet)),
+                      ],
+                    ),
+                  )
+                else ...[
+                  Text(
+                    l10n.selectedPhotoCount(_selected.length),
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
+                    itemCount: _selected.length,
+                    itemBuilder: (context, index) {
+                      final photo = _selected[index];
+                      return Semantics(
+                        container: true,
+                        image: true,
+                        label: '${l10n.photos} ${index + 1}',
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.file(
+                                File(photo.path),
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => ColoredBox(
+                                  color: scheme.surfaceContainerHighest,
+                                  child: Icon(
+                                    Icons.broken_image_outlined,
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              top: 2,
+                              right: 2,
+                              child: IconButton.filledTonal(
+                                key: Key('quick-report-evidence-remove-$index'),
+                                tooltip: l10n.removePhoto,
+                                icon: const Icon(Icons.close),
+                                onPressed: () =>
+                                    setState(() => _selected.removeAt(index)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+                if (_error != null) ...[
+                  const SizedBox(height: 10),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(_error!, style: TextStyle(color: scheme.error)),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        key: const Key('quick-report-evidence-camera'),
+                        onPressed: _isPicking ? null : _addFromCamera,
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        label: Text(l10n.camera),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        key: const Key('quick-report-evidence-gallery'),
+                        onPressed: _isPicking ? null : _addFromGallery,
+                        icon: const Icon(Icons.photo_library_outlined),
+                        label: Text(l10n.gallery),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          key: const Key('quick-report-evidence-skip'),
+          onPressed: _isPicking ? null : () => Navigator.pop(context),
+          child: Text(l10n.skipPhotoEvidence),
+        ),
+        FilledButton.icon(
+          key: const Key('quick-report-upload-evidence'),
+          onPressed: _selected.isEmpty || _isPicking
+              ? null
+              : () =>
+                    Navigator.pop(context, List<XFile>.unmodifiable(_selected)),
+          icon: const Icon(Icons.cloud_upload_outlined),
+          label: Text(l10n.uploadEvidence),
+        ),
+      ],
     );
   }
 }

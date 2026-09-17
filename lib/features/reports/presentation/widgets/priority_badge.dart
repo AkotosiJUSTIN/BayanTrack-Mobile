@@ -42,7 +42,6 @@ class PriorityBadge extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.background,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colors.border, width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -108,31 +107,29 @@ class PriorityBadge extends StatelessWidget {
     BuildContext context,
     PriorityLevel level,
   ) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return switch (level) {
       PriorityLevel.critical => _PriorityColors(
         background: colorScheme.errorContainer,
-        border: colorScheme.error,
         text: colorScheme.onErrorContainer,
       ),
       PriorityLevel.high => _PriorityColors(
         background: AppColors.alertMedium.withValues(alpha: 0.16),
-        border: AppColors.alertMedium,
-        text: colorScheme.onSurface,
+        text: theme.brightness == Brightness.dark
+            ? AppColors.pendingTextDark
+            : AppColors.pendingText,
       ),
       PriorityLevel.medium => _PriorityColors(
         background: colorScheme.tertiaryContainer,
-        border: colorScheme.tertiary,
         text: colorScheme.onTertiaryContainer,
       ),
       PriorityLevel.low => _PriorityColors(
         background: colorScheme.secondaryContainer,
-        border: colorScheme.secondary,
         text: colorScheme.onSecondaryContainer,
       ),
       PriorityLevel.veryLow => _PriorityColors(
         background: colorScheme.primaryContainer,
-        border: colorScheme.primary,
         text: colorScheme.onPrimaryContainer,
       ),
     };
@@ -141,14 +138,9 @@ class PriorityBadge extends StatelessWidget {
 
 class _PriorityColors {
   final Color background;
-  final Color border;
   final Color text;
 
-  _PriorityColors({
-    required this.background,
-    required this.border,
-    required this.text,
-  });
+  _PriorityColors({required this.background, required this.text});
 }
 
 /// Priority reasons expandable widget

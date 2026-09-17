@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:bayantrack_mobile/core/constants/urdaneta_barangays.dart';
 import 'package:bayantrack_mobile/core/domain/failures.dart';
@@ -17,6 +18,7 @@ import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dar
 import 'package:bayantrack_mobile/features/reports/domain/usecases/create_report_usecase.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/new_report/quick_report_screen.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/new_report/quick_report_geo.dart';
+import 'package:bayantrack_mobile/features/reports/presentation/new_report/report_flow_widgets.dart';
 import 'package:bayantrack_mobile/features/reports/reports_di.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +26,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart' show Override;
@@ -128,6 +131,8 @@ Future<void> _pumpQuickReport(
   ReportsRepository? reportsRepository,
   AuthRepository? authRepository,
   CreateReportUseCase? createReportUseCase,
+  Future<XFile?> Function(ImageSource source)? pickImage,
+  Future<List<XFile>> Function()? pickMultiImage,
   NavigatorObserver? navigatorObserver,
   bool pushFromRoot = false,
 }) async {
@@ -141,6 +146,8 @@ Future<void> _pumpQuickReport(
     key: UniqueKey(),
     locationOverride: locate,
     showMapTiles: false,
+    pickImage: pickImage,
+    pickMultiImage: pickMultiImage,
   );
   final auth = authRepository ?? _AuthRepositoryMock();
   if (authRepository == null) {
@@ -198,6 +205,7 @@ Future<void> _pumpQuickReport(
   }
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 1));
+  await tester.pump(nearbyLandmarkDebounceDuration);
 }
 
 void main() {
@@ -305,6 +313,54 @@ void main() {
     expect(chips.every((chip) => chip.shape is StadiumBorder), isTrue);
   });
 
+  testWidgets('selected landmark icon uses the orange accent in light mode', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: const Scaffold(
+          body: ReportLandmarkSuggestionChips(
+            suggestions: ['Clinic', 'Market'],
+            selectedLandmark: 'Market',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final chips = tester.widgetList<FilterChip>(find.byType(FilterChip));
+    final selected = chips.singleWhere((chip) => chip.selected);
+    expect(
+      (selected.avatar! as Icon).color,
+      AppTheme.light.colorScheme.secondary,
+    );
+  });
+
+  testWidgets('selected landmark icon uses the orange accent in dark mode', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark,
+        home: const Scaffold(
+          body: ReportLandmarkSuggestionChips(
+            suggestions: ['Clinic', 'Market'],
+            selectedLandmark: 'Market',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final chips = tester.widgetList<FilterChip>(find.byType(FilterChip));
+    final selected = chips.singleWhere((chip) => chip.selected);
+    expect(
+      (selected.avatar! as Icon).color,
+      AppTheme.dark.colorScheme.secondary,
+    );
+  });
+
   testWidgets('dark outside-city callout stays soft and borderless', (
     tester,
   ) async {
@@ -368,6 +424,7 @@ void main() {
       const LatLng(15.9763, 120.5776),
     );
     await tester.pump();
+    await tester.pump(nearbyLandmarkDebounceDuration);
     expect(find.text('Public Market'), findsNothing);
     expect(find.text('Bactad East'), findsNothing);
     expect(find.text('Bayaoas'), findsAtLeastNWidgets(1));
@@ -379,6 +436,106 @@ void main() {
     await tester.pump();
     expect(find.text('New Market'), findsOneWidget);
     expect(landmarkRequests.length, 2);
+  });
+
+  testWidgets('rapid manual pins debounce requests and ignore stale results', (
+    tester,
+  ) async {
+    final auth = _AuthRepositoryMock();
+    final requests = <LatLng>[];
+    final firstResponse = Completer<Result<List<NearbyLandmarkModel>>>();
+    when(
+      () => auth.getNearbyLandmarks(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+      ),
+    ).thenAnswer((invocation) async {
+      requests.add(
+        LatLng(
+          invocation.namedArguments[#latitude] as double,
+          invocation.namedArguments[#longitude] as double,
+        ),
+      );
+      if (requests.length == 1) return firstResponse.future;
+      return const Success([
+        NearbyLandmarkModel(name: 'Latest Market', distanceMeters: 40),
+      ]);
+    });
+
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      authRepository: auth,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Manual Pin'));
+    await tester.pump();
+
+    final onMapTap = tester
+        .widget<FlutterMap>(find.byType(FlutterMap))
+        .options
+        .onTap!;
+    onMapTap(
+      const TapPosition(Offset.zero, Offset.zero),
+      const LatLng(15.9763, 120.5776),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+    onMapTap(
+      const TapPosition(Offset.zero, Offset.zero),
+      const LatLng(15.9530, 120.5772),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(requests.length, 2);
+    expect(requests.first.latitude, inside.latitude);
+    expect(requests.first.longitude, inside.longitude);
+    expect(requests.last, const LatLng(15.9530, 120.5772));
+    expect(find.text('Latest Market'), findsOneWidget);
+
+    firstResponse.complete(
+      const Success([
+        NearbyLandmarkModel(name: 'Stale Market', distanceMeters: 40),
+      ]),
+    );
+    await tester.pump();
+    expect(find.text('Stale Market'), findsNothing);
+    expect(find.text('Latest Market'), findsOneWidget);
+  });
+
+  testWidgets('landmark loading never disables quick report submission', (
+    tester,
+  ) async {
+    final auth = _AuthRepositoryMock();
+    final pending = Completer<Result<List<NearbyLandmarkModel>>>();
+    when(
+      () => auth.getNearbyLandmarks(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+      ),
+    ).thenAnswer((_) => pending.future);
+
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      authRepository: auth,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Getting location'), findsAtLeastNWidgets(1));
+    await tester.enterText(
+      find.byKey(const Key('quick-report-description')),
+      'Blocked road',
+    );
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<ElevatedButton>(find.byKey(const Key('quick-report-submit')))
+          .onPressed,
+      isNotNull,
+    );
+
+    pending.complete(const Success([]));
+    await tester.pump();
   });
 
   testWidgets('landmark lookup failure is distinct from no nearby landmark', (
@@ -507,10 +664,121 @@ void main() {
     expect(createReport.lastBarangayId, 'bactad_east');
     expect(createReport.lastBarangay, 'Bactad East');
     expect(createReport.lastStreetLandmark, 'Public Market');
-    if (find.text('Done').evaluate().isNotEmpty) {
-      await tester.tap(find.text('Done'));
+    if (find
+        .byKey(const Key('quick-report-evidence-skip'))
+        .evaluate()
+        .isNotEmpty) {
+      await tester.tap(find.byKey(const Key('quick-report-evidence-skip')));
       await tester.pump();
     }
+  });
+
+  testWidgets('post-report evidence reviews single and multiple photos', (
+    tester,
+  ) async {
+    final reports = _ReportsRepositoryMock();
+    when(
+      () => reports.getNearbyReports(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+        municipalityId: any(named: 'municipalityId'),
+      ),
+    ).thenAnswer((_) async => const []);
+    final createReport = _TestCreateReportUseCase(
+      (_) async => const Success(
+        domain_report.Report(id: 'quick-evidence', description: 'Blocked road'),
+      ),
+    );
+
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      reportsRepository: reports,
+      createReportUseCase: createReport,
+      pickImage: (source) async {
+        expect(source, ImageSource.camera);
+        return XFile.fromData(
+          Uint8List.fromList(List<int>.filled(32, 1)),
+          name: 'camera.jpg',
+        );
+      },
+      pickMultiImage: () async => [
+        XFile.fromData(
+          Uint8List.fromList(List<int>.filled(32, 2)),
+          name: 'gallery-one.jpg',
+        ),
+        XFile.fromData(
+          Uint8List.fromList(List<int>.filled(32, 3)),
+          name: 'gallery-two.jpg',
+        ),
+      ],
+    );
+    await tester.enterText(
+      find.byKey(const Key('quick-report-description')),
+      'Blocked road',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('quick-report-submit')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Submitting Quick Report…'), findsNothing);
+
+    expect(
+      find.byKey(const Key('quick-report-evidence-camera')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('quick-report-evidence-gallery')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('quick-report-upload-evidence')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('quick-report-evidence-camera')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('quick-report-evidence-gallery')));
+    await tester.pump();
+    expect(find.text('3 photo(s) selected'), findsOneWidget);
+    expect(
+      find.byKey(const Key('quick-report-evidence-remove-0')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('quick-report-evidence-remove-1')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('quick-report-evidence-remove-2')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(const Key('quick-report-evidence-remove-1')));
+    await tester.pump();
+    expect(find.text('2 photo(s) selected'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(const Key('quick-report-upload-evidence')),
+          )
+          .onPressed,
+      isNotNull,
+    );
+
+    await tester.tap(find.byKey(const Key('quick-report-upload-evidence')));
+    await tester.pump();
+    expect(find.byKey(const Key('quick-report-upload-evidence')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('quick-report-submit')));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Skip for now'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('quick-report-evidence-camera')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('quick-report-evidence-skip')));
+    await tester.pump();
   });
 
   testWidgets('GPS loading, success, and failure stay near location controls', (
@@ -793,7 +1061,7 @@ void main() {
     expect(createReport.callCount, 1);
     expect(createReport.lastIsQuickReport, isTrue);
 
-    await tester.tap(find.text('Done'));
+    await tester.tap(find.byKey(const Key('quick-report-evidence-skip')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 

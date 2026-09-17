@@ -31,7 +31,7 @@ class ProfileScreen extends ConsumerWidget {
     final profileAsync = ref.watch(profileControllerProvider);
     final statsAsync = ref.watch(profileStatsControllerProvider);
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.profile)),
@@ -130,7 +130,7 @@ class ProfileScreen extends ConsumerWidget {
     UserProfile profile,
     ThemeData theme,
   ) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
     // Get initials, handling empty names
     String getInitials() {
@@ -270,7 +270,7 @@ class ProfileScreen extends ConsumerWidget {
     WidgetRef ref,
     ThemeData theme,
   ) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       child: Column(
@@ -293,7 +293,7 @@ class ProfileScreen extends ConsumerWidget {
     Map<String, int> stats,
     ThemeData theme,
   ) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
     return CivicSurface(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -371,40 +371,34 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildAccountMenu(BuildContext context) {
     return Consumer(
       builder: (context, ref, _) {
-        final l10n = AppLocalizations.of(context)!;
-        return CivicSurface(
-          child: Column(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.person_outline),
-                title: Text(l10n.editProfile),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () async {
-                  await Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const EditProfileScreen(),
-                    ),
-                  );
-                  // Refresh profile data when returning from edit screen
-                  // so avatar and name changes appear immediately.
-                  ref.invalidate(profileControllerProvider);
-                },
-              ),
-              const Divider(height: 1, indent: 72),
-              ListTile(
-                leading: const Icon(Icons.lock_outline),
-                title: Text(l10n.changePassword),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const ChangePasswordScreen(),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
+        final l10n = AppLocalizations.of(context);
+        return CivicSettingsGroup(
+          children: [
+            CivicSettingsRow(
+              icon: Icons.person_outline,
+              title: l10n.editProfile,
+              onTap: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                );
+                // Refresh profile data when returning from edit screen
+                // so avatar and name changes appear immediately.
+                ref.invalidate(profileControllerProvider);
+              },
+            ),
+            CivicSettingsRow(
+              icon: Icons.lock_outline,
+              title: l10n.changePassword,
+              showDivider: false,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ChangePasswordScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
         );
       },
     );
@@ -415,84 +409,62 @@ class ProfileScreen extends ConsumerWidget {
       builder: (context, ref, _) {
         final themeMode = ref.watch(themeModeProvider);
         final locale = ref.watch(appLocaleProvider);
-        final l10n = AppLocalizations.of(context)!;
-        return CivicSurface(
-          child: Column(
-            children: [
-              ListTile(
-                leading: const Icon(Icons.notifications_outlined),
-                title: Text(l10n.notificationSettings),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const NotificationSettingsScreen(),
-                    ),
-                  );
-                },
-              ),
-              const Divider(height: 1),
-              ListTile(
-                leading: Icon(
-                  themeMode == ThemeMode.dark
-                      ? Icons.dark_mode
-                      : themeMode == ThemeMode.light
-                      ? Icons.light_mode
-                      : Icons.brightness_auto,
-                ),
-                title: Text(l10n.theme),
-                subtitle: Text(
-                  themeMode == ThemeMode.dark
-                      ? l10n.darkMode
-                      : themeMode == ThemeMode.light
-                      ? l10n.lightMode
-                      : l10n.systemDefault,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+        final l10n = AppLocalizations.of(context);
+        return CivicSettingsGroup(
+          children: [
+            CivicSettingsRow(
+              icon: Icons.notifications_outlined,
+              title: l10n.notificationSettings,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationSettingsScreen(),
                   ),
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => ref.read(themeModeProvider.notifier).toggleTheme(),
-              ),
-              const Divider(height: 1),
-              ListTile(
-                key: const ValueKey('profile-language'),
-                leading: const Icon(Icons.translate),
-                title: Text(l10n.language),
-                subtitle: Text(
-                  locale.languageCode == 'fil' ? l10n.filipino : l10n.english,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _showLanguagePicker(context, ref, locale),
-              ),
-            ],
-          ),
+                );
+              },
+            ),
+            CivicSettingsRow(
+              icon: themeMode == ThemeMode.dark
+                  ? Icons.dark_mode
+                  : themeMode == ThemeMode.light
+                  ? Icons.light_mode
+                  : Icons.brightness_auto,
+              title: l10n.theme,
+              subtitle: themeMode == ThemeMode.dark
+                  ? l10n.darkMode
+                  : themeMode == ThemeMode.light
+                  ? l10n.lightMode
+                  : l10n.systemDefault,
+              onTap: () => ref.read(themeModeProvider.notifier).toggleTheme(),
+            ),
+            CivicSettingsRow(
+              key: const ValueKey('profile-language'),
+              icon: Icons.translate,
+              title: l10n.language,
+              subtitle: locale.languageCode == 'fil'
+                  ? l10n.filipino
+                  : l10n.english,
+              showDivider: false,
+              onTap: () => _showLanguagePicker(context, ref, locale),
+            ),
+          ],
         );
       },
     );
   }
 
   Widget _buildLogoutTile(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
-    return CivicSurface(
-      child: ListTile(
-        minVerticalPadding: 12,
-        leading: Icon(Icons.logout, color: theme.colorScheme.error),
-        title: Text(
-          l10n.logout,
-          style: TextStyle(
-            color: theme.colorScheme.error,
-            fontWeight: FontWeight.w700,
-          ),
+    final l10n = AppLocalizations.of(context);
+    return CivicSettingsGroup(
+      children: [
+        CivicSettingsRow(
+          icon: Icons.logout,
+          title: l10n.logout,
+          destructive: true,
+          showDivider: false,
+          onTap: () => _confirmLogout(context, ref),
         ),
-        onTap: () => _confirmLogout(context, ref),
-      ),
+      ],
     );
   }
 
@@ -504,10 +476,9 @@ class ProfileScreen extends ConsumerWidget {
     final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
     final statusColor = _getKycStatusColor(theme, kycStatus?.status);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
-    return Card(
-      margin: EdgeInsets.zero,
+    return CivicSurface(
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () {
@@ -566,10 +537,6 @@ class ProfileScreen extends ConsumerWidget {
                 FilledButton.icon(
                   onPressed: () =>
                       _navigateToVerificationAction(context, ref, permissions),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                  ),
                   icon: const Icon(Icons.verified_user_outlined),
                   label: Text(
                     localizedVerificationActionLabel(permissions, l10n),
@@ -663,7 +630,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -676,7 +643,10 @@ class ProfileScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.logout, style: const TextStyle(color: Colors.red)),
+            child: Text(
+              l10n.logout,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           ),
         ],
       ),
@@ -699,35 +669,31 @@ class ProfileScreen extends ConsumerWidget {
     WidgetRef ref,
     Locale currentLocale,
   ) async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            RadioListTile<Locale>(
-              title: Text(l10n.english),
-              value: const Locale('en'),
-              groupValue: currentLocale,
-              onChanged: (locale) async {
-                if (locale == null) return;
-                await ref.read(appLocaleProvider.notifier).setLocale(locale);
-                if (sheetContext.mounted) Navigator.pop(sheetContext);
-              },
-            ),
-            RadioListTile<Locale>(
-              title: Text(l10n.filipino),
-              value: const Locale('fil'),
-              groupValue: currentLocale,
-              onChanged: (locale) async {
-                if (locale == null) return;
-                await ref.read(appLocaleProvider.notifier).setLocale(locale);
-                if (sheetContext.mounted) Navigator.pop(sheetContext);
-              },
-            ),
-          ],
+        child: RadioGroup<Locale>(
+          groupValue: currentLocale,
+          onChanged: (locale) async {
+            if (locale == null) return;
+            await ref.read(appLocaleProvider.notifier).setLocale(locale);
+            if (sheetContext.mounted) Navigator.pop(sheetContext);
+          },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<Locale>(
+                title: Text(l10n.english),
+                value: const Locale('en'),
+              ),
+              RadioListTile<Locale>(
+                title: Text(l10n.filipino),
+                value: const Locale('fil'),
+              ),
+            ],
+          ),
         ),
       ),
     );

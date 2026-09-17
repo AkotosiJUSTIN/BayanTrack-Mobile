@@ -43,7 +43,7 @@ class KycStatusScreen extends ConsumerWidget {
             ],
           ),
         ),
-        error: (_, __) => _buildErrorState(context, ref),
+        error: (_, _) => _buildErrorState(context, ref),
       ),
     );
   }
@@ -51,7 +51,7 @@ class KycStatusScreen extends ConsumerWidget {
   Widget _buildNoKycView(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
@@ -85,9 +85,6 @@ class KycStatusScreen extends ConsumerWidget {
                   },
                   icon: const Icon(Icons.assignment_outlined),
                   label: Text(l10n.verifyIdentity),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                  ),
                 ),
               ),
             ],
@@ -110,7 +107,7 @@ class KycStatusScreen extends ConsumerWidget {
       onRefresh: () => ref.read(kycStatusControllerProvider.notifier).refresh(),
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640),
@@ -121,11 +118,11 @@ class KycStatusScreen extends ConsumerWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: statusColor.withValues(alpha: 0.18),
+                    color: Color.alphaBlend(
+                      statusColor.withValues(alpha: 0.08),
+                      theme.colorScheme.surface,
                     ),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,51 +220,51 @@ class KycStatusScreen extends ConsumerWidget {
                     title: l10n.submittedInformation,
                   ),
                   const SizedBox(height: 8),
-                  Container(
+                  SizedBox(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: theme.colorScheme.outline.withValues(
-                          alpha: 0.28,
+                    child: Material(
+                      color: theme.colorScheme.surfaceContainerLow,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (kycStatus.computedFullName.trim().isNotEmpty)
+                              _buildInfoRow(
+                                l10n.fullName,
+                                kycStatus.computedFullName,
+                                context,
+                              ),
+                            if (kycStatus.idType != null)
+                              _buildInfoRow(
+                                l10n.idType,
+                                _idTypeLabel(kycStatus.idType!, l10n),
+                                context,
+                              ),
+                            if (kycStatus.idNumber != null)
+                              _buildInfoRow(
+                                l10n.idNumber,
+                                kycStatus.idNumber!,
+                                context,
+                              ),
+                            if (kycStatus.dateOfBirth != null)
+                              _buildInfoRow(
+                                l10n.dateOfBirth,
+                                _formatDateTime(kycStatus.dateOfBirth!),
+                                context,
+                              ),
+                            if (kycStatus.resubmissionCount > 0)
+                              _buildInfoRow(
+                                l10n.resubmissions,
+                                kycStatus.resubmissionCount.toString(),
+                                context,
+                              ),
+                          ],
                         ),
                       ),
-                    ),
-                    child: Column(
-                      children: [
-                        if (kycStatus.computedFullName.trim().isNotEmpty)
-                          _buildInfoRow(
-                            l10n.fullName,
-                            kycStatus.computedFullName,
-                            context,
-                          ),
-                        if (kycStatus.idType != null)
-                          _buildInfoRow(
-                            l10n.idType,
-                            _idTypeLabel(kycStatus.idType!, l10n),
-                            context,
-                          ),
-                        if (kycStatus.idNumber != null)
-                          _buildInfoRow(
-                            l10n.idNumber,
-                            kycStatus.idNumber!,
-                            context,
-                          ),
-                        if (kycStatus.dateOfBirth != null)
-                          _buildInfoRow(
-                            l10n.dateOfBirth,
-                            _formatDateTime(kycStatus.dateOfBirth!),
-                            context,
-                          ),
-                        if (kycStatus.resubmissionCount > 0)
-                          _buildInfoRow(
-                            l10n.resubmissions,
-                            kycStatus.resubmissionCount.toString(),
-                            context,
-                          ),
-                      ],
                     ),
                   ),
                 ],
@@ -320,9 +317,6 @@ class KycStatusScreen extends ConsumerWidget {
                     ref.read(kycStatusControllerProvider.notifier).refresh(),
                 icon: const Icon(Icons.refresh),
                 label: Text(l10n.retry),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52),
-                ),
               ),
             ],
           ),
@@ -377,9 +371,6 @@ class KycStatusScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.primaryContainer.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: 0.18),
-        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -435,7 +426,6 @@ class KycStatusScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -516,7 +506,6 @@ class KycStatusScreen extends ConsumerWidget {
                     : l10n.resubmitDocuments
               : l10n.verifyIdentity,
         ),
-        style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
       ),
     );
   }
@@ -524,7 +513,7 @@ class KycStatusScreen extends ConsumerWidget {
   Widget _buildInfoRow(String label, String value, BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 11),
+      padding: const EdgeInsets.symmetric(vertical: 9),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

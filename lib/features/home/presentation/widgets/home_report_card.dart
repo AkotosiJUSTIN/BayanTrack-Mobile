@@ -38,151 +38,157 @@ class HomeReportCard extends StatelessWidget {
     return Semantics(
       button: onTap != null,
       label: '$title, $statusLabel',
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildLeading(context, title),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 6,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              Text(
-                                localizedReportCategory(
-                                  report.category,
-                                  l10n,
-                                  fallback: report.categoryDisplay,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: CivicSurface(
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLeading(context, title),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 6,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                Text(
+                                  localizedReportCategory(
+                                    report.category,
+                                    l10n,
+                                    fallback: report.categoryDisplay,
+                                  ),
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.w700,
+                                CivicStatusChip(
+                                  label: statusLabel,
+                                  color: _statusColor(context),
+                                  icon: _statusIcon,
                                 ),
-                              ),
-                              CivicStatusChip(
-                                label: statusLabel,
-                                color: _statusColor(context),
-                                icon: _statusIcon,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 7),
-                          Text(
-                            title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
+                              ],
                             ),
+                            const SizedBox(height: 7),
+                            Text(
+                              title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (onTap != null) ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.chevron_right,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (report.displayPriorityLevel != null) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        PriorityBadge(
+                          priorityLevel: report.displayPriorityLevel,
+                          fontSize: 11,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                        ),
+                        Text(
+                          report.priorityIsAdvisory
+                              ? l10n.aiSuggestion
+                              : l10n.queuePriority,
+                          style: theme.textTheme.labelSmall,
+                        ),
+                        if (report.linkedReportCount > 1 &&
+                            report.isIncidentRepresentative)
+                          Text(
+                            l10n.linkedReports(report.linkedReportCount),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  _buildMetaRow(
+                    context,
+                    icon: Icons.location_on_outlined,
+                    value: _locationLabel(l10n),
+                    includeTime: true,
+                  ),
+                  if (_departmentLabel != null) ...[
+                    const SizedBox(height: 6),
+                    _buildMetaRow(
+                      context,
+                      icon: Icons.account_balance_outlined,
+                      value: _departmentLabel!,
+                      includeTime: false,
+                    ),
+                  ],
+                  if (needsReview) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _statusColor(context).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.rate_review_outlined,
+                            size: 18,
+                            color: _statusColor(context),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l10n.awaitingStaffConfirmation,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: _statusColor(context),
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.chevron_right,
+                            size: 20,
+                            color: _statusColor(context),
                           ),
                         ],
                       ),
                     ),
                   ],
-                ),
-                if (report.displayPriorityLevel != null) ...[
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      PriorityBadge(
-                        priorityLevel: report.displayPriorityLevel,
-                        fontSize: 11,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 5,
-                        ),
-                      ),
-                      Text(
-                        report.priorityIsAdvisory
-                            ? l10n.aiSuggestion
-                            : l10n.queuePriority,
-                        style: theme.textTheme.labelSmall,
-                      ),
-                      if (report.linkedReportCount > 1 &&
-                          report.isIncidentRepresentative)
-                        Text(
-                          l10n.linkedReports(report.linkedReportCount),
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                    ],
-                  ),
                 ],
-                const SizedBox(height: 12),
-                _buildMetaRow(
-                  context,
-                  icon: Icons.location_on_outlined,
-                  value: _locationLabel(l10n),
-                  includeTime: true,
-                ),
-                if (_departmentLabel != null) ...[
-                  const SizedBox(height: 6),
-                  _buildMetaRow(
-                    context,
-                    icon: Icons.account_balance_outlined,
-                    value: _departmentLabel!,
-                    includeTime: false,
-                  ),
-                ],
-                if (needsReview) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 9,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _statusColor(context).withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: _statusColor(context).withValues(alpha: 0.18),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.rate_review_outlined,
-                          size: 18,
-                          color: _statusColor(context),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            l10n.awaitingStaffConfirmation,
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: _statusColor(context),
-                            ),
-                          ),
-                        ),
-                        Icon(
-                          Icons.chevron_right,
-                          size: 20,
-                          color: _statusColor(context),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
+              ),
             ),
           ),
         ),

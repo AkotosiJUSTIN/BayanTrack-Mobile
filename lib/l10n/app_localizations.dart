@@ -974,6 +974,30 @@ abstract class AppLocalizations {
   /// **'Add an optional photo as evidence?'**
   String get addOptionalPhoto;
 
+  /// No description provided for @photoEvidenceSelectionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose one or more photos to attach to this report.'**
+  String get photoEvidenceSelectionHint;
+
+  /// No description provided for @selectedPhotoCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} photo(s) selected'**
+  String selectedPhotoCount(int count);
+
+  /// No description provided for @uploadEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload evidence'**
+  String get uploadEvidence;
+
+  /// No description provided for @skipPhotoEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip for now'**
+  String get skipPhotoEvidence;
+
   /// No description provided for @reviewMine.
   ///
   /// In en, this message translates to:

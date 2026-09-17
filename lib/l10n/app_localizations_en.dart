@@ -471,6 +471,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addOptionalPhoto => 'Add an optional photo as evidence?';
 
   @override
+  String get photoEvidenceSelectionHint =>
+      'Choose one or more photos to attach to this report.';
+
+  @override
+  String selectedPhotoCount(int count) {
+    return '$count photo(s) selected';
+  }
+
+  @override
+  String get uploadEvidence => 'Upload evidence';
+
+  @override
+  String get skipPhotoEvidence => 'Skip for now';
+
+  @override
   String get reviewMine => 'Review mine';
 
   @override

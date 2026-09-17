@@ -476,6 +476,21 @@ class AppLocalizationsFil extends AppLocalizations {
       'Magdagdag ng opsyonal na larawan bilang ebidensya?';
 
   @override
+  String get photoEvidenceSelectionHint =>
+      'Pumili ng isa o higit pang larawan na ikakabit sa ulat na ito.';
+
+  @override
+  String selectedPhotoCount(int count) {
+    return '$count larawan ang napili';
+  }
+
+  @override
+  String get uploadEvidence => 'I-upload ang ebidensya';
+
+  @override
+  String get skipPhotoEvidence => 'Laktawan muna';
+
+  @override
   String get reviewMine => 'Suriin ang akin';
 
   @override

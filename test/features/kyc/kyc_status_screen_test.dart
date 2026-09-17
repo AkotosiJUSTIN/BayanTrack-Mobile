@@ -55,7 +55,10 @@ void main() {
       locale: const Locale('fil'),
     );
 
-    expect(find.text('Mga Tuntunin at Kundisyon at Patakaran sa Privacy'), findsOneWidget);
+    expect(
+      find.text('Mga Tuntunin at Kundisyon at Patakaran sa Privacy'),
+      findsOneWidget,
+    );
     expect(find.text('Wala pang naisumiteng beripikasyon'), findsOneWidget);
     expect(find.text('I-verify ang Pagkakakilanlan'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -64,16 +67,40 @@ void main() {
   testWidgets(
     'does not show blank submitted information for an unverified user',
     (tester) async {
+      await _pumpStatus(
+        tester,
+        theme: AppTheme.light,
+        status: const KycStatusEntity(status: KycVerificationStatus.unverified),
+      );
+
+      expect(find.text('No verification submitted yet'), findsOneWidget);
+      expect(find.text('Submitted Information'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('submitted information labels share one scan edge', (
+    tester,
+  ) async {
     await _pumpStatus(
       tester,
-      theme: AppTheme.light,
-      status: const KycStatusEntity(
-        status: KycVerificationStatus.unverified,
+      theme: AppTheme.dark,
+      status: KycStatusEntity(
+        status: KycVerificationStatus.pending,
+        firstName: 'Henry',
+        lastName: 'Citizen',
+        idType: IdType.nationalId,
+        idNumber: '123456789',
+        dateOfBirth: DateTime(1990, 1, 9),
       ),
     );
 
-    expect(find.text('No verification submitted yet'), findsOneWidget);
-    expect(find.text('Submitted Information'), findsNothing);
-    expect(tester.takeException(), isNull);
+    final scrollable = tester.state<ScrollableState>(find.byType(Scrollable));
+    scrollable.position.jumpTo(scrollable.position.maxScrollExtent);
+    await tester.pump();
+
+    final fullNameX = tester.getTopLeft(find.text('Full Name')).dx;
+    final idTypeX = tester.getTopLeft(find.text('ID Type')).dx;
+    expect((fullNameX - idTypeX).abs(), lessThan(1));
   });
 }

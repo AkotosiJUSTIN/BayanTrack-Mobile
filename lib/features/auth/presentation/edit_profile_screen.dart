@@ -86,12 +86,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: Text(AppLocalizations.of(context)!.chooseFromGallery),
+              title: Text(AppLocalizations.of(context).chooseFromGallery),
               onTap: () => Navigator.of(context).pop(ImageSource.gallery),
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: Text(AppLocalizations.of(context)!.takePhoto),
+              title: Text(AppLocalizations.of(context).takePhoto),
               onTap: () => Navigator.of(context).pop(ImageSource.camera),
             ),
           ],
@@ -114,7 +114,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (file.lengthSync() > 5 * 1024 * 1024) {
       await _deleteFile(file);
       if (mounted) {
-        AppToast.error(context, AppLocalizations.of(context)!.imageTooLarge);
+        AppToast.error(context, AppLocalizations.of(context).imageTooLarge);
       }
       return;
     }
@@ -152,13 +152,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           );
       await _deleteTemporaryAvatar();
       if (!mounted) return;
-      AppToast.success(context, AppLocalizations.of(context)!.profilePictureUpdated);
+      AppToast.success(
+        context,
+        AppLocalizations.of(context).profilePictureUpdated,
+      );
     } catch (_) {
       if (!mounted) return;
-      AppToast.error(
-        context,
-        AppLocalizations.of(context)!.avatarUploadFailed,
-      );
+      AppToast.error(context, AppLocalizations.of(context).avatarUploadFailed);
     } finally {
       if (mounted) setState(() => _avatarOperation = null);
     }
@@ -170,10 +170,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     try {
       await ref.read(profileControllerProvider.notifier).removeAvatar();
       await _deleteTemporaryAvatar();
-      if (mounted) AppToast.success(context, AppLocalizations.of(context)!.profilePictureRemoved);
+      if (mounted) {
+        AppToast.success(
+          context,
+          AppLocalizations.of(context).profilePictureRemoved,
+        );
+      }
     } catch (_) {
       if (mounted) {
-        AppToast.error(context, AppLocalizations.of(context)!.removePictureFailed);
+        AppToast.error(
+          context,
+          AppLocalizations.of(context).removePictureFailed,
+        );
       }
     } finally {
       if (mounted) setState(() => _avatarOperation = null);
@@ -226,14 +234,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           );
       if (!mounted) return;
       _hasChanges = false;
-      AppToast.success(context, AppLocalizations.of(context)!.profileUpdated);
+      AppToast.success(context, AppLocalizations.of(context).profileUpdated);
       Navigator.pop(context);
     } catch (_) {
       if (mounted) {
-        AppToast.error(
-          context,
-          AppLocalizations.of(context)!.saveProfileFailed,
-        );
+        AppToast.error(context, AppLocalizations.of(context).saveProfileFailed);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -245,16 +250,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(AppLocalizations.of(context)!.discardChanges),
-            content: Text(AppLocalizations.of(context)!.unsavedProfileChanges),
+            title: Text(AppLocalizations.of(context).discardChanges),
+            content: Text(AppLocalizations.of(context).unsavedProfileChanges),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text(AppLocalizations.of(context)!.keepEditing),
+                child: Text(AppLocalizations.of(context).keepEditing),
               ),
               FilledButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: Text(AppLocalizations.of(context)!.discard),
+                child: Text(AppLocalizations.of(context).discard),
               ),
             ],
           ),
@@ -285,7 +290,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget build(BuildContext context) {
     final profileState = ref.watch(profileControllerProvider);
     final profile = profileState.value;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     if (profile != null) _seedForm(profile);
 
     return PopScope(
@@ -329,9 +334,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 )
               : SingleChildScrollView(
                   padding: EdgeInsets.fromLTRB(
+                    20,
                     16,
-                    16,
-                    16,
+                    20,
                     24 + MediaQuery.viewInsetsOf(context).bottom,
                   ),
                   child: Form(
@@ -374,9 +379,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _lastNameController,
-                          decoration: InputDecoration(
-                            labelText: l10n.lastName,
-                          ),
+                          decoration: InputDecoration(labelText: l10n.lastName),
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.familyName],
                           inputFormatters: [
@@ -397,8 +400,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           decoration: InputDecoration(
                             labelText: l10n.phoneNumber,
                             prefixText: '+63 ',
-                            helperText:
-                                l10n.phoneHelper,
+                            helperText: l10n.phoneHelper,
                           ),
                           keyboardType: TextInputType.phone,
                           textInputAction: TextInputAction.done,
@@ -467,7 +469,7 @@ class _AvatarEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final name = '${profile.firstName} ${profile.lastName}'.trim();
     final remoteAvatar = profile.avatarUrl;
     final image = selectedImageBytes != null
@@ -484,7 +486,9 @@ class _AvatarEditor extends StatelessWidget {
         : 'U';
 
     return Semantics(
-      label: name.isEmpty ? l10n.profilePicture : '$name ${l10n.profilePicture}',
+      label: name.isEmpty
+          ? l10n.profilePicture
+          : '$name ${l10n.profilePicture}',
       image: true,
       child: Column(
         children: [
@@ -544,6 +548,9 @@ class _AvatarEditor extends StatelessWidget {
               if (image != null)
                 TextButton.icon(
                   onPressed: isBusy ? null : onRemove,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  ),
                   icon: const Icon(Icons.delete_outline),
                   label: Text(l10n.remove),
                 ),

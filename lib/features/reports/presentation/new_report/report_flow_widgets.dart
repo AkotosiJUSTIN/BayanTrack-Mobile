@@ -102,7 +102,7 @@ class ReportLandmarkSuggestionChips extends StatelessWidget {
                 Icons.place_outlined,
                 size: 17,
                 color: suggestion == selectedLandmark
-                    ? scheme.primary
+                    ? scheme.secondary
                     : scheme.onSurfaceVariant,
               ),
               label: Text(suggestion),

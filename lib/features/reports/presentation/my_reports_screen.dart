@@ -197,7 +197,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
             SliverToBoxAdapter(
               child: CivicSectionHeading(title: l10n.filterByStatus),
             ),
-            SliverToBoxAdapter(child: _buildFilters(theme, l10n)),
+            SliverToBoxAdapter(child: _buildFilters(l10n)),
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
             _buildSliverContent(theme, l10n),
           ],
@@ -272,8 +272,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     );
   }
 
-  Widget _buildFilters(ThemeData theme, AppLocalizations l10n) {
-    final isDark = theme.brightness == Brightness.dark;
+  Widget _buildFilters(AppLocalizations l10n) {
     return SizedBox(
       height: 48,
       child: ListView.separated(
@@ -283,33 +282,13 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final selected = _selectedFilter == index;
-          return Semantics(
-            button: true,
-            selected: selected,
+          return CivicFilterChip(
             label: _filterLabel(_filters[index], l10n),
-            child: ChoiceChip(
-              selected: selected,
-              label: Text(_filterLabel(_filters[index], l10n)),
-              selectedColor: theme.colorScheme.primary,
-              backgroundColor: isDark
-                  ? AppColors.darkSurface
-                  : AppColors.lightBackground,
-              side: BorderSide(
-                color: selected
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.outline,
-              ),
-              labelStyle: TextStyle(
-                color: selected
-                    ? theme.colorScheme.onPrimary
-                    : theme.colorScheme.onSurface,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              ),
-              onSelected: (_) {
-                setState(() => _selectedFilter = index);
-                _loadInitialReports();
-              },
-            ),
+            selected: selected,
+            onSelected: (_) {
+              setState(() => _selectedFilter = index);
+              _loadInitialReports();
+            },
           );
         },
       ),

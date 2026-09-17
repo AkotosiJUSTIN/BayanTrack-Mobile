@@ -58,6 +58,11 @@ abstract final class AppColors {
   static const Color lightBorder = Color(0xFFCBD5E1); // Slate 300
   static const Color lightInputFill = Color(0xFFF1F5F9); // Slate 100
 
+  /// Citizen surfaces are intentionally separate from auth/onboarding tokens.
+  static const Color citizenLightPage = Color(0xFFF2F5F9);
+  static const Color citizenLightSurface = Color(0xFFF9FBFD);
+  static const Color citizenLightInput = Color(0xFFEAF0F6);
+
   // ─────────────────────────────────────────────────────────
   // DARK MODE COLORS
   // ─────────────────────────────────────────────────────────
@@ -71,6 +76,11 @@ abstract final class AppColors {
   static const Color darkTextDisabled = Color(0xFF64748B); // Slate 500
   static const Color darkBorder = Color(0xFF475569); // Slate 600
   static const Color darkInputFill = Color(0xFF1E293B); // Slate 800
+
+  static const Color citizenDarkPage = Color(0xFF0D1117);
+  static const Color citizenDarkSurface = Color(0xFF171C24);
+  static const Color citizenDarkSurfaceVariant = Color(0xFF232B36);
+  static const Color citizenDarkInput = Color(0xFF232B36);
 
   // ─────────────────────────────────────────────────────────
   // STATUS BADGE COLORS (Background / Text pairs)

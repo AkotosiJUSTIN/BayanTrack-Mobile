@@ -7,9 +7,11 @@ const quickReportDescriptionMaxLength = 500;
 const barangayResolutionMaxDistanceMeters = 20000.0;
 const nearbyLandmarkRadiusMeters = 250.0;
 const strongNearbyLandmarkRadiusMeters = 150.0;
+const nearbyLandmarkDebounceDuration = Duration(milliseconds: 250);
 const noNearbyLandmarkFound = 'No nearby landmark found';
 const chooseNearbyLandmark = 'Choose a nearby landmark';
-const landmarkLookupUnavailable = 'Nearby landmark lookup unavailable.';
+const landmarkLookupUnavailable =
+    'Nearby landmarks are temporarily unavailable';
 
 String? quickReportDescriptionError(String value, {AppLocalizations? l10n}) {
   final description = value.trim();

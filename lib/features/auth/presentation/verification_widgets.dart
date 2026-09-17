@@ -204,9 +204,11 @@ class VerificationBanner extends ConsumerWidget {
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
           decoration: BoxDecoration(
-            color: statusColor.withValues(alpha: 0.08),
+            color: Color.alphaBlend(
+              statusColor.withValues(alpha: 0.08),
+              theme.colorScheme.surface,
+            ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: statusColor.withValues(alpha: 0.18)),
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -348,11 +350,11 @@ class InlineVerificationPrompt extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.alertMedium.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppColors.alertMedium.withValues(alpha: 0.18),
+        color: Color.alphaBlend(
+          AppColors.alertMedium.withValues(alpha: 0.1),
+          Theme.of(context).colorScheme.surface,
         ),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

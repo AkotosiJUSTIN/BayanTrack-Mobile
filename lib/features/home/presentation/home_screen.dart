@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../core/presentation/widgets/empty_content_placeholder.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/barangays_provider.dart';
@@ -219,7 +218,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
     // Auto-refresh when a new report is created
     ref.listen<int>(myReportsRefreshProvider, (previous, next) {
@@ -275,7 +274,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ThemeData theme,
     AppLocalizations l10n,
   ) {
-    final isDark = theme.brightness == Brightness.dark;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -372,10 +370,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             alignment: Alignment.centerLeft,
             child: Text(
               l10n.filterByStatus,
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
@@ -389,41 +386,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             itemBuilder: (context, index) {
               final isSelected = _selectedStatusFilterIndex == index;
               final label = _statusFilterLabel(_statusFilters[index], l10n);
-              return Semantics(
-                button: true,
-                selected: isSelected,
-                label: label,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    selected: isSelected,
-                    label: Text(label),
-                    selectedColor: AppColors.primary,
-                    backgroundColor: isDark
-                        ? AppColors.darkSurface
-                        : AppColors.lightBackground,
-                    labelStyle: TextStyle(
-                      color: isSelected
-                          ? Colors.white
-                          : (isDark
-                                ? AppColors.darkTextPrimary
-                                : AppColors.lightTextPrimary),
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                    ),
-                    side: BorderSide(
-                      color: isSelected
-                          ? AppColors.primary
-                          : (isDark
-                                ? AppColors.darkBorder
-                                : AppColors.lightBorder),
-                    ),
-                    onSelected: (_) {
-                      setState(() => _selectedStatusFilterIndex = index);
-                      _loadInitialReports();
-                    },
-                  ),
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: CivicFilterChip(
+                  label: label,
+                  selected: isSelected,
+                  onSelected: (_) {
+                    setState(() => _selectedStatusFilterIndex = index);
+                    _loadInitialReports();
+                  },
                 ),
               );
             },
@@ -472,7 +443,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildMapView(ThemeData theme) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
     if (_isInitialLoading) {
       return _buildLoadingState();
@@ -525,38 +496,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Positioned(
                     left: 16,
                     bottom: 16,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                    child: Material(
+                      color: theme.colorScheme.surface.withValues(alpha: 0.92),
+                      elevation: 1,
+                      shadowColor: theme.colorScheme.shadow.withValues(
+                        alpha: 0.08,
                       ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).scaffoldBackgroundColor.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Wrap(
-                        spacing: 12,
-                        runSpacing: 8,
-                        children: [
-                          _buildLegendItem(
-                            l10n.submitted,
-                            reportMapStatusColor(ReportStatus.submitted),
-                          ),
-                          _buildLegendItem(
-                            l10n.inProgress,
-                            reportMapStatusColor(ReportStatus.inProgress),
-                          ),
-                          _buildLegendItem(
-                            l10n.escalated,
-                            reportMapStatusColor(ReportStatus.escalated),
-                          ),
-                          _buildLegendItem(
-                            l10n.resolvedStatus,
-                            reportMapStatusColor(ReportStatus.resolved),
-                          ),
-                        ],
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        child: Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          children: [
+                            _buildLegendItem(
+                              l10n.submitted,
+                              reportMapStatusColor(ReportStatus.submitted),
+                            ),
+                            _buildLegendItem(
+                              l10n.inProgress,
+                              reportMapStatusColor(ReportStatus.inProgress),
+                            ),
+                            _buildLegendItem(
+                              l10n.escalated,
+                              reportMapStatusColor(ReportStatus.escalated),
+                            ),
+                            _buildLegendItem(
+                              l10n.resolvedStatus,
+                              reportMapStatusColor(ReportStatus.resolved),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -643,8 +618,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               )
             : Text(
                 _hasNextPage
-                    ? AppLocalizations.of(context)!.scrollLoadMore
-                    : AppLocalizations.of(context)!.noMoreReports,
+                    ? AppLocalizations.of(context).scrollLoadMore
+                    : AppLocalizations.of(context).noMoreReports,
                 style: theme.textTheme.bodySmall,
               ),
       ),
@@ -716,7 +691,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ? 'quick'
           : (report.displayPriorityLevel?.name ?? 'unscored');
       if (group != previousGroup) {
-        final l10n = AppLocalizations.of(context)!;
+        final l10n = AppLocalizations.of(context);
         final label = switch (group) {
           'emergency' => l10n.emergencyReport,
           'quick' => l10n.quickReport,
@@ -733,7 +708,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   String _sectionLabelForDate(DateTime? date) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     if (date == null) return l10n.unknownDate;
 
     final now = DateTime.now();
@@ -749,8 +724,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildEmptyState(ThemeData theme) {
     return EmptyContentPlaceholder(
       icon: Icons.location_off_outlined,
-      title: AppLocalizations.of(context)!.noReportsFound,
-      message: AppLocalizations.of(context)!.noReportsMatch,
+      title: AppLocalizations.of(context).noReportsFound,
+      message: AppLocalizations.of(context).noReportsMatch,
       onRetry: _onRefresh,
     );
   }
@@ -783,17 +758,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.error_outline, size: 64, color: AppColors.alertHigh),
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: theme.colorScheme.error,
+                ),
                 const SizedBox(height: 16),
                 Text(
-                  AppLocalizations.of(context)!.unableLoadReports,
+                  AppLocalizations.of(context).unableLoadReports,
                   style: theme.textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Text(
-                    AppLocalizations.of(context)!.reportsNetworkError,
+                    AppLocalizations.of(context).reportsNetworkError,
                     style: theme.textTheme.bodySmall,
                     textAlign: TextAlign.center,
                   ),
@@ -801,7 +780,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: 16),
                 FilledButton.tonal(
                   onPressed: _onRefresh,
-                  child: Text(AppLocalizations.of(context)!.retry),
+                  child: Text(AppLocalizations.of(context).retry),
                 ),
               ],
             ),
