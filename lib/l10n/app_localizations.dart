@@ -2990,6 +2990,18 @@ abstract class AppLocalizations {
   /// **'Use a clear front photo. Text recognition runs on this device.'**
   String get scanIdDescription;
 
+  /// No description provided for @fitIdInsideFrame.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit your ID inside the frame'**
+  String get fitIdInsideFrame;
+
+  /// No description provided for @keepIdFlatReadable.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep it flat and readable'**
+  String get keepIdFlatReadable;
+
   /// No description provided for @chooseVerificationMethod.
   ///
   /// In en, this message translates to:

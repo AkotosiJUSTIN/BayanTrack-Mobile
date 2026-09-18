@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:bayantrack_mobile/core/domain/failures.dart';
 import 'package:bayantrack_mobile/core/domain/result.dart';
+import 'package:bayantrack_mobile/core/constants/api_constants.dart';
 import 'package:bayantrack_mobile/features/kyc/domain/entities/kyc_enums.dart';
 import 'package:bayantrack_mobile/features/kyc/domain/entities/kyc_status.dart';
 import 'package:bayantrack_mobile/features/kyc/domain/kyc_repository.dart';
@@ -30,9 +33,8 @@ Future<void> _pumpPending(
     ProviderScope(
       overrides: [
         kycStatusControllerProvider.overrideWithBuild(
-          (_, _) async => const KycStatusEntity(
-            status: KycVerificationStatus.pending,
-          ),
+          (_, _) async =>
+              const KycStatusEntity(status: KycVerificationStatus.pending),
         ),
         getKycStatusUseCaseProvider.overrideWithValue(
           GetKycStatusUseCase(repository: repository),
@@ -52,6 +54,11 @@ Future<void> _pumpPending(
 }
 
 void main() {
+  test('withdrawal keeps preferred and legacy routes defined', () {
+    expect(ApiConstants.verificationWithdraw, '/auth/verification/withdraw/');
+    expect(ApiConstants.kycWithdraw, '/auth/kyc/withdraw/');
+  });
+
   testWidgets('pending status exposes a confirmed withdrawal action', (
     tester,
   ) async {
@@ -73,7 +80,32 @@ void main() {
       ),
       findsOneWidget,
     );
+    expect(find.byType(AlertDialog), findsNothing);
     expect(find.text('Cancel'), findsOneWidget);
+  });
+
+  testWidgets('withdrawal confirmation shows progress until the request ends', (
+    tester,
+  ) async {
+    final repository = _KycRepositoryMock();
+    final withdrawal = Completer<Result<KycStatusEntity>>();
+    when(() => repository.withdrawKyc()).thenAnswer((_) => withdrawal.future);
+    await _pumpPending(tester, repository: repository);
+
+    await tester.tap(find.text('Withdraw submission'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Withdraw submission'));
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Loading…'), findsOneWidget);
+    verify(() => repository.withdrawKyc()).called(1);
+
+    withdrawal.complete(
+      const Success(KycStatusEntity(status: KycVerificationStatus.unverified)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(Dialog), findsNothing);
   });
 
   testWidgets('successful withdrawal refreshes to editable state', (
@@ -89,9 +121,7 @@ void main() {
 
     await tester.tap(find.text('Withdraw submission'));
     await tester.pumpAndSettle();
-    await tester.tap(
-      find.widgetWithText(FilledButton, 'Withdraw submission'),
-    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Withdraw submission'));
     await tester.pumpAndSettle();
 
     expect(find.text('Pending Review'), findsNothing);
@@ -111,9 +141,7 @@ void main() {
 
     await tester.tap(find.text('Withdraw submission'));
     await tester.pumpAndSettle();
-    await tester.tap(
-      find.widgetWithText(FilledButton, 'Withdraw submission'),
-    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Withdraw submission'));
     await tester.pumpAndSettle();
 
     expect(find.text('Pending Review'), findsOneWidget);

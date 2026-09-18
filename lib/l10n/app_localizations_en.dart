@@ -1610,6 +1610,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use a clear front photo. Text recognition runs on this device.';
 
   @override
+  String get fitIdInsideFrame => 'Fit your ID inside the frame';
+
+  @override
+  String get keepIdFlatReadable => 'Keep it flat and readable';
+
+  @override
   String get chooseVerificationMethod => 'Choose how to verify';
 
   @override

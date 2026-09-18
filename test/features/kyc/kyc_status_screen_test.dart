@@ -137,7 +137,9 @@ void main() {
     },
   );
 
-  testWidgets('pending and verified statuses stay read-only', (tester) async {
+  testWidgets('pending and verified statuses do not show resubmit action', (
+    tester,
+  ) async {
     for (final status in [
       KycVerificationStatus.pending,
       KycVerificationStatus.verified,

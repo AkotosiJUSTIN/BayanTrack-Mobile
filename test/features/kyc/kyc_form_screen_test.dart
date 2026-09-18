@@ -338,6 +338,31 @@ void main() {
     expect(find.byIcon(Icons.add_a_photo_outlined), findsOneWidget);
   });
 
+  testWidgets('ID types requiring a back side keep both capture slots', (
+    tester,
+  ) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final controller = container.read(kycFormControllerProvider.notifier);
+    controller.setVerificationMethod(KycVerificationMethod.manual);
+    controller.setIdType(dto.IdType.driversLicense);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: const KycFormScreen(initialStep: 5),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('ID Front Photo *'), findsOneWidget);
+    expect(find.text('ID Back Photo *'), findsOneWidget);
+  });
+
   testWidgets(
     'resubmission confirmation uses the compact confirmation surface',
     (tester) async {

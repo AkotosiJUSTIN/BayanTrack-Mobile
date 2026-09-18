@@ -1614,6 +1614,12 @@ class AppLocalizationsFil extends AppLocalizations {
       'Gumamit ng malinaw na larawan ng harap. Isinasagawa ang pagkilala ng teksto sa device na ito.';
 
   @override
+  String get fitIdInsideFrame => 'Ilagay ang iyong ID sa loob ng frame';
+
+  @override
+  String get keepIdFlatReadable => 'Panatilihing patag at malinaw';
+
+  @override
   String get chooseVerificationMethod => 'Piliin kung paano magberipika';
 
   @override

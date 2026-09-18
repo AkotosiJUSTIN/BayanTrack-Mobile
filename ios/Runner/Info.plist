@@ -52,7 +52,7 @@
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Choose a photo to use as your profile picture or report evidence.</string>
 		<key>NSCameraUsageDescription</key>
-		<string>Take a photo for your profile picture or report evidence.</string>
+		<string>Take a photo for your profile picture, report evidence, or identity verification.</string>
 		<key>NSAppTransportSecurity</key>
 		<dict>
 			<key>NSAllowsArbitraryLoads</key>

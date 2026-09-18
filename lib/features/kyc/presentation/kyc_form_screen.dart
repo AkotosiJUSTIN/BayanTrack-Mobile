@@ -14,6 +14,7 @@ import '../data/kyc_ocr.dart';
 import '../data/kyc_models.dart';
 import '../domain/entities/kyc_status.dart';
 import '../../auth/presentation/barangays_provider.dart';
+import 'id_capture_screen.dart';
 import 'kyc_controller.dart';
 
 enum _KycStep {
@@ -151,12 +152,25 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
   Future<void> _pickImage(ImageSource source, String imageType) async {
     try {
-      final pickedFile = await _imagePicker.pickImage(
-        source: source,
-        maxWidth: 1920,
-        maxHeight: 1920,
-        imageQuality: 85,
-      );
+      final navigator = Navigator.of(context);
+      final isIdImage = imageType == 'id_front' || imageType == 'id_back';
+      final pickedFile = source == ImageSource.camera && isIdImage
+          ? await navigator.push<XFile>(
+              MaterialPageRoute(
+                fullscreenDialog: true,
+                builder: (_) => IdCaptureScreen(
+                  side: imageType == 'id_front'
+                      ? IdCaptureSide.front
+                      : IdCaptureSide.back,
+                ),
+              ),
+            )
+          : await _imagePicker.pickImage(
+              source: source,
+              maxWidth: 1920,
+              maxHeight: 1920,
+              imageQuality: 85,
+            );
 
       if (pickedFile == null) return;
 

@@ -513,6 +513,8 @@
   "uploadGovId": "Mag-upload ng malinaw na larawan ng iyong Government ID",
   "scanId": "I-scan ang ID",
   "scanIdDescription": "Gumamit ng malinaw na larawan ng harap. Isinasagawa ang pagkilala ng teksto sa device na ito.",
+  "fitIdInsideFrame": "Ilagay ang iyong ID sa loob ng frame",
+  "keepIdFlatReadable": "Panatilihing patag at malinaw",
   "chooseVerificationMethod": "Piliin kung paano magberipika",
   "chooseVerificationMethodDescription": "Piliin kung mag-i-scan ng ID para sa pagsusuri o ilalagay mismo ang iyong mga detalye.",
   "scanIdOptionTitle": "Mag-scan ng ID",

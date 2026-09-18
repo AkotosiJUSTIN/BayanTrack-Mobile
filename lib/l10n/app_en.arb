@@ -513,6 +513,8 @@
   "uploadGovId": "Upload clear photos of your Government ID",
   "scanId": "Scan ID",
   "scanIdDescription": "Use a clear front photo. Text recognition runs on this device.",
+  "fitIdInsideFrame": "Fit your ID inside the frame",
+  "keepIdFlatReadable": "Keep it flat and readable",
   "chooseVerificationMethod": "Choose how to verify",
   "chooseVerificationMethodDescription": "Choose whether to scan an ID for review or enter your details yourself.",
   "scanIdOptionTitle": "Scan an ID",

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/domain/result.dart';
 import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
@@ -527,34 +528,144 @@ class KycStatusScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _withdrawSubmission(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> _withdrawSubmission(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
+    Result<KycStatusEntity>? withdrawalResult;
     final confirmed = await showDialog<bool>(
+      barrierDismissible: false,
+      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.46),
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.withdrawSubmissionTitle),
-        content: Text(l10n.withdrawSubmissionDescription),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(l10n.withdrawSubmission),
-          ),
-        ],
-      ),
+      builder: (dialogContext) {
+        var isWithdrawing = false;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final theme = Theme.of(context);
+            final colors = theme.colorScheme;
+
+            Future<void> withdraw() async {
+              if (isWithdrawing) return;
+              setState(() => isWithdrawing = true);
+              withdrawalResult = await ref
+                  .read(kycStatusControllerProvider.notifier)
+                  .withdrawKyc();
+              if (dialogContext.mounted) {
+                Navigator.pop(dialogContext, true);
+              }
+            }
+
+            return Dialog(
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 24,
+              ),
+              backgroundColor: colors.surfaceContainerHigh,
+              surfaceTintColor: Colors.transparent,
+              elevation: 8,
+              shadowColor: colors.shadow.withValues(alpha: 0.18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.withdrawSubmissionTitle,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.1,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        l10n.withdrawSubmissionDescription,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: colors.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                      ),
+                      if (isWithdrawing) ...[
+                        const SizedBox(height: 20),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colors.primaryContainer.withValues(
+                              alpha: 0.6,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              const SizedBox.square(
+                                dimension: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.2,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  l10n.loading,
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: colors.onPrimaryContainer,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: isWithdrawing ? null : withdraw,
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(52),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Text(l10n.withdrawSubmission),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton(
+                          onPressed: isWithdrawing
+                              ? null
+                              : () => Navigator.pop(dialogContext, false),
+                          style: TextButton.styleFrom(
+                            foregroundColor: colors.onSurfaceVariant,
+                            minimumSize: const Size.fromHeight(48),
+                          ),
+                          child: Text(l10n.cancel),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
     if (confirmed != true || !context.mounted) return;
 
-    final result = await ref
-        .read(kycStatusControllerProvider.notifier)
-        .withdrawKyc();
-    if (!context.mounted) return;
+    final result = withdrawalResult;
+    if (result == null || !context.mounted) return;
 
     final failure = result.failureOrNull;
     if (failure != null) {
