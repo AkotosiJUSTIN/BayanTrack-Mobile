@@ -639,7 +639,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get submitVerification => 'Submit Verification';
 
   @override
-  String get resubmitDocuments => 'Resubmit Documents';
+  String get resubmitDocuments => 'Correct & Resubmit';
+
+  @override
+  String get withdrawSubmission => 'Withdraw submission';
+
+  @override
+  String get withdrawSubmissionTitle => 'Withdraw pending submission?';
+
+  @override
+  String get withdrawSubmissionDescription =>
+      'Your application will be removed from staff review. You can edit and submit it again.';
+
+  @override
+  String get withdrawalSucceeded =>
+      'Submission withdrawn. You can edit and submit again.';
 
   @override
   String get viewStatus => 'View Status';
@@ -1596,6 +1610,27 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use a clear front photo. Text recognition runs on this device.';
 
   @override
+  String get chooseVerificationMethod => 'Choose how to verify';
+
+  @override
+  String get chooseVerificationMethodDescription =>
+      'Choose whether to scan an ID for review or enter your details yourself.';
+
+  @override
+  String get scanIdOptionTitle => 'Scan an ID';
+
+  @override
+  String get scanIdOptionDescription =>
+      'Extract details from your ID for review, then complete the rest of the form.';
+
+  @override
+  String get manualEntryOptionTitle => 'Enter details manually';
+
+  @override
+  String get manualEntryOptionDescription =>
+      'Fill in your identity details yourself. OCR is skipped.';
+
+  @override
   String get maxImageFormats => 'Max 10MB each • JPG, PNG formats';
 
   @override
@@ -1715,6 +1750,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get idFrontRequired => 'Please upload a photo of your ID (front side)';
+
+  @override
+  String get idBackRequired => 'Please upload a photo of your ID (back side)';
 
   @override
   String get selfieRequired => 'Please upload a selfie photo';

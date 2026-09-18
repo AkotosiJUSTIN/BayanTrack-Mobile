@@ -65,6 +65,7 @@ class ApiConstants {
   static const String verificationIdTypes = '/auth/verification/id-types/';
   static const String verificationSubmit = '/auth/verification/submit/';
   static const String verificationStatus = '/auth/verification/status/';
+  static const String verificationWithdraw = '/auth/verification/withdraw/';
   static const String verificationResubmit = '/auth/verification/resubmit/';
   static const String verificationFormOptions =
       '/auth/verification/form-options/';
@@ -73,6 +74,7 @@ class ApiConstants {
   static const String kycIdTypes = '/auth/kyc/id-types/';
   static const String kycSubmit = '/auth/kyc/submit/';
   static const String kycStatus = '/auth/kyc/status/';
+  static const String kycWithdraw = '/auth/kyc/withdraw/';
   static const String kycResubmit = '/auth/kyc/resubmit/';
   static const String kycFormOptions = '/auth/kyc/form-options/';
 

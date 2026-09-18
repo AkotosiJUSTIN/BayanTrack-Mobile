@@ -62,32 +62,40 @@ void main() {
     expect(find.text('Hold this update'), findsNothing);
   });
 
-  testWidgets('transient toast auto-dismisses but errors persist', (
-    tester,
-  ) async {
-    await tester.pumpWidget(host());
-    final context = tester.element(find.byKey(const ValueKey('toast-host')));
+  testWidgets(
+    'transient feedback auto-dismisses while warnings and actions persist',
+    (tester) async {
+      await tester.pumpWidget(host());
+      final context = tester.element(find.byKey(const ValueKey('toast-host')));
 
-    AppToast.success(context, 'Saved');
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.pump(const Duration(seconds: 3));
-    await tester.pumpAndSettle();
-    expect(find.text('Saved'), findsNothing);
+      AppToast.success(context, 'Saved');
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+      expect(find.text('Saved'), findsNothing);
 
-    AppToast.warning(context, 'Complete required fields');
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.pump(const Duration(seconds: 4));
-    expect(find.text('Complete required fields'), findsOneWidget);
-    await tester.tap(find.byIcon(Icons.close));
-    await tester.pumpAndSettle();
+      AppToast.warning(context, 'Complete required fields');
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(seconds: 4));
+      expect(find.text('Complete required fields'), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
 
-    AppToast.error(context, 'Could not save');
-    await tester.pump(const Duration(milliseconds: 300));
-    await tester.pump(const Duration(seconds: 5));
-    expect(find.text('Could not save'), findsOneWidget);
+      AppToast.error(context, 'Could not save');
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pumpAndSettle();
+      expect(find.text('Could not save'), findsNothing);
 
-    await tester.tap(find.byIcon(Icons.close));
-    await tester.pumpAndSettle();
-    expect(find.text('Could not save'), findsNothing);
-  });
+      AppToast.error(
+        context,
+        'Upload failed',
+        actionLabel: 'Retry',
+        onAction: () {},
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pump(const Duration(seconds: 4));
+      expect(find.text('Upload failed'), findsOneWidget);
+    },
+  );
 }

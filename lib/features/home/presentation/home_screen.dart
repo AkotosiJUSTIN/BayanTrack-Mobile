@@ -365,7 +365,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(

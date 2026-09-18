@@ -16,6 +16,9 @@ double _contrast(Color foreground, Color background) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+double _tonalDistance(Color first, Color second) =>
+    (first.computeLuminance() - second.computeLuminance()).abs();
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -40,6 +43,34 @@ void main() {
       );
     },
   );
+
+  test('light unread notification surface preserves text contrast', () {
+    final unreadSurface = AppColors.citizenLightUnreadNotification;
+
+    expect(unreadSurface, isNot(AppColors.citizenLightPage));
+    expect(
+      _contrast(AppColors.primary, unreadSurface),
+      greaterThanOrEqualTo(4.5),
+    );
+    expect(
+      _contrast(AppColors.lightTextSecondary, unreadSurface),
+      greaterThanOrEqualTo(4.5),
+    );
+  });
+
+  test('light page, read, and unread surfaces form a clear hierarchy', () {
+    final page = AppColors.citizenLightPage;
+    final read = AppTheme.light.colorScheme.surface;
+    final unread = AppColors.citizenLightUnreadNotification;
+
+    expect(page, const Color(0xFFF7F8FA));
+    expect(AppTheme.light.scaffoldBackgroundColor, page);
+    expect(read, Colors.white);
+    expect(
+      _tonalDistance(unread, page),
+      greaterThan(_tonalDistance(read, page)),
+    );
+  });
 
   test('light page and card surfaces use distinct tonal levels', () {
     expect(AppTheme.light.scaffoldBackgroundColor, AppColors.citizenLightPage);

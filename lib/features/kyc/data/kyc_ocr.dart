@@ -13,6 +13,10 @@ enum KycOcrField {
   sex,
   nationality,
   civilStatus,
+  address,
+  cityMunicipality,
+  province,
+  zipCode,
   idNumber,
   idExpiryDate,
 }
@@ -26,6 +30,10 @@ extension KycOcrFieldLabel on KycOcrField {
     KycOcrField.sex => 'Sex',
     KycOcrField.nationality => 'Nationality',
     KycOcrField.civilStatus => 'Civil status',
+    KycOcrField.address => 'Address',
+    KycOcrField.cityMunicipality => 'City / municipality',
+    KycOcrField.province => 'Province',
+    KycOcrField.zipCode => 'ZIP code',
     KycOcrField.idNumber => 'ID number',
     KycOcrField.idExpiryDate => 'ID expiry date',
   };
@@ -47,12 +55,14 @@ class KycOcrResult {
   final KycOcrResultStatus status;
   final Map<KycOcrField, KycOcrFieldValue> fields;
   final String? message;
+  final String rawText;
 
   KycOcrResult({
     required this.idType,
     required this.status,
     Map<KycOcrField, KycOcrFieldValue> fields = const {},
     this.message,
+    this.rawText = '',
   }) : fields = Map.unmodifiable(fields);
 
   bool get hasFields => fields.isNotEmpty;
@@ -65,6 +75,8 @@ class KycOcrResult {
 abstract final class KycOcrParser {
   static final _supportedTypes = {
     IdType.passport,
+    IdType.nationalId,
+    IdType.philsys,
     IdType.driversLicense,
     IdType.umid,
     IdType.prcProfessionalId,
@@ -72,25 +84,31 @@ abstract final class KycOcrParser {
 
   static final _surnamePatterns = [
     RegExp(
-      r'\b(?:surname|last\s+name)\b\s*[:\-]?\s*(.*)',
+      r'\b(?:surname|last\s+name|apelyido)\b\s*[:\-]?\s*(.*)',
       caseSensitive: false,
     ),
   ];
   static final _givenNamePatterns = [
     RegExp(
-      r'\b(?:given\s+names?|first\s+name)\b\s*[:\-]?\s*(.*)',
+      r'\b(?:given\s+names?|first\s+name|mga\s+pangalan|pangalan)\b\s*[:\-]?\s*(.*)',
       caseSensitive: false,
     ),
   ];
   static final _middleNamePatterns = [
-    RegExp(r'\bmiddle\s+name\b\s*[:\-]?\s*(.*)', caseSensitive: false),
+    RegExp(
+      r'\b(?:middle\s+name|gitnang\s+(?:name|pangalan|apelyido))\b\s*[:\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
   ];
   static final _fullNamePatterns = [
     RegExp(r'\bfull\s+name\b\s*[:\-]?\s*(.*)', caseSensitive: false),
     RegExp(r'^name\s*[:\-]\s*(.*)', caseSensitive: false),
   ];
   static final _dateOfBirthPatterns = [
-    RegExp(r'\bdate\s+of\s+birth\b\s*[:\-]?\s*(.*)', caseSensitive: false),
+    RegExp(
+      r'\b(?:date\s+of\s+birth|petsa\s+ng\s+kapanganakan)\b\s*[:\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
     RegExp(r'\bbirth\s+date\b\s*[:\-]?\s*(.*)', caseSensitive: false),
   ];
   static final _expiryPatterns = [
@@ -101,16 +119,54 @@ abstract final class KycOcrParser {
     RegExp(r'\bvalid(?:ity|\s+until)\b\s*[:\-]?\s*(.*)', caseSensitive: false),
   ];
   static final _sexPatterns = [
-    RegExp(r'\bsex\b\s*[:\-]?\s*(.*)', caseSensitive: false),
-    RegExp(r'\bgender\b\s*[:\-]?\s*(.*)', caseSensitive: false),
+    RegExp(
+      r'\b(?:sex|gender|kasarian)\b\s*[:\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
   ];
   static final _nationalityPatterns = [
-    RegExp(r'\bnationality\b\s*[:\-]?\s*(.*)', caseSensitive: false),
-    RegExp(r'\bcitizenship\b\s*[:\-]?\s*(.*)', caseSensitive: false),
+    RegExp(
+      r'\b(?:nationality|citizenship|nasyonalidad)\b\s*[:\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
   ];
   static final _civilStatusPatterns = [
-    RegExp(r'\bcivil\s+status\b\s*[:\-]?\s*(.*)', caseSensitive: false),
-    RegExp(r'\bmarital\s+status\b\s*[:\-]?\s*(.*)', caseSensitive: false),
+    RegExp(
+      r'\b(?:civil\s+status|marital\s+status|katayuang\s+sibil|kalagayang\s+sibil)\b\s*[:\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
+  ];
+  static final _nationalIdNumberPatterns = [
+    RegExp(
+      r'\b(?:philsys|phil\s*sys|philid|phil\s*id)\s*(?:card\s*)?(?:no\.?|number)\b\s*[:#\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
+    RegExp(r'\b(?:pcn|psn)\b\s*[:#\-]?\s*(.*)', caseSensitive: false),
+    RegExp(
+      r'\b(?:national\s+id|national\s+identification)\s*(?:no\.?|number)\b\s*[:#\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
+  ];
+  static final _addressPatterns = [
+    RegExp(
+      r'\b(?:present\s+address|current\s+address|residential\s+address|address|tirahan|kasalukuyang\s+tirahan)\b\s*[:\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
+  ];
+  static final _cityPatterns = [
+    RegExp(
+      r'\b(?:city\s*/?\s*municipality|municipality|city|lungsod|munisipalidad)\b\s*[:\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
+  ];
+  static final _provincePatterns = [
+    RegExp(r'\b(?:province|probinsya)\b\s*[:\-]?\s*(.*)', caseSensitive: false),
+  ];
+  static final _zipPatterns = [
+    RegExp(
+      r'\b(?:zip\s*code|postal\s*code|zip)\b\s*[:\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
   ];
 
   static bool supports(IdType idType) => _supportedTypes.contains(idType);
@@ -121,6 +177,7 @@ abstract final class KycOcrParser {
         idType: idType,
         status: KycOcrResultStatus.unsupported,
         message: 'OCR is not available for this ID type yet.',
+        rawText: rawText,
       );
     }
 
@@ -130,6 +187,7 @@ abstract final class KycOcrParser {
         idType: idType,
         status: KycOcrResultStatus.unreadable,
         message: 'No readable text was found. Enter details manually.',
+        rawText: rawText,
       );
     }
 
@@ -137,14 +195,15 @@ abstract final class KycOcrParser {
     switch (idType) {
       case IdType.passport:
         _parsePassport(lines, fields);
+      case IdType.nationalId:
+      case IdType.philsys:
+        _parseNationalId(lines, fields);
       case IdType.driversLicense:
         _parseDriversLicense(lines, fields);
       case IdType.umid:
         _parseUmid(lines, fields);
       case IdType.prcProfessionalId:
         _parsePrc(lines, fields);
-      case IdType.nationalId:
-      case IdType.philsys:
       case IdType.sss:
       case IdType.postal:
       case IdType.voters:
@@ -163,6 +222,48 @@ abstract final class KycOcrParser {
       message: status == KycOcrResultStatus.unreadable
           ? 'The image text was incomplete. Enter details manually.'
           : null,
+      rawText: rawText,
+    );
+  }
+
+  static void _parseNationalId(
+    List<String> lines,
+    Map<KycOcrField, KycOcrFieldValue> fields,
+  ) {
+    _parseNames(lines, fields);
+    _addDate(
+      fields,
+      KycOcrField.dateOfBirth,
+      _valueForPatterns(lines, _dateOfBirthPatterns),
+    );
+    _addSex(fields, _valueForPatterns(lines, _sexPatterns));
+    _addNationality(fields, _valueForPatterns(lines, _nationalityPatterns));
+    _addCivilStatus(fields, _valueForPatterns(lines, _civilStatusPatterns));
+    _addText(
+      fields,
+      KycOcrField.address,
+      _valueForLabeledBlock(lines, _addressPatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.cityMunicipality,
+      _valueForPatterns(lines, _cityPatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.province,
+      _valueForPatterns(lines, _provincePatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.zipCode,
+      _valueForPatterns(lines, _zipPatterns),
+    );
+    _addId(fields, _valueForPatterns(lines, _nationalIdNumberPatterns));
+    _addDate(
+      fields,
+      KycOcrField.idExpiryDate,
+      _valueForPatterns(lines, _expiryPatterns),
     );
   }
 
@@ -405,6 +506,20 @@ abstract final class KycOcrParser {
     );
   }
 
+  static void _addText(
+    Map<KycOcrField, KycOcrFieldValue> fields,
+    KycOcrField field,
+    String? value,
+  ) {
+    final cleaned = _cleanCandidate(value);
+    if (cleaned == null) return;
+    fields.putIfAbsent(
+      field,
+      () =>
+          KycOcrFieldValue(value: cleaned, confidence: KycOcrConfidence.review),
+    );
+  }
+
   static void _addDate(
     Map<KycOcrField, KycOcrFieldValue> fields,
     KycOcrField field,
@@ -504,6 +619,30 @@ abstract final class KycOcrParser {
     return null;
   }
 
+  static String? _valueForLabeledBlock(
+    List<String> lines,
+    Iterable<RegExp> patterns,
+  ) {
+    for (var i = 0; i < lines.length; i++) {
+      for (final pattern in patterns) {
+        final match = pattern.firstMatch(lines[i]);
+        if (match == null) continue;
+        final sameLine = _cleanCandidate(match.group(1));
+        if (sameLine != null && !_isFormatHint(sameLine)) return sameLine;
+
+        final values = <String>[];
+        for (var j = i + 1; j < lines.length && j <= i + 4; j++) {
+          final candidate = _cleanCandidate(lines[j]);
+          if (candidate == null) continue;
+          if (_isStandaloneLabel(candidate)) break;
+          values.add(candidate);
+        }
+        if (values.isNotEmpty) return values.join(', ');
+      }
+    }
+    return null;
+  }
+
   static String? _nextValue(List<String> lines, int index) {
     for (var i = index + 1; i < lines.length && i <= index + 3; i++) {
       final candidate = _cleanCandidate(lines[i]);
@@ -538,7 +677,7 @@ abstract final class KycOcrParser {
   ).hasMatch(value);
 
   static bool _isStandaloneLabel(String value) => RegExp(
-    r'^(?:passport|surname|last name|first name|given names?|middle name|full name|date of birth|birth date|sex|gender|nationality|citizenship|civil status|marital status|passport no\.?|passport number|license no\.?|license number|registration no\.?|registration number|crn|ss number|sss no\.?)\s*(?:\([^)]*\))?\s*[:.\-]?$',
+    r'^(?:passport|surname|last name|apelyido|first name|given names?|mga pangalan|pangalan|middle name|gitnang (?:name|pangalan|apelyido)|full name|date of birth|petsa ng kapanganakan|birth date|sex|gender|kasarian|nationality|citizenship|nasyonalidad|civil status|marital status|katayuang sibil|address|present address|current address|residential address|tirahan|city|municipality|city\s*/?\s*municipality|lungsod|munisipalidad|province|probinsya|zip|zip code|postal code|passport no\.?|passport number|license no\.?|license number|registration no\.?|registration number|crn|ss number|sss no\.?|pcn|psn|philsys card number|philid number|national id number)\s*(?:\([^)]*\))?\s*[:.\-]?$',
     caseSensitive: false,
   ).hasMatch(value);
 
@@ -632,14 +771,23 @@ abstract final class KycOcrParser {
         'oct' => 10,
         'nov' => 11,
         'dec' => 12,
+        'ene' => 1,
+        'peb' => 2,
+        'abr' => 4,
+        'hun' => 6,
+        'hul' => 7,
+        'ago' => 8,
+        'set' => 9,
+        'okt' => 10,
+        'dis' => 12,
         _ => 0,
       };
 
   static String? _sexValue(String? value) {
     final lower = value?.trim().toLowerCase();
     return switch (lower) {
-      'm' || 'male' => 'male',
-      'f' || 'female' => 'female',
+      'm' || 'male' || 'lalaki' => 'male',
+      'f' || 'female' || 'babae' => 'female',
       _ => null,
     };
   }

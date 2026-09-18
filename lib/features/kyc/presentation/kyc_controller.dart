@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/domain/result.dart';
 import '../../../core/utils/kyc_validators.dart';
 import '../data/kyc_ocr.dart';
 import '../data/kyc_models.dart';
@@ -33,6 +34,16 @@ class KycStatusController extends _$KycStatusController {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _fetchStatus());
   }
+
+  /// Withdraw a pending submission without changing local state on failure.
+  Future<Result<KycStatusEntity>> withdrawKyc() async {
+    final result = await ref.read(withdrawKycUseCaseProvider)();
+    result.when(
+      success: (entity) => state = AsyncValue.data(entity),
+      failure: (_) {},
+    );
+    return result;
+  }
 }
 
 // ==================== ID TYPES PROVIDER ====================
@@ -62,7 +73,15 @@ Future<domain.KycFormOptions> kycFormOptions(Ref ref) async {
 
 // ==================== KYC FORM STATE ====================
 
+enum KycVerificationMethod { scanId, manual }
+
+enum KycIdImageSide { front, back }
+
+const _unset = Object();
+
 class KycFormState {
+  final KycVerificationMethod? verificationMethod;
+
   // A. Basic Identity Information
   final String firstName;
   final String? middleName;
@@ -95,10 +114,15 @@ class KycFormState {
   final String? selfieImagePath;
   final String? selfieWithIdImagePath;
 
-  // Local OCR assistance. OCR never changes an existing non-empty value.
+  // Local OCR assistance and reviewed-draft provenance.
   final KycOcrResult? ocrResult;
   final bool isOcrScanning;
   final String? ocrError;
+  final Map<KycOcrField, String> ocrReviewValues;
+  final Map<KycOcrField, String> ocrAppliedValues;
+  final Set<KycOcrField> ocrUserEditedFields;
+  final bool ocrReviewConfirmed;
+  final bool scanIdentityStepRequired;
 
   // G. Declaration
   final bool declarationAccepted;
@@ -109,6 +133,7 @@ class KycFormState {
   final int currentStep;
 
   const KycFormState({
+    this.verificationMethod,
     // Basic Identity
     this.firstName = '',
     this.middleName,
@@ -137,6 +162,11 @@ class KycFormState {
     this.ocrResult,
     this.isOcrScanning = false,
     this.ocrError,
+    this.ocrReviewValues = const {},
+    this.ocrAppliedValues = const {},
+    this.ocrUserEditedFields = const {},
+    this.ocrReviewConfirmed = false,
+    this.scanIdentityStepRequired = true,
     // Declaration
     this.declarationAccepted = false,
     // Form state
@@ -146,62 +176,96 @@ class KycFormState {
   });
 
   KycFormState copyWith({
+    KycVerificationMethod? verificationMethod,
     String? firstName,
-    String? middleName,
+    Object? middleName = _unset,
     String? lastName,
-    DateTime? dateOfBirth,
-    Sex? sex,
+    Object? dateOfBirth = _unset,
+    Object? sex = _unset,
     String? nationality,
-    CivilStatus? civilStatus,
+    Object? civilStatus = _unset,
     String? email,
     String? mobileNumber,
     String? streetBarangay,
     String? cityMunicipality,
     String? province,
-    String? zipCode,
-    IdType? selectedIdType,
+    Object? zipCode = _unset,
+    Object? selectedIdType = _unset,
     String? idNumber,
-    DateTime? idExpiryDate,
-    String? idFrontImagePath,
-    String? idBackImagePath,
-    String? selfieImagePath,
-    String? selfieWithIdImagePath,
-    KycOcrResult? ocrResult,
+    Object? idExpiryDate = _unset,
+    Object? idFrontImagePath = _unset,
+    Object? idBackImagePath = _unset,
+    Object? selfieImagePath = _unset,
+    Object? selfieWithIdImagePath = _unset,
+    Object? ocrResult = _unset,
     bool? isOcrScanning,
-    String? ocrError,
+    Object? ocrError = _unset,
+    Map<KycOcrField, String>? ocrReviewValues,
+    Map<KycOcrField, String>? ocrAppliedValues,
+    Set<KycOcrField>? ocrUserEditedFields,
+    bool? ocrReviewConfirmed,
+    bool? scanIdentityStepRequired,
     bool? declarationAccepted,
     bool? isSubmitting,
-    String? error,
+    Object? error = _unset,
     int? currentStep,
   }) {
     return KycFormState(
+      verificationMethod: verificationMethod ?? this.verificationMethod,
       firstName: firstName ?? this.firstName,
-      middleName: middleName ?? this.middleName,
+      middleName: identical(middleName, _unset)
+          ? this.middleName
+          : middleName as String?,
       lastName: lastName ?? this.lastName,
-      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
-      sex: sex ?? this.sex,
+      dateOfBirth: identical(dateOfBirth, _unset)
+          ? this.dateOfBirth
+          : dateOfBirth as DateTime?,
+      sex: identical(sex, _unset) ? this.sex : sex as Sex?,
       nationality: nationality ?? this.nationality,
-      civilStatus: civilStatus ?? this.civilStatus,
+      civilStatus: identical(civilStatus, _unset)
+          ? this.civilStatus
+          : civilStatus as CivilStatus?,
       email: email ?? this.email,
       mobileNumber: mobileNumber ?? this.mobileNumber,
       streetBarangay: streetBarangay ?? this.streetBarangay,
       cityMunicipality: cityMunicipality ?? this.cityMunicipality,
       province: province ?? this.province,
-      zipCode: zipCode ?? this.zipCode,
-      selectedIdType: selectedIdType ?? this.selectedIdType,
+      zipCode: identical(zipCode, _unset) ? this.zipCode : zipCode as String?,
+      selectedIdType: identical(selectedIdType, _unset)
+          ? this.selectedIdType
+          : selectedIdType as IdType?,
       idNumber: idNumber ?? this.idNumber,
-      idExpiryDate: idExpiryDate ?? this.idExpiryDate,
-      idFrontImagePath: idFrontImagePath ?? this.idFrontImagePath,
-      idBackImagePath: idBackImagePath ?? this.idBackImagePath,
-      selfieImagePath: selfieImagePath ?? this.selfieImagePath,
-      selfieWithIdImagePath:
-          selfieWithIdImagePath ?? this.selfieWithIdImagePath,
-      ocrResult: ocrResult ?? this.ocrResult,
+      idExpiryDate: identical(idExpiryDate, _unset)
+          ? this.idExpiryDate
+          : idExpiryDate as DateTime?,
+      idFrontImagePath: identical(idFrontImagePath, _unset)
+          ? this.idFrontImagePath
+          : idFrontImagePath as String?,
+      idBackImagePath: identical(idBackImagePath, _unset)
+          ? this.idBackImagePath
+          : idBackImagePath as String?,
+      selfieImagePath: identical(selfieImagePath, _unset)
+          ? this.selfieImagePath
+          : selfieImagePath as String?,
+      selfieWithIdImagePath: identical(selfieWithIdImagePath, _unset)
+          ? this.selfieWithIdImagePath
+          : selfieWithIdImagePath as String?,
+      ocrResult: identical(ocrResult, _unset)
+          ? this.ocrResult
+          : ocrResult as KycOcrResult?,
       isOcrScanning: isOcrScanning ?? this.isOcrScanning,
-      ocrError: ocrError,
+      ocrError: identical(ocrError, _unset)
+          ? this.ocrError
+          : ocrError as String?,
+      ocrReviewValues: ocrReviewValues ?? this.ocrReviewValues,
+      ocrAppliedValues: ocrAppliedValues ?? this.ocrAppliedValues,
+      ocrUserEditedFields: ocrUserEditedFields ?? this.ocrUserEditedFields,
+      ocrReviewConfirmed: ocrReviewConfirmed ?? this.ocrReviewConfirmed,
+      scanIdentityStepRequired:
+          scanIdentityStepRequired ?? this.scanIdentityStepRequired,
       declarationAccepted: declarationAccepted ?? this.declarationAccepted,
       isSubmitting: isSubmitting ?? this.isSubmitting,
-      error: error,
+      error: identical(error, _unset) ? this.error : error as String?,
       currentStep: currentStep ?? this.currentStep,
     );
   }
@@ -238,8 +302,7 @@ class KycFormState {
       selectedIdType != null && idNumber.trim().isNotEmpty;
 
   /// Check if required images are uploaded
-  bool get isImagesComplete =>
-      idFrontImagePath != null && selfieImagePath != null;
+  bool get isImagesComplete => hasRequiredIdImages && hasSelfie;
 
   /// Check if declaration is accepted
   bool get isDeclarationComplete => declarationAccepted;
@@ -255,13 +318,34 @@ class KycFormState {
       !isSubmitting;
 
   /// Image state helpers
-  bool get hasIdFront => idFrontImagePath != null;
-  bool get hasIdBack => idBackImagePath != null;
-  bool get hasSelfie => selfieImagePath != null;
-  bool get hasSelfieWithId => selfieWithIdImagePath != null;
+  bool _hasImage(String? path) => path?.trim().isNotEmpty == true;
+
+  bool get hasIdFront => _hasImage(idFrontImagePath);
+  bool get hasIdBack => _hasImage(idBackImagePath);
+  bool get hasSelfie => _hasImage(selfieImagePath);
+  bool get hasSelfieWithId => _hasImage(selfieWithIdImagePath);
+  bool get requiresIdBack => selectedIdType?.requiresBackImage == true;
+  bool get hasRequiredIdImages => hasIdFront && (!requiresIdBack || hasIdBack);
+
+  KycIdImageSide? get missingRequiredIdSide {
+    if (!hasIdFront) return KycIdImageSide.front;
+    if (requiresIdBack && !hasIdBack) return KycIdImageSide.back;
+    return null;
+  }
+
+  bool get isIdentityDraftComplete =>
+      firstName.trim().isNotEmpty &&
+      middleName?.trim().isNotEmpty == true &&
+      lastName.trim().isNotEmpty &&
+      dateOfBirth != null &&
+      sex != null &&
+      nationality.trim().isNotEmpty &&
+      civilStatus != null;
 
   bool get hasCurrentOcrResult =>
       ocrResult != null && ocrResult!.idType == selectedIdType;
+
+  String? ocrReviewValue(KycOcrField field) => ocrReviewValues[field];
 }
 
 // ==================== KYC FORM CONTROLLER ====================
@@ -273,18 +357,141 @@ class KycFormController extends _$KycFormController {
   @override
   KycFormState build() => const KycFormState();
 
+  Map<KycOcrField, String> _withoutApplied(KycOcrField field) {
+    final values = Map<KycOcrField, String>.from(state.ocrAppliedValues);
+    values.remove(field);
+    return values;
+  }
+
+  Map<KycOcrField, String> _withReviewedEdit(KycOcrField field, String value) {
+    final values = Map<KycOcrField, String>.from(state.ocrReviewValues);
+    if (state.ocrReviewConfirmed) values[field] = value;
+    return values;
+  }
+
+  Set<KycOcrField> _withUserEditedField(KycOcrField field) {
+    final fields = Set<KycOcrField>.from(state.ocrUserEditedFields);
+    if (state.ocrReviewConfirmed) fields.add(field);
+    return fields;
+  }
+
+  KycFormState _clearOcrState({bool preserveUserEdits = true}) {
+    var next = state;
+    for (final entry in state.ocrAppliedValues.entries) {
+      final value = entry.value;
+      switch (entry.key) {
+        case KycOcrField.firstName:
+          if (next.firstName == value) next = next.copyWith(firstName: '');
+        case KycOcrField.middleName:
+          if (next.middleName == value) next = next.copyWith(middleName: null);
+        case KycOcrField.lastName:
+          if (next.lastName == value) next = next.copyWith(lastName: '');
+        case KycOcrField.dateOfBirth:
+          if (_dateValue(next.dateOfBirth) == value) {
+            next = next.copyWith(dateOfBirth: null);
+          }
+        case KycOcrField.sex:
+          if (next.sex?.name == value) next = next.copyWith(sex: null);
+        case KycOcrField.nationality:
+          if (next.nationality == value) next = next.copyWith(nationality: '');
+        case KycOcrField.civilStatus:
+          if (next.civilStatus?.name == value) {
+            next = next.copyWith(civilStatus: null);
+          }
+        case KycOcrField.address:
+          if (next.streetBarangay == value) {
+            next = next.copyWith(streetBarangay: '');
+          }
+        case KycOcrField.cityMunicipality:
+          if (next.cityMunicipality == value) {
+            next = next.copyWith(cityMunicipality: '');
+          }
+        case KycOcrField.province:
+          if (next.province == value) next = next.copyWith(province: '');
+        case KycOcrField.zipCode:
+          if (next.zipCode == value) next = next.copyWith(zipCode: null);
+        case KycOcrField.idNumber:
+          if (next.idNumber == value) next = next.copyWith(idNumber: '');
+        case KycOcrField.idExpiryDate:
+          if (_dateValue(next.idExpiryDate) == value) {
+            next = next.copyWith(idExpiryDate: null);
+          }
+      }
+    }
+    return next.copyWith(
+      ocrResult: null,
+      isOcrScanning: false,
+      ocrError: null,
+      ocrReviewValues: const {},
+      ocrAppliedValues: const {},
+      ocrUserEditedFields: preserveUserEdits
+          ? state.ocrUserEditedFields
+          : const {},
+      ocrReviewConfirmed: false,
+      scanIdentityStepRequired: true,
+    );
+  }
+
+  String? _dateValue(DateTime? value) =>
+      value?.toIso8601String().split('T').first;
+
+  // ===== Verification Method =====
+  void setVerificationMethod(KycVerificationMethod method) {
+    _ocrRequestId++;
+    state = _clearOcrState(
+      preserveUserEdits: false,
+    ).copyWith(verificationMethod: method);
+  }
+
   // ===== A. Basic Identity Setters =====
-  void setFirstName(String value) => state = state.copyWith(firstName: value);
-  void setMiddleName(String? value) =>
-      state = state.copyWith(middleName: value);
-  void setLastName(String value) => state = state.copyWith(lastName: value);
-  void setDateOfBirth(DateTime? value) =>
-      state = state.copyWith(dateOfBirth: value);
-  void setSex(Sex? value) => state = state.copyWith(sex: value);
-  void setNationality(String value) =>
-      state = state.copyWith(nationality: value);
-  void setCivilStatus(CivilStatus? value) =>
-      state = state.copyWith(civilStatus: value);
+  void setFirstName(String value) => state = state.copyWith(
+    firstName: value,
+    ocrAppliedValues: _withoutApplied(KycOcrField.firstName),
+    ocrReviewValues: _withReviewedEdit(KycOcrField.firstName, value),
+    ocrUserEditedFields: _withUserEditedField(KycOcrField.firstName),
+  );
+  void setMiddleName(String? value) => state = state.copyWith(
+    middleName: value,
+    ocrAppliedValues: _withoutApplied(KycOcrField.middleName),
+    ocrReviewValues: _withReviewedEdit(KycOcrField.middleName, value ?? ''),
+    ocrUserEditedFields: _withUserEditedField(KycOcrField.middleName),
+  );
+  void setLastName(String value) => state = state.copyWith(
+    lastName: value,
+    ocrAppliedValues: _withoutApplied(KycOcrField.lastName),
+    ocrReviewValues: _withReviewedEdit(KycOcrField.lastName, value),
+    ocrUserEditedFields: _withUserEditedField(KycOcrField.lastName),
+  );
+  void setDateOfBirth(DateTime? value) => state = state.copyWith(
+    dateOfBirth: value,
+    ocrAppliedValues: _withoutApplied(KycOcrField.dateOfBirth),
+    ocrReviewValues: _withReviewedEdit(
+      KycOcrField.dateOfBirth,
+      _dateValue(value) ?? '',
+    ),
+    ocrUserEditedFields: _withUserEditedField(KycOcrField.dateOfBirth),
+  );
+  void setSex(Sex? value) => state = state.copyWith(
+    sex: value,
+    ocrAppliedValues: _withoutApplied(KycOcrField.sex),
+    ocrReviewValues: _withReviewedEdit(KycOcrField.sex, value?.name ?? ''),
+    ocrUserEditedFields: _withUserEditedField(KycOcrField.sex),
+  );
+  void setNationality(String value) => state = state.copyWith(
+    nationality: value,
+    ocrAppliedValues: _withoutApplied(KycOcrField.nationality),
+    ocrReviewValues: _withReviewedEdit(KycOcrField.nationality, value),
+    ocrUserEditedFields: _withUserEditedField(KycOcrField.nationality),
+  );
+  void setCivilStatus(CivilStatus? value) => state = state.copyWith(
+    civilStatus: value,
+    ocrAppliedValues: _withoutApplied(KycOcrField.civilStatus),
+    ocrReviewValues: _withReviewedEdit(
+      KycOcrField.civilStatus,
+      value?.name ?? '',
+    ),
+    ocrUserEditedFields: _withUserEditedField(KycOcrField.civilStatus),
+  );
 
   // ===== B. Contact Setters =====
   void setEmail(String value) => state = state.copyWith(email: value);
@@ -293,23 +500,62 @@ class KycFormController extends _$KycFormController {
   );
 
   // ===== C. Address Setters =====
-  void setStreetBarangay(String value) =>
-      state = state.copyWith(streetBarangay: value);
-  void setCityMunicipality(String value) =>
-      state = state.copyWith(cityMunicipality: value);
-  void setProvince(String value) => state = state.copyWith(province: value);
-  void setZipCode(String? value) => state = state.copyWith(zipCode: value);
+  void setStreetBarangay(String value) => state = state.copyWith(
+    streetBarangay: value,
+    ocrAppliedValues: _withoutApplied(KycOcrField.address),
+    ocrReviewValues: _withReviewedEdit(KycOcrField.address, value),
+    ocrUserEditedFields: _withUserEditedField(KycOcrField.address),
+  );
+  void setCityMunicipality(String value) => state = state.copyWith(
+    cityMunicipality: value,
+    ocrAppliedValues: _withoutApplied(KycOcrField.cityMunicipality),
+    ocrReviewValues: _withReviewedEdit(KycOcrField.cityMunicipality, value),
+    ocrUserEditedFields: _withUserEditedField(KycOcrField.cityMunicipality),
+  );
+  void setProvince(String value) => state = state.copyWith(
+    province: value,
+    ocrAppliedValues: _withoutApplied(KycOcrField.province),
+    ocrReviewValues: _withReviewedEdit(KycOcrField.province, value),
+    ocrUserEditedFields: _withUserEditedField(KycOcrField.province),
+  );
+  void setZipCode(String? value) => state = state.copyWith(
+    zipCode: value,
+    ocrAppliedValues: _withoutApplied(KycOcrField.zipCode),
+    ocrReviewValues: _withReviewedEdit(KycOcrField.zipCode, value ?? ''),
+    ocrUserEditedFields: _withUserEditedField(KycOcrField.zipCode),
+  );
 
   // ===== D. ID Details Setters =====
-  void setIdType(IdType value) => state = state.copyWith(selectedIdType: value);
-  void setIdNumber(String value) => state = state.copyWith(idNumber: value);
-  void setIdExpiryDate(DateTime? value) =>
-      state = state.copyWith(idExpiryDate: value);
+  void setIdType(IdType value) {
+    if (state.selectedIdType == value) return;
+    _ocrRequestId++;
+    state = _clearOcrState(preserveUserEdits: false).copyWith(
+      selectedIdType: value,
+      idFrontImagePath: null,
+      idBackImagePath: null,
+    );
+  }
+
+  void setIdNumber(String value) => state = state.copyWith(
+    idNumber: value,
+    ocrAppliedValues: _withoutApplied(KycOcrField.idNumber),
+    ocrReviewValues: _withReviewedEdit(KycOcrField.idNumber, value),
+    ocrUserEditedFields: _withUserEditedField(KycOcrField.idNumber),
+  );
+  void setIdExpiryDate(DateTime? value) => state = state.copyWith(
+    idExpiryDate: value,
+    ocrAppliedValues: _withoutApplied(KycOcrField.idExpiryDate),
+    ocrReviewValues: _withReviewedEdit(
+      KycOcrField.idExpiryDate,
+      _dateValue(value) ?? '',
+    ),
+    ocrUserEditedFields: _withUserEditedField(KycOcrField.idExpiryDate),
+  );
 
   // ===== E. Image Setters =====
   void setIdFrontImage(String? path) {
     _ocrRequestId++;
-    state = state.copyWith(idFrontImagePath: path);
+    state = _clearOcrState().copyWith(idFrontImagePath: path);
   }
 
   void setIdBackImage(String? path) =>
@@ -319,11 +565,14 @@ class KycFormController extends _$KycFormController {
   void setSelfieWithIdImage(String? path) =>
       state = state.copyWith(selfieWithIdImagePath: path);
 
-  /// Runs on-device OCR for the selected ID. Existing form values stay intact;
-  /// only blank fields receive a suggestion and the result remains reviewable.
+  /// Runs on-device OCR for scan-assisted verification.
   Future<KycOcrResult?> scanId() async {
     final idType = state.selectedIdType;
-    if (idType == null || state.idFrontImagePath == null) return null;
+    if (state.verificationMethod != KycVerificationMethod.scanId ||
+        idType == null ||
+        !state.hasIdFront) {
+      return null;
+    }
     final requestId = ++_ocrRequestId;
 
     if (!KycOcrParser.supports(idType)) {
@@ -332,7 +581,12 @@ class KycFormController extends _$KycFormController {
         status: KycOcrResultStatus.unsupported,
         message: 'OCR is not available for this ID type yet.',
       );
-      state = state.copyWith(ocrResult: result, isOcrScanning: false);
+      state = state.copyWith(
+        ocrResult: result,
+        ocrReviewValues: const {},
+        isOcrScanning: false,
+        ocrError: null,
+      );
       return result;
     }
 
@@ -346,68 +600,118 @@ class KycFormController extends _$KycFormController {
           result.idType != idType) {
         return null;
       }
-      state = _prefillBlankFields(
-        result,
-      ).copyWith(ocrResult: result, isOcrScanning: false, ocrError: null);
+      state = state.copyWith(
+        ocrResult: result,
+        ocrReviewValues: {
+          for (final entry in result.fields.entries)
+            entry.key: entry.value.value,
+        },
+        isOcrScanning: false,
+        ocrError: null,
+      );
       return result;
     } catch (_) {
       if (requestId != _ocrRequestId) return null;
       state = state.copyWith(
+        ocrResult: KycOcrResult(
+          idType: idType,
+          status: KycOcrResultStatus.unreadable,
+          message: 'OCR could not read this image. Enter details manually.',
+        ),
+        ocrReviewValues: const {},
         isOcrScanning: false,
         ocrError: 'OCR could not read this image.',
       );
-      return null;
+      return state.ocrResult;
     }
   }
 
-  KycFormState _prefillBlankFields(KycOcrResult result) {
+  void setOcrReviewValue(KycOcrField field, String value) {
+    final values = Map<KycOcrField, String>.from(state.ocrReviewValues);
+    values[field] = value;
+    final applied = Map<KycOcrField, String>.from(state.ocrAppliedValues);
+    applied.remove(field);
+    final userEdited = Set<KycOcrField>.from(state.ocrUserEditedFields);
+    userEdited.remove(field);
+    state = state.copyWith(
+      ocrReviewValues: values,
+      ocrAppliedValues: applied,
+      ocrUserEditedFields: userEdited,
+    );
+  }
+
+  /// Applies reviewed OCR values to the canonical draft.
+  void applyOcrReview() {
+    final result = state.ocrResult;
+    if (result == null || result.idType != state.selectedIdType) return;
+
     var next = state;
-    for (final entry in result.fields.entries) {
-      final value = entry.value.value;
+    final applied = Map<KycOcrField, String>.from(state.ocrAppliedValues);
+    for (final entry in state.ocrReviewValues.entries) {
+      final value = entry.value.trim();
+      if (value.isEmpty) continue;
+      if (state.ocrUserEditedFields.contains(entry.key)) continue;
       switch (entry.key) {
         case KycOcrField.firstName:
-          if (next.firstName.trim().isEmpty) {
-            next = next.copyWith(firstName: value);
-          }
+          next = next.copyWith(firstName: value);
+          applied[entry.key] = value;
         case KycOcrField.middleName:
-          if (next.middleName?.trim().isNotEmpty != true) {
-            next = next.copyWith(middleName: value);
-          }
+          next = next.copyWith(middleName: value);
+          applied[entry.key] = value;
         case KycOcrField.lastName:
-          if (next.lastName.trim().isEmpty) {
-            next = next.copyWith(lastName: value);
-          }
+          next = next.copyWith(lastName: value);
+          applied[entry.key] = value;
         case KycOcrField.dateOfBirth:
-          if (next.dateOfBirth == null) {
-            final date = DateTime.tryParse(value);
-            if (date != null) next = next.copyWith(dateOfBirth: date);
+          final date = DateTime.tryParse(value);
+          if (date != null) {
+            next = next.copyWith(dateOfBirth: date);
+            applied[entry.key] = value;
           }
         case KycOcrField.sex:
-          if (next.sex == null) {
-            final sex = _sexFromOcr(value);
-            if (sex != null) next = next.copyWith(sex: sex);
+          final sex = _sexFromOcr(value);
+          if (sex != null) {
+            next = next.copyWith(sex: sex);
+            applied[entry.key] = value;
           }
         case KycOcrField.nationality:
-          if (next.nationality.trim().isEmpty) {
-            next = next.copyWith(nationality: value);
-          }
+          next = next.copyWith(nationality: value);
+          applied[entry.key] = value;
         case KycOcrField.civilStatus:
-          if (next.civilStatus == null) {
-            final status = _civilStatusFromOcr(value);
-            if (status != null) next = next.copyWith(civilStatus: status);
+          final status = _civilStatusFromOcr(value);
+          if (status != null) {
+            next = next.copyWith(civilStatus: status);
+            applied[entry.key] = value;
           }
+        case KycOcrField.address:
+          next = next.copyWith(streetBarangay: value);
+          applied[entry.key] = value;
+        case KycOcrField.cityMunicipality:
+          next = next.copyWith(cityMunicipality: value);
+          applied[entry.key] = value;
+        case KycOcrField.province:
+          next = next.copyWith(province: value);
+          applied[entry.key] = value;
+        case KycOcrField.zipCode:
+          next = next.copyWith(zipCode: value);
+          applied[entry.key] = value;
         case KycOcrField.idNumber:
-          if (next.idNumber.trim().isEmpty) {
-            next = next.copyWith(idNumber: value);
-          }
+          next = next.copyWith(idNumber: value);
+          applied[entry.key] = value;
         case KycOcrField.idExpiryDate:
-          if (next.idExpiryDate == null) {
-            final date = DateTime.tryParse(value);
-            if (date != null) next = next.copyWith(idExpiryDate: date);
+          final date = DateTime.tryParse(value);
+          if (date != null) {
+            next = next.copyWith(idExpiryDate: date);
+            applied[entry.key] = value;
           }
       }
     }
-    return next;
+    final reviewed = next.copyWith(
+      ocrAppliedValues: applied,
+      ocrReviewConfirmed: true,
+    );
+    state = reviewed.copyWith(
+      scanIdentityStepRequired: !reviewed.isIdentityDraftComplete,
+    );
   }
 
   Sex? _sexFromOcr(String value) {
@@ -463,6 +767,7 @@ class KycFormController extends _$KycFormController {
     }
 
     state = KycFormState(
+      verificationMethod: KycVerificationMethod.manual,
       firstName: existing.firstName ?? '',
       middleName: existing.middleName,
       lastName: existing.lastName ?? '',

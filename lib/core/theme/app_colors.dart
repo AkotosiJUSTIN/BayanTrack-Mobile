@@ -59,9 +59,10 @@ abstract final class AppColors {
   static const Color lightInputFill = Color(0xFFF1F5F9); // Slate 100
 
   /// Citizen surfaces are intentionally separate from auth/onboarding tokens.
-  static const Color citizenLightPage = Color(0xFFF2F5F9);
+  static const Color citizenLightPage = Color(0xFFF7F8FA);
   static const Color citizenLightSurface = Color(0xFFF9FBFD);
   static const Color citizenLightInput = Color(0xFFEAF0F6);
+  static const Color citizenLightUnreadNotification = Color(0xFFE8F0FF);
 
   // ─────────────────────────────────────────────────────────
   // DARK MODE COLORS

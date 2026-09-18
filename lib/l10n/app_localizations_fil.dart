@@ -643,7 +643,21 @@ class AppLocalizationsFil extends AppLocalizations {
   String get submitVerification => 'Isumite ang Verification';
 
   @override
-  String get resubmitDocuments => 'Isumite Muli ang mga Dokumento';
+  String get resubmitDocuments => 'Iwasto at Isumite Muli';
+
+  @override
+  String get withdrawSubmission => 'Bawiin ang pagsusumite';
+
+  @override
+  String get withdrawSubmissionTitle => 'Bawiin ang kasalukuyang pagsusumite?';
+
+  @override
+  String get withdrawSubmissionDescription =>
+      'Aalisin ang iyong aplikasyon sa pagsusuri ng staff. Maaari mo itong baguhin at isumite muli.';
+
+  @override
+  String get withdrawalSucceeded =>
+      'Binawi ang pagsusumite. Maaari mo itong baguhin at isumite muli.';
 
   @override
   String get viewStatus => 'Tingnan ang Status';
@@ -1600,6 +1614,27 @@ class AppLocalizationsFil extends AppLocalizations {
       'Gumamit ng malinaw na larawan ng harap. Isinasagawa ang pagkilala ng teksto sa device na ito.';
 
   @override
+  String get chooseVerificationMethod => 'Piliin kung paano magberipika';
+
+  @override
+  String get chooseVerificationMethodDescription =>
+      'Piliin kung mag-i-scan ng ID para sa pagsusuri o ilalagay mismo ang iyong mga detalye.';
+
+  @override
+  String get scanIdOptionTitle => 'Mag-scan ng ID';
+
+  @override
+  String get scanIdOptionDescription =>
+      'Kunin ang mga detalye mula sa iyong ID para suriin, pagkatapos ay kumpletuhin ang form.';
+
+  @override
+  String get manualEntryOptionTitle => 'Ilagay nang manu-mano ang detalye';
+
+  @override
+  String get manualEntryOptionDescription =>
+      'Ikaw mismo ang maglagay ng iyong mga detalye. Hindi gagamit ng OCR.';
+
+  @override
   String get maxImageFormats => 'Hanggang 10MB bawat isa • JPG, PNG';
 
   @override
@@ -1719,6 +1754,9 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get idFrontRequired => 'Mag-upload ng larawan ng harap ng iyong ID';
+
+  @override
+  String get idBackRequired => 'Mag-upload ng larawan ng likod ng iyong ID';
 
   @override
   String get selfieRequired => 'Mag-upload ng selfie';

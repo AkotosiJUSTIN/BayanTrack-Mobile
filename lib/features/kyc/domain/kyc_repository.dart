@@ -16,6 +16,9 @@ abstract class KycRepository {
   /// Get current KYC status for the authenticated user.
   Future<Result<KycStatusEntity>> getKycStatus();
 
+  /// Withdraw a pending submission back to editable, unsubmitted state.
+  Future<Result<KycStatusEntity>> withdrawKyc();
+
   /// Submit KYC documents for verification.
   ///
   /// [firstName], [lastName], [nationality] are required.

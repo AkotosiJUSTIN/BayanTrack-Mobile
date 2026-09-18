@@ -7,6 +7,7 @@ import 'domain/usecases/get_form_options_usecase.dart';
 import 'domain/usecases/get_kyc_status_usecase.dart';
 import 'domain/usecases/resubmit_kyc_usecase.dart';
 import 'domain/usecases/submit_kyc_usecase.dart';
+import 'domain/usecases/withdraw_kyc_usecase.dart';
 
 /// Provides the [KycRepository] implementation.
 final kycDomainRepositoryProvider = Provider<KycRepository>((ref) {
@@ -18,6 +19,12 @@ final kycDomainRepositoryProvider = Provider<KycRepository>((ref) {
 final getKycStatusUseCaseProvider = Provider<GetKycStatusUseCase>((ref) {
   final repo = ref.watch(kycDomainRepositoryProvider);
   return GetKycStatusUseCase(repository: repo);
+});
+
+/// Provides the [WithdrawKycUseCase].
+final withdrawKycUseCaseProvider = Provider<WithdrawKycUseCase>((ref) {
+  final repo = ref.watch(kycDomainRepositoryProvider);
+  return WithdrawKycUseCase(repository: repo);
 });
 
 /// Provides the [GetFormOptionsUseCase].

@@ -18,6 +18,91 @@ void _expectUnreadable(IdType idType) {
 }
 
 void main() {
+  group('PhilSys / National ID OCR', () {
+    test(
+      'dispatches national_id key and extracts identity, address, and PCN',
+      () {
+        const rawText = '''
+REPUBLIC OF THE PHILIPPINES
+PHILIPPINE IDENTIFICATION CARD
+SURNAME
+DELA CRUZ
+GIVEN NAME
+JUAN
+MIDDLE NAME
+SANTOS
+DATE OF BIRTH
+01 JAN 1990
+SEX
+M
+NATIONALITY
+FILIPINO
+ADDRESS
+123 Mabini Street
+Barangay San Antonio
+CITY/MUNICIPALITY
+Quezon City
+PROVINCE
+Metro Manila
+ZIP CODE
+1000
+PHILSYS CARD NUMBER
+1234-5678-9012
+''';
+
+        expect(KycOcrParser.supports(IdType.nationalId), isTrue);
+        expect(KycOcrParser.supports(IdType.philsys), isTrue);
+        final result = KycOcrParser.parse(IdType.nationalId, rawText);
+
+        expect(result.rawText, rawText);
+        expect(result.status, KycOcrResultStatus.extracted);
+        expect(result.fields[KycOcrField.firstName]?.value, 'JUAN');
+        expect(result.fields[KycOcrField.middleName]?.value, 'SANTOS');
+        expect(result.fields[KycOcrField.lastName]?.value, 'DELA CRUZ');
+        expect(result.fields[KycOcrField.dateOfBirth]?.value, '1990-01-01');
+        expect(
+          result.fields[KycOcrField.address]?.value,
+          '123 Mabini Street, Barangay San Antonio',
+        );
+        expect(
+          result.fields[KycOcrField.cityMunicipality]?.value,
+          'Quezon City',
+        );
+        expect(result.fields[KycOcrField.province]?.value, 'Metro Manila');
+        expect(result.fields[KycOcrField.zipCode]?.value, '1000');
+        expect(result.fields[KycOcrField.idNumber]?.value, '1234-5678-9012');
+        expect(result.fields[KycOcrField.idExpiryDate], isNull);
+
+        final philsys = KycOcrParser.parse(IdType.philsys, rawText);
+        expect(philsys.fields[KycOcrField.idNumber]?.value, '1234-5678-9012');
+        expect(
+          philsys.fields[KycOcrField.address]?.value,
+          '123 Mabini Street, Barangay San Antonio',
+        );
+      },
+    );
+
+    test('does not route same text through driver license parser', () {
+      const text = 'PHILSYS CARD NUMBER: 1234-5678-9012\nADDRESS: Cebu City';
+      final national = KycOcrParser.parse(IdType.nationalId, text);
+      final driver = KycOcrParser.parse(IdType.driversLicense, text);
+
+      expect(national.fields[KycOcrField.idNumber]?.value, '1234-5678-9012');
+      expect(national.fields[KycOcrField.address]?.value, 'Cebu City');
+      expect(driver.fields[KycOcrField.idNumber], isNull);
+      expect(driver.fields[KycOcrField.address], isNull);
+    });
+
+    test('keeps National ID partial and unreadable input manual', () {
+      _expectPartial(
+        IdType.nationalId,
+        'PCN: 1234-5678-9012',
+        KycOcrField.idNumber,
+      );
+      _expectUnreadable(IdType.nationalId);
+    });
+  });
+
   group('Philippine Passport OCR', () {
     test('extracts labeled fields and MRZ-safe values', () {
       final result = KycOcrParser.parse(IdType.passport, '''

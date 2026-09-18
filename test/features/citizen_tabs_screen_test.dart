@@ -1,5 +1,6 @@
 import 'package:bayantrack_mobile/core/domain/failures.dart';
 import 'package:bayantrack_mobile/core/domain/result.dart';
+import 'package:bayantrack_mobile/core/theme/app_colors.dart';
 import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
 import 'package:bayantrack_mobile/features/home/presentation/home_screen.dart';
 import 'package:bayantrack_mobile/features/notifications/domain/entities/notification.dart';
@@ -240,6 +241,68 @@ void main() {
     expect(find.text('Report update'), findsOneWidget);
     expect(find.text('Your report is now under review.'), findsOneWidget);
   });
+
+  testWidgets(
+    'Notifications use a light blue unread surface without changing dark mode',
+    (tester) async {
+      Future<void> pumpNotification(ThemeData theme, bool isRead) async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pumpWidget(
+          _app(
+            home: const NotificationsScreen(),
+            theme: theme,
+            overrides: [
+              notificationsControllerProvider.overrideWithBuild(
+                (_, _) async => PaginatedNotifications(
+                  results: [
+                    NotificationEntity(
+                      id: 'notification-1',
+                      title: 'Report update',
+                      message: 'Your report is now under review.',
+                      type: NotificationType.statusChange,
+                      isRead: isRead,
+                    ),
+                  ],
+                  unreadCount: isRead ? 0 : 1,
+                ),
+              ),
+              userPermissionsProvider.overrideWithValue(UserPermissions(null)),
+            ],
+          ),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      Material notificationMaterial() => tester.widget<Material>(
+        find
+            .ancestor(
+              of: find.text('Report update'),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+
+      await pumpNotification(AppTheme.light, false);
+      final lightUnread = notificationMaterial();
+      expect(lightUnread.color, AppColors.citizenLightUnreadNotification);
+      final lightShape = lightUnread.shape! as RoundedRectangleBorder;
+      expect(lightShape.borderRadius, BorderRadius.circular(16));
+      expect(lightShape.side.style, BorderStyle.none);
+
+      await pumpNotification(AppTheme.light, true);
+      expect(notificationMaterial().color, AppTheme.light.colorScheme.surface);
+      expect(notificationMaterial().color, isNot(lightUnread.color));
+
+      await pumpNotification(AppTheme.dark, false);
+      expect(
+        notificationMaterial().color,
+        Color.alphaBlend(
+          AppTheme.dark.colorScheme.primary.withValues(alpha: 0.07),
+          AppTheme.dark.colorScheme.surface,
+        ),
+      );
+    },
+  );
 
   testWidgets('Notifications hides raw failures behind localized retry copy', (
     tester,

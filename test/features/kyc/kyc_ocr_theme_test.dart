@@ -39,6 +39,7 @@ Future<void> _pumpReview(
   );
   addTearDown(container.dispose);
   final controller = container.read(kycFormControllerProvider.notifier);
+  controller.setVerificationMethod(KycVerificationMethod.scanId);
   controller.setIdType(IdType.passport);
   controller.setIdFrontImage('front.jpg');
   await controller.scanId();
@@ -54,7 +55,7 @@ Future<void> _pumpReview(
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         theme: theme,
-        home: const KycFormScreen(initialStep: 5),
+        home: const KycFormScreen(initialStep: 3),
       ),
     ),
   );

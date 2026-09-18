@@ -103,4 +103,51 @@ void main() {
     final idTypeX = tester.getTopLeft(find.text('ID Type')).dx;
     expect((fullNameX - idTypeX).abs(), lessThan(1));
   });
+
+  testWidgets('rejected status shows reason and Correct & Resubmit action', (
+    tester,
+  ) async {
+    await _pumpStatus(
+      tester,
+      theme: AppTheme.light,
+      status: const KycStatusEntity(
+        status: KycVerificationStatus.rejected,
+        rejectionReason: 'ID image is blurry',
+      ),
+    );
+
+    expect(find.text('ID image is blurry'), findsOneWidget);
+    expect(find.text('Correct & Resubmit'), findsOneWidget);
+  });
+
+  testWidgets(
+    'resubmit requested status shows reason and Correct & Resubmit action',
+    (tester) async {
+      await _pumpStatus(
+        tester,
+        theme: AppTheme.light,
+        status: const KycStatusEntity(
+          status: KycVerificationStatus.resubmitRequested,
+          rejectionReason: 'Add the back of the ID.',
+        ),
+      );
+
+      expect(find.text('Add the back of the ID.'), findsOneWidget);
+      expect(find.text('Correct & Resubmit'), findsOneWidget);
+    },
+  );
+
+  testWidgets('pending and verified statuses stay read-only', (tester) async {
+    for (final status in [
+      KycVerificationStatus.pending,
+      KycVerificationStatus.verified,
+    ]) {
+      await _pumpStatus(
+        tester,
+        theme: AppTheme.light,
+        status: KycStatusEntity(status: status),
+      );
+      expect(find.text('Correct & Resubmit'), findsNothing);
+    }
+  });
 }

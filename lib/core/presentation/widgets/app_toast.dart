@@ -8,7 +8,8 @@ enum ToastType { success, error, warning, info }
 ///
 /// One top-positioned overlay replaces the current message so feedback stays
 /// visible without competing with bottom navigation, the FAB, or the keyboard.
-/// Errors and warnings persist until the citizen dismisses them.
+/// Warnings and actionable errors persist until the citizen dismisses them;
+/// other errors are transient.
 class AppToast {
   AppToast._();
 
@@ -28,7 +29,7 @@ class AppToast {
       context,
       message,
       ToastType.error,
-      persist: true,
+      persist: actionLabel != null,
       actionLabel: actionLabel,
       onAction: onAction,
     );

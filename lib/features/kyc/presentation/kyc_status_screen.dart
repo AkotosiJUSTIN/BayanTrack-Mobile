@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/entities/kyc_enums.dart';
@@ -268,6 +269,10 @@ class KycStatusScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
+                if (kycStatus.status == KycVerificationStatus.pending) ...[
+                  const SizedBox(height: 16),
+                  _buildWithdrawAction(context, ref),
+                ],
                 if (kycStatus.status.canResubmit ||
                     kycStatus.status == KycVerificationStatus.unverified) ...[
                   const SizedBox(height: 24),
@@ -508,6 +513,59 @@ class KycStatusScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildWithdrawAction(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () => _withdrawSubmission(context, ref),
+        icon: const Icon(Icons.undo_outlined),
+        label: Text(l10n.withdrawSubmission),
+      ),
+    );
+  }
+
+  Future<void> _withdrawSubmission(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.withdrawSubmissionTitle),
+        content: Text(l10n.withdrawSubmissionDescription),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(l10n.withdrawSubmission),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final result = await ref
+        .read(kycStatusControllerProvider.notifier)
+        .withdrawKyc();
+    if (!context.mounted) return;
+
+    final failure = result.failureOrNull;
+    if (failure != null) {
+      AppToast.error(context, failure.message);
+      return;
+    }
+
+    await ref.read(kycStatusControllerProvider.notifier).refresh();
+    if (context.mounted) {
+      AppToast.success(context, l10n.withdrawalSucceeded);
+    }
   }
 
   Widget _buildInfoRow(String label, String value, BuildContext context) {

@@ -1295,8 +1295,32 @@ abstract class AppLocalizations {
   /// No description provided for @resubmitDocuments.
   ///
   /// In en, this message translates to:
-  /// **'Resubmit Documents'**
+  /// **'Correct & Resubmit'**
   String get resubmitDocuments;
+
+  /// No description provided for @withdrawSubmission.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw submission'**
+  String get withdrawSubmission;
+
+  /// No description provided for @withdrawSubmissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw pending submission?'**
+  String get withdrawSubmissionTitle;
+
+  /// No description provided for @withdrawSubmissionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your application will be removed from staff review. You can edit and submit it again.'**
+  String get withdrawSubmissionDescription;
+
+  /// No description provided for @withdrawalSucceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Submission withdrawn. You can edit and submit again.'**
+  String get withdrawalSucceeded;
 
   /// No description provided for @viewStatus.
   ///
@@ -2966,6 +2990,42 @@ abstract class AppLocalizations {
   /// **'Use a clear front photo. Text recognition runs on this device.'**
   String get scanIdDescription;
 
+  /// No description provided for @chooseVerificationMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how to verify'**
+  String get chooseVerificationMethod;
+
+  /// No description provided for @chooseVerificationMethodDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose whether to scan an ID for review or enter your details yourself.'**
+  String get chooseVerificationMethodDescription;
+
+  /// No description provided for @scanIdOptionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan an ID'**
+  String get scanIdOptionTitle;
+
+  /// No description provided for @scanIdOptionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract details from your ID for review, then complete the rest of the form.'**
+  String get scanIdOptionDescription;
+
+  /// No description provided for @manualEntryOptionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter details manually'**
+  String get manualEntryOptionTitle;
+
+  /// No description provided for @manualEntryOptionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in your identity details yourself. OCR is skipped.'**
+  String get manualEntryOptionDescription;
+
   /// No description provided for @maxImageFormats.
   ///
   /// In en, this message translates to:
@@ -3181,6 +3241,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please upload a photo of your ID (front side)'**
   String get idFrontRequired;
+
+  /// No description provided for @idBackRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please upload a photo of your ID (back side)'**
+  String get idBackRequired;
 
   /// No description provided for @selfieRequired.
   ///

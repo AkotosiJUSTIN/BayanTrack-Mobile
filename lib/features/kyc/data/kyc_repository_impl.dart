@@ -48,6 +48,16 @@ class KycRepositoryImpl implements domain.KycRepository {
   }
 
   @override
+  Future<Result<KycStatusEntity>> withdrawKyc() async {
+    try {
+      final dto = await _legacyRepo.withdrawKyc();
+      return Success(KycMapper.toKycStatusEntity(dto));
+    } catch (e, stack) {
+      return Err(ErrorMapper.mapException(e, stack));
+    }
+  }
+
+  @override
   Future<Result<KycStatusEntity>> submitKyc({
     required String firstName,
     String? middleName,
