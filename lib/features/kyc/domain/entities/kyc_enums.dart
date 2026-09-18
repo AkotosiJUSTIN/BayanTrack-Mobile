@@ -73,7 +73,8 @@ enum IdType {
   sss,
   umid,
   postal,
-  voters;
+  voters,
+  prcProfessionalId;
 
   String get displayName => switch (this) {
     passport => 'Passport',
@@ -84,6 +85,7 @@ enum IdType {
     umid => 'UMID',
     postal => 'Postal ID',
     voters => "Voter's ID",
+    prcProfessionalId => 'PRC Professional ID',
   };
 
   /// API value for submission.
@@ -96,6 +98,7 @@ enum IdType {
     umid => 'umid',
     postal => 'postal',
     voters => 'voters',
+    prcProfessionalId => 'prc',
   };
 
   /// Whether this ID type requires a back image.
@@ -114,6 +117,7 @@ enum IdType {
       'umid' => umid,
       'postal' => postal,
       'voters' => voters,
+      'prc' => prcProfessionalId,
       _ => nationalId,
     };
   }

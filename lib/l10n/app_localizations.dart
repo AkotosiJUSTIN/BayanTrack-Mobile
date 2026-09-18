@@ -2954,6 +2954,18 @@ abstract class AppLocalizations {
   /// **'Upload clear photos of your Government ID'**
   String get uploadGovId;
 
+  /// No description provided for @scanId.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan ID'**
+  String get scanId;
+
+  /// No description provided for @scanIdDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a clear front photo. Text recognition runs on this device.'**
+  String get scanIdDescription;
+
   /// No description provided for @maxImageFormats.
   ///
   /// In en, this message translates to:
@@ -3055,6 +3067,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unable to submit user verification. Please try again.'**
   String get verificationSubmitFailed;
+
+  /// No description provided for @reviewExtractedDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Review extracted details'**
+  String get reviewExtractedDetails;
+
+  /// No description provided for @reviewExtractedDetailsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Check each suggestion and edit anything before continuing.'**
+  String get reviewExtractedDetailsDescription;
+
+  /// No description provided for @ocrScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading your ID on this device…'**
+  String get ocrScanning;
+
+  /// No description provided for @ocrPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Some details were found. Check them and fill any blanks.'**
+  String get ocrPartial;
+
+  /// No description provided for @ocrUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t read this image. Retake the photo or enter details manually.'**
+  String get ocrUnreadable;
+
+  /// No description provided for @ocrUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'OCR is not available for this ID type yet. Enter details manually.'**
+  String get ocrUnsupported;
+
+  /// No description provided for @ocrManualReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Check this field'**
+  String get ocrManualReview;
+
+  /// No description provided for @ocrHighConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear text match'**
+  String get ocrHighConfidence;
+
+  /// No description provided for @ocrAuthenticityNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'OCR only helps fill the form. It does not verify that the ID is authentic.'**
+  String get ocrAuthenticityNotice;
 
   /// No description provided for @fixFormErrors.
   ///
@@ -3505,6 +3571,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Voter\'s ID'**
   String get idVoters;
+
+  /// No description provided for @idPrc.
+  ///
+  /// In en, this message translates to:
+  /// **'PRC Professional ID'**
+  String get idPrc;
 
   /// No description provided for @male.
   ///

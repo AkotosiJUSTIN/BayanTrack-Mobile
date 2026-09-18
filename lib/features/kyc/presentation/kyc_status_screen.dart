@@ -602,6 +602,7 @@ class KycStatusScreen extends ConsumerWidget {
     IdType.umid => l10n.idUmid,
     IdType.postal => l10n.idPostal,
     IdType.voters => l10n.idVoters,
+    IdType.prcProfessionalId => l10n.idPrc,
   };
 
   String _formatDateTime(DateTime date) {

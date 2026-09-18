@@ -231,6 +231,7 @@ class KycRepositoryImpl implements domain.KycRepository {
       'umid' => IdType.umid,
       'postal' => IdType.postal,
       'voters' => IdType.voters,
+      'prc' => IdType.prcProfessionalId,
       _ => IdType.nationalId,
     };
   }

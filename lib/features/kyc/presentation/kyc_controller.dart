@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/utils/kyc_validators.dart';
+import '../data/kyc_ocr.dart';
 import '../data/kyc_models.dart';
 import '../domain/entities/kyc_form_options.dart' as domain;
 import '../domain/entities/kyc_status.dart';
@@ -94,6 +95,11 @@ class KycFormState {
   final String? selfieImagePath;
   final String? selfieWithIdImagePath;
 
+  // Local OCR assistance. OCR never changes an existing non-empty value.
+  final KycOcrResult? ocrResult;
+  final bool isOcrScanning;
+  final String? ocrError;
+
   // G. Declaration
   final bool declarationAccepted;
 
@@ -128,6 +134,9 @@ class KycFormState {
     this.idBackImagePath,
     this.selfieImagePath,
     this.selfieWithIdImagePath,
+    this.ocrResult,
+    this.isOcrScanning = false,
+    this.ocrError,
     // Declaration
     this.declarationAccepted = false,
     // Form state
@@ -157,6 +166,9 @@ class KycFormState {
     String? idBackImagePath,
     String? selfieImagePath,
     String? selfieWithIdImagePath,
+    KycOcrResult? ocrResult,
+    bool? isOcrScanning,
+    String? ocrError,
     bool? declarationAccepted,
     bool? isSubmitting,
     String? error,
@@ -184,6 +196,9 @@ class KycFormState {
       selfieImagePath: selfieImagePath ?? this.selfieImagePath,
       selfieWithIdImagePath:
           selfieWithIdImagePath ?? this.selfieWithIdImagePath,
+      ocrResult: ocrResult ?? this.ocrResult,
+      isOcrScanning: isOcrScanning ?? this.isOcrScanning,
+      ocrError: ocrError,
       declarationAccepted: declarationAccepted ?? this.declarationAccepted,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       error: error,
@@ -244,12 +259,17 @@ class KycFormState {
   bool get hasIdBack => idBackImagePath != null;
   bool get hasSelfie => selfieImagePath != null;
   bool get hasSelfieWithId => selfieWithIdImagePath != null;
+
+  bool get hasCurrentOcrResult =>
+      ocrResult != null && ocrResult!.idType == selectedIdType;
 }
 
 // ==================== KYC FORM CONTROLLER ====================
 
 @riverpod
 class KycFormController extends _$KycFormController {
+  int _ocrRequestId = 0;
+
   @override
   KycFormState build() => const KycFormState();
 
@@ -287,14 +307,122 @@ class KycFormController extends _$KycFormController {
       state = state.copyWith(idExpiryDate: value);
 
   // ===== E. Image Setters =====
-  void setIdFrontImage(String? path) =>
-      state = state.copyWith(idFrontImagePath: path);
+  void setIdFrontImage(String? path) {
+    _ocrRequestId++;
+    state = state.copyWith(idFrontImagePath: path);
+  }
+
   void setIdBackImage(String? path) =>
       state = state.copyWith(idBackImagePath: path);
   void setSelfieImage(String? path) =>
       state = state.copyWith(selfieImagePath: path);
   void setSelfieWithIdImage(String? path) =>
       state = state.copyWith(selfieWithIdImagePath: path);
+
+  /// Runs on-device OCR for the selected ID. Existing form values stay intact;
+  /// only blank fields receive a suggestion and the result remains reviewable.
+  Future<KycOcrResult?> scanId() async {
+    final idType = state.selectedIdType;
+    if (idType == null || state.idFrontImagePath == null) return null;
+    final requestId = ++_ocrRequestId;
+
+    if (!KycOcrParser.supports(idType)) {
+      final result = KycOcrResult(
+        idType: idType,
+        status: KycOcrResultStatus.unsupported,
+        message: 'OCR is not available for this ID type yet.',
+      );
+      state = state.copyWith(ocrResult: result, isOcrScanning: false);
+      return result;
+    }
+
+    state = state.copyWith(isOcrScanning: true, ocrError: null);
+    try {
+      final result = await ref
+          .read(kycOcrServiceProvider)
+          .scan(idType: idType, imagePath: state.idFrontImagePath!);
+      if (requestId != _ocrRequestId ||
+          idType != state.selectedIdType ||
+          result.idType != idType) {
+        return null;
+      }
+      state = _prefillBlankFields(
+        result,
+      ).copyWith(ocrResult: result, isOcrScanning: false, ocrError: null);
+      return result;
+    } catch (_) {
+      if (requestId != _ocrRequestId) return null;
+      state = state.copyWith(
+        isOcrScanning: false,
+        ocrError: 'OCR could not read this image.',
+      );
+      return null;
+    }
+  }
+
+  KycFormState _prefillBlankFields(KycOcrResult result) {
+    var next = state;
+    for (final entry in result.fields.entries) {
+      final value = entry.value.value;
+      switch (entry.key) {
+        case KycOcrField.firstName:
+          if (next.firstName.trim().isEmpty) {
+            next = next.copyWith(firstName: value);
+          }
+        case KycOcrField.middleName:
+          if (next.middleName?.trim().isNotEmpty != true) {
+            next = next.copyWith(middleName: value);
+          }
+        case KycOcrField.lastName:
+          if (next.lastName.trim().isEmpty) {
+            next = next.copyWith(lastName: value);
+          }
+        case KycOcrField.dateOfBirth:
+          if (next.dateOfBirth == null) {
+            final date = DateTime.tryParse(value);
+            if (date != null) next = next.copyWith(dateOfBirth: date);
+          }
+        case KycOcrField.sex:
+          if (next.sex == null) {
+            final sex = _sexFromOcr(value);
+            if (sex != null) next = next.copyWith(sex: sex);
+          }
+        case KycOcrField.nationality:
+          if (next.nationality.trim().isEmpty) {
+            next = next.copyWith(nationality: value);
+          }
+        case KycOcrField.civilStatus:
+          if (next.civilStatus == null) {
+            final status = _civilStatusFromOcr(value);
+            if (status != null) next = next.copyWith(civilStatus: status);
+          }
+        case KycOcrField.idNumber:
+          if (next.idNumber.trim().isEmpty) {
+            next = next.copyWith(idNumber: value);
+          }
+        case KycOcrField.idExpiryDate:
+          if (next.idExpiryDate == null) {
+            final date = DateTime.tryParse(value);
+            if (date != null) next = next.copyWith(idExpiryDate: date);
+          }
+      }
+    }
+    return next;
+  }
+
+  Sex? _sexFromOcr(String value) {
+    for (final sex in Sex.values) {
+      if (sex.name == value) return sex;
+    }
+    return null;
+  }
+
+  CivilStatus? _civilStatusFromOcr(String value) {
+    for (final status in CivilStatus.values) {
+      if (status.name == value) return status;
+    }
+    return null;
+  }
 
   // ===== G. Declaration Setter =====
   void setDeclarationAccepted(bool value) =>
@@ -405,7 +533,7 @@ class KycFormController extends _$KycFormController {
 
       state = state.copyWith(isSubmitting: false);
 
-      return result.when(
+      return await result.when(
         success: (entity) => entity,
         failure: (failure) => throw failure,
       );
@@ -464,7 +592,7 @@ class KycFormController extends _$KycFormController {
 
       state = state.copyWith(isSubmitting: false);
 
-      return result.when(
+      return await result.when(
         success: (entity) => entity,
         failure: (failure) => throw failure,
       );

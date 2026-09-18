@@ -9,6 +9,7 @@ import '../../../core/domain/failures.dart';
 import '../../../core/utils/kyc_validators.dart';
 import '../../../core/utils/validators.dart';
 import '../../../l10n/app_localizations.dart';
+import '../data/kyc_ocr.dart';
 import '../data/kyc_models.dart';
 import '../domain/entities/kyc_status.dart';
 import '../../auth/presentation/barangays_provider.dart';
@@ -27,11 +28,13 @@ import 'kyc_controller.dart';
 class KycFormScreen extends ConsumerStatefulWidget {
   final bool isResubmission;
   final KycStatusEntity? existingKyc;
+  final int initialStep;
 
   const KycFormScreen({
     super.key,
     this.isResubmission = false,
     this.existingKyc,
+    this.initialStep = 0,
   });
 
   @override
@@ -39,6 +42,7 @@ class KycFormScreen extends ConsumerStatefulWidget {
 }
 
 class _KycFormScreenState extends ConsumerState<KycFormScreen> {
+  static const _stepCount = 8;
   final _formKey = GlobalKey<FormState>();
   final _imagePicker = ImagePicker();
   static final _nameInputRegex = RegExp(
@@ -71,6 +75,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialStep >= 0 && widget.initialStep < _stepCount) {
+      _currentStep = widget.initialStep;
+    }
     if (widget.existingKyc != null) {
       _populateFromExisting(widget.existingKyc!);
     }
@@ -142,6 +149,11 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         case 'id_front':
           _clearBackendError('id_front_image');
           controller.setIdFrontImage(pickedFile.path);
+          final result = await controller.scanId();
+          if (mounted) {
+            _syncOcrControllers(ref.read(kycFormControllerProvider));
+            if (result != null) _setCurrentStep(5);
+          }
           break;
         case 'id_back':
           _clearBackendError('id_back_image');
@@ -160,6 +172,29 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       if (mounted) {
         AppToast.error(context, AppLocalizations.of(context).imageAccessError);
       }
+    }
+  }
+
+  void _syncOcrControllers(KycFormState state) {
+    if (_firstNameController.text.trim().isEmpty &&
+        state.firstName.trim().isNotEmpty) {
+      _firstNameController.text = state.firstName;
+    }
+    if (_middleNameController.text.trim().isEmpty &&
+        state.middleName?.trim().isNotEmpty == true) {
+      _middleNameController.text = state.middleName!;
+    }
+    if (_lastNameController.text.trim().isEmpty &&
+        state.lastName.trim().isNotEmpty) {
+      _lastNameController.text = state.lastName;
+    }
+    if (_nationalityController.text.trim().isEmpty &&
+        state.nationality.trim().isNotEmpty) {
+      _nationalityController.text = state.nationality;
+    }
+    if (_idNumberController.text.trim().isEmpty &&
+        state.idNumber.trim().isNotEmpty) {
+      _idNumberController.text = state.idNumber;
     }
   }
 
@@ -283,12 +318,12 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       return 3;
     }
 
-    // Check Images (Steps 4-5)
+    // Check Images (Steps 4 and 6; review step is optional)
     if (state.idFrontImagePath == null) return 4;
-    if (state.selfieImagePath == null) return 5;
+    if (state.selfieImagePath == null) return 6;
 
-    // Check Declaration (Step 6)
-    if (!state.declarationAccepted) return 6;
+    // Check Declaration (Step 7)
+    if (!state.declarationAccepted) return 7;
 
     return null;
   }
@@ -358,11 +393,11 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         return _backendError('id_front_image') ??
             _backendError('id_back_image') ??
             l10n.idFrontRequired;
-      case 5:
+      case 6:
         return _backendError('selfie_image') ??
             _backendError('selfie_with_id_image') ??
             l10n.selfieRequired;
-      case 6:
+      case 7:
         return _backendError('declaration_accepted') ??
             l10n.declarationRequired;
       default:
@@ -374,11 +409,11 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     final errorStep = _findStepWithErrors();
     if (errorStep != null && errorStep <= _currentStep) {
       _formKey.currentState?.validate();
-      AppToast.error(context, _getStepErrorMessage(errorStep));
+      AppToast.error(context, AppLocalizations.of(context).allRequiredFields);
       return;
     }
 
-    _setCurrentStep(_currentStep + 1);
+    if (_currentStep < _stepCount - 1) _setCurrentStep(_currentStep + 1);
   }
 
   Future<void> _submitForm() async {
@@ -480,8 +515,8 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     'street_barangay' || 'city_municipality' || 'province' || 'zip_code' => 2,
     'id_type' || 'id_number' || 'id_expiry_date' => 3,
     'id_front_image' || 'id_back_image' => 4,
-    'selfie_image' || 'selfie_with_id_image' => 5,
-    'declaration_accepted' => 6,
+    'selfie_image' || 'selfie_with_id_image' => 6,
+    'declaration_accepted' => 7,
     _ => null,
   };
 
@@ -501,9 +536,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           preferredSize: const Size.fromHeight(4),
           child: Semantics(
             container: true,
-            label: l10n.stepOf(_currentStep + 1, 7),
+            label: l10n.stepOf(_currentStep + 1, _stepCount),
             child: LinearProgressIndicator(
-              value: (_currentStep + 1) / 7,
+              value: (_currentStep + 1) / _stepCount,
               minHeight: 4,
             ),
           ),
@@ -546,7 +581,8 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       l10n.contactInfo,
       l10n.reportLocation,
       l10n.governmentId,
-      l10n.idPhotos,
+      l10n.scanId,
+      l10n.reviewExtractedDetails,
       l10n.selfie,
       l10n.declaration,
     ];
@@ -556,6 +592,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       l10n.currentResidence,
       l10n.idTypeNumber,
       l10n.uploadIdImages,
+      l10n.reviewExtractedDetailsDescription,
       l10n.faceVerification,
       l10n.confirmSubmit,
     ];
@@ -565,6 +602,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       state.isAddressComplete,
       state.isIdDetailsComplete,
       state.hasIdFront,
+      state.hasCurrentOcrResult && !state.isOcrScanning,
       state.hasSelfie,
       state.isDeclarationComplete,
     ];
@@ -659,7 +697,8 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     2 => _buildAddressSection(state),
     3 => _buildIdDetailsSection(state),
     4 => _buildIdImagesSection(state),
-    5 => _buildSelfieSection(state),
+    5 => _buildOcrReviewSection(state),
+    6 => _buildSelfieSection(state),
     _ => _buildDeclarationSection(state),
   };
 
@@ -672,7 +711,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             child: ElevatedButton(
               onPressed: state.isSubmitting
                   ? null
-                  : _currentStep < 6
+                  : _currentStep < _stepCount - 1
                   ? _continueStep
                   : _submitForm,
               child: state.isSubmitting
@@ -682,7 +721,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Text(
-                      _currentStep < 6
+                      _currentStep < _stepCount - 1
                           ? l10n.continueLabel
                           : widget.isResubmission
                           ? l10n.resubmitDocuments
@@ -1062,7 +1101,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             .watch(barangaysProvider)
             .when(
               loading: () => const LinearProgressIndicator(),
-              error: (_, __) => Text(
+              error: (_, _) => Text(
                 l10n.failedLoadBarangays,
                 style: TextStyle(color: theme.colorScheme.error),
               ),
@@ -1073,7 +1112,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
                     : null;
 
                 return DropdownButtonFormField<String>(
-                  value: validBarangay,
+                  initialValue: validBarangay,
                   isExpanded: true,
                   decoration: InputDecoration(
                     labelText: '${l10n.barangay} *',
@@ -1285,7 +1324,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          l10n.maxImageFormats,
+          '${l10n.scanIdDescription}\n${l10n.maxImageFormats}',
           style: TextStyle(
             fontSize: 12,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -1295,9 +1334,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
         // ID Front *
         _buildImagePicker(
-          title: '${l10n.idFrontPhoto} *',
+          title: '${l10n.scanId} · ${l10n.idFrontPhoto} *',
           imagePath: state.idFrontImagePath,
-          onTap: () => _showImageSourceDialog('id_front', l10n.idFrontPhoto),
+          onTap: () => _showImageSourceDialog('id_front', l10n.scanId),
           onRemove: () => controller.setIdFrontImage(null),
         ),
         const SizedBox(height: 16),
@@ -1323,9 +1362,325 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             ),
           ),
         ],
+        if (state.isOcrScanning) ...[
+          const SizedBox(height: 16),
+          LinearProgressIndicator(semanticsLabel: l10n.ocrScanning),
+          const SizedBox(height: 8),
+          Text(l10n.ocrScanning),
+        ],
+        if (state.ocrError != null) ...[
+          const SizedBox(height: 12),
+          Text(
+            l10n.ocrUnreadable,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+        ],
+        if (state.hasCurrentOcrResult && !state.isOcrScanning) ...[
+          const SizedBox(height: 16),
+          FilledButton.tonalIcon(
+            onPressed: () => _setCurrentStep(5),
+            icon: const Icon(Icons.fact_check_outlined),
+            label: Text(l10n.reviewExtractedDetails),
+          ),
+        ],
       ],
     );
   }
+
+  Widget _buildOcrReviewSection(KycFormState state) {
+    final l10n = AppLocalizations.of(context);
+    final result = state.ocrResult;
+    final theme = Theme.of(context);
+
+    if (result == null || result.idType != state.selectedIdType) {
+      return _buildOcrRecovery(l10n.ocrUnreadable, Icons.info_outline, l10n);
+    }
+    if (result.status == KycOcrResultStatus.unsupported) {
+      return _buildOcrRecovery(
+        l10n.ocrUnsupported,
+        Icons.edit_note_outlined,
+        l10n,
+      );
+    }
+    if (!result.hasFields) {
+      return _buildOcrRecovery(
+        result.message ?? l10n.ocrUnreadable,
+        Icons.document_scanner_outlined,
+        l10n,
+      );
+    }
+
+    final controller = ref.read(kycFormControllerProvider.notifier);
+    final fields = result.fields;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildOcrReviewNotice(
+          l10n.ocrAuthenticityNotice,
+          Icons.shield_outlined,
+        ),
+        const SizedBox(height: 16),
+        if (result.status == KycOcrResultStatus.partial)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              l10n.ocrPartial,
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            ),
+          ),
+        ...fields.entries.expand((entry) {
+          final value = entry.value;
+          final confidence = value.confidence == KycOcrConfidence.high
+              ? l10n.ocrHighConfidence
+              : l10n.ocrManualReview;
+          return [
+            _buildOcrField(
+              field: entry.key,
+              value: value,
+              confidenceLabel: confidence,
+              controller: controller,
+            ),
+            const SizedBox(height: 14),
+          ];
+        }),
+        Text(
+          l10n.reviewExtractedDetailsDescription,
+          style: theme.textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOcrReviewNotice(String message, IconData icon) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: theme.colorScheme.onSecondaryContainer),
+          const SizedBox(width: 12),
+          Expanded(child: Text(message)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOcrRecovery(
+    String message,
+    IconData icon,
+    AppLocalizations l10n,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildOcrReviewNotice(message, icon),
+        const SizedBox(height: 16),
+        FilledButton.tonalIcon(
+          onPressed: () => _setCurrentStep(4),
+          icon: const Icon(Icons.refresh),
+          label: Text(l10n.scanId),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOcrField({
+    required KycOcrField field,
+    required KycOcrFieldValue value,
+    required String confidenceLabel,
+    required KycFormController controller,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    final currentState = ref.read(kycFormControllerProvider);
+    final fieldLabel = switch (field) {
+      KycOcrField.firstName => '${l10n.firstName} *',
+      KycOcrField.middleName => l10n.middleName,
+      KycOcrField.lastName => '${l10n.lastName} *',
+      KycOcrField.dateOfBirth => '${l10n.dateOfBirth} *',
+      KycOcrField.sex => l10n.sex,
+      KycOcrField.nationality => '${l10n.nationality} *',
+      KycOcrField.civilStatus => l10n.civilStatus,
+      KycOcrField.idNumber => '${l10n.idNumber} *',
+      KycOcrField.idExpiryDate => l10n.idExpiryDate,
+    };
+
+    if (field == KycOcrField.dateOfBirth || field == KycOcrField.idExpiryDate) {
+      final date = field == KycOcrField.dateOfBirth
+          ? currentState.dateOfBirth
+          : currentState.idExpiryDate;
+      return Semantics(
+        button: true,
+        label: fieldLabel,
+        child: InkWell(
+          onTap: () => _editOcrDate(field, controller, date),
+          child: InputDecorator(
+            decoration: InputDecoration(labelText: fieldLabel),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(date == null ? value.value : _formatDate(date)),
+                ),
+                _buildOcrConfidenceChip(confidenceLabel),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (field == KycOcrField.sex || field == KycOcrField.civilStatus) {
+      final selectedSex = currentState.sex;
+      final selectedCivilStatus = currentState.civilStatus;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          DropdownButtonFormField<Object>(
+            decoration: InputDecoration(labelText: fieldLabel),
+            initialValue: field == KycOcrField.sex
+                ? selectedSex
+                : selectedCivilStatus,
+            items: field == KycOcrField.sex
+                ? Sex.values
+                      .map(
+                        (sex) => DropdownMenuItem<Object>(
+                          value: sex,
+                          child: Text(_sexLabel(sex, l10n)),
+                        ),
+                      )
+                      .toList()
+                : CivilStatus.values
+                      .map(
+                        (status) => DropdownMenuItem<Object>(
+                          value: status,
+                          child: Text(_civilStatusLabel(status, l10n)),
+                        ),
+                      )
+                      .toList(),
+            onChanged: (selected) {
+              if (field == KycOcrField.sex && selected is Sex) {
+                _clearBackendError('sex');
+                controller.setSex(selected);
+              } else if (field == KycOcrField.civilStatus &&
+                  selected is CivilStatus) {
+                _clearBackendError('civil_status');
+                controller.setCivilStatus(selected);
+              }
+            },
+          ),
+          const SizedBox(height: 6),
+          _buildOcrConfidenceChip(confidenceLabel),
+        ],
+      );
+    }
+
+    final textController = switch (field) {
+      KycOcrField.firstName => _firstNameController,
+      KycOcrField.middleName => _middleNameController,
+      KycOcrField.lastName => _lastNameController,
+      KycOcrField.nationality => _nationalityController,
+      KycOcrField.idNumber => _idNumberController,
+      _ => null,
+    };
+    if (textController == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          key: ValueKey('ocr-${field.name}'),
+          controller: textController,
+          decoration: InputDecoration(labelText: fieldLabel),
+          onChanged: (text) {
+            switch (field) {
+              case KycOcrField.firstName:
+                _clearBackendError('first_name');
+                controller.setFirstName(text);
+              case KycOcrField.middleName:
+                _clearBackendError('middle_name');
+                controller.setMiddleName(text);
+              case KycOcrField.lastName:
+                _clearBackendError('last_name');
+                controller.setLastName(text);
+              case KycOcrField.nationality:
+                _clearBackendError('nationality');
+                controller.setNationality(text);
+              case KycOcrField.idNumber:
+                _clearBackendError('id_number');
+                controller.setIdNumber(text);
+              case KycOcrField.dateOfBirth:
+              case KycOcrField.sex:
+              case KycOcrField.civilStatus:
+              case KycOcrField.idExpiryDate:
+                break;
+            }
+          },
+        ),
+        const SizedBox(height: 6),
+        _buildOcrConfidenceChip(confidenceLabel),
+      ],
+    );
+  }
+
+  Widget _buildOcrConfidenceChip(String label) {
+    final theme = Theme.of(context);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(label, style: theme.textTheme.labelMedium),
+      ),
+    );
+  }
+
+  Future<void> _editOcrDate(
+    KycOcrField field,
+    KycFormController controller,
+    DateTime? currentDate,
+  ) async {
+    final now = DateTime.now();
+    final firstDate = field == KycOcrField.dateOfBirth
+        ? DateTime(now.year - 120, now.month, now.day)
+        : now;
+    final lastDate = field == KycOcrField.dateOfBirth
+        ? DateTime(now.year - 18, now.month, now.day)
+        : DateTime(now.year + 20, now.month, now.day);
+    final initialDate = currentDate == null
+        ? field == KycOcrField.dateOfBirth
+              ? DateTime(now.year - 30, now.month, now.day)
+              : DateTime(now.year + 1, now.month, now.day)
+        : currentDate.isBefore(firstDate)
+        ? firstDate
+        : currentDate.isAfter(lastDate)
+        ? lastDate
+        : currentDate;
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+    );
+    if (date == null) return;
+    if (field == KycOcrField.dateOfBirth) {
+      _clearBackendError('date_of_birth');
+      controller.setDateOfBirth(date);
+    } else {
+      _clearBackendError('id_expiry_date');
+      controller.setIdExpiryDate(date);
+    }
+  }
+
+  String _formatDate(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
   Widget _buildSelfieSection(KycFormState state) {
     final controller = ref.read(kycFormControllerProvider.notifier);
@@ -1518,6 +1873,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     IdType.umid => l10n.idUmid,
     IdType.postal => l10n.idPostal,
     IdType.voters => l10n.idVoters,
+    IdType.prcProfessionalId => l10n.idPrc,
   };
 
   String _sexLabel(Sex value, AppLocalizations l10n) => switch (value) {
@@ -1661,7 +2017,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
                     height: 150,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       height: 150,
                       width: double.infinity,
                       color: theme.colorScheme.surfaceContainerHighest,

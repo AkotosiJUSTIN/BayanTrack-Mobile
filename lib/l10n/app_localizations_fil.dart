@@ -1593,6 +1593,13 @@ class AppLocalizationsFil extends AppLocalizations {
       'Mag-upload ng malinaw na larawan ng iyong Government ID';
 
   @override
+  String get scanId => 'I-scan ang ID';
+
+  @override
+  String get scanIdDescription =>
+      'Gumamit ng malinaw na larawan ng harap. Isinasagawa ang pagkilala ng teksto sa device na ito.';
+
+  @override
   String get maxImageFormats => 'Hanggang 10MB bawat isa • JPG, PNG';
 
   @override
@@ -1649,6 +1656,38 @@ class AppLocalizationsFil extends AppLocalizations {
   @override
   String get verificationSubmitFailed =>
       'Hindi maisumite ang beripikasyon. Subukan muli.';
+
+  @override
+  String get reviewExtractedDetails => 'Suriin ang nakuha na detalye';
+
+  @override
+  String get reviewExtractedDetailsDescription =>
+      'Suriin ang bawat mungkahi at itama ang kailangan bago magpatuloy.';
+
+  @override
+  String get ocrScanning => 'Binabasa ang iyong ID sa device na ito…';
+
+  @override
+  String get ocrPartial =>
+      'May ilang detalyeng nakuha. Suriin at punan ang mga blangko.';
+
+  @override
+  String get ocrUnreadable =>
+      'Hindi mabasa ang larawang ito. Kumuha muli ng larawan o ilagay nang manu-mano ang detalye.';
+
+  @override
+  String get ocrUnsupported =>
+      'Hindi pa available ang OCR para sa uri ng ID na ito. Ilagay nang manu-mano ang detalye.';
+
+  @override
+  String get ocrManualReview => 'Suriin ang field na ito';
+
+  @override
+  String get ocrHighConfidence => 'Malinaw na tugma ng teksto';
+
+  @override
+  String get ocrAuthenticityNotice =>
+      'Tumutulong lamang ang OCR sa pag-fill up. Hindi nito pinatutunayang tunay ang ID.';
 
   @override
   String get fixFormErrors => 'Ayusin ang mga error na naka-highlight sa form';
@@ -1910,6 +1949,9 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get idVoters => 'Voter\'s ID';
+
+  @override
+  String get idPrc => 'Professional ID ng PRC';
 
   @override
   String get male => 'Lalaki';

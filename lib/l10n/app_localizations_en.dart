@@ -1589,6 +1589,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get uploadGovId => 'Upload clear photos of your Government ID';
 
   @override
+  String get scanId => 'Scan ID';
+
+  @override
+  String get scanIdDescription =>
+      'Use a clear front photo. Text recognition runs on this device.';
+
+  @override
   String get maxImageFormats => 'Max 10MB each • JPG, PNG formats';
 
   @override
@@ -1645,6 +1652,38 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get verificationSubmitFailed =>
       'Unable to submit user verification. Please try again.';
+
+  @override
+  String get reviewExtractedDetails => 'Review extracted details';
+
+  @override
+  String get reviewExtractedDetailsDescription =>
+      'Check each suggestion and edit anything before continuing.';
+
+  @override
+  String get ocrScanning => 'Reading your ID on this device…';
+
+  @override
+  String get ocrPartial =>
+      'Some details were found. Check them and fill any blanks.';
+
+  @override
+  String get ocrUnreadable =>
+      'We couldn\'t read this image. Retake the photo or enter details manually.';
+
+  @override
+  String get ocrUnsupported =>
+      'OCR is not available for this ID type yet. Enter details manually.';
+
+  @override
+  String get ocrManualReview => 'Check this field';
+
+  @override
+  String get ocrHighConfidence => 'Clear text match';
+
+  @override
+  String get ocrAuthenticityNotice =>
+      'OCR only helps fill the form. It does not verify that the ID is authentic.';
 
   @override
   String get fixFormErrors => 'Please fix the highlighted errors in the form';
@@ -1902,6 +1941,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get idVoters => 'Voter\'s ID';
+
+  @override
+  String get idPrc => 'PRC Professional ID';
 
   @override
   String get male => 'Male';
