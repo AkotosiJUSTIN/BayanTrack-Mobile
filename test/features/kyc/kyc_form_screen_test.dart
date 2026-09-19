@@ -122,7 +122,7 @@ class _PartialOcrService implements KycOcrService {
 }
 
 void main() {
-test('legacy PhilSys draft normalizes to National ID', () {
+  test('legacy PhilSys draft normalizes to National ID', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
@@ -299,14 +299,14 @@ test('legacy PhilSys draft normalizes to National ID', () {
       controller.setDateOfBirth(DateTime(1990, 1, 1));
       await tester.pump();
       final nationalityField = find.byType(TextFormField).last;
-      expect(tester.widget<TextFormField>(nationalityField).readOnly, isTrue);
-      expect(
-        tester
-            .widget<TextFormField>(nationalityField)
-            .controller
-            ?.text,
-        KycFormState.fixedNationality,
+      final nationalityInput = tester.widget<EditableText>(
+        find.descendant(
+          of: nationalityField,
+          matching: find.byType(EditableText),
+        ),
       );
+      expect(nationalityInput.readOnly, isTrue);
+      expect(nationalityInput.controller.text, KycFormState.fixedNationality);
 
       expect(find.text('Basic Identity'), findsOneWidget);
       expect(find.text('Current residence'), findsNothing);
