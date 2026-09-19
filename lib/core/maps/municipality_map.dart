@@ -69,17 +69,31 @@ class MunicipalityMapCamera {
 }
 
 /// Boundary layer is deliberately placed before report markers and pins.
-class MunicipalityBoundaryLayer extends StatelessWidget {
+class MunicipalityBoundaryLayer extends StatefulWidget {
   const MunicipalityBoundaryLayer({super.key, required this.boundary});
 
   final MunicipalityBoundary? boundary;
 
   @override
+  State<MunicipalityBoundaryLayer> createState() =>
+      _MunicipalityBoundaryLayerState();
+}
+
+class _MunicipalityBoundaryLayerState extends State<MunicipalityBoundaryLayer> {
+  MunicipalityBoundary? _cachedBoundary;
+  Color? _cachedPrimaryColor;
+  List<Polygon>? _cachedPolygons;
+
+  @override
   Widget build(BuildContext context) {
+    final boundary = widget.boundary;
     if (boundary == null) return const SizedBox.shrink();
     final scheme = Theme.of(context).colorScheme;
-    return PolygonLayer(
-      polygons: boundary!.polygons
+    if (!identical(boundary, _cachedBoundary) ||
+        _cachedPrimaryColor != scheme.primary) {
+      _cachedBoundary = boundary;
+      _cachedPrimaryColor = scheme.primary;
+      _cachedPolygons = boundary.polygons
           .map(
             (polygon) => Polygon(
               points: polygon.first
@@ -98,7 +112,8 @@ class MunicipalityBoundaryLayer extends StatelessWidget {
               borderStrokeWidth: 2,
             ),
           )
-          .toList(growable: false),
-    );
+          .toList(growable: false);
+    }
+    return PolygonLayer(polygons: _cachedPolygons!);
   }
 }

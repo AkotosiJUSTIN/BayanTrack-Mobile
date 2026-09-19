@@ -1496,6 +1496,18 @@ abstract class AppLocalizations {
   /// **'Take Photo'**
   String get takePhoto;
 
+  /// No description provided for @flashlightOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn flashlight on'**
+  String get flashlightOn;
+
+  /// No description provided for @flashlightOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn flashlight off'**
+  String get flashlightOff;
+
   /// No description provided for @chooseFromGallery.
   ///
   /// In en, this message translates to:
@@ -3649,6 +3661,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Voter\'s ID'**
   String get idVoters;
+
+  /// No description provided for @idGsisECard.
+  ///
+  /// In en, this message translates to:
+  /// **'GSIS eCard'**
+  String get idGsisECard;
+
+  /// No description provided for @idPhilHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'PhilHealth ID'**
+  String get idPhilHealth;
 
   /// No description provided for @idPrc.
   ///

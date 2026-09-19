@@ -41,10 +41,13 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
         const NotificationsScreen(),
         const ProfileScreen(),
       ];
+  final Set<int> _visitedTabs = {0};
 
   void _onTabTapped(int index) {
+    if (index < 0 || index >= _screens.length) return;
     setState(() {
       _currentIndex = index;
+      _visitedTabs.add(index);
     });
   }
 
@@ -133,7 +136,15 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
         children: [
           const EvidenceUploadFeedback(),
           Expanded(
-            child: IndexedStack(index: _currentIndex, children: _screens),
+            child: IndexedStack(
+              index: _currentIndex,
+              children: [
+                for (var index = 0; index < _screens.length; index++)
+                  _visitedTabs.contains(index)
+                      ? _screens[index]
+                      : const SizedBox.shrink(),
+              ],
+            ),
           ),
         ],
       ),

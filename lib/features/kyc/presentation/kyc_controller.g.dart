@@ -34,7 +34,7 @@ final class KycStatusControllerProvider
 }
 
 String _$kycStatusControllerHash() =>
-    r'686d1d47d0482df33033f01a81f2cf56c85b4ed8';
+    r'cec91280aad37f39b5d540fa9a717466eec1cd09';
 
 abstract class _$KycStatusController extends $AsyncNotifier<KycStatusEntity?> {
   FutureOr<KycStatusEntity?> build();
@@ -167,7 +167,7 @@ final class KycFormControllerProvider
   }
 }
 
-String _$kycFormControllerHash() => r'0351c9be991952204905818fc78a2538ec0f1aa9';
+String _$kycFormControllerHash() => r'14e51e1acfff79f00841bbf440cc5fbce5a5157f';
 
 abstract class _$KycFormController extends $Notifier<KycFormState> {
   KycFormState build();

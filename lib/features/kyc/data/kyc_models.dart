@@ -73,6 +73,10 @@ enum IdType {
   postal,
   @JsonValue('voters')
   voters,
+  @JsonValue('gsis_ecard')
+  gsisECard,
+  @JsonValue('philhealth')
+  philHealth,
   @JsonValue('prc')
   prcProfessionalId,
 }
@@ -96,6 +100,10 @@ extension IdTypeExtension on IdType {
         return 'Postal ID';
       case IdType.voters:
         return "Voter's ID";
+      case IdType.gsisECard:
+        return 'GSIS eCard';
+      case IdType.philHealth:
+        return 'PhilHealth ID';
       case IdType.prcProfessionalId:
         return 'PRC Professional ID';
     }
@@ -119,6 +127,10 @@ extension IdTypeExtension on IdType {
         return 'postal';
       case IdType.voters:
         return 'voters';
+      case IdType.gsisECard:
+        return 'gsis_ecard';
+      case IdType.philHealth:
+        return 'philhealth';
       case IdType.prcProfessionalId:
         return 'prc';
     }

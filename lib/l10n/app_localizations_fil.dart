@@ -768,6 +768,12 @@ class AppLocalizationsFil extends AppLocalizations {
   String get takePhoto => 'Kumuha ng Larawan';
 
   @override
+  String get flashlightOn => 'Buksan ang flashlight';
+
+  @override
+  String get flashlightOff => 'Patayin ang flashlight';
+
+  @override
   String get chooseFromGallery => 'Pumili mula sa Gallery';
 
   @override
@@ -1993,6 +1999,12 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get idVoters => 'Voter\'s ID';
+
+  @override
+  String get idGsisECard => 'GSIS eCard';
+
+  @override
+  String get idPhilHealth => 'PhilHealth ID';
 
   @override
   String get idPrc => 'Professional ID ng PRC';

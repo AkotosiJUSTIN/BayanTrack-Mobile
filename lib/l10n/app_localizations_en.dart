@@ -764,6 +764,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get takePhoto => 'Take Photo';
 
   @override
+  String get flashlightOn => 'Turn flashlight on';
+
+  @override
+  String get flashlightOff => 'Turn flashlight off';
+
+  @override
   String get chooseFromGallery => 'Choose from Gallery';
 
   @override
@@ -1985,6 +1991,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get idVoters => 'Voter\'s ID';
+
+  @override
+  String get idGsisECard => 'GSIS eCard';
+
+  @override
+  String get idPhilHealth => 'PhilHealth ID';
 
   @override
   String get idPrc => 'PRC Professional ID';

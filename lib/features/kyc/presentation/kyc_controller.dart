@@ -5,6 +5,7 @@ import '../../../core/utils/kyc_validators.dart';
 import '../data/kyc_ocr.dart';
 import '../data/kyc_models.dart';
 import '../domain/entities/kyc_form_options.dart' as domain;
+import '../domain/entities/kyc_enums.dart' as domain_enums;
 import '../domain/entities/kyc_status.dart';
 import '../domain/usecases/submit_kyc_usecase.dart';
 import '../kyc_di.dart';
@@ -80,6 +81,8 @@ enum KycIdImageSide { front, back }
 const _unset = Object();
 
 class KycFormState {
+  static const fixedNationality = 'Filipino';
+
   final KycVerificationMethod? verificationMethod;
 
   // A. Basic Identity Information
@@ -122,7 +125,6 @@ class KycFormState {
   final Map<KycOcrField, String> ocrAppliedValues;
   final Set<KycOcrField> ocrUserEditedFields;
   final bool ocrReviewConfirmed;
-  final bool scanIdentityStepRequired;
 
   // G. Declaration
   final bool declarationAccepted;
@@ -130,7 +132,6 @@ class KycFormState {
   // Form state
   final bool isSubmitting;
   final String? error;
-  final int currentStep;
 
   const KycFormState({
     this.verificationMethod,
@@ -140,7 +141,7 @@ class KycFormState {
     this.lastName = '',
     this.dateOfBirth,
     this.sex,
-    this.nationality = '',
+    this.nationality = fixedNationality,
     this.civilStatus,
     // Contact
     this.email = '',
@@ -166,13 +167,11 @@ class KycFormState {
     this.ocrAppliedValues = const {},
     this.ocrUserEditedFields = const {},
     this.ocrReviewConfirmed = false,
-    this.scanIdentityStepRequired = true,
     // Declaration
     this.declarationAccepted = false,
     // Form state
     this.isSubmitting = false,
     this.error,
-    this.currentStep = 0,
   });
 
   KycFormState copyWith({
@@ -204,11 +203,9 @@ class KycFormState {
     Map<KycOcrField, String>? ocrAppliedValues,
     Set<KycOcrField>? ocrUserEditedFields,
     bool? ocrReviewConfirmed,
-    bool? scanIdentityStepRequired,
     bool? declarationAccepted,
     bool? isSubmitting,
     Object? error = _unset,
-    int? currentStep,
   }) {
     return KycFormState(
       verificationMethod: verificationMethod ?? this.verificationMethod,
@@ -261,12 +258,9 @@ class KycFormState {
       ocrAppliedValues: ocrAppliedValues ?? this.ocrAppliedValues,
       ocrUserEditedFields: ocrUserEditedFields ?? this.ocrUserEditedFields,
       ocrReviewConfirmed: ocrReviewConfirmed ?? this.ocrReviewConfirmed,
-      scanIdentityStepRequired:
-          scanIdentityStepRequired ?? this.scanIdentityStepRequired,
       declarationAccepted: declarationAccepted ?? this.declarationAccepted,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       error: identical(error, _unset) ? this.error : error as String?,
-      currentStep: currentStep ?? this.currentStep,
     );
   }
 
@@ -333,15 +327,6 @@ class KycFormState {
     return null;
   }
 
-  bool get isIdentityDraftComplete =>
-      firstName.trim().isNotEmpty &&
-      middleName?.trim().isNotEmpty == true &&
-      lastName.trim().isNotEmpty &&
-      dateOfBirth != null &&
-      sex != null &&
-      nationality.trim().isNotEmpty &&
-      civilStatus != null;
-
   bool get hasCurrentOcrResult =>
       ocrResult != null && ocrResult!.idType == selectedIdType;
 
@@ -393,7 +378,9 @@ class KycFormController extends _$KycFormController {
         case KycOcrField.sex:
           if (next.sex?.name == value) next = next.copyWith(sex: null);
         case KycOcrField.nationality:
-          if (next.nationality == value) next = next.copyWith(nationality: '');
+          if (next.nationality == value) {
+            next = next.copyWith(nationality: KycFormState.fixedNationality);
+          }
         case KycOcrField.civilStatus:
           if (next.civilStatus?.name == value) {
             next = next.copyWith(civilStatus: null);
@@ -428,7 +415,6 @@ class KycFormController extends _$KycFormController {
           ? state.ocrUserEditedFields
           : const {},
       ocrReviewConfirmed: false,
-      scanIdentityStepRequired: true,
     );
   }
 
@@ -477,10 +463,13 @@ class KycFormController extends _$KycFormController {
     ocrReviewValues: _withReviewedEdit(KycOcrField.sex, value?.name ?? ''),
     ocrUserEditedFields: _withUserEditedField(KycOcrField.sex),
   );
-  void setNationality(String value) => state = state.copyWith(
-    nationality: value,
+  void setNationality(String _) => state = state.copyWith(
+    nationality: KycFormState.fixedNationality,
     ocrAppliedValues: _withoutApplied(KycOcrField.nationality),
-    ocrReviewValues: _withReviewedEdit(KycOcrField.nationality, value),
+    ocrReviewValues: _withReviewedEdit(
+      KycOcrField.nationality,
+      KycFormState.fixedNationality,
+    ),
     ocrUserEditedFields: _withUserEditedField(KycOcrField.nationality),
   );
   void setCivilStatus(CivilStatus? value) => state = state.copyWith(
@@ -494,6 +483,17 @@ class KycFormController extends _$KycFormController {
   );
 
   // ===== B. Contact Setters =====
+  void seedContactFromProfile({String? email, String? mobileNumber}) {
+    state = state.copyWith(
+      email: state.email.trim().isEmpty && email != null
+          ? email.trim()
+          : state.email,
+      mobileNumber: state.mobileNumber.trim().isEmpty && mobileNumber != null
+          ? KycValidators.normalizeMobileNumber(mobileNumber)
+          : state.mobileNumber,
+    );
+  }
+
   void setEmail(String value) => state = state.copyWith(email: value);
   void setMobileNumber(String value) => state = state.copyWith(
     mobileNumber: KycValidators.normalizeMobileNumber(value),
@@ -567,6 +567,7 @@ class KycFormController extends _$KycFormController {
 
   /// Runs on-device OCR for scan-assisted verification.
   Future<KycOcrResult?> scanId() async {
+    if (state.isOcrScanning) return null;
     final idType = state.selectedIdType;
     if (state.verificationMethod != KycVerificationMethod.scanId ||
         idType == null ||
@@ -604,7 +605,9 @@ class KycFormController extends _$KycFormController {
         ocrResult: result,
         ocrReviewValues: {
           for (final entry in result.fields.entries)
-            entry.key: entry.value.value,
+            entry.key: entry.key == KycOcrField.nationality
+                ? KycFormState.fixedNationality
+                : entry.value.value,
         },
         isOcrScanning: false,
         ocrError: null,
@@ -628,7 +631,9 @@ class KycFormController extends _$KycFormController {
 
   void setOcrReviewValue(KycOcrField field, String value) {
     final values = Map<KycOcrField, String>.from(state.ocrReviewValues);
-    values[field] = value;
+    values[field] = field == KycOcrField.nationality
+        ? KycFormState.fixedNationality
+        : value;
     final applied = Map<KycOcrField, String>.from(state.ocrAppliedValues);
     applied.remove(field);
     final userEdited = Set<KycOcrField>.from(state.ocrUserEditedFields);
@@ -674,8 +679,8 @@ class KycFormController extends _$KycFormController {
             applied[entry.key] = value;
           }
         case KycOcrField.nationality:
-          next = next.copyWith(nationality: value);
-          applied[entry.key] = value;
+          next = next.copyWith(nationality: KycFormState.fixedNationality);
+          applied[entry.key] = KycFormState.fixedNationality;
         case KycOcrField.civilStatus:
           final status = _civilStatusFromOcr(value);
           if (status != null) {
@@ -705,13 +710,7 @@ class KycFormController extends _$KycFormController {
           }
       }
     }
-    final reviewed = next.copyWith(
-      ocrAppliedValues: applied,
-      ocrReviewConfirmed: true,
-    );
-    state = reviewed.copyWith(
-      scanIdentityStepRequired: !reviewed.isIdentityDraftComplete,
-    );
+    state = next.copyWith(ocrAppliedValues: applied, ocrReviewConfirmed: true);
   }
 
   Sex? _sexFromOcr(String value) {
@@ -733,7 +732,6 @@ class KycFormController extends _$KycFormController {
       state = state.copyWith(declarationAccepted: value);
 
   // ===== Form State =====
-  void setCurrentStep(int step) => state = state.copyWith(currentStep: step);
   void clearError() => state = state.copyWith(error: null);
 
   /// Reset form to initial state
@@ -760,10 +758,14 @@ class KycFormController extends _$KycFormController {
 
     IdType? idType;
     if (existing.idType != null) {
-      idType = IdType.values.firstWhere(
-        (e) => e.name == existing.idType!.name,
-        orElse: () => IdType.nationalId,
-      );
+      // PhilSys is the legacy API name for the National ID. Normalize it in
+      // editable drafts while still accepting old records from the backend.
+      idType = existing.idType == domain_enums.IdType.philsys
+          ? IdType.nationalId
+          : IdType.values.firstWhere(
+              (e) => e.name == existing.idType!.name,
+              orElse: () => IdType.nationalId,
+            );
     }
 
     state = KycFormState(
@@ -773,7 +775,7 @@ class KycFormController extends _$KycFormController {
       lastName: existing.lastName ?? '',
       dateOfBirth: existing.dateOfBirth,
       sex: sex,
-      nationality: existing.nationality ?? '',
+      nationality: KycFormState.fixedNationality,
       civilStatus: civilStatus,
       email: existing.email ?? '',
       mobileNumber: KycValidators.normalizeMobileNumber(

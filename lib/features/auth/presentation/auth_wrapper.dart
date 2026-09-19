@@ -32,12 +32,12 @@ class AuthWrapper extends ConsumerStatefulWidget {
 
 class _AuthWrapperState extends ConsumerState<AuthWrapper>
     with WidgetsBindingObserver {
-  bool _pushInitialized = false;
   String? _evidenceSyncKey;
   late final WidgetBridge _widgetBridge;
   late final StreamSubscription<WidgetDestination>
   _widgetDestinationSubscription;
   bool _widgetNavigationScheduled = false;
+  String? _pushUserId;
 
   @override
   void initState() {
@@ -47,6 +47,19 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
       _maybeNavigateToWidgetDestination();
     });
     WidgetsBinding.instance.addObserver(this);
+    ref.listenManual<AuthState>(
+      authControllerProvider,
+      (_, next) => _handleAuthState(next),
+      fireImmediately: true,
+    );
+    ref.listenManual<bool>(
+      isOnlineProvider,
+      (_, next) => _syncEvidenceForCurrentAuth(next),
+      fireImmediately: true,
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _maybeNavigateToWidgetDestination();
+    });
     debugPrint('[AuthWrapper] Initializing...');
 
     // Only validate the session on initial startup
@@ -77,6 +90,85 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
       unawaited(_widgetBridge.syncAuthenticated(true));
     } else {
       unawaited(_widgetBridge.syncAuthenticated(false));
+    }
+  }
+
+  void _handleAuthState(AuthState state) {
+    _syncWidgetState(state);
+    _maybeNavigateToWidgetDestination();
+
+    final userId = state is AuthSuccess ? state.user?.id : null;
+    _syncEvidenceQueue(userId, ref.read(isOnlineProvider));
+
+    final realtime = ref.read(authRealtimeControllerProvider);
+    if (userId == null) {
+      _pushUserId = null;
+      realtime.stop();
+      return;
+    }
+
+    unawaited(Future.microtask(() => realtime.start(userId)));
+    if (_pushUserId != userId) {
+      _pushUserId = userId;
+      unawaited(_initializePush(userId));
+    }
+  }
+
+  void _syncEvidenceForCurrentAuth(bool isOnline) {
+    final state = ref.read(authControllerProvider);
+    final userId = state is AuthSuccess ? state.user?.id : null;
+    _syncEvidenceQueue(userId, isOnline);
+  }
+
+  Future<void> _initializePush(String? userId) async {
+    try {
+      final pushService = ref.read(pushServiceProvider);
+      final dio = ref.read(dioProvider);
+      await pushService.ensureRegistered('android', dio, userId: userId);
+
+      if (!mounted || _pushUserId != userId) return;
+      pushService.onTokenRefresh((token) async {
+        await pushService.registerToken(token, 'android', dio, userId: userId);
+      });
+
+      // Foreground message handler: show simple in-app snackbar and persist
+      pushService.onMessage((message) async {
+        final title = message.notification?.title ?? 'Notification';
+        final body = message.notification?.body ?? '';
+        ref.invalidate(notificationsControllerProvider);
+        await LocalNotificationService.showFromRemoteMessage(message);
+        if (!context.mounted) return;
+        AppToast.info(context, '$title: $body');
+      });
+
+      // When a user taps a notification and the app is opened from background
+      pushService.onMessageOpened((message) {
+        final reportId = message.data['report_id'] as String?;
+        if (reportId != null) {
+          ref.invalidate(notificationsControllerProvider);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ReportDetailScreen(reportId: reportId),
+            ),
+          );
+        }
+      });
+
+      // If launched from terminated state via notification
+      final initial = await FirebaseMessaging.instance.getInitialMessage();
+      if (initial != null) {
+        final reportId = initial.data['report_id'] as String?;
+        if (reportId != null && context.mounted) {
+          ref.invalidate(notificationsControllerProvider);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ReportDetailScreen(reportId: reportId),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Push initialization failed: $e');
     }
   }
 
@@ -146,9 +238,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
         final userId = authState.user?.id;
         if (userId != null) {
           Future.microtask(
-            () => ref
-                .read(authRealtimeControllerProvider)
-                .start(userId, force: true),
+            () => ref.read(authRealtimeControllerProvider).start(userId),
           );
           _syncEvidenceQueue(userId, ref.read(isOnlineProvider), force: true);
         }
@@ -158,7 +248,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
           try {
             final pushService = ref.read(pushServiceProvider);
             final dio = ref.read(dioProvider);
-            await pushService.ensureRegistered('android', dio);
+            await pushService.ensureRegistered('android', dio, userId: userId);
           } catch (e) {
             debugPrint('Push token refresh on resume failed: $e');
           }
@@ -171,77 +261,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   Widget build(BuildContext context) {
     final state = ref.watch(authControllerProvider);
     ref.watch(appLocaleProvider);
-    final isOnline = ref.watch(isOnlineProvider);
     debugPrint('[AuthWrapper] AuthState changed: ${state.runtimeType}');
-
-    _syncWidgetState(state);
-    _maybeNavigateToWidgetDestination();
-
-    // Initialize push service once after successful auth
-    if (state is AuthSuccess && !_pushInitialized) {
-      _pushInitialized = true;
-      Future.microtask(() async {
-        try {
-          final pushService = ref.read(pushServiceProvider);
-          await pushService.requestPermission();
-          final dio = ref.read(dioProvider);
-          await Future.delayed(const Duration(seconds: 2));
-          await pushService.ensureRegistered('android', dio);
-
-          pushService.onTokenRefresh((token) async {
-            await pushService.registerToken(token, 'android', dio);
-          });
-
-          // Foreground message handler: show simple in-app snackbar and persist
-          pushService.onMessage((message) async {
-            final title = message.notification?.title ?? 'Notification';
-            final body = message.notification?.body ?? '';
-            ref.invalidate(notificationsControllerProvider);
-            await LocalNotificationService.showFromRemoteMessage(message);
-            if (!context.mounted) return;
-            AppToast.info(context, '$title: $body');
-          });
-
-          // When a user taps a notification and app opens from background
-          pushService.onMessageOpened((message) {
-            final reportId = message.data['report_id'] as String?;
-            if (reportId != null) {
-              ref.invalidate(notificationsControllerProvider);
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => ReportDetailScreen(reportId: reportId),
-                ),
-              );
-            }
-          });
-
-          // If launched from terminated state via notification
-          final initial = await FirebaseMessaging.instance.getInitialMessage();
-          if (initial != null) {
-            final reportId = initial.data['report_id'] as String?;
-            if (reportId != null && context.mounted) {
-              ref.invalidate(notificationsControllerProvider);
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => ReportDetailScreen(reportId: reportId),
-                ),
-              );
-            }
-          }
-        } catch (e) {
-          debugPrint('Push initialization failed: $e');
-        }
-      });
-    }
-
-    final authenticatedUserId = state is AuthSuccess ? state.user?.id : null;
-    _syncEvidenceQueue(authenticatedUserId, isOnline);
-    final realtime = ref.read(authRealtimeControllerProvider);
-    if (authenticatedUserId != null) {
-      Future.microtask(() => realtime.start(authenticatedUserId));
-    } else {
-      realtime.stop();
-    }
 
     return switch (state) {
       AuthSuccess() => const MainNavigationShell(),

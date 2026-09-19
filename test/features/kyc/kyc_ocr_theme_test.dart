@@ -55,7 +55,7 @@ Future<void> _pumpReview(
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         theme: theme,
-        home: const KycFormScreen(initialStep: 3),
+        home: const KycFormScreen(initialStep: 2),
       ),
     ),
   );

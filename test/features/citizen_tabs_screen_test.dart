@@ -89,6 +89,55 @@ void main() {
     expect(find.text('Retry'), findsOneWidget);
   });
 
+  testWidgets('Home search keeps focus when keyboard changes header layout', (
+    tester,
+  ) async {
+    addTearDown(tester.view.reset);
+    final repository = _ReportsRepositoryMock();
+    when(
+      () => repository.getReports(
+        page: 1,
+        pageSize: 20,
+        status: null,
+        zone: null,
+        category: null,
+        sortBy: 'date',
+      ),
+    ).thenAnswer(
+      (_) async => Success(
+        PaginatedReports(
+          results: const [Report(id: 'home-1', description: 'Test report')],
+          total: 1,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      _app(
+        home: const HomeScreen(),
+        overrides: [
+          getReportsUseCaseProvider.overrideWithValue(
+            GetReportsUseCase(repository: repository),
+          ),
+          userPermissionsProvider.overrideWithValue(UserPermissions(null)),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final search = find.byType(TextField).first;
+    await tester.tap(search);
+    await tester.pump();
+    expect(tester.binding.focusManager.primaryFocus?.hasFocus, isTrue);
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 220);
+    await tester.pump();
+    expect(tester.binding.focusManager.primaryFocus?.hasFocus, isTrue);
+
+    await tester.enterText(search, 'street');
+    expect(tester.widget<TextField>(search).controller?.text, 'street');
+  });
+
   testWidgets('Home stays usable on compact and large-text phones', (
     tester,
   ) async {

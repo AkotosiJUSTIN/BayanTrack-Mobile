@@ -771,6 +771,8 @@ class KycStatusScreen extends ConsumerWidget {
     IdType.umid => l10n.idUmid,
     IdType.postal => l10n.idPostal,
     IdType.voters => l10n.idVoters,
+    IdType.gsisECard => l10n.idGsisECard,
+    IdType.philHealth => l10n.idPhilHealth,
     IdType.prcProfessionalId => l10n.idPrc,
   };
 

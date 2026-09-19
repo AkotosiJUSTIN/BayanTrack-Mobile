@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bayantrack_mobile/core/constants/urdaneta_barangays.dart';
 import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
+import 'package:bayantrack_mobile/features/auth/presentation/profile_controller.dart';
 import 'package:bayantrack_mobile/features/kyc/data/kyc_models.dart' as dto;
 import 'package:bayantrack_mobile/features/kyc/data/kyc_ocr.dart';
 import 'package:bayantrack_mobile/features/kyc/presentation/kyc_form_screen.dart';
@@ -20,6 +21,22 @@ class _TestBarangays extends Barangays {
   FutureOr<List<BarangayModel>> build() => bundledUrdanetaBarangays;
 }
 
+final _emptyProfileOverride = profileControllerProvider.overrideWithBuild(
+  (_, _) => const UserProfile(id: 'test-user', email: ''),
+);
+
+final _completeProfileOverride = profileControllerProvider.overrideWithBuild(
+  (_, _) => const UserProfile(
+    id: 'test-user',
+    email: 'profile@example.com',
+    phone: '09171234567',
+  ),
+);
+
+final _emailOnlyProfileOverride = profileControllerProvider.overrideWithBuild(
+  (_, _) => const UserProfile(id: 'test-user', email: 'profile@example.com'),
+);
+
 class _CompleteOcrService implements KycOcrService {
   @override
   Future<KycOcrResult> scan({
@@ -34,10 +51,6 @@ class _CompleteOcrService implements KycOcrService {
           value: 'Juan',
           confidence: KycOcrConfidence.review,
         ),
-        KycOcrField.middleName: const KycOcrFieldValue(
-          value: 'Santos',
-          confidence: KycOcrConfidence.review,
-        ),
         KycOcrField.lastName: const KycOcrFieldValue(
           value: 'Dela Cruz',
           confidence: KycOcrConfidence.review,
@@ -46,16 +59,8 @@ class _CompleteOcrService implements KycOcrService {
           value: '1990-01-01',
           confidence: KycOcrConfidence.review,
         ),
-        KycOcrField.sex: const KycOcrFieldValue(
-          value: 'male',
-          confidence: KycOcrConfidence.review,
-        ),
         KycOcrField.nationality: const KycOcrFieldValue(
           value: 'Filipino',
-          confidence: KycOcrConfidence.review,
-        ),
-        KycOcrField.civilStatus: const KycOcrFieldValue(
-          value: 'single',
           confidence: KycOcrConfidence.review,
         ),
         KycOcrField.address: const KycOcrFieldValue(
@@ -117,11 +122,51 @@ class _PartialOcrService implements KycOcrService {
 }
 
 void main() {
+test('legacy PhilSys draft normalizes to National ID', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    container
+        .read(kycFormControllerProvider.notifier)
+        .populateFromExisting(
+          const KycStatusEntity(
+            status: domain.KycVerificationStatus.resubmitRequested,
+            idType: domain.IdType.philsys,
+          ),
+        );
+
+    expect(
+      container.read(kycFormControllerProvider).selectedIdType,
+      dto.IdType.nationalId,
+    );
+  });
+
+  test('nationality remains fixed to Filipino', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final controller = container.read(kycFormControllerProvider.notifier);
+    controller.setNationality('Canadian');
+    controller.setOcrReviewValue(KycOcrField.nationality, 'Canadian');
+
+    expect(
+      container.read(kycFormControllerProvider).nationality,
+      KycFormState.fixedNationality,
+    );
+    expect(
+      container
+          .read(kycFormControllerProvider)
+          .ocrReviewValue(KycOcrField.nationality),
+      KycFormState.fixedNationality,
+    );
+  });
+
   testWidgets('partial OCR identity step shows only missing fields', (
     tester,
   ) async {
     final container = ProviderContainer(
       overrides: [
+        _completeProfileOverride,
         kycOcrServiceProvider.overrideWithValue(_PartialOcrService()),
       ],
     );
@@ -141,7 +186,7 @@ void main() {
         child: MaterialApp(
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          home: const KycFormScreen(initialStep: 4),
+          home: const KycFormScreen(initialStep: 3),
         ),
       ),
     );
@@ -159,6 +204,7 @@ void main() {
   ) async {
     final container = ProviderContainer(
       overrides: [
+        _completeProfileOverride,
         barangaysProvider.overrideWith(_TestBarangays.new),
         kycOcrServiceProvider.overrideWithValue(_CompleteOcrService()),
       ],
@@ -179,7 +225,7 @@ void main() {
         child: MaterialApp(
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          home: const KycFormScreen(initialStep: 3),
+          home: const KycFormScreen(initialStep: 2),
         ),
       ),
     );
@@ -199,13 +245,87 @@ void main() {
     expect(state.cityMunicipality, 'Cebu City');
     expect(state.province, 'Cebu');
     expect(state.zipCode, '6000');
-    expect(state.isIdentityDraftComplete, isTrue);
+    expect(state.isBasicIdentityComplete, isTrue);
     expect(state.ocrReviewConfirmed, isTrue);
-    expect(state.scanIdentityStepRequired, isFalse);
 
-    expect(find.text('Contact Info'), findsOneWidget);
+    expect(state.email, 'profile@example.com');
+    expect(state.mobileNumber, '09171234567');
+    expect(state.streetBarangay, '123 Mabini Street, Cebu City');
+    expect(state.selectedIdType, dto.IdType.passport);
+    expect(state.idNumber, 'P1234567');
+    expect(state.idExpiryDate, DateTime(2030, 1, 1));
+    expect(find.text('Step 4 of 5'), findsOneWidget);
+    expect(find.text('Selfie'), findsOneWidget);
+    expect(find.text('Contact Info'), findsNothing);
     expect(find.text('Basic Identity'), findsNothing);
+    expect(find.text('Current residence'), findsNothing);
   });
+
+  testWidgets(
+    'OCR keeps the current editable step until Continue and Back uses its plan',
+    (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          _completeProfileOverride,
+          barangaysProvider.overrideWith(_TestBarangays.new),
+          kycOcrServiceProvider.overrideWithValue(_PartialOcrService()),
+        ],
+      );
+      addTearDown(container.dispose);
+      final keepAlive = container.listen(kycFormControllerProvider, (_, _) {});
+      addTearDown(keepAlive.close);
+      final controller = container.read(kycFormControllerProvider.notifier);
+      controller.setVerificationMethod(KycVerificationMethod.scanId);
+      controller.setIdType(dto.IdType.passport);
+      controller.setIdFrontImage('front.jpg');
+      await controller.scanId();
+      controller.applyOcrReview();
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            home: const KycFormScreen(initialStep: 3),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Basic Identity'), findsOneWidget);
+      expect(find.text('Step 4 of 8'), findsOneWidget);
+
+      controller.setDateOfBirth(DateTime(1990, 1, 1));
+      await tester.pump();
+      final nationalityField = find.byType(TextFormField).last;
+      expect(tester.widget<TextFormField>(nationalityField).readOnly, isTrue);
+      expect(
+        tester
+            .widget<TextFormField>(nationalityField)
+            .controller
+            ?.text,
+        KycFormState.fixedNationality,
+      );
+
+      expect(find.text('Basic Identity'), findsOneWidget);
+      expect(find.text('Current residence'), findsNothing);
+      expect(find.text('Step 4 of 8'), findsOneWidget);
+
+      await tester.tap(
+        find.widgetWithText(ElevatedButton, 'Continue').hitTestable(),
+      );
+      await tester.pump();
+      expect(find.text('Current residence'), findsOneWidget);
+
+      await tester.tap(
+        find.widgetWithText(OutlinedButton, 'Back').hitTestable(),
+      );
+      await tester.pump();
+      expect(find.text('Basic Identity'), findsOneWidget);
+      expect(find.text('Review extracted details'), findsNothing);
+    },
+  );
 
   testWidgets('continue blocks when the current KYC step is incomplete', (
     tester,
@@ -216,7 +336,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [barangaysProvider.overrideWith(_TestBarangays.new)],
+        overrides: [
+          _emptyProfileOverride,
+          barangaysProvider.overrideWith(_TestBarangays.new),
+        ],
         child: MaterialApp(
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -243,7 +366,10 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [barangaysProvider.overrideWith(_TestBarangays.new)],
+        overrides: [
+          _completeProfileOverride,
+          barangaysProvider.overrideWith(_TestBarangays.new),
+        ],
         child: MaterialApp(
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -264,6 +390,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Basic Identity'), findsOneWidget);
+    expect(find.text('Step 2 of 7'), findsOneWidget);
     expect(find.text('Reading your ID on this device…'), findsNothing);
   });
 
@@ -272,7 +399,10 @@ void main() {
     (tester) async {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [barangaysProvider.overrideWith(_TestBarangays.new)],
+          overrides: [
+            _emptyProfileOverride,
+            barangaysProvider.overrideWith(_TestBarangays.new),
+          ],
           child: MaterialApp(
             supportedLocales: AppLocalizations.supportedLocales,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -292,12 +422,9 @@ void main() {
 
       await tester.tap(find.byType(DropdownButtonFormField<dto.IdType>));
       await tester.pump();
+      expect(find.text('PhilSys ID'), findsNothing);
       await tester.tap(find.text('Passport').last);
       await tester.pumpAndSettle();
-      await tester.tap(
-        find.widgetWithText(ElevatedButton, 'Continue').hitTestable(),
-      );
-      await tester.pump();
 
       expect(find.textContaining('ID Front Photo'), findsOneWidget);
       expect(find.text('First name *'), findsNothing);
@@ -307,7 +434,7 @@ void main() {
   testWidgets('uploaded image remove control removes only that image', (
     tester,
   ) async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(overrides: [_emptyProfileOverride]);
     addTearDown(container.dispose);
     final controller = container.read(kycFormControllerProvider.notifier);
     controller.setVerificationMethod(KycVerificationMethod.manual);
@@ -341,7 +468,7 @@ void main() {
   testWidgets('ID types requiring a back side keep both capture slots', (
     tester,
   ) async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(overrides: [_emptyProfileOverride]);
     addTearDown(container.dispose);
     final controller = container.read(kycFormControllerProvider.notifier);
     controller.setVerificationMethod(KycVerificationMethod.manual);
@@ -367,7 +494,10 @@ void main() {
     'resubmission confirmation uses the compact confirmation surface',
     (tester) async {
       final container = ProviderContainer(
-        overrides: [barangaysProvider.overrideWith(_TestBarangays.new)],
+        overrides: [
+          _emptyProfileOverride,
+          barangaysProvider.overrideWith(_TestBarangays.new),
+        ],
       );
       addTearDown(container.dispose);
       final keepAlive = container.listen(kycFormControllerProvider, (_, _) {});
@@ -409,7 +539,7 @@ void main() {
       controller.setDeclarationAccepted(true);
       await tester.pump();
 
-      for (var i = 0; i < 6; i++) {
+      for (var i = 0; i < 5; i++) {
         await tester.tap(
           find.widgetWithText(ElevatedButton, 'Continue').hitTestable(),
         );
@@ -437,7 +567,10 @@ void main() {
   ) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [barangaysProvider.overrideWith(_TestBarangays.new)],
+        overrides: [
+          _emptyProfileOverride,
+          barangaysProvider.overrideWith(_TestBarangays.new),
+        ],
         child: MaterialApp(
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -466,7 +599,10 @@ void main() {
     tester,
   ) async {
     final container = ProviderContainer(
-      overrides: [barangaysProvider.overrideWith(_TestBarangays.new)],
+      overrides: [
+        _emptyProfileOverride,
+        barangaysProvider.overrideWith(_TestBarangays.new),
+      ],
     );
     addTearDown(container.dispose);
     final keepAlive = container.listen(kycFormControllerProvider, (_, _) {});
@@ -491,12 +627,13 @@ void main() {
         child: MaterialApp(
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          home: const KycFormScreen(initialStep: 3),
+          home: const KycFormScreen(initialStep: 2),
         ),
       ),
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Barangay'), findsNothing);
     await tester.tap(
       find.widgetWithText(ElevatedButton, 'Continue').hitTestable(),
     );
@@ -508,4 +645,152 @@ void main() {
       '123 Mabini Street, Barangay San Antonio',
     );
   });
+
+  testWidgets('Urdaneta residence keeps the complete address editable', (
+    tester,
+  ) async {
+    final container = ProviderContainer(
+      overrides: [
+        _emptyProfileOverride,
+        barangaysProvider.overrideWith(_TestBarangays.new),
+      ],
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(kycFormControllerProvider.notifier);
+    controller.setVerificationMethod(KycVerificationMethod.manual);
+    controller.setFirstName('Juan');
+    controller.setLastName('Citizen');
+    controller.setDateOfBirth(DateTime(1990, 1, 1));
+    controller.setNationality('Filipino');
+    controller.setEmail('juan@example.com');
+    controller.setMobileNumber('9171234567');
+    controller.setStreetBarangay('Main Street\nBarangay San Vicente');
+    controller.setCityMunicipality('Urdaneta');
+    controller.setProvince('Pangasinan');
+    controller.setIdType(dto.IdType.passport);
+    controller.setIdNumber('P1234567');
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: const KycFormScreen(initialStep: 2),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Barangay'), findsNothing);
+    expect(find.text('Main Street\nBarangay San Vicente'), findsOneWidget);
+    final streetField = tester.widget<TextField>(
+      find.descendant(
+        of: find.byType(TextFormField).first,
+        matching: find.byType(TextField),
+      ),
+    );
+    expect(streetField.minLines, 1);
+    expect(streetField.maxLines, 2);
+    expect(
+      container.read(kycFormControllerProvider).streetBarangay,
+      'Main Street\nBarangay San Vicente',
+    );
+
+    await tester.tap(
+      find.widgetWithText(ElevatedButton, 'Continue').hitTestable(),
+    );
+    await tester.pump();
+    expect(find.text('ID Type *'), findsOneWidget);
+  });
+
+  testWidgets('missing profile phone keeps only contact fallback editable', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          _emailOnlyProfileOverride,
+          barangaysProvider.overrideWith(_TestBarangays.new),
+        ],
+        child: const MaterialApp(
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: KycFormScreen(initialStep: 2),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(KycFormScreen)),
+    );
+    container
+        .read(kycFormControllerProvider.notifier)
+        .setVerificationMethod(KycVerificationMethod.manual);
+    await tester.pump();
+
+    expect(find.text('Contact Info'), findsOneWidget);
+    expect(find.text('Mobile Number *'), findsOneWidget);
+    final emailField = tester.widget<TextField>(
+      find.descendant(
+        of: find.byKey(const ValueKey('kyc-profile-email')),
+        matching: find.byType(TextField),
+      ),
+    );
+    expect(emailField.controller?.text, 'profile@example.com');
+    expect(emailField.readOnly, isTrue);
+  });
+
+  testWidgets(
+    'manual contact step stays visible until Continue and Back returns to it',
+    (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          _emailOnlyProfileOverride,
+          barangaysProvider.overrideWith(_TestBarangays.new),
+        ],
+      );
+      addTearDown(container.dispose);
+      final keepAlive = container.listen(kycFormControllerProvider, (_, _) {});
+      addTearDown(keepAlive.close);
+      final controller = container.read(kycFormControllerProvider.notifier);
+      controller.setFirstName('Juan');
+      controller.setLastName('Citizen');
+      controller.setDateOfBirth(DateTime(1990, 1, 1));
+      controller.setNationality('Filipino');
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            home: KycFormScreen(initialStep: 2),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      controller.setVerificationMethod(KycVerificationMethod.manual);
+      await tester.pump();
+
+      expect(find.text('Contact Info'), findsOneWidget);
+      await tester.enterText(find.byType(TextFormField).last, '9171234567');
+      await tester.pump();
+
+      expect(find.text('Contact Info'), findsOneWidget);
+      await tester.tap(
+        find.widgetWithText(ElevatedButton, 'Continue').hitTestable(),
+      );
+      await tester.pump();
+      expect(find.text('Current residence'), findsOneWidget);
+
+      await tester.tap(
+        find.widgetWithText(OutlinedButton, 'Back').hitTestable(),
+      );
+      await tester.pump();
+      expect(find.text('Contact Info'), findsOneWidget);
+    },
+  );
 }

@@ -48,7 +48,6 @@ class AuthRealtimeController {
         serverUrl: ApiConstants.mediaBaseUrl,
         token: token,
         onEvent: _handleEvent,
-        onConnect: () => _ref.invalidate(profileControllerProvider),
       );
       _connectedUserId = userId;
     } finally {

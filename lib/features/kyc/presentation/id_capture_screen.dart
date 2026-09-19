@@ -23,6 +23,7 @@ class _IdCaptureScreenState extends State<IdCaptureScreen>
   CameraController? _controller;
   String? _error;
   bool _isInitializing = false;
+  bool _flashlightOn = false;
 
   @override
   void initState() {
@@ -76,6 +77,7 @@ class _IdCaptureScreenState extends State<IdCaptureScreen>
         enableAudio: false,
       );
       await nextController.initialize();
+      await _applyFlashlightMode(nextController);
       if (!mounted) {
         unawaited(nextController.dispose());
         return;
@@ -97,6 +99,39 @@ class _IdCaptureScreenState extends State<IdCaptureScreen>
     } finally {
       if (nextController != null) unawaited(nextController.dispose());
       _isInitializing = false;
+    }
+  }
+
+  Future<void> _applyFlashlightMode(CameraController controller) async {
+    try {
+      await controller.setFlashMode(
+        _flashlightOn ? FlashMode.torch : FlashMode.off,
+      );
+    } on CameraException {
+      // Some cameras do not expose a torch. Keep capture available and reset
+      // the toggle so the UI reflects the actual camera state.
+      _flashlightOn = false;
+    }
+  }
+
+  Future<void> _toggleFlashlight() async {
+    final controller = _controller;
+    if (controller == null ||
+        !controller.value.isInitialized ||
+        controller.value.isTakingPicture) {
+      return;
+    }
+
+    final nextValue = !_flashlightOn;
+    try {
+      await controller.setFlashMode(
+        nextValue ? FlashMode.torch : FlashMode.off,
+      );
+      if (mounted) setState(() => _flashlightOn = nextValue);
+    } on CameraException {
+      if (mounted) {
+        setState(() => _error = AppLocalizations.of(context).imageAccessError);
+      }
     }
   }
 
@@ -171,12 +206,34 @@ class _IdCaptureScreenState extends State<IdCaptureScreen>
                       title,
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSurface,
+                        color: Colors.white,
                         fontWeight: FontWeight.w700,
+                        shadows: const [
+                          Shadow(color: Colors.black54, blurRadius: 6),
+                        ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 48, height: 48),
+                  Material(
+                    color: theme.colorScheme.surface.withValues(alpha: 0.82),
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      tooltip: _flashlightOn
+                          ? l10n.flashlightOff
+                          : l10n.flashlightOn,
+                      onPressed: canCapture ? _toggleFlashlight : null,
+                      icon: Icon(
+                        _flashlightOn ? Icons.flash_on : Icons.flash_off,
+                      ),
+                      color: _flashlightOn
+                          ? Colors.orange
+                          : theme.colorScheme.onSurface,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 48,
+                        height: 48,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

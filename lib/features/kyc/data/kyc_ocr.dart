@@ -79,18 +79,22 @@ abstract final class KycOcrParser {
     IdType.philsys,
     IdType.driversLicense,
     IdType.umid,
+    IdType.postal,
+    IdType.gsisECard,
+    IdType.voters,
+    IdType.philHealth,
     IdType.prcProfessionalId,
   };
 
   static final _surnamePatterns = [
     RegExp(
-      r'\b(?:surname|last\s+name|apelyido)\b\s*[:\-]?\s*(.*)',
+      r'\b(?:surname|last\s+name|apelyido(?:\s*/\s*last\s+name)?)\b\s*[:\-]?\s*(.*)',
       caseSensitive: false,
     ),
   ];
   static final _givenNamePatterns = [
     RegExp(
-      r'\b(?:given\s+names?|first\s+name|mga\s+pangalan|pangalan)\b\s*[:\-]?\s*(.*)',
+      r'\b(?:given\s+names?|first\s+name|mga\s+pangalan(?:\s*/\s*given\s+names?)?|pangalan)\b\s*[:\-]?\s*(.*)',
       caseSensitive: false,
     ),
   ];
@@ -153,6 +157,27 @@ abstract final class KycOcrParser {
       caseSensitive: false,
     ),
   ];
+  static final _driversLicenseAddressPatterns = [
+    ..._addressPatterns,
+    RegExp(
+      r'\b(?:house\s*(?:no\.?|number)|house\s*(?:no\.?|number)?\s*[/&]\s*street|street\s*/\s*barangay)\b\s*[:\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
+  ];
+  static final _driversLicenseDateOfBirthPatterns = [
+    ..._dateOfBirthPatterns,
+    RegExp(r'\b(?:birthdate|dob)\b\s*[:\-]?\s*(.*)', caseSensitive: false),
+  ];
+  static final _driversLicenseExpiryPatterns = [
+    ..._expiryPatterns,
+    RegExp(r'\b(?:expiry|expiration)\b\s*[:\-]?\s*(.*)', caseSensitive: false),
+  ];
+  static final _nationalIdAddressPatterns = [
+    RegExp(
+      r'\b(?:present\s+address|current\s+address|residential\s+address|address|tirahan(?:\s*/\s*address)?|kasalukuyang\s+tirahan)\b\s*[:\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
+  ];
   static final _cityPatterns = [
     RegExp(
       r'\b(?:city\s*/?\s*municipality|municipality|city|lungsod|munisipalidad)\b\s*[:\-]?\s*(.*)',
@@ -202,11 +227,17 @@ abstract final class KycOcrParser {
         _parseDriversLicense(lines, fields);
       case IdType.umid:
         _parseUmid(lines, fields);
+      case IdType.postal:
+        _parsePostal(lines, fields);
+      case IdType.gsisECard:
+        _parseGsisECard(lines, fields);
+      case IdType.voters:
+        _parseVoters(lines, fields);
+      case IdType.philHealth:
+        _parsePhilHealth(lines, fields);
       case IdType.prcProfessionalId:
         _parsePrc(lines, fields);
       case IdType.sss:
-      case IdType.postal:
-      case IdType.voters:
         break;
     }
 
@@ -239,11 +270,7 @@ abstract final class KycOcrParser {
     _addSex(fields, _valueForPatterns(lines, _sexPatterns));
     _addNationality(fields, _valueForPatterns(lines, _nationalityPatterns));
     _addCivilStatus(fields, _valueForPatterns(lines, _civilStatusPatterns));
-    _addText(
-      fields,
-      KycOcrField.address,
-      _valueForLabeledBlock(lines, _addressPatterns),
-    );
+    _addText(fields, KycOcrField.address, _nationalIdAddressValue(lines));
     _addText(
       fields,
       KycOcrField.cityMunicipality,
@@ -259,7 +286,7 @@ abstract final class KycOcrParser {
       KycOcrField.zipCode,
       _valueForPatterns(lines, _zipPatterns),
     );
-    _addId(fields, _valueForPatterns(lines, _nationalIdNumberPatterns));
+    _addId(fields, _nationalIdNumberValue(lines), allowMasked: true);
     _addDate(
       fields,
       KycOcrField.idExpiryDate,
@@ -296,15 +323,37 @@ abstract final class KycOcrParser {
     _addDate(
       fields,
       KycOcrField.dateOfBirth,
-      _valueForPatterns(lines, _dateOfBirthPatterns),
+      _valueForPatterns(lines, _driversLicenseDateOfBirthPatterns),
     );
     _addSex(fields, _valueForPatterns(lines, _sexPatterns));
     _addNationality(fields, _valueForPatterns(lines, _nationalityPatterns));
-    _addId(fields, _valueForPatterns(lines, _licenseNumberPatterns));
+    if (_containsDriversLicenseEvidence(lines)) {
+      _addText(
+        fields,
+        KycOcrField.address,
+        _valueForLabeledBlock(lines, _driversLicenseAddressPatterns),
+      );
+    }
+    _addText(
+      fields,
+      KycOcrField.cityMunicipality,
+      _valueForPatterns(lines, _cityPatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.province,
+      _valueForPatterns(lines, _provincePatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.zipCode,
+      _valueForPatterns(lines, _zipPatterns),
+    );
+    _addId(fields, _valueForPatterns(lines, _driversLicenseNumberPatterns));
     _addDate(
       fields,
       KycOcrField.idExpiryDate,
-      _valueForPatterns(lines, _expiryPatterns),
+      _valueForPatterns(lines, _driversLicenseExpiryPatterns),
     );
   }
 
@@ -343,6 +392,152 @@ abstract final class KycOcrParser {
     );
   }
 
+  static void _parsePostal(
+    List<String> lines,
+    Map<KycOcrField, KycOcrFieldValue> fields,
+  ) {
+    _parseNames(lines, fields);
+    _addDate(
+      fields,
+      KycOcrField.dateOfBirth,
+      _valueForPatterns(lines, _dateOfBirthPatterns),
+    );
+    _addNationality(fields, _valueForPatterns(lines, _nationalityPatterns));
+    _addText(
+      fields,
+      KycOcrField.address,
+      _valueForLabeledBlock(lines, _addressPatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.cityMunicipality,
+      _valueForPatterns(lines, _cityPatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.province,
+      _valueForPatterns(lines, _provincePatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.zipCode,
+      _valueForPatterns(lines, _zipPatterns),
+    );
+    _addId(fields, _valueForPatterns(lines, _postalNumberPatterns));
+    _addDate(
+      fields,
+      KycOcrField.idExpiryDate,
+      _valueForPatterns(lines, _expiryPatterns),
+    );
+  }
+
+  static void _parseGsisECard(
+    List<String> lines,
+    Map<KycOcrField, KycOcrFieldValue> fields,
+  ) {
+    _parseNames(lines, fields);
+    _addDate(
+      fields,
+      KycOcrField.dateOfBirth,
+      _valueForPatterns(lines, _dateOfBirthPatterns),
+    );
+    _addSex(fields, _valueForPatterns(lines, _sexPatterns));
+    _addText(
+      fields,
+      KycOcrField.address,
+      _valueForLabeledBlock(lines, _addressPatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.cityMunicipality,
+      _valueForPatterns(lines, _cityPatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.province,
+      _valueForPatterns(lines, _provincePatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.zipCode,
+      _valueForPatterns(lines, _zipPatterns),
+    );
+    _addId(fields, _valueForPatterns(lines, _gsisNumberPatterns));
+    _addDate(
+      fields,
+      KycOcrField.idExpiryDate,
+      _valueForPatterns(lines, _gsisExpiryPatterns),
+    );
+  }
+
+  static void _parseVoters(
+    List<String> lines,
+    Map<KycOcrField, KycOcrFieldValue> fields,
+  ) {
+    _parseNames(lines, fields);
+    _addDate(
+      fields,
+      KycOcrField.dateOfBirth,
+      _valueForPatterns(lines, _dateOfBirthPatterns),
+    );
+    _addSex(fields, _valueForPatterns(lines, _sexPatterns));
+    _addText(
+      fields,
+      KycOcrField.address,
+      _valueForLabeledBlock(lines, _addressPatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.cityMunicipality,
+      _valueForPatterns(lines, _cityPatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.province,
+      _valueForPatterns(lines, _provincePatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.zipCode,
+      _valueForPatterns(lines, _zipPatterns),
+    );
+    _addId(fields, _valueForPatterns(lines, _voterNumberPatterns));
+  }
+
+  static void _parsePhilHealth(
+    List<String> lines,
+    Map<KycOcrField, KycOcrFieldValue> fields,
+  ) {
+    _parseNames(lines, fields);
+    _addDate(
+      fields,
+      KycOcrField.dateOfBirth,
+      _valueForPatterns(lines, _dateOfBirthPatterns),
+    );
+    _addSex(fields, _valueForPatterns(lines, _sexPatterns));
+    _addText(
+      fields,
+      KycOcrField.address,
+      _valueForLabeledBlock(lines, _addressPatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.cityMunicipality,
+      _valueForPatterns(lines, _cityPatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.province,
+      _valueForPatterns(lines, _provincePatterns),
+    );
+    _addText(
+      fields,
+      KycOcrField.zipCode,
+      _valueForPatterns(lines, _zipPatterns),
+    );
+    _addId(fields, _valueForPatterns(lines, _philHealthNumberPatterns));
+  }
+
   static final _passportNumberPatterns = [
     RegExp(
       r'\bpassport\s*(?:no\.?|number)\s*[:#\-]?\s*(.*)',
@@ -356,6 +551,13 @@ abstract final class KycOcrParser {
     ),
     RegExp(
       r'\blicen[cs]e\s*(?:no\.?|number)\s*[:#\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
+  ];
+  static final _driversLicenseNumberPatterns = [
+    ..._licenseNumberPatterns,
+    RegExp(
+      r'\b(?:dl|lic\.?)\s*(?:no\.?|number|#)\s*[:#\-]?\s*(.*)',
       caseSensitive: false,
     ),
   ];
@@ -379,6 +581,176 @@ abstract final class KycOcrParser {
       caseSensitive: false,
     ),
   ];
+  static final _postalNumberPatterns = [
+    RegExp(
+      r'\bpostal\s+reference\s+(?:no\.?|number)\s*[:#\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
+    RegExp(r'\bprn\s*[:#\-]?\s*(.*)', caseSensitive: false),
+  ];
+  static final _gsisNumberPatterns = [
+    RegExp(
+      r'\bgsis\s+(?:id|member)\s*(?:no\.?|number)\s*[:#\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
+    RegExp(r'\bgsis\s+id\s*[:#\-]\s*(.*)', caseSensitive: false),
+    RegExp(
+      r'\bmember\s*(?:no\.?|number)\s*[:#\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
+  ];
+  static final _gsisExpiryPatterns = [
+    RegExp(
+      r'\bvalid\s+(?:thru|through)\b\s*[:#\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
+    ..._expiryPatterns,
+  ];
+  static final _voterNumberPatterns = [
+    RegExp(r'\bvin\s*[:#\-]?\s*(.*)', caseSensitive: false),
+    RegExp(
+      r"\bvoter(?:'|’)?s?\s+(?:identification\s+)?(?:id\s+)?(?:no\.?|number)\s*[:#\-]?\s*(.*)",
+      caseSensitive: false,
+    ),
+  ];
+  static final _philHealthNumberPatterns = [
+    RegExp(r'\bpin\s*[:#\-]?\s*(.*)', caseSensitive: false),
+    RegExp(
+      r'\bphilhealth\s+(?:identification\s+)?(?:no\.?|number)(?:\s*\(pin\))?\s*[:#\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
+  ];
+
+  static String? _nationalIdNumberValue(List<String> lines) {
+    final labeled = _valueForPatterns(lines, _nationalIdNumberPatterns);
+    if (labeled != null) return labeled;
+
+    for (final line in lines) {
+      final candidate = _cleanCandidate(line);
+      if (candidate != null && _isNationalIdNumber(candidate)) {
+        return candidate;
+      }
+    }
+    return null;
+  }
+
+  static bool _containsDriversLicenseEvidence(List<String> lines) => lines.any((
+    line,
+  ) {
+    final normalized = _normalizedLabel(line);
+    return RegExp(
+      r'\b(?:driver s license|professional driver s license|non professional driver s license|land transportation office|lto|license no|license number|lic no|lic number|dl no|dl number|expiry|expiration)\b',
+      caseSensitive: false,
+    ).hasMatch(normalized);
+  });
+
+  static String? _nationalIdAddressValue(List<String> lines) {
+    for (var i = 0; i < lines.length; i++) {
+      for (final pattern in _nationalIdAddressPatterns) {
+        final match = pattern.firstMatch(lines[i]);
+        if (match == null) continue;
+
+        final sameLine = _cleanCandidate(match.group(1));
+        if (sameLine != null &&
+            !_isFormatHint(sameLine) &&
+            !_isNationalIdAddressNoise(sameLine) &&
+            !_isPlaceholderValue(sameLine) &&
+            !_isNationalIdAddressBoundary(sameLine)) {
+          return sameLine;
+        }
+
+        final values = <String>[];
+        var skipNextLabeledValue = false;
+        for (var j = i + 1; j < lines.length; j++) {
+          final candidate = _cleanCandidate(lines[j]);
+          if (candidate == null) continue;
+          if (skipNextLabeledValue) {
+            skipNextLabeledValue = false;
+            continue;
+          }
+          if (_isNationalIdIdentityLabel(candidate)) {
+            skipNextLabeledValue = _isNationalIdIdentityLabelOnly(candidate);
+            continue;
+          }
+          if (_isNationalIdAddressNoise(candidate)) {
+            skipNextLabeledValue = RegExp(
+              r'^(?:pcn|psn|philsys card number|philid number|national id number)$',
+              caseSensitive: false,
+            ).hasMatch(_normalizedLabel(candidate));
+            continue;
+          }
+          if (_isNationalIdAddressBoundary(candidate)) break;
+          if (_isPlaceholderValue(candidate)) continue;
+          values.add(candidate);
+        }
+        if (values.isNotEmpty && values.any(_looksLikeAddressLine)) {
+          return values.join(', ');
+        }
+      }
+    }
+    return null;
+  }
+
+  static bool _isNationalIdNumber(String value) => RegExp(
+    r'^\d{4}\s*-\s*[0-9_*]{4}(?:\s*-\s*(?:\d{4}|[0-9_*]{4})){2}$',
+  ).hasMatch(value);
+
+  static bool _isNationalIdAddressNoise(String value) {
+    final normalized = _normalizedLabel(value);
+    return normalized.contains('pambansang pagkakakilanlan') ||
+        normalized.contains('philippine identification card') ||
+        normalized.contains('philippine identification') ||
+        normalized == 'republic of the philippines' ||
+        normalized == 'republika ng pilipinas' ||
+        normalized == 'reoublic of the philippines' ||
+        _isNationalIdAddressTemplate(value) ||
+        RegExp(
+          r'^(?:shif t|shift|cirl)$',
+          caseSensitive: false,
+        ).hasMatch(normalized) ||
+        _isNationalIdNumber(value) ||
+        _isNationalIdIdentityLabel(value) ||
+        RegExp(
+          r'^(?:pcn|psn|philsys card number|philid number|national id number)\b',
+          caseSensitive: false,
+        ).hasMatch(normalized);
+  }
+
+  static bool _isNationalIdAddressBoundary(String value) {
+    if (_isPlaceholderValue(value) &&
+        !_isStandaloneLabel(value) &&
+        !_isLabeledField(value)) {
+      return false;
+    }
+    if (_isStandaloneLabel(value) || _isLabeledField(value)) return true;
+
+    final normalized = _normalizedLabel(value);
+    return RegExp(
+      r'^(?:surname|last name|apelyido|apelyido last name|first name|given names?|mga pangalan|mga pangalan given names?|pangalan|middle name|gitnang name|gitnang pangalan|date of birth|petsa ng kapanganakan|petsa ng kapanganakan date of birth|birth date|sex|gender|kasarian|nationality|citizenship|nasyonalidad|civil status|marital status|katayuang sibil|address|present address|current address|residential address|tirahan|tirahan address|kasalukuyang tirahan|city|municipality|city municipality|lungsod|munisipalidad|province|probinsya|zip|zip code|postal code|pcn|psn|philsys card number|philid number|national id number)$',
+      caseSensitive: false,
+    ).hasMatch(normalized);
+  }
+
+  static bool _isNationalIdAddressTemplate(String value) {
+    final normalized = _normalizedLabel(value);
+    return RegExp(
+      r'^(?:house no street|house number street|house number barangay city municipality|house no street barangay city municipality|house number street barangay city municipality)$',
+      caseSensitive: false,
+    ).hasMatch(normalized);
+  }
+
+  static bool _isNationalIdIdentityLabel(String value) => RegExp(
+    r'^(?:surname|last name|apelyido(?: last name)?|first name|given names?|mga pangalan(?: given names?)?|pangalan|middle name|gitnang name|gitnang pangalan|gitnang apelyido)\b',
+    caseSensitive: false,
+  ).hasMatch(_normalizedLabel(value));
+
+  static bool _isNationalIdIdentityLabelOnly(String value) => RegExp(
+    r'^(?:surname|last name|apelyido(?: last name)?|first name|given names?|mga pangalan(?: given names?)?|pangalan|middle name|gitnang name|gitnang pangalan|gitnang apelyido)$',
+    caseSensitive: false,
+  ).hasMatch(_normalizedLabel(value));
+
+  static String _normalizedLabel(String value) =>
+      value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
 
   static void _parseNames(
     List<String> lines,
@@ -492,16 +864,23 @@ abstract final class KycOcrParser {
     );
   }
 
-  static void _addId(Map<KycOcrField, KycOcrFieldValue> fields, String? value) {
-    final cleaned = _cleanCandidate(
-      value,
-    )?.replaceAll(RegExp(r'[^A-Za-z0-9 -]'), '');
+  static void _addId(
+    Map<KycOcrField, KycOcrFieldValue> fields,
+    String? value, {
+    bool allowMasked = false,
+  }) {
+    final cleaned = _cleanCandidate(value)?.replaceAll(
+      RegExp(allowMasked ? r'[^A-Za-z0-9_* -]' : r'[^A-Za-z0-9 -]'),
+      '',
+    );
     if (cleaned == null || cleaned.trim().length < 4) return;
     fields.putIfAbsent(
       KycOcrField.idNumber,
       () => KycOcrFieldValue(
         value: cleaned.trim(),
-        confidence: KycOcrConfidence.high,
+        confidence: allowMasked && RegExp(r'[_*]').hasMatch(cleaned)
+            ? KycOcrConfidence.review
+            : KycOcrConfidence.high,
       ),
     );
   }
@@ -611,7 +990,11 @@ abstract final class KycOcrParser {
         final match = pattern.firstMatch(lines[i]);
         if (match == null) continue;
         final sameLine = _cleanCandidate(match.group(1));
-        if (sameLine != null && !_isFormatHint(sameLine)) return sameLine;
+        if (sameLine != null &&
+            !_isFormatHint(sameLine) &&
+            !_isPlaceholderValue(sameLine)) {
+          return sameLine;
+        }
         final next = _nextValue(lines, i);
         if (next != null) return next;
       }
@@ -628,16 +1011,43 @@ abstract final class KycOcrParser {
         final match = pattern.firstMatch(lines[i]);
         if (match == null) continue;
         final sameLine = _cleanCandidate(match.group(1));
-        if (sameLine != null && !_isFormatHint(sameLine)) return sameLine;
+        if (sameLine != null &&
+            !_isFormatHint(sameLine) &&
+            !_isAddressNoise(sameLine)) {
+          return sameLine;
+        }
 
         final values = <String>[];
-        for (var j = i + 1; j < lines.length && j <= i + 4; j++) {
+        var hasAddressComponent = false;
+        for (var j = i + 1; j < lines.length && j <= i + 6; j++) {
           final candidate = _cleanCandidate(lines[j]);
           if (candidate == null) continue;
-          if (_isStandaloneLabel(candidate)) break;
+
+          if (_isDocumentHeader(candidate) ||
+              _isNationalIdAddressNoise(candidate)) {
+            continue;
+          }
+          if (_isStandaloneAddressComponentLabel(candidate) &&
+              !RegExp(r'[:\-]').hasMatch(candidate)) {
+            continue;
+          }
+          final addressComponent = _addressComponentValue(candidate);
+          if (addressComponent != null) {
+            values.add(addressComponent);
+            hasAddressComponent = true;
+            continue;
+          }
+          if (_isStandaloneAddressComponentLabel(candidate)) continue;
+          if (_isAddressBoundary(candidate)) {
+            break;
+          }
+          if (_isPlaceholderValue(candidate)) continue;
           values.add(candidate);
         }
-        if (values.isNotEmpty) return values.join(', ');
+        if (values.isNotEmpty &&
+            (hasAddressComponent || values.any(_looksLikeAddressLine))) {
+          return values.join(', ');
+        }
       }
     }
     return null;
@@ -648,6 +1058,10 @@ abstract final class KycOcrParser {
       final candidate = _cleanCandidate(lines[i]);
       if (candidate == null ||
           _isStandaloneLabel(candidate) ||
+          _isStandaloneAddressComponentLabel(candidate) ||
+          _isDocumentHeader(candidate) ||
+          _isLabeledField(candidate) ||
+          _isPlaceholderValue(candidate) ||
           _isFormatHint(candidate)) {
         continue;
       }
@@ -676,8 +1090,57 @@ abstract final class KycOcrParser {
     caseSensitive: false,
   ).hasMatch(value);
 
+  static bool _isPlaceholderValue(String value) {
+    final normalized = value
+        .replaceFirst(RegExp(r'^[^A-Za-z0-9]+'), '')
+        .replaceAll(RegExp(r'[^A-Za-z0-9]+'), ' ')
+        .trim();
+    return normalized.isEmpty ||
+        _isStandaloneLabel(normalized) ||
+        _isStandaloneAddressComponentLabel(normalized) ||
+        _isDocumentHeader(normalized);
+  }
+
+  static bool _isAddressNoise(String value) =>
+      _isAddressBoundary(value) ||
+      _isNationalIdAddressNoise(value) ||
+      _isPlaceholderValue(value);
+
+  static bool _isAddressBoundary(String value) =>
+      !_isStandaloneAddressComponentLabel(value) &&
+      _addressComponentValue(value) == null &&
+      (_isStandaloneLabel(value) || _isLabeledField(value));
+
+  static bool _isStandaloneAddressComponentLabel(String value) => RegExp(
+    r'^(?:house(?: no| number)?(?: street)?|hse(?: no| number)?(?: street)?|street(?: name)?|barangay|brgy|purok|sitio|zone|district)$',
+    caseSensitive: false,
+  ).hasMatch(_normalizedLabel(value));
+
+  static String? _addressComponentValue(String value) {
+    final match = RegExp(
+      r'^(?:house\s*(?:no\.?|number)?|hse\s*(?:no\.?|number)?|street(?:\s+name)?|barangay|brgy|purok|sitio|zone|district)(?:\s*[/&]\s*(?:street|barangay))?\s*(?:[:.\-]\s*)+(.+)$',
+      caseSensitive: false,
+    ).firstMatch(value);
+    return _cleanCandidate(match?.group(1));
+  }
+
+  static bool _looksLikeAddressLine(String value) => RegExp(
+    r'\d|\b(?:street|st\.?|road|rd\.?|avenue|ave\.?|boulevard|blvd\.?|barangay|brgy\.?|purok|sitio|zone|village|subdivision|phase|block|lot|unit|house|hse)\b',
+    caseSensitive: false,
+  ).hasMatch(value);
+
+  static bool _isDocumentHeader(String value) => RegExp(
+    r'^(?:republic of the philippines|department of transportation|land transportation office|lto|driver s license|professional driver s license|non professional driver s license|philippine identification card|philippine identification|pambansang pagkakakilanlan|official receipt)$',
+    caseSensitive: false,
+  ).hasMatch(_normalizedLabel(value));
+
   static bool _isStandaloneLabel(String value) => RegExp(
-    r'^(?:passport|surname|last name|apelyido|first name|given names?|mga pangalan|pangalan|middle name|gitnang (?:name|pangalan|apelyido)|full name|date of birth|petsa ng kapanganakan|birth date|sex|gender|kasarian|nationality|citizenship|nasyonalidad|civil status|marital status|katayuang sibil|address|present address|current address|residential address|tirahan|city|municipality|city\s*/?\s*municipality|lungsod|munisipalidad|province|probinsya|zip|zip code|postal code|passport no\.?|passport number|license no\.?|license number|registration no\.?|registration number|crn|ss number|sss no\.?|pcn|psn|philsys card number|philid number|national id number)\s*(?:\([^)]*\))?\s*[:.\-]?$',
+    r'^(?:passport|surname|last name|apelyido|first name|given names?|mga pangalan|pangalan|name|middle name|gitnang (?:name|pangalan|apelyido)|full name|date of birth|petsa ng kapanganakan|birth date|birthdate|dob|sex|gender|kasarian|nationality|citizenship|nasyonalidad|civil status|marital status|katayuang sibil|address|address tirahan|present address|current address|residential address|tirahan|city|municipality|municipality city|city\s*/?\s*municipality|lungsod|munisipalidad|province|probinsya|zip|zip code|postal code|house no\.?|house number|street|street name|barangay|brgy|purok|sitio|zone|district|passport no\.?|passport number|license no\.?|license number|lic no\.?|lic number|dl no\.?|dl number|registration no\.?|registration number|crn|ss number|sss no\.?|pcn|psn|philsys card number|philid number|national id number|postal reference no\.?|postal reference number|prn|gsis id number|gsis id no\.?|member number|member no\.?|vin|precinct no\.?|pin|philhealth identification number|valid until|valid thru|valid through|expiry|expiration|membership category)\s*(?:\([^)]*\))?\s*[:.\-]?$',
+    caseSensitive: false,
+  ).hasMatch(value);
+
+  static bool _isLabeledField(String value) => RegExp(
+    r'^(?:passport|surname|last name|apelyido|first name|given names?|mga pangalan|pangalan|name|middle name|gitnang (?:name|pangalan|apelyido)|full name|date of birth|petsa ng kapanganakan|birth date|birthdate|dob|sex|gender|kasarian|nationality|citizenship|nasyonalidad|civil status|marital status|katayuang sibil|address|address tirahan|present address|current address|residential address|tirahan|city|municipality|municipality\s*/\s*city|city\s*/?\s*municipality|lungsod|munisipalidad|province|probinsya|zip|zip code|postal code|postal reference no\.?|postal reference number|prn|house no\.?|house number|hse no\.?|street|street name|barangay|brgy|purok|sitio|zone|district|passport no\.?|passport number|license no\.?|license number|lic no\.?|lic number|dl no\.?|dl number|registration no\.?|registration number|crn|ss number|sss no\.?|pcn|psn|philsys card number|philid number|national id number|vin|precinct no\.?|pin|philhealth identification number|valid until|valid thru|valid through|expiry|expiration|membership category)\s*[:.\-]',
     caseSensitive: false,
   ).hasMatch(value);
 

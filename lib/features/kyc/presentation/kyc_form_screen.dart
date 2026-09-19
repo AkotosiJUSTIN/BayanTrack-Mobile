@@ -8,18 +8,17 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/domain/failures.dart';
 import '../../../core/utils/kyc_validators.dart';
 import '../../../core/utils/validators.dart';
-import '../../../core/constants/urdaneta_geo.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../auth/data/auth_models.dart';
 import '../data/kyc_ocr.dart';
 import '../data/kyc_models.dart';
 import '../domain/entities/kyc_status.dart';
-import '../../auth/presentation/barangays_provider.dart';
+import '../../auth/presentation/profile_controller.dart';
 import 'id_capture_screen.dart';
 import 'kyc_controller.dart';
 
 enum _KycStep {
   method,
-  idType,
   idImages,
   ocrReview,
   identity,
@@ -62,10 +61,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   static final _nameInputRegex = RegExp(
     r"[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF\s\-'.]",
   );
-  static final _nationalityInputRegex = RegExp(
-    r'[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF\s-]',
-  );
-  static final _addressInputRegex = RegExp(r"[A-Za-z0-9\s,.'#/()-]");
+  static final _addressInputRegex = RegExp(r"[A-Za-z0-9\s,.'#/()\-\n]");
   static final _idNumberRegex = RegExp(r"[A-Za-z0-9\s-]");
 
   // Text controllers for all fields
@@ -81,16 +77,32 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   final _zipCodeController = TextEditingController();
   final _idNumberController = TextEditingController();
   final _stepScrollController = ScrollController();
+  final Map<KycOcrField, TextEditingController> _ocrReviewControllers = {};
+  final Set<KycOcrField> _dirtyOcrReviewFields = {};
 
-  String? _selectedBarangayName;
   Map<String, String> _backendFieldErrors = {};
+  List<_KycStep>? _stepPlan;
   int _currentStep = 0;
+  KycVerificationMethod? _initialVerificationMethod;
+  bool _profileContactSeeded = false;
+  bool _emailFromProfile = false;
+  bool _mobileFromProfile = false;
 
   @override
   void initState() {
     super.initState();
     final initialState = ref.read(kycFormControllerProvider);
+    _initialVerificationMethod = initialState.verificationMethod;
     _syncOcrControllers(initialState);
+    ref.listenManual(
+      profileControllerProvider,
+      (_, next) => next.whenData((profile) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _seedContactFromProfile(profile);
+        });
+      }),
+      fireImmediately: true,
+    );
     if (widget.initialStep >= 0) {
       _currentStep = widget.initialStep;
     }
@@ -99,27 +111,47 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     }
   }
 
+  void _seedContactFromProfile(UserProfile profile) {
+    if (_profileContactSeeded || widget.existingKyc != null) return;
+    _profileContactSeeded = true;
+
+    final current = ref.read(kycFormControllerProvider);
+    final email = profile.email.trim();
+    final mobile = KycValidators.normalizeMobileNumber(profile.phone ?? '');
+    final useEmail =
+        current.email.trim().isEmpty && Validators.email(email) == null;
+    final useMobile =
+        current.mobileNumber.trim().isEmpty &&
+        KycValidators.mobileNumber(mobile) == null;
+    final controller = ref.read(kycFormControllerProvider.notifier);
+    controller.seedContactFromProfile(
+      email: useEmail ? email : null,
+      mobileNumber: useMobile ? mobile : null,
+    );
+
+    _emailFromProfile = useEmail;
+    _mobileFromProfile = useMobile;
+    final seeded = ref.read(kycFormControllerProvider);
+    _syncOcrControllers(seeded);
+    if (_currentStep > 0 &&
+        _stepPlan == null &&
+        seeded.verificationMethod != null) {
+      _stepPlan = _stepsForState(seeded);
+    }
+    if (mounted) setState(() {});
+  }
+
   void _populateFromExisting(KycStatusEntity existing) {
     _firstNameController.text = existing.firstName ?? '';
     _middleNameController.text = existing.middleName ?? '';
     _lastNameController.text = existing.lastName ?? '';
-    _nationalityController.text = existing.nationality ?? '';
+    _nationalityController.text = KycFormState.fixedNationality;
     _emailController.text = existing.email ?? '';
     _mobileNumberController.text = KycValidators.mobileInputValue(
       existing.mobileNumber ?? '',
     );
 
-    final fullAddress = existing.streetBarangay ?? '';
-    if (fullAddress.contains(',')) {
-      final parts = fullAddress.split(',');
-      _selectedBarangayName = parts.last.trim();
-      _streetBarangayController.text = parts
-          .sublist(0, parts.length - 1)
-          .join(',')
-          .trim();
-    } else {
-      _streetBarangayController.text = fullAddress;
-    }
+    _streetBarangayController.text = existing.streetBarangay ?? '';
 
     _cityMunicipalityController.text = existing.cityMunicipality ?? '';
     _provinceController.text = existing.province ?? '';
@@ -129,6 +161,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final controller = ref.read(kycFormControllerProvider.notifier);
       controller.populateFromExisting(existing);
+      _stepPlan = _stepsForState(ref.read(kycFormControllerProvider));
       if (mounted) _setCurrentStep(1);
     });
   }
@@ -147,6 +180,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     _zipCodeController.dispose();
     _idNumberController.dispose();
     _stepScrollController.dispose();
+    for (final controller in _ocrReviewControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -234,10 +270,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         state.lastName.trim().isNotEmpty) {
       _lastNameController.text = state.lastName;
     }
-    if ((overwrite || _nationalityController.text.trim().isEmpty) &&
-        state.nationality.trim().isNotEmpty) {
-      _nationalityController.text = state.nationality;
-    }
+    _nationalityController.text = KycFormState.fixedNationality;
     if ((overwrite || _emailController.text.trim().isEmpty) &&
         state.email.trim().isNotEmpty) {
       _emailController.text = state.email;
@@ -270,7 +303,17 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     }
   }
 
-  void _validateLive() => _formKey.currentState?.validate();
+  void _commitOcrReviewValues() {
+    if (_ocrReviewControllers.isEmpty) return;
+    final state = ref.read(kycFormControllerProvider);
+    final controller = ref.read(kycFormControllerProvider.notifier);
+    for (final entry in _ocrReviewControllers.entries) {
+      if (state.ocrReviewValues[entry.key] != entry.value.text) {
+        controller.setOcrReviewValue(entry.key, entry.value.text);
+      }
+    }
+    _dirtyOcrReviewFields.clear();
+  }
 
   String? _backendError(String field) => _backendFieldErrors[field];
 
@@ -281,6 +324,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   }
 
   void _setCurrentStep(int step) {
+    _commitOcrReviewValues();
     setState(() => _currentStep = step);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _stepScrollController.hasClients) {
@@ -289,31 +333,60 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     });
   }
 
-  List<_KycStep> _steps(KycFormState state) {
+  bool _hasBackendError(Iterable<String> fields) =>
+      fields.any(_backendFieldErrors.containsKey);
+
+  bool _identityNeedsInput(KycFormState state) =>
+      !state.isBasicIdentityComplete ||
+      _hasBackendError({
+        'first_name',
+        'middle_name',
+        'last_name',
+        'date_of_birth',
+        'sex',
+        'nationality',
+        'civil_status',
+      });
+
+  bool _contactNeedsInput(KycFormState state) =>
+      Validators.email(state.email) != null ||
+      KycValidators.mobileNumber(state.mobileNumber) != null ||
+      _hasBackendError({'email', 'mobile_number'});
+
+  bool _addressNeedsInput(KycFormState state) =>
+      !state.isAddressComplete ||
+      _hasBackendError({
+        'street_barangay',
+        'city_municipality',
+        'province',
+        'zip_code',
+      });
+
+  bool _idDetailsNeedInput(KycFormState state) =>
+      !state.isIdDetailsComplete ||
+      _hasBackendError({'id_type', 'id_number', 'id_expiry_date'});
+
+  List<_KycStep> _stepsForState(KycFormState state) {
     switch (state.verificationMethod) {
       case KycVerificationMethod.scanId:
         final steps = <_KycStep>[
           _KycStep.method,
-          _KycStep.idType,
           _KycStep.idImages,
           _KycStep.ocrReview,
         ];
-        if (!state.ocrReviewConfirmed || state.scanIdentityStepRequired) {
-          steps.add(_KycStep.identity);
+        if (state.ocrReviewConfirmed) {
+          if (_identityNeedsInput(state)) steps.add(_KycStep.identity);
+          if (_contactNeedsInput(state)) steps.add(_KycStep.contact);
+          if (_addressNeedsInput(state)) steps.add(_KycStep.address);
+          if (_idDetailsNeedInput(state)) steps.add(_KycStep.idDetails);
         }
-        steps.addAll([
-          _KycStep.contact,
-          _KycStep.address,
-          _KycStep.idDetails,
-          _KycStep.selfie,
-          _KycStep.declaration,
-        ]);
+        steps.addAll([_KycStep.selfie, _KycStep.declaration]);
         return steps;
       case KycVerificationMethod.manual:
-        return const [
+        return [
           _KycStep.method,
           _KycStep.identity,
-          _KycStep.contact,
+          if (_contactNeedsInput(state)) _KycStep.contact,
           _KycStep.address,
           _KycStep.idDetails,
           _KycStep.idImages,
@@ -323,6 +396,17 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       case null:
         return const [_KycStep.method];
     }
+  }
+
+  List<_KycStep> _steps(KycFormState state) {
+    if (_stepPlan == null &&
+        _currentStep > 0 &&
+        state.verificationMethod != null &&
+        (_profileContactSeeded ||
+            state.verificationMethod != _initialVerificationMethod)) {
+      _stepPlan = _stepsForState(state);
+    }
+    return _stepPlan ?? _stepsForState(state);
   }
 
   int _currentIndex(KycFormState state) {
@@ -336,6 +420,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   }
 
   void _selectVerificationMethod(KycVerificationMethod method) {
+    if (ref.read(kycFormControllerProvider).verificationMethod != method) {
+      _stepPlan = null;
+    }
     ref.read(kycFormControllerProvider.notifier).setVerificationMethod(method);
     _clearBackendError('verification_method');
   }
@@ -391,7 +478,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     }
 
     if (state.verificationMethod == KycVerificationMethod.scanId) {
-      if (state.selectedIdType == null) return _KycStep.idType;
+      if (state.selectedIdType == null) return _KycStep.idImages;
       if (!state.hasRequiredIdImages ||
           state.isOcrScanning ||
           !state.hasCurrentOcrResult) {
@@ -434,7 +521,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
               'Street/barangay address',
             ) !=
             null ||
-        (_requiresLocalBarangay(state) && _selectedBarangayName == null) ||
         KycValidators.addressField(
               _cityMunicipalityController.text,
               'City/municipality',
@@ -470,10 +556,12 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     switch (step) {
       case _KycStep.method:
         return l10n.chooseVerificationMethod;
-      case _KycStep.idType:
-        return _backendError('id_type') ?? l10n.selectIdType;
       case _KycStep.idImages:
         final state = ref.read(kycFormControllerProvider);
+        if (_backendError('id_type') != null) {
+          return _backendError('id_type')!;
+        }
+        if (state.selectedIdType == null) return l10n.selectIdType;
         if (_backendError('id_back_image') != null) {
           return _backendError('id_back_image')!;
         }
@@ -557,21 +645,31 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   }
 
   void _continueStep() {
+    _commitOcrReviewValues();
     final state = ref.read(kycFormControllerProvider);
-    final steps = _steps(state);
+    _stepPlan ??= _stepsForState(state);
+    final steps = _stepPlan!;
     final currentIndex = _currentIndex(state);
     final currentStep = steps[currentIndex];
-    final errorStep = _findStepWithErrors();
-    if (errorStep != null && steps.indexOf(errorStep) <= currentIndex) {
-      _formKey.currentState?.validate();
-      AppToast.error(context, _getStepErrorMessage(errorStep));
-      return;
-    }
 
     if (currentStep == _KycStep.ocrReview) {
       ref.read(kycFormControllerProvider.notifier).applyOcrReview();
       final reviewedState = ref.read(kycFormControllerProvider);
       _syncOcrControllers(reviewedState, overwrite: true);
+      _stepPlan = _stepsForState(reviewedState);
+      final reviewedSteps = _stepPlan!;
+      final reviewIndex = reviewedSteps.indexOf(_KycStep.ocrReview);
+      if (reviewIndex >= 0 && reviewIndex < reviewedSteps.length - 1) {
+        _setCurrentStep(reviewIndex + 1);
+      }
+      return;
+    }
+
+    final errorStep = _findStepWithErrors();
+    if (errorStep != null && steps.indexOf(errorStep) <= currentIndex) {
+      _formKey.currentState?.validate();
+      AppToast.error(context, _getStepErrorMessage(errorStep));
+      return;
     }
 
     final nextSteps = _steps(ref.read(kycFormControllerProvider));
@@ -760,7 +858,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     if (field == 'id_type' &&
         ref.read(kycFormControllerProvider).verificationMethod ==
             KycVerificationMethod.scanId) {
-      return _KycStep.idType;
+      return _KycStep.idImages;
     }
     return switch (field) {
       'first_name' ||
@@ -843,87 +941,29 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     final theme = Theme.of(context);
     final steps = _steps(state);
     final currentIndex = _currentIndex(state);
-    final titles = steps.map((step) => _stepTitle(step, l10n)).toList();
-    final subtitles = steps.map((step) => _stepSubtitle(step, l10n)).toList();
-    final completed = steps.map((step) => _stepCompleted(step, state)).toList();
+    final currentStep = steps[currentIndex];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: List.generate(titles.length, (index) {
-              final isCurrent = index == currentIndex;
-              final color = isCurrent
-                  ? theme.colorScheme.primary
-                  : completed[index]
-                  ? theme.colorScheme.primaryContainer
-                  : theme.colorScheme.surfaceContainerHighest;
-              final foregroundColor = isCurrent
-                  ? theme.colorScheme.onPrimary
-                  : completed[index]
-                  ? theme.colorScheme.onPrimaryContainer
-                  : theme.colorScheme.onSurfaceVariant;
-
-              return Expanded(
-                child: Semantics(
-                  button: true,
-                  selected: isCurrent,
-                  label:
-                      '${l10n.stepOf(index + 1, titles.length)}: ${titles[index]}',
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    onTap: index <= currentIndex
-                        ? () => _setCurrentStep(index)
-                        : null,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Center(
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                          ),
-                          child: completed[index] && !isCurrent
-                              ? Icon(
-                                  Icons.check,
-                                  size: 18,
-                                  color: foregroundColor,
-                                )
-                              : Text(
-                                  '${index + 1}',
-                                  style: theme.textTheme.labelLarge?.copyWith(
-                                    color: foregroundColor,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 4),
           Text(
-            l10n.stepOf(currentIndex + 1, titles.length),
+            l10n.stepOf(currentIndex + 1, steps.length),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
+          const SizedBox(height: 4),
           Text(
-            titles[currentIndex],
+            _stepTitle(currentStep, state, l10n),
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
+          const SizedBox(height: 2),
           Text(
-            subtitles[currentIndex],
+            _stepSubtitle(currentStep, state, l10n),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -933,23 +973,32 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     );
   }
 
-  String _stepTitle(_KycStep step, AppLocalizations l10n) => switch (step) {
-    _KycStep.method => l10n.chooseVerificationMethod,
-    _KycStep.idType => l10n.governmentId,
-    _KycStep.idImages => l10n.uploadIdImages,
-    _KycStep.ocrReview => l10n.reviewExtractedDetails,
-    _KycStep.identity => l10n.basicIdentity,
-    _KycStep.contact => l10n.contactInfo,
-    _KycStep.address => l10n.reportLocation,
-    _KycStep.idDetails => l10n.governmentId,
-    _KycStep.selfie => l10n.selfie,
-    _KycStep.declaration => l10n.declaration,
-  };
+  String _stepTitle(_KycStep step, KycFormState state, AppLocalizations l10n) =>
+      switch (step) {
+        _KycStep.method => l10n.chooseVerificationMethod,
+        _KycStep.idImages =>
+          state.verificationMethod == KycVerificationMethod.scanId
+              ? l10n.scanId
+              : l10n.uploadIdImages,
+        _KycStep.ocrReview => l10n.reviewExtractedDetails,
+        _KycStep.identity => l10n.basicIdentity,
+        _KycStep.contact => l10n.contactInfo,
+        _KycStep.address => l10n.reportLocation,
+        _KycStep.idDetails => l10n.governmentId,
+        _KycStep.selfie => l10n.selfie,
+        _KycStep.declaration => l10n.declaration,
+      };
 
-  String _stepSubtitle(_KycStep step, AppLocalizations l10n) => switch (step) {
+  String _stepSubtitle(
+    _KycStep step,
+    KycFormState state,
+    AppLocalizations l10n,
+  ) => switch (step) {
     _KycStep.method => l10n.chooseVerificationMethodDescription,
-    _KycStep.idType => l10n.idTypeNumber,
-    _KycStep.idImages => l10n.scanIdDescription,
+    _KycStep.idImages =>
+      state.verificationMethod == KycVerificationMethod.scanId
+          ? l10n.scanIdDescription
+          : l10n.maxImageFormats,
     _KycStep.ocrReview => l10n.reviewExtractedDetailsDescription,
     _KycStep.identity => l10n.personalInformation,
     _KycStep.contact => l10n.emailPhone,
@@ -959,22 +1008,8 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     _KycStep.declaration => l10n.confirmSubmit,
   };
 
-  bool _stepCompleted(_KycStep step, KycFormState state) => switch (step) {
-    _KycStep.method => state.verificationMethod != null,
-    _KycStep.idType => state.selectedIdType != null,
-    _KycStep.idImages => state.hasRequiredIdImages,
-    _KycStep.ocrReview => state.hasCurrentOcrResult && !state.isOcrScanning,
-    _KycStep.identity => state.isBasicIdentityComplete,
-    _KycStep.contact => state.isContactComplete,
-    _KycStep.address => state.isAddressComplete,
-    _KycStep.idDetails => state.isIdDetailsComplete,
-    _KycStep.selfie => state.hasSelfie,
-    _KycStep.declaration => state.isDeclarationComplete,
-  };
-
   Widget _buildCurrentStep(KycFormState state, _KycStep step) => switch (step) {
     _KycStep.method => _buildMethodSection(state),
-    _KycStep.idType => _buildIdTypeSection(state),
     _KycStep.idImages => _buildIdImagesSection(state),
     _KycStep.ocrReview => _buildOcrReviewSection(state),
     _KycStep.identity => _buildBasicIdentitySection(state),
@@ -1145,38 +1180,30 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   Widget _buildIdTypeSection(KycFormState state) {
     final controller = ref.read(kycFormControllerProvider.notifier);
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(l10n.scanIdOptionDescription, style: theme.textTheme.bodyLarge),
-        const SizedBox(height: 20),
-        DropdownButtonFormField<IdType>(
-          decoration: InputDecoration(
-            labelText: '${l10n.idType} *',
-            border: _inputBorder(),
-            prefixIcon: const Icon(Icons.badge_outlined),
-          ),
-          initialValue: state.selectedIdType,
-          items: IdType.values
-              .map(
-                (type) => DropdownMenuItem(
-                  value: type,
-                  child: Text(_idTypeLabel(type, l10n)),
-                ),
-              )
-              .toList(),
-          onChanged: (value) {
-            if (value != null) {
-              _clearBackendError('id_type');
-              controller.setIdType(value);
-            }
-          },
-          validator: (value) =>
-              _backendError('id_type') ??
-              (value == null ? l10n.selectIdType : null),
-        ),
-      ],
+    return DropdownButtonFormField<IdType>(
+      decoration: InputDecoration(
+        labelText: '${l10n.idType} *',
+        border: _inputBorder(),
+        prefixIcon: const Icon(Icons.badge_outlined),
+      ),
+      initialValue: state.selectedIdType,
+      items: _idTypeOptions(state.selectedIdType)
+          .map(
+            (type) => DropdownMenuItem(
+              value: type,
+              child: Text(_idTypeLabel(type, l10n)),
+            ),
+          )
+          .toList(),
+      onChanged: (value) {
+        if (value != null) {
+          _clearBackendError('id_type');
+          controller.setIdType(value);
+        }
+      },
+      validator: (value) =>
+          _backendError('id_type') ??
+          (value == null ? l10n.selectIdType : null),
     );
   }
 
@@ -1232,7 +1259,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             onChanged: (v) {
               _clearBackendError('first_name');
               controller.setFirstName(v);
-              _validateLive();
             },
             validator: (v) {
               if (_backendError('first_name') != null) {
@@ -1262,7 +1288,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             onChanged: (v) {
               _clearBackendError('middle_name');
               controller.setMiddleName(v);
-              _validateLive();
             },
             validator: (v) =>
                 _backendError('middle_name') ??
@@ -1290,7 +1315,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             onChanged: (v) {
               _clearBackendError('last_name');
               controller.setLastName(v);
-              _validateLive();
             },
             validator: (v) {
               if (_backendError('last_name') != null) {
@@ -1344,7 +1368,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
                     _clearBackendError('date_of_birth');
                     controller.setDateOfBirth(date);
                     field.didChange(date);
-                    _validateLive();
                   }
                 },
                 child: InputDecorator(
@@ -1397,31 +1420,13 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           // Nationality *
           TextFormField(
             controller: _nationalityController,
+            readOnly: true,
             decoration: InputDecoration(
               labelText: '${l10n.nationality} *',
               border: _inputBorder(),
               prefixIcon: Icon(Icons.flag),
-              hintText: l10n.nationalityExample,
             ),
-            textCapitalization: TextCapitalization.words,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(_nationalityInputRegex),
-              LengthLimitingTextInputFormatter(50),
-            ],
-            onChanged: (v) {
-              _clearBackendError('nationality');
-              controller.setNationality(v);
-              _validateLive();
-            },
-            validator: (v) {
-              if (_backendError('nationality') != null) {
-                return _backendError('nationality');
-              }
-              if (v == null || v.trim().isEmpty) {
-                return l10n.nationalityRequired;
-              }
-              return KycValidators.nationality(v);
-            },
+            validator: (_) => _backendError('nationality'),
           ),
           const SizedBox(height: 16),
         ],
@@ -1462,18 +1467,24 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       children: [
         // Email *
         TextFormField(
+          key: const ValueKey('kyc-profile-email'),
           controller: _emailController,
+          readOnly: _emailFromProfile,
           decoration: InputDecoration(
             labelText: '${l10n.emailAddress} *',
             border: _inputBorder(),
             prefixIcon: Icon(Icons.email),
+            suffixIcon: _emailFromProfile
+                ? const Icon(Icons.lock_outline)
+                : null,
           ),
           keyboardType: TextInputType.emailAddress,
-          onChanged: (v) {
-            _clearBackendError('email');
-            controller.setEmail(v);
-            _validateLive();
-          },
+          onChanged: _emailFromProfile
+              ? null
+              : (v) {
+                  _clearBackendError('email');
+                  controller.setEmail(v);
+                },
           validator: (value) =>
               _backendError('email') ?? Validators.email(value, l10n: l10n),
         ),
@@ -1482,23 +1493,28 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         // Mobile Number *
         TextFormField(
           controller: _mobileNumberController,
+          readOnly: _mobileFromProfile,
           decoration: InputDecoration(
             labelText: '${l10n.mobileNumberRequired} *',
             border: _inputBorder(),
             prefixIcon: Icon(Icons.phone),
             prefixText: '+63 ',
             hintText: '9123456789',
+            suffixIcon: _mobileFromProfile
+                ? const Icon(Icons.lock_outline)
+                : null,
           ),
           keyboardType: TextInputType.number,
           inputFormatters: [
             FilteringTextInputFormatter.digitsOnly,
             LengthLimitingTextInputFormatter(10),
           ],
-          onChanged: (v) {
-            _clearBackendError('mobile_number');
-            controller.setMobileNumber(v);
-            _validateLive();
-          },
+          onChanged: _mobileFromProfile
+              ? null
+              : (v) {
+                  _clearBackendError('mobile_number');
+                  controller.setMobileNumber(v);
+                },
           validator: (v) =>
               _backendError('mobile_number') ?? KycValidators.mobileNumber(v),
         ),
@@ -1508,26 +1524,12 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
 
   Widget _buildAddressSection(KycFormState state) {
     final controller = ref.read(kycFormControllerProvider.notifier);
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
     // Update the controller whenever either field changes
     void updateStreetBarangay() {
-      final street = _streetBarangayController.text.trim();
-      final barangay = _selectedBarangayName ?? '';
-      if (street.isNotEmpty && barangay.isNotEmpty) {
-        controller.setStreetBarangay('$street, $barangay');
-      } else if (street.isNotEmpty) {
-        controller.setStreetBarangay(street);
-      } else if (barangay.isNotEmpty) {
-        controller.setStreetBarangay(barangay);
-      } else {
-        controller.setStreetBarangay('');
-      }
-      _validateLive();
+      controller.setStreetBarangay(_streetBarangayController.text);
     }
-
-    final requiresLocalBarangay = _requiresLocalBarangay(state);
 
     return Column(
       children: [
@@ -1541,6 +1543,10 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             hintText: l10n.houseStreetHint,
           ),
           textCapitalization: TextCapitalization.words,
+          keyboardType: TextInputType.multiline,
+          textInputAction: TextInputAction.newline,
+          minLines: 1,
+          maxLines: 2,
           inputFormatters: [
             FilteringTextInputFormatter.allow(_addressInputRegex),
             LengthLimitingTextInputFormatter(255),
@@ -1553,54 +1559,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
               _backendError('street_barangay') ??
               KycValidators.addressField(v, 'Street/barangay address'),
         ),
-        const SizedBox(height: 16),
-
-        // Barangay Dropdown *
-        ref
-            .watch(barangaysProvider)
-            .when(
-              loading: () => const LinearProgressIndicator(),
-              error: (_, _) => Text(
-                l10n.failedLoadBarangays,
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
-              data: (barangays) {
-                final validBarangay =
-                    barangays.any((b) => b.name == _selectedBarangayName)
-                    ? _selectedBarangayName
-                    : null;
-
-                return DropdownButtonFormField<String>(
-                  initialValue: validBarangay,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: requiresLocalBarangay
-                        ? '${l10n.barangay} *'
-                        : l10n.barangay,
-                    border: _inputBorder(),
-                    prefixIcon: Icon(Icons.location_city_outlined),
-                    hintText: l10n.selectYourBarangay,
-                  ),
-                  items: barangays
-                      .map(
-                        (b) => DropdownMenuItem(
-                          value: b.name,
-                          child: Text(b.name),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() => _selectedBarangayName = value);
-                    _clearBackendError('street_barangay');
-                    updateStreetBarangay();
-                  },
-                  validator: (_) =>
-                      requiresLocalBarangay && _selectedBarangayName == null
-                      ? l10n.pleaseSelectBarangay
-                      : _backendError('street_barangay'),
-                );
-              },
-            ),
         const SizedBox(height: 16),
 
         // City *
@@ -1619,7 +1577,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           onChanged: (v) {
             _clearBackendError('city_municipality');
             controller.setCityMunicipality(v);
-            _validateLive();
           },
           validator: (v) =>
               _backendError('city_municipality') ??
@@ -1643,7 +1600,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           onChanged: (v) {
             _clearBackendError('province');
             controller.setProvince(v);
-            _validateLive();
           },
           validator: (v) =>
               _backendError('province') ??
@@ -1667,23 +1623,12 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           onChanged: (v) {
             _clearBackendError('zip_code');
             controller.setZipCode(v);
-            _validateLive();
           },
           validator: (v) =>
               _backendError('zip_code') ?? KycValidators.zipCode(v),
         ),
       ],
     );
-  }
-
-  bool _requiresLocalBarangay(KycFormState state) {
-    final city = state.cityMunicipality.trim().toLowerCase();
-    final addressWasConfirmedByOcr = state.ocrAppliedValues.containsKey(
-      KycOcrField.address,
-    );
-    return city.isEmpty ||
-        (city == UrdanetaGeo.defaultCityMunicipality.toLowerCase() &&
-            !addressWasConfirmedByOcr);
   }
 
   Widget _buildIdDetailsSection(
@@ -1704,7 +1649,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
               prefixIcon: const Icon(Icons.badge),
             ),
             initialValue: state.selectedIdType,
-            items: IdType.values
+            items: _idTypeOptions(state.selectedIdType)
                 .map(
                   (type) => DropdownMenuItem(
                     value: type,
@@ -1740,7 +1685,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           onChanged: (v) {
             _clearBackendError('id_number');
             controller.setIdNumber(v);
-            _validateLive();
           },
           validator: (v) =>
               _backendError('id_number') ?? KycValidators.idNumber(v),
@@ -1795,9 +1739,17 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         !state.isOcrScanning &&
         state.hasRequiredIdImages;
 
+    if (isScanPath && state.selectedIdType == null) {
+      return _buildIdTypeSection(state);
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (isScanPath) ...[
+          _buildIdTypeSection(state),
+          const SizedBox(height: 24),
+        ],
         Text(
           l10n.uploadGovId,
           style: TextStyle(
@@ -1993,7 +1945,9 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       KycOcrField.idNumber => '${l10n.idNumber} *',
       KycOcrField.idExpiryDate => l10n.idExpiryDate,
     };
-    final reviewValue = currentState.ocrReviewValue(field) ?? value.value;
+    final reviewValue = field == KycOcrField.nationality
+        ? KycFormState.fixedNationality
+        : currentState.ocrReviewValue(field) ?? value.value;
 
     if (field == KycOcrField.dateOfBirth || field == KycOcrField.idExpiryDate) {
       final date = DateTime.tryParse(reviewValue);
@@ -2075,18 +2029,32 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
       _ => null,
     };
     if (textController == null) return const SizedBox.shrink();
+    final reviewController = _ocrReviewControllers.putIfAbsent(
+      field,
+      () => TextEditingController(text: reviewValue),
+    );
+    if (!_dirtyOcrReviewFields.contains(field) &&
+        reviewController.text != reviewValue) {
+      reviewController.value = TextEditingValue(
+        text: reviewValue,
+        selection: TextSelection.collapsed(offset: reviewValue.length),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextFormField(
           key: ValueKey('ocr-${field.name}'),
-          initialValue: reviewValue,
+          controller: reviewController,
+          readOnly: field == KycOcrField.nationality,
           decoration: InputDecoration(labelText: fieldLabel),
-          onChanged: (text) {
-            _clearBackendError(_backendFieldForOcrField(field));
-            controller.setOcrReviewValue(field, text);
-          },
+          onChanged: field == KycOcrField.nationality
+              ? null
+              : (text) {
+                  _dirtyOcrReviewFields.add(field);
+                  _clearBackendError(_backendFieldForOcrField(field));
+                },
         ),
         const SizedBox(height: 6),
         _buildOcrConfidenceChip(confidenceLabel),
@@ -2356,15 +2324,29 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     );
   }
 
+  List<IdType> _idTypeOptions(IdType? current) {
+    final options = IdType.values
+        .where((type) => type != IdType.philsys)
+        .toList();
+    if (current == IdType.philsys) {
+      final nationalIdIndex = options.indexOf(IdType.nationalId);
+      if (nationalIdIndex >= 0) options[nationalIdIndex] = IdType.philsys;
+    }
+    return options;
+  }
+
   String _idTypeLabel(IdType value, AppLocalizations l10n) => switch (value) {
     IdType.passport => l10n.idPassport,
     IdType.nationalId => l10n.idNational,
     IdType.driversLicense => l10n.idDriversLicense,
-    IdType.philsys => l10n.idPhilsys,
+    // PhilSys remains a legacy API alias, but is presented as National ID.
+    IdType.philsys => l10n.idNational,
     IdType.sss => l10n.idSss,
     IdType.umid => l10n.idUmid,
     IdType.postal => l10n.idPostal,
     IdType.voters => l10n.idVoters,
+    IdType.gsisECard => l10n.idGsisECard,
+    IdType.philHealth => l10n.idPhilHealth,
     IdType.prcProfessionalId => l10n.idPrc,
   };
 

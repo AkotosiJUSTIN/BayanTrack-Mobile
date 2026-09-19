@@ -25,9 +25,17 @@ void main() {
     expect(find.text('Fit your ID inside the frame'), findsOneWidget);
     expect(find.text('Keep it flat and readable'), findsOneWidget);
     expect(find.byTooltip('Back'), findsOneWidget);
+    expect(find.byTooltip('Turn flashlight on'), findsOneWidget);
     expect(find.byTooltip('Take Photo'), findsOneWidget);
     expect(tester.getSize(find.byTooltip('Back')), const Size(48, 48));
+    expect(
+      tester.getSize(find.byTooltip('Turn flashlight on')),
+      const Size(48, 48),
+    );
     expect(tester.getSize(find.byTooltip('Take Photo')), const Size(64, 64));
+
+    final title = tester.widget<Text>(find.text('ID Front Photo'));
+    expect(title.style?.color, Colors.white);
   });
 
   testWidgets('keeps front and back capture variants labeled', (tester) async {

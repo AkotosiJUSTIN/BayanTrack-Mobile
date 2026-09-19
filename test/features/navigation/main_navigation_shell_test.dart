@@ -8,6 +8,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class _CountingScreen extends StatefulWidget {
+  const _CountingScreen({required this.onInit});
+
+  final VoidCallback onInit;
+
+  @override
+  State<_CountingScreen> createState() => _CountingScreenState();
+}
+
+class _CountingScreenState extends State<_CountingScreen> {
+  @override
+  void initState() {
+    super.initState();
+    widget.onInit();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+
 void main() {
   testWidgets('center report FAB keeps the curved bottom navigation surface', (
     tester,
@@ -73,4 +93,37 @@ void main() {
       expect(fab.elevation, 4);
     },
   );
+
+  testWidgets('defers hidden tab initialization until first visit', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    final initCounts = List<int>.filled(4, 0);
+    final screens = [
+      for (var index = 0; index < initCounts.length; index++)
+        _CountingScreen(onInit: () => initCounts[index]++),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          userPermissionsProvider.overrideWithValue(UserPermissions(null)),
+          sharedPrefsProvider.overrideWithValue(preferences),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: MainNavigationShell(screens: screens),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(initCounts, [1, 0, 0, 0]);
+    await tester.tap(find.text('Notifications'));
+    await tester.pump();
+    expect(initCounts, [1, 0, 1, 0]);
+  });
 }

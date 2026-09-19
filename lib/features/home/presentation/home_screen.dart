@@ -247,13 +247,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           return Column(
             children: [
-              if (shouldScrollHeader)
-                SizedBox(
-                  height: constraints.maxHeight * 0.48,
-                  child: SingleChildScrollView(child: header),
-                )
-              else
-                header,
+              SizedBox(
+                height: shouldScrollHeader
+                    ? constraints.maxHeight * 0.48
+                    : null,
+                child: SingleChildScrollView(
+                  physics: shouldScrollHeader
+                      ? const ClampingScrollPhysics()
+                      : const NeverScrollableScrollPhysics(),
+                  child: header,
+                ),
+              ),
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: _onRefresh,
