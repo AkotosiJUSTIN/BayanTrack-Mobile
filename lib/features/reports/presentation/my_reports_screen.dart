@@ -33,6 +33,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   int _currentPage = 0;
   int _totalPages = 1;
   int _totalReports = 0;
+  int _loadGeneration = 0;
 
   final _scrollController = ScrollController();
   final List<Report> _reports = [];
@@ -68,6 +69,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   Future<void> _onRefresh() => _loadInitialReports();
 
   Future<void> _loadInitialReports() async {
+    final generation = ++_loadGeneration;
     setState(() {
       _isInitialLoading = true;
       _isLoadingMore = false;
@@ -84,12 +86,15 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
       sortBy: _selectedSort,
     );
 
-    if (!mounted) return;
+    if (!mounted || generation != _loadGeneration) return;
 
     result.when(
       success: (data) {
+        final uniqueReports = <String, Report>{
+          for (final report in data.results) report.id: report,
+        };
         setState(() {
-          _reports.addAll(data.results);
+          _reports.addAll(uniqueReports.values);
           _currentPage = data.page;
           _totalPages = data.totalPages;
           _totalReports = data.total;
@@ -108,6 +113,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   Future<void> _loadNextPage() async {
     if (_isInitialLoading || _isLoadingMore || !_hasNextPage) return;
 
+    final generation = _loadGeneration;
     setState(() => _isLoadingMore = true);
     try {
       final result = await ref.read(getMyReportsUseCaseProvider)(
@@ -116,7 +122,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
         sortBy: _selectedSort,
       );
 
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
 
       result.when(
         success: (data) {
@@ -136,7 +142,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     } finally {
       // Always clear the paging flag, even if the future throws, so
       // infinite scroll cannot get stuck after a transient failure.
-      if (mounted) {
+      if (mounted && generation == _loadGeneration) {
         setState(() => _isLoadingMore = false);
       }
     }
