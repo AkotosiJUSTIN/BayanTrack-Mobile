@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../l10n/app_localizations.dart';
+import 'id_capture_geometry.dart';
 
 enum IdCaptureSide { front, back }
 
@@ -135,7 +139,7 @@ class _IdCaptureScreenState extends State<IdCaptureScreen>
     }
   }
 
-  Future<void> _takePicture() async {
+  Future<void> _takePicture(Size viewportSize, Rect frame) async {
     final controller = _controller;
     if (controller == null ||
         !controller.value.isInitialized ||
@@ -145,12 +149,129 @@ class _IdCaptureScreenState extends State<IdCaptureScreen>
 
     try {
       final image = await controller.takePicture();
-      if (mounted) Navigator.of(context).pop(image);
+      final framedImage = await _cropCapturedImage(
+        image,
+        viewportSize: viewportSize,
+        frame: frame,
+        previewSize: _orientedPreviewSize(controller),
+      );
+      if (mounted) Navigator.of(context).pop(framedImage);
     } on CameraException {
       if (mounted) {
         setState(() => _error = AppLocalizations.of(context).imageAccessError);
       }
     }
+  }
+
+  DeviceOrientation _applicableOrientation(CameraController controller) {
+    final value = controller.value;
+    return value.previewPauseOrientation ??
+        value.lockedCaptureOrientation ??
+        value.deviceOrientation;
+  }
+
+  bool _isLandscape(CameraController controller) {
+    final orientation = _applicableOrientation(controller);
+    return orientation == DeviceOrientation.landscapeLeft ||
+        orientation == DeviceOrientation.landscapeRight;
+  }
+
+  Size _orientedPreviewSize(CameraController controller) {
+    final raw = controller.value.previewSize;
+    if (raw == null) return Size.zero;
+    return IdCaptureGeometry.orientedPreviewSize(
+      raw,
+      landscape: _isLandscape(controller),
+    );
+  }
+
+  Widget _buildCameraPreview(CameraController controller) {
+    final previewSize = _orientedPreviewSize(controller);
+    if (previewSize == Size.zero) return const ColoredBox(color: Colors.black);
+
+    return ClipRect(
+      child: FittedBox(
+        fit: BoxFit.cover,
+        clipBehavior: Clip.hardEdge,
+        child: SizedBox(
+          width: previewSize.width,
+          height: previewSize.height,
+          child: CameraPreview(controller),
+        ),
+      ),
+    );
+  }
+
+  Future<XFile> _cropCapturedImage(
+    XFile image, {
+    required Size viewportSize,
+    required Rect frame,
+    required Size previewSize,
+  }) async {
+    ui.Codec? codec;
+    ui.Image? decoded;
+    ui.Image? cropped;
+    try {
+      final bytes = await image.readAsBytes();
+      codec = await ui.instantiateImageCodec(bytes);
+      final frameInfo = await codec.getNextFrame();
+      decoded = frameInfo.image;
+      final crop = IdCaptureGeometry.mapFrameToImage(
+        previewSize: previewSize,
+        imageSize: Size(decoded.width.toDouble(), decoded.height.toDouble()),
+        viewportSize: viewportSize,
+        frame: frame,
+      );
+      if (crop == null) return image;
+
+      final outputWidth = crop.width.round().clamp(1, decoded.width).toInt();
+      final outputHeight = crop.height.round().clamp(1, decoded.height).toInt();
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      canvas.drawImageRect(
+        decoded,
+        crop,
+        Rect.fromLTWH(0, 0, outputWidth.toDouble(), outputHeight.toDouble()),
+        Paint()..filterQuality = FilterQuality.high,
+      );
+      cropped = await recorder.endRecording().toImage(
+        outputWidth,
+        outputHeight,
+      );
+      final outputBytes = await cropped.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
+      if (outputBytes == null) return image;
+
+      final outputPath = _framedImagePath(image.path);
+      await File(outputPath).writeAsBytes(
+        outputBytes.buffer.asUint8List(
+          outputBytes.offsetInBytes,
+          outputBytes.lengthInBytes,
+        ),
+        flush: true,
+      );
+      return XFile(outputPath, mimeType: 'image/png');
+    } catch (_) {
+      // Frame mapping is conservative. Never replace a usable capture with a
+      // malformed crop when decoding or writing fails.
+      return image;
+    } finally {
+      codec?.dispose();
+      decoded?.dispose();
+      cropped?.dispose();
+    }
+  }
+
+  String _framedImagePath(String sourcePath) {
+    final separator = math.max(
+      sourcePath.lastIndexOf('/'),
+      sourcePath.lastIndexOf('\\'),
+    );
+    final dot = sourcePath.lastIndexOf('.');
+    final hasExtension = dot > separator;
+    final base = hasExtension ? sourcePath.substring(0, dot) : sourcePath;
+    return '${base}_framed.png';
   }
 
   @override
@@ -168,175 +289,225 @@ class _IdCaptureScreenState extends State<IdCaptureScreen>
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            controller?.value.isInitialized == true
-                ? CameraPreview(controller!)
-                : const ColoredBox(color: Colors.black),
-            IgnorePointer(
-              child: Semantics(
-                container: true,
-                label: '${l10n.fitIdInsideFrame}. ${l10n.keepIdFlatReadable}',
-                child: const IdCaptureGuide(),
-              ),
-            ),
-            Positioned(
-              top: 8,
-              left: 12,
-              right: 12,
-              child: Row(
-                children: [
-                  Material(
-                    color: theme.colorScheme.surface.withValues(alpha: 0.82),
-                    shape: const CircleBorder(),
-                    child: IconButton(
-                      tooltip: l10n.back,
-                      onPressed: () => Navigator.of(context).maybePop(),
-                      icon: const Icon(Icons.close),
-                      color: theme.colorScheme.onSurface,
-                      constraints: const BoxConstraints.tightFor(
-                        width: 48,
-                        height: 48,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        shadows: const [
-                          Shadow(color: Colors.black54, blurRadius: 6),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Material(
-                    color: theme.colorScheme.surface.withValues(alpha: 0.82),
-                    shape: const CircleBorder(),
-                    child: IconButton(
-                      tooltip: _flashlightOn
-                          ? l10n.flashlightOff
-                          : l10n.flashlightOn,
-                      onPressed: canCapture ? _toggleFlashlight : null,
-                      icon: Icon(
-                        _flashlightOn ? Icons.flash_on : Icons.flash_off,
-                      ),
-                      color: _flashlightOn
-                          ? Colors.orange
-                          : theme.colorScheme.onSurface,
-                      constraints: const BoxConstraints.tightFor(
-                        width: 48,
-                        height: 48,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Positioned(
-              top: 72,
-              left: 24,
-              right: 24,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface.withValues(alpha: 0.84),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.2),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final viewportSize = Size(
+              constraints.maxWidth,
+              constraints.maxHeight,
+            );
+            final frame = IdCaptureGeometry.frameFor(viewportSize);
+            final isLandscape = viewportSize.width > viewportSize.height;
+
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                controller?.value.isInitialized == true
+                    ? _buildCameraPreview(controller!)
+                    : const ColoredBox(color: Colors.black),
+                IgnorePointer(
+                  child: Semantics(
+                    container: true,
+                    label:
+                        '${l10n.fitIdInsideFrame}. ${l10n.keepIdFlatReadable}',
+                    child: const IdCaptureGuide(),
                   ),
                 ),
-                child: Column(
-                  children: [
-                    Text(
-                      l10n.fitIdInsideFrame,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.w700,
+                Positioned(
+                  top: isLandscape ? 4 : 8,
+                  left: 12,
+                  right: 12,
+                  child: Row(
+                    children: [
+                      Material(
+                        color: theme.colorScheme.surface.withValues(
+                          alpha: 0.82,
+                        ),
+                        shape: const CircleBorder(),
+                        child: IconButton(
+                          tooltip: l10n.back,
+                          onPressed: () => Navigator.of(context).maybePop(),
+                          icon: const Icon(Icons.close),
+                          color: theme.colorScheme.onSurface,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 48,
+                            height: 48,
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      l10n.keepIdFlatReadable,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                      Expanded(
+                        child: Text(
+                          title,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            shadows: const [
+                              Shadow(color: Colors.black54, blurRadius: 6),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                      Material(
+                        color: theme.colorScheme.surface.withValues(
+                          alpha: 0.82,
+                        ),
+                        shape: const CircleBorder(),
+                        child: IconButton(
+                          tooltip: _flashlightOn
+                              ? l10n.flashlightOff
+                              : l10n.flashlightOn,
+                          onPressed: canCapture ? _toggleFlashlight : null,
+                          icon: Icon(
+                            _flashlightOn ? Icons.flash_on : Icons.flash_off,
+                          ),
+                          color: _flashlightOn
+                              ? Colors.orange
+                              : theme.colorScheme.onSurface,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 48,
+                            height: 48,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-            if (_error != null)
-              Positioned.fill(
-                child: ColoredBox(
-                  color: Colors.black.withValues(alpha: 0.32),
+                Positioned(
+                  top: isLandscape ? 58 : 72,
+                  left: isLandscape ? 32 : 24,
+                  right: isLandscape ? 32 : 24,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isLandscape ? 12 : 16,
+                      vertical: isLandscape ? 8 : 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface.withValues(alpha: 0.84),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: isLandscape
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  l10n.fitIdInsideFrame,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurface,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                ' · ',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              Flexible(
+                                child: Text(
+                                  l10n.keepIdFlatReadable,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            children: [
+                              Text(
+                                l10n.fitIdInsideFrame,
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                l10n.keepIdFlatReadable,
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+                if (_error != null)
+                  Positioned.fill(
+                    child: ColoredBox(
+                      color: Colors.black.withValues(alpha: 0.32),
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _error!,
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              FilledButton.tonal(
+                                onPressed: _initializeCamera,
+                                child: Text(l10n.retry),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (_error == null && controller == null)
+                  const Center(child: CircularProgressIndicator()),
+                Positioned(
+                  left: 24,
+                  right: 24,
+                  bottom: isLandscape ? 12 : 16,
                   child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _error!,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.white,
-                            ),
+                    child: Semantics(
+                      button: true,
+                      enabled: canCapture,
+                      label: l10n.takePhoto,
+                      child: Material(
+                        color: canCapture
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.surfaceContainerHighest,
+                        shape: const CircleBorder(),
+                        child: IconButton(
+                          tooltip: l10n.takePhoto,
+                          onPressed: canCapture
+                              ? () => _takePicture(viewportSize, frame)
+                              : null,
+                          icon: const Icon(Icons.camera_alt_outlined),
+                          color: canCapture
+                              ? theme.colorScheme.onPrimary
+                              : theme.colorScheme.onSurfaceVariant,
+                          iconSize: 30,
+                          constraints: const BoxConstraints.tightFor(
+                            width: 64,
+                            height: 64,
                           ),
-                          const SizedBox(height: 12),
-                          FilledButton.tonal(
-                            onPressed: _initializeCamera,
-                            child: Text(l10n.retry),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            if (_error == null && controller == null)
-              const Center(child: CircularProgressIndicator()),
-            Positioned(
-              left: 24,
-              right: 24,
-              bottom: 16,
-              child: Center(
-                child: Semantics(
-                  button: true,
-                  enabled: canCapture,
-                  label: l10n.takePhoto,
-                  child: Material(
-                    color: canCapture
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.surfaceContainerHighest,
-                    shape: const CircleBorder(),
-                    child: IconButton(
-                      tooltip: l10n.takePhoto,
-                      onPressed: canCapture ? _takePicture : null,
-                      icon: const Icon(Icons.camera_alt_outlined),
-                      color: canCapture
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.onSurfaceVariant,
-                      iconSize: 30,
-                      constraints: const BoxConstraints.tightFor(
-                        width: 64,
-                        height: 64,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );
@@ -412,18 +583,7 @@ class _IdCaptureGuidePainter extends CustomPainter {
   }
 
   Rect _frameRect(Size size) {
-    // Visual guide only. No detection, crop, or dimension validation uses it.
-    const visualCardRatio = 1.58;
-    final width = math.min(
-      size.width * 0.86,
-      size.height * 0.52 * visualCardRatio,
-    );
-    final height = width / visualCardRatio;
-    return Rect.fromCenter(
-      center: size.center(Offset.zero),
-      width: width,
-      height: height,
-    );
+    return IdCaptureGeometry.frameFor(size);
   }
 
   @override

@@ -81,6 +81,23 @@ enum IdType {
   prcProfessionalId,
 }
 
+/// New citizen submissions expose only these ID choices.
+///
+/// Other enum members remain for decoding and resubmitting legacy records.
+const supportedCitizenIdTypes = <IdType>[
+  IdType.nationalId,
+  IdType.driversLicense,
+  IdType.passport,
+  IdType.umid,
+];
+
+const supportedCitizenIdApiValues = <String>{
+  'national_id',
+  'drivers_license',
+  'passport',
+  'umid',
+};
+
 extension IdTypeExtension on IdType {
   String get displayName {
     switch (this) {

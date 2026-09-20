@@ -75,7 +75,12 @@ class KycMapper {
     dto.KycFormOptionsResponse formDto,
   ) {
     return domain.KycFormOptions(
-      idTypes: formDto.idTypes.map(_toKycOptionItem).toList(),
+      idTypes: formDto.idTypes
+          .where(
+            (option) => dto.supportedCitizenIdApiValues.contains(option.value),
+          )
+          .map(_toKycOptionItem)
+          .toList(),
       sexOptions: formDto.sexOptions.map(_toKycOptionItem).toList(),
       civilStatuses: formDto.civilStatuses.map(_toKycOptionItem).toList(),
     );

@@ -60,6 +60,8 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byKey(const ValueKey('id-capture-guide')), findsOneWidget);
+    expect(find.byTooltip('Turn flashlight on'), findsOneWidget);
+    expect(find.byTooltip('Take Photo'), findsOneWidget);
   });
 
   testWidgets('keeps controls readable in dark theme', (tester) async {

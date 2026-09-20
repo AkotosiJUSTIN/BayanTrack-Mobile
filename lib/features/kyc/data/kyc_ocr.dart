@@ -164,6 +164,29 @@ abstract final class KycOcrParser {
       caseSensitive: false,
     ),
   ];
+  static final _driversLicenseSurnamePatterns = [
+    RegExp(
+      r'\b(?:surname|last\s+name)\b\s*[:#\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
+  ];
+  static final _driversLicenseGivenNamePatterns = [
+    RegExp(
+      r'\b(?:given\s+names?|first\s+name)\b\s*[:#\-]?\s*(.*)',
+      caseSensitive: false,
+    ),
+  ];
+  static final _driversLicenseMiddleNamePatterns = [
+    RegExp(r'\bmiddle\s+name\b\s*[:#\-]?\s*(.*)', caseSensitive: false),
+  ];
+  static final _driversLicenseFieldBoundaryPattern = RegExp(
+    r"\b(?:surname|last\s+name|given\s+names?|first\s+name|middle\s+name|address|house\s*(?:no\.?|number)?\s*(?:[/&]\s*street)?|street\s*(?:[/&]\s*barangay)?|barangay|brgy|city\s*/?\s*municipality|municipality|province|probinsya|zip\s*(?:code)?|postal\s*code|sex|gender|date\s+of\s+birth|birthdate|dob|nationality|driver(?:['’]?s)?\s+license|licen[cs]e\s*(?:no\.?|number|ma\.?)|restrictions?|conditions?|expiration(?:\s+date)?|expiry(?:\s+date)?|valid\s+(?:until|thru|through)|agency(?:\s+code)?|lto)\b",
+    caseSensitive: false,
+  );
+  static final _driversLicenseAddressStopPattern = RegExp(
+    r"\b(?:surname|last\s+name|given\s+names?|first\s+name|middle\s+name|address|city\s*/?\s*municipality|municipality|province|probinsya|zip\s*(?:code)?|postal\s*code|sex|gender|date\s+of\s+birth|birthdate|dob|nationality|driver(?:['’]?s)?\s+license|licen[cs]e\s*(?:no\.?|number|ma\.?)|restrictions?|conditions?|expiration(?:\s+date)?|expiry(?:\s+date)?|valid\s+(?:until|thru|through)|agency(?:\s+code)?|land\s+transportation\s+office|lto)\b",
+    caseSensitive: false,
+  );
   static final _driversLicenseDateOfBirthPatterns = [
     ..._dateOfBirthPatterns,
     RegExp(r'\b(?:birthdate|dob)\b\s*[:\-]?\s*(.*)', caseSensitive: false),
@@ -306,7 +329,10 @@ abstract final class KycOcrParser {
     );
     _addSex(fields, _valueForPatterns(lines, _sexPatterns));
     _addNationality(fields, _valueForPatterns(lines, _nationalityPatterns));
-    _addId(fields, _valueForPatterns(lines, _passportNumberPatterns));
+    _addPassportNumber(
+      fields,
+      _valueForPatterns(lines, _passportNumberPatterns),
+    );
     _addDate(
       fields,
       KycOcrField.idExpiryDate,
@@ -319,41 +345,46 @@ abstract final class KycOcrParser {
     List<String> lines,
     Map<KycOcrField, KycOcrFieldValue> fields,
   ) {
-    _parseNames(lines, fields);
+    _parseDriversLicenseNames(lines, fields);
     _addDate(
       fields,
       KycOcrField.dateOfBirth,
-      _valueForPatterns(lines, _driversLicenseDateOfBirthPatterns),
+      _driversLicenseValueForPatterns(
+        lines,
+        _driversLicenseDateOfBirthPatterns,
+      ),
     );
-    _addSex(fields, _valueForPatterns(lines, _sexPatterns));
-    _addNationality(fields, _valueForPatterns(lines, _nationalityPatterns));
+    _addSex(fields, _driversLicenseValueForPatterns(lines, _sexPatterns));
+    _addNationality(
+      fields,
+      _driversLicenseValueForPatterns(lines, _nationalityPatterns),
+    );
     if (_containsDriversLicenseEvidence(lines)) {
-      _addText(
-        fields,
-        KycOcrField.address,
-        _valueForLabeledBlock(lines, _driversLicenseAddressPatterns),
-      );
+      _addText(fields, KycOcrField.address, _driversLicenseAddressValue(lines));
     }
     _addText(
       fields,
       KycOcrField.cityMunicipality,
-      _valueForPatterns(lines, _cityPatterns),
+      _driversLicenseValueForPatterns(lines, _cityPatterns),
     );
     _addText(
       fields,
       KycOcrField.province,
-      _valueForPatterns(lines, _provincePatterns),
+      _driversLicenseValueForPatterns(lines, _provincePatterns),
     );
     _addText(
       fields,
       KycOcrField.zipCode,
-      _valueForPatterns(lines, _zipPatterns),
+      _driversLicenseValueForPatterns(lines, _zipPatterns),
     );
-    _addId(fields, _valueForPatterns(lines, _driversLicenseNumberPatterns));
+    _addId(
+      fields,
+      _driversLicenseValueForPatterns(lines, _driversLicenseNumberPatterns),
+    );
     _addDate(
       fields,
       KycOcrField.idExpiryDate,
-      _valueForPatterns(lines, _driversLicenseExpiryPatterns),
+      _driversLicenseValueForPatterns(lines, _driversLicenseExpiryPatterns),
     );
   }
 
@@ -370,7 +401,7 @@ abstract final class KycOcrParser {
     _addSex(fields, _valueForPatterns(lines, _sexPatterns));
     _addNationality(fields, _valueForPatterns(lines, _nationalityPatterns));
     _addCivilStatus(fields, _valueForPatterns(lines, _civilStatusPatterns));
-    _addId(fields, _valueForPatterns(lines, _umidNumberPatterns));
+    _addUmidNumber(fields, _valueForPatterns(lines, _umidNumberPatterns));
   }
 
   static void _parsePrc(
@@ -644,6 +675,142 @@ abstract final class KycOcrParser {
     ).hasMatch(normalized);
   });
 
+  static void _parseDriversLicenseNames(
+    List<String> lines,
+    Map<KycOcrField, KycOcrFieldValue> fields,
+  ) {
+    _addName(
+      fields,
+      KycOcrField.lastName,
+      _driversLicenseValueForPatterns(lines, _driversLicenseSurnamePatterns),
+    );
+    _addName(
+      fields,
+      KycOcrField.firstName,
+      _driversLicenseValueForPatterns(lines, _driversLicenseGivenNamePatterns),
+    );
+    _addName(
+      fields,
+      KycOcrField.middleName,
+      _driversLicenseValueForPatterns(lines, _driversLicenseMiddleNamePatterns),
+    );
+  }
+
+  static String? _driversLicenseValueForPatterns(
+    List<String> lines,
+    Iterable<RegExp> patterns,
+  ) {
+    for (var i = 0; i < lines.length; i++) {
+      for (final pattern in patterns) {
+        final match = pattern.firstMatch(lines[i]);
+        if (match == null) continue;
+
+        final sameLine = _driversLicenseValue(match.group(1));
+        if (sameLine != null) return sameLine;
+
+        for (var j = i + 1; j < lines.length; j++) {
+          final candidate = _cleanCandidate(lines[j]);
+          if (candidate == null) continue;
+          if (_driversLicenseFieldBoundaryPattern.hasMatch(candidate)) break;
+          final next = _driversLicenseValue(candidate);
+          if (next != null) return next;
+        }
+      }
+    }
+    return null;
+  }
+
+  static String? _driversLicenseValue(String? value) {
+    final cleaned = _cleanCandidate(value);
+    if (cleaned == null) return null;
+    final boundary = _driversLicenseFieldBoundaryPattern.firstMatch(cleaned);
+    final beforeBoundary = boundary == null
+        ? cleaned
+        : cleaned.substring(0, boundary.start);
+    final candidate = _cleanCandidate(
+      beforeBoundary.replaceFirst(RegExp(r'[,;/|]+\s*$'), ''),
+    );
+    if (candidate == null ||
+        candidate.contains(',') ||
+        _isPlaceholderValue(candidate)) {
+      return null;
+    }
+    return candidate;
+  }
+
+  static String? _driversLicenseAddressValue(List<String> lines) {
+    for (var i = 0; i < lines.length; i++) {
+      for (final pattern in _driversLicenseAddressPatterns) {
+        final match = pattern.firstMatch(lines[i]);
+        if (match == null) continue;
+
+        final values = <String>[];
+        var stopped = false;
+        final sameLine = _driversLicenseAddressPrefix(match.group(1));
+        if (sameLine != null) values.add(sameLine);
+        if (match.group(1) != null &&
+            _driversLicenseAddressStopPattern.hasMatch(match.group(1)!)) {
+          stopped = true;
+        }
+
+        if (!stopped) {
+          for (var j = i + 1; j < lines.length; j++) {
+            final candidate = _cleanCandidate(lines[j]);
+            if (candidate == null) continue;
+
+            final stop = _driversLicenseAddressStopPattern.firstMatch(
+              candidate,
+            );
+            if (stop != null) {
+              final prefix = _driversLicenseAddressPrefix(candidate);
+              if (prefix != null) values.add(prefix);
+              stopped = true;
+              break;
+            }
+            if (_driversLicenseAddressLabelOnly(candidate)) continue;
+
+            final component = _driversLicenseAddressComponentValue(candidate);
+            final value = component ?? candidate;
+            if (!_looksLikeAddressLine(value)) return null;
+            values.add(value);
+          }
+        }
+
+        if (stopped && values.isNotEmpty && values.any(_looksLikeAddressLine)) {
+          return values.join(', ');
+        }
+      }
+    }
+    return null;
+  }
+
+  static String? _driversLicenseAddressPrefix(String? value) {
+    final cleaned = _cleanCandidate(value);
+    if (cleaned == null) return null;
+    final stop = _driversLicenseAddressStopPattern.firstMatch(cleaned);
+    final beforeStop = stop == null
+        ? cleaned
+        : cleaned.substring(0, stop.start);
+    final candidate = _cleanCandidate(
+      beforeStop.replaceFirst(RegExp(r'[,;/|]+\s*$'), ''),
+    );
+    if (candidate == null || _isAddressNoise(candidate)) return null;
+    return _looksLikeAddressLine(candidate) ? candidate : null;
+  }
+
+  static String? _driversLicenseAddressComponentValue(String value) {
+    final match = RegExp(
+      r'^(?:house\s*(?:no\.?|number)?(?:\s*[/&]\s*street)?|street(?:\s*[/&]\s*barangay)?|barangay|brgy|zone|purok|sitio)\s*[:.\-]\s*(.+)$',
+      caseSensitive: false,
+    ).firstMatch(value);
+    return _cleanCandidate(match?.group(1));
+  }
+
+  static bool _driversLicenseAddressLabelOnly(String value) => RegExp(
+    r'^(?:address|house(?:\s+(?:no|number))?(?:\s+street)?|street(?:\s+barangay)?|barangay|brgy|zone|purok|sitio)$',
+    caseSensitive: false,
+  ).hasMatch(_normalizedLabel(value));
+
   static String? _nationalIdAddressValue(List<String> lines) {
     for (var i = 0; i < lines.length; i++) {
       for (final pattern in _nationalIdAddressPatterns) {
@@ -811,19 +978,28 @@ abstract final class KycOcrParser {
     for (final line in lines) {
       final compact = line.replaceAll(' ', '');
       final match = RegExp(
-        r'([A-Z0-9]{9})\d([A-Z]{3})(\d{6})\d([MF<])(\d{6})',
+        r'([A-Z0-9<]{9})(\d)([A-Z]{3})(\d{6})(\d)([MF<])(\d{6})(\d)',
       ).firstMatch(compact);
       if (match == null) continue;
+      if (!_validMrzPart(match.group(1)!, match.group(2)!) ||
+          !_validMrzPart(match.group(4)!, match.group(5)!) ||
+          !_validMrzPart(match.group(7)!, match.group(8)!)) {
+        continue;
+      }
 
-      _addStrong(fields, KycOcrField.idNumber, match.group(1));
+      _addStrong(
+        fields,
+        KycOcrField.idNumber,
+        match.group(1)!.replaceAll('<', ''),
+      );
       _addStrong(
         fields,
         KycOcrField.nationality,
-        _nationalityValue(match.group(2)),
+        _nationalityValue(match.group(3)),
       );
-      _addStrong(fields, KycOcrField.dateOfBirth, _mrzDate(match.group(3)));
-      _addStrong(fields, KycOcrField.sex, _sexValue(match.group(4)));
-      _addStrong(fields, KycOcrField.idExpiryDate, _mrzDate(match.group(5)));
+      _addStrong(fields, KycOcrField.dateOfBirth, _mrzDate(match.group(4)));
+      _addStrong(fields, KycOcrField.sex, _sexValue(match.group(6)));
+      _addStrong(fields, KycOcrField.idExpiryDate, _mrzDate(match.group(7)));
       break;
     }
 
@@ -883,6 +1059,31 @@ abstract final class KycOcrParser {
             : KycOcrConfidence.high,
       ),
     );
+  }
+
+  static void _addPassportNumber(
+    Map<KycOcrField, KycOcrFieldValue> fields,
+    String? value,
+  ) {
+    final cleaned = _cleanCandidate(
+      value,
+    )?.replaceAll(RegExp(r'[^A-Za-z0-9]'), '');
+    if (cleaned == null ||
+        !RegExp(r'^[A-Za-z][A-Za-z0-9]{6,8}$').hasMatch(cleaned)) {
+      return;
+    }
+    _addId(fields, cleaned.toUpperCase());
+  }
+
+  static void _addUmidNumber(
+    Map<KycOcrField, KycOcrFieldValue> fields,
+    String? value,
+  ) {
+    final cleaned = _cleanCandidate(value)?.replaceAll(' ', '');
+    if (cleaned == null || !RegExp(r'^\d{4}-?\d{7}-?\d$').hasMatch(cleaned)) {
+      return;
+    }
+    _addId(fields, cleaned);
   }
 
   static void _addText(
@@ -1209,6 +1410,25 @@ abstract final class KycOcrParser {
     final month = int.parse(value.substring(2, 4));
     final day = int.parse(value.substring(4, 6));
     return _dateIso(year >= 50 ? 1900 + year : 2000 + year, month, day);
+  }
+
+  static bool _validMrzPart(String value, String checkDigit) {
+    final expected = int.tryParse(checkDigit);
+    if (expected == null) return false;
+    const weights = [7, 3, 1];
+    var total = 0;
+    for (var i = 0; i < value.length; i++) {
+      final code = value.codeUnitAt(i);
+      final characterValue = switch (code) {
+        >= 48 && <= 57 => code - 48,
+        >= 65 && <= 90 => code - 55,
+        60 => 0,
+        _ => -1,
+      };
+      if (characterValue < 0) return false;
+      total += characterValue * weights[i % weights.length];
+    }
+    return total % 10 == expected;
   }
 
   static String? _dateIso(int year, int month, int day) {

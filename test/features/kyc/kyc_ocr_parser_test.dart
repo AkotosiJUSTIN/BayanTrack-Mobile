@@ -357,6 +357,57 @@ Date of Expiry
       expect(result.fields[KycOcrField.idExpiryDate]?.value, '2030-12-06');
     });
 
+    test(
+      'uses valid MRZ mapping and does not borrow National ID or license fields',
+      () {
+        final result = KycOcrParser.parse(IdType.passport, '''
+PHILIPPINE PASSPORT
+SURNAME
+DELA CRUZ
+GIVEN NAMES
+JUAN SANTOS
+ADDRESS: 123 Mabini Street
+PCN: 1234-5678-9012
+LICENSE NO.: N01-23-456789
+P<PHLDELA CRUZ<<JUAN<SANTOS<<<<<<<<<<<<<<<<<<<
+D0009237A2PHL9009305M3012062<<<<<<<<<<<<<<<
+''');
+
+        expect(result.fields[KycOcrField.lastName]?.value, 'DELA CRUZ');
+        expect(result.fields[KycOcrField.firstName]?.value, 'JUAN SANTOS');
+        expect(result.fields[KycOcrField.idNumber]?.value, 'D0009237A');
+        expect(result.fields[KycOcrField.dateOfBirth]?.value, '1990-09-30');
+        expect(result.fields[KycOcrField.idExpiryDate]?.value, '2030-12-06');
+        expect(result.fields[KycOcrField.address], isNull);
+
+        final invalidMrz = KycOcrParser.parse(
+          IdType.passport,
+          'D0009237A8PHL9009301M3012067',
+        );
+        expect(invalidMrz.fields[KycOcrField.idNumber], isNull);
+        expect(invalidMrz.fields[KycOcrField.dateOfBirth], isNull);
+        expect(invalidMrz.fields[KycOcrField.idExpiryDate], isNull);
+      },
+    );
+
+    test('leaves uncertain fields blank for manual review', () {
+      final result = KycOcrParser.parse(IdType.passport, '''
+PASSPORT
+Passport No.: ???
+Date of Birth: ??/??/????
+Sex: X
+Address: /Address
+Date of Issue: 01 JAN 2020
+Date of Expiry: MM/DD/YYYY
+''');
+
+      expect(result.fields[KycOcrField.idNumber], isNull);
+      expect(result.fields[KycOcrField.dateOfBirth], isNull);
+      expect(result.fields[KycOcrField.sex], isNull);
+      expect(result.fields[KycOcrField.address], isNull);
+      expect(result.fields[KycOcrField.idExpiryDate], isNull);
+    });
+
     test('keeps partial extraction reviewable', () {
       _expectPartial(
         IdType.passport,
@@ -389,6 +440,74 @@ Expiration Date: 2030/01/02
       expect(result.fields[KycOcrField.nationality]?.value, 'Filipino');
       expect(result.fields[KycOcrField.idNumber]?.value, 'N01-23-456789');
       expect(result.fields[KycOcrField.idExpiryDate]?.value, '2030-01-02');
+    });
+
+    test('extracts inline surname, first, and middle names in label order', () {
+      final result = KycOcrParser.parse(IdType.driversLicense, '''
+LAND TRANSPORTATION OFFICE
+DRIVER'S LICENSE
+LAST NAME: REYES, FIRST NAME: ANA, MIDDLE NAME: MARIA
+ADDRESS: 123, ZONE 8, BARANGAY SAN ANTONIO, CITY/MUNICIPALITY: Dagupan City, PROVINCE: PANGASINAN, ZIP CODE: 2432, SEX: F, DATE OF BIRTH: 1999/01/02, LICENSE NO.: A2-00-000000
+''');
+
+      expect(result.fields[KycOcrField.lastName]?.value, 'REYES');
+      expect(result.fields[KycOcrField.firstName]?.value, 'ANA');
+      expect(result.fields[KycOcrField.middleName]?.value, 'MARIA');
+      expect(
+        result.fields[KycOcrField.address]?.value,
+        '123, ZONE 8, BARANGAY SAN ANTONIO',
+      );
+      expect(
+        result.fields[KycOcrField.cityMunicipality]?.value,
+        'Dagupan City',
+      );
+      expect(result.fields[KycOcrField.province]?.value, 'PANGASINAN');
+      expect(result.fields[KycOcrField.zipCode]?.value, '2432');
+      expect(result.fields[KycOcrField.sex]?.value, 'female');
+      expect(result.fields[KycOcrField.dateOfBirth]?.value, '1999-01-02');
+      expect(result.fields[KycOcrField.idNumber]?.value, 'A2-00-000000');
+    });
+
+    test('stops address before sex, DOB, and license sections', () {
+      final result = KycOcrParser.parse(IdType.driversLicense, '''
+DRIVER'S LICENSE
+LAST NAME: REYES
+FIRST NAME: ANA
+ADDRESS: 123, ZONE 8, BARANGAY SAN ANTONIO, CITY/MUNICIPALITY: Dagupan City, PROVINCE: PANGASINAN, ZIP CODE: 2432, SEX: F, DATE OF BIRTH: 1999/01/02, LICENSE NO.: A2-00-000000, RESTRICTIONS: 1
+''');
+      final address = result.fields[KycOcrField.address]?.value ?? '';
+
+      expect(address, '123, ZONE 8, BARANGAY SAN ANTONIO');
+      expect(address, isNot(contains('SEX')));
+      expect(address, isNot(contains('1999')));
+      expect(address, isNot(contains('A2-00-000000')));
+      expect(
+        result.fields[KycOcrField.cityMunicipality]?.value,
+        'Dagupan City',
+      );
+      expect(result.fields[KycOcrField.province]?.value, 'PANGASINAN');
+      expect(result.fields[KycOcrField.zipCode]?.value, '2432');
+      expect(result.fields[KycOcrField.idNumber]?.value, 'A2-00-000000');
+    });
+
+    test('keeps uncertain name component blank', () {
+      final result = KycOcrParser.parse(IdType.driversLicense, '''
+DRIVER'S LICENSE
+LAST NAME: REYES, FIRST NAME: ANA, MIDDLE NAME: ???
+''');
+
+      expect(result.fields[KycOcrField.lastName]?.value, 'REYES');
+      expect(result.fields[KycOcrField.firstName]?.value, 'ANA');
+      expect(result.fields[KycOcrField.middleName], isNull);
+    });
+
+    test('leaves ambiguous address blank instead of swallowing sections', () {
+      final result = KycOcrParser.parse(IdType.driversLicense, '''
+DRIVER'S LICENSE
+ADDRESS: Sex Date of Birth, 1999/00/00, 123, Zone 8, Barangay, City/Municipality, PANGASINAN, 2432, License Ma., A2-00-000000
+''');
+
+      expect(result.fields[KycOcrField.address], isNull);
     });
 
     test('extracts present LTO address fields without header text', () {
@@ -501,6 +620,45 @@ CRN
       expect(result.fields[KycOcrField.dateOfBirth]?.value, '1990-01-02');
       expect(result.fields[KycOcrField.civilStatus]?.value, 'married');
       expect(result.fields[KycOcrField.idNumber]?.value, '1234-5678901-2');
+    });
+
+    test('uses UMID-only mapping and leaves unrelated fields blank', () {
+      final result = KycOcrParser.parse(IdType.umid, '''
+UNIFIED MULTI-PURPOSE ID
+SURNAME: DELA CRUZ
+GIVEN NAME: JUAN
+DATE OF BIRTH: 01021990
+SEX: F
+CIVIL STATUS: MARRIED
+COMMON REFERENCE NUMBER: 1234-5678901-2
+ADDRESS: 123 Mabini Street
+PCN: 1234-5678-9012
+LICENSE NO.: N01-23-456789
+PASSPORT NO.: P1234567
+DATE OF EXPIRY: 2030/01/02
+''');
+
+      expect(result.fields[KycOcrField.lastName]?.value, 'DELA CRUZ');
+      expect(result.fields[KycOcrField.firstName]?.value, 'JUAN');
+      expect(result.fields[KycOcrField.dateOfBirth]?.value, '1990-01-02');
+      expect(result.fields[KycOcrField.sex]?.value, 'female');
+      expect(result.fields[KycOcrField.civilStatus]?.value, 'married');
+      expect(result.fields[KycOcrField.idNumber]?.value, '1234-5678901-2');
+      expect(result.fields[KycOcrField.address], isNull);
+      expect(result.fields[KycOcrField.idExpiryDate], isNull);
+    });
+
+    test('leaves uncertain UMID values blank for manual review', () {
+      final result = KycOcrParser.parse(IdType.umid, '''
+UMID
+CRN: ???
+DATE OF BIRTH: 99/99/9999
+SEX: UNKNOWN
+ADDRESS: /Address
+''');
+
+      expect(result.fields, isEmpty);
+      expect(result.status, KycOcrResultStatus.unreadable);
     });
 
     test('keeps partial extraction reviewable', () {

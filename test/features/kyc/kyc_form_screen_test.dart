@@ -423,6 +423,12 @@ void main() {
       await tester.tap(find.byType(DropdownButtonFormField<dto.IdType>));
       await tester.pump();
       expect(find.text('PhilSys ID'), findsNothing);
+      expect(find.text('Postal ID'), findsNothing);
+      expect(find.text('GSIS eCard'), findsNothing);
+      expect(find.text("Voter's ID"), findsNothing);
+      expect(find.text('PhilHealth ID'), findsNothing);
+      expect(find.text('PRC Professional ID'), findsNothing);
+      expect(find.text('SSS ID'), findsNothing);
       await tester.tap(find.text('Passport').last);
       await tester.pumpAndSettle();
 

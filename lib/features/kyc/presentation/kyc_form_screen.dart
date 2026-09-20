@@ -2340,12 +2340,14 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   }
 
   List<IdType> _idTypeOptions(IdType? current) {
-    final options = IdType.values
-        .where((type) => type != IdType.philsys)
-        .toList();
+    final options = List<IdType>.from(supportedCitizenIdTypes);
     if (current == IdType.philsys) {
       final nationalIdIndex = options.indexOf(IdType.nationalId);
       if (nationalIdIndex >= 0) options[nationalIdIndex] = IdType.philsys;
+    } else if (current != null && !options.contains(current)) {
+      // Keep an existing legacy record editable without offering legacy IDs to
+      // new submissions.
+      options.add(current);
     }
     return options;
   }
