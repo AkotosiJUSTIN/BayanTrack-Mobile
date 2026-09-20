@@ -5,6 +5,7 @@ import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report_enums.dart';
+import 'package:bayantrack_mobile/features/reports/domain/entities/report_image.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/report_detail_controller.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/report_detail_screen.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
@@ -19,7 +20,10 @@ class _TestMunicipalities extends Municipalities {
   ];
 }
 
-Report _report({ReportStatus status = ReportStatus.inProgress}) => Report(
+Report _report({
+  ReportStatus status = ReportStatus.inProgress,
+  bool withProof = false,
+}) => Report(
   id: 'RPT-DETAIL-UI-1',
   title: 'Blocked drainage near the market',
   description: 'Water is collecting beside the public market.',
@@ -31,6 +35,12 @@ Report _report({ReportStatus status = ReportStatus.inProgress}) => Report(
   cityMunicipality: 'Urdaneta City',
   zone: 'Zone 3',
   assignedDepartment: 'City Engineering Office',
+  images: withProof
+      ? const [
+          ReportImage(id: 'proof-1', url: 'https://example.com/proof.jpg'),
+        ]
+      : const [],
+  resolvedProofImageIds: withProof ? const ['proof-1'] : const [],
   createdAt: DateTime(2026, 8, 27, 9, 30),
   verifiedAt: DateTime(2026, 8, 27, 11),
 );
@@ -86,6 +96,23 @@ void main() {
     await _pumpDetail(tester, report: _report(status: ReportStatus.resolved));
 
     expect(find.text('Review & Sign Off'), findsOneWidget);
+  });
+
+  testWidgets('opens resolved response evidence in a zoomable gallery', (
+    tester,
+  ) async {
+    await _pumpDetail(
+      tester,
+      report: _report(status: ReportStatus.resolved, withProof: true),
+    );
+
+    await tester.tap(
+      find.bySemanticsLabel(RegExp(r'^Resolution proof 1$')).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(InteractiveViewer), findsOneWidget);
+    expect(find.byType(PageView), findsOneWidget);
   });
 
   testWidgets('keeps the same hierarchy in dark mode', (tester) async {

@@ -3,8 +3,11 @@ import 'package:bayantrack_mobile/core/domain/result.dart';
 import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
 import 'package:bayantrack_mobile/features/home/presentation/home_screen.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/paginated_reports.dart';
+import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart';
+import 'package:bayantrack_mobile/features/reports/domain/entities/report_enums.dart';
 import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dart';
 import 'package:bayantrack_mobile/features/reports/domain/usecases/get_reports_usecase.dart';
+import 'package:bayantrack_mobile/features/reports/presentation/reports_controller.dart';
 import 'package:bayantrack_mobile/features/reports/reports_di.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +16,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _ReportsRepositoryMock extends Mock implements ReportsRepository {}
+
+const _resolvedReport = Report(
+  id: 'resolved-1',
+  title: 'Resolved report',
+  description: 'Resolved report description',
+  status: ReportStatus.resolved,
+  latitude: 15.97,
+  longitude: 120.57,
+);
+
+const _closedReport = Report(
+  id: 'closed-1',
+  title: 'Closed report',
+  description: 'Closed report description',
+  status: ReportStatus.closed,
+  latitude: 15.97,
+  longitude: 120.57,
+);
 
 Widget _app(_ReportsRepositoryMock repository) {
   return ProviderScope(
@@ -48,6 +69,39 @@ void _stubReports(
 }
 
 void main() {
+  test(
+    'Home policy keeps resolved reports but removes final/duplicate entries',
+    () {
+      final active = const Report(
+        id: 'active-1',
+        description: 'Active report',
+        status: ReportStatus.inProgress,
+      );
+      final replacement = const Report(
+        id: 'active-1',
+        description: 'Updated active report',
+        status: ReportStatus.assigned,
+      );
+
+      expect(isHomeReportVisible(_resolvedReport), isTrue);
+      expect(isHomeReportVisible(_closedReport), isFalse);
+      expect(mergeHomeReports([active], [replacement]), [replacement]);
+      expect(
+        mergeHomeReports(
+          [active],
+          [
+            const Report(
+              id: 'active-1',
+              description: 'Closed replacement',
+              status: ReportStatus.closed,
+            ),
+          ],
+        ),
+        isEmpty,
+      );
+    },
+  );
+
   testWidgets('Home initializes public reports provider on first build', (
     tester,
   ) async {
@@ -84,4 +138,35 @@ void main() {
 
     expect(calls, 2);
   });
+
+  testWidgets(
+    'Home removes a closed marker after report refresh invalidation',
+    (tester) async {
+      final repository = _ReportsRepositoryMock();
+      var calls = 0;
+      _stubReports(repository, () async {
+        calls++;
+        return calls == 1
+            ? const Success(
+                PaginatedReports(results: [_resolvedReport], total: 1),
+              )
+            : const Success(
+                PaginatedReports(results: [_closedReport], total: 1),
+              );
+      });
+
+      await tester.pumpWidget(_app(repository));
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.location_on), findsOneWidget);
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(HomeScreen)),
+      );
+      container.read(myReportsRefreshProvider.notifier).increment();
+      await tester.pumpAndSettle();
+
+      expect(calls, 2);
+      expect(find.byIcon(Icons.location_on), findsNothing);
+    },
+  );
 }

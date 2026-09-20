@@ -87,6 +87,12 @@ void main() {
     );
     expect(
       invalidationTargets(
+        RealtimeEvent.tryParse(event('report.status_changed'))!,
+      ),
+      {RealtimeTarget.reports},
+    );
+    expect(
+      invalidationTargets(
         RealtimeEvent.tryParse(event('notification.created'))!,
       ),
       {RealtimeTarget.notifications},

@@ -13,6 +13,7 @@ import '../../auth/presentation/barangays_provider.dart';
 import '../domain/entities/blockchain_verification.dart';
 import '../domain/entities/report.dart';
 import '../domain/entities/report_enums.dart';
+import '../domain/entities/report_image.dart';
 import 'citizen_review_screen.dart';
 import 'report_detail_controller.dart';
 import 'widgets/priority_badge.dart';
@@ -645,23 +646,30 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                 itemBuilder: (context, index) {
                   final proofImage = report.resolvedProofImages[index];
                   return Semantics(
+                    button: true,
                     image: true,
-                    label: l10n.resolutionProof,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        ApiConstants.getImageUrl(proofImage.url),
-                        width: 140,
-                        height: 104,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => Container(
+                    label: '${l10n.resolutionProof} ${index + 1}',
+                    child: GestureDetector(
+                      onTap: () => _openResolutionProofGallery(
+                        report.resolvedProofImages,
+                        index,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          ApiConstants.getImageUrl(proofImage.url),
                           width: 140,
                           height: 104,
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          alignment: Alignment.center,
-                          child: Icon(
-                            Icons.broken_image_outlined,
-                            color: theme.colorScheme.onSurfaceVariant,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Container(
+                            width: 140,
+                            height: 104,
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            alignment: Alignment.center,
+                            child: Icon(
+                              Icons.broken_image_outlined,
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ),
                       ),
@@ -681,6 +689,20 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           _buildBlockchainSection(theme, isDark, report),
           const SizedBox(height: 32),
         ],
+      ),
+    );
+  }
+
+  Future<void> _openResolutionProofGallery(
+    List<ReportImage> images,
+    int initialIndex,
+  ) {
+    return showDialog<void>(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (_) => _ResolutionProofGallery(
+        images: images,
+        initialIndex: initialIndex,
       ),
     );
   }
@@ -1220,6 +1242,89 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
           const SizedBox(height: 4),
           Text(value, style: theme.textTheme.bodyMedium),
         ],
+      ),
+    );
+  }
+}
+
+class _ResolutionProofGallery extends StatefulWidget {
+  final List<ReportImage> images;
+  final int initialIndex;
+
+  const _ResolutionProofGallery({
+    required this.images,
+    required this.initialIndex,
+  });
+
+  @override
+  State<_ResolutionProofGallery> createState() =>
+      _ResolutionProofGalleryState();
+}
+
+class _ResolutionProofGalleryState extends State<_ResolutionProofGallery> {
+  late final PageController _pageController = PageController(
+    initialPage: widget.initialIndex,
+  );
+  late int _currentIndex = widget.initialIndex;
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: SafeArea(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              itemCount: widget.images.length,
+              onPageChanged: (index) => setState(() => _currentIndex = index),
+              itemBuilder: (context, index) {
+                return InteractiveViewer(
+                  minScale: 1,
+                  maxScale: 4,
+                  child: Center(
+                    child: Image.network(
+                      ApiConstants.getImageUrl(widget.images[index].url),
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => const Icon(
+                        Icons.broken_image_outlined,
+                        color: Colors.white70,
+                        size: 56,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close, color: Colors.white),
+              ),
+            ),
+            if (widget.images.length > 1)
+              Positioned(
+                bottom: 16,
+                left: 0,
+                right: 0,
+                child: Text(
+                  '${_currentIndex + 1} / ${widget.images.length}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

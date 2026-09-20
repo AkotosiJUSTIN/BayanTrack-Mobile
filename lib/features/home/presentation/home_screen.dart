@@ -16,6 +16,28 @@ import '../../reports/reports_di.dart';
 import 'widgets/home_report_card.dart';
 import 'widgets/map_placeholder.dart';
 
+bool isHomeReportVisible(Report report) =>
+    report.status != ReportStatus.closed &&
+    report.status != ReportStatus.rejected;
+
+List<Report> mergeHomeReports(
+  Iterable<Report> existing,
+  Iterable<Report> incoming,
+) {
+  final merged = <String, Report>{
+    for (final report in existing)
+      if (isHomeReportVisible(report)) report.id: report,
+  };
+  for (final report in incoming) {
+    if (isHomeReportVisible(report)) {
+      merged[report.id] = report;
+    } else {
+      merged.remove(report.id);
+    }
+  }
+  return merged.values.toList(growable: false);
+}
+
 /// Home screen with map/list toggle and report list.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -35,6 +57,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _totalPages = 1;
   int _totalReports = 0;
   int _selectedStatusFilterIndex = 0;
+  int _loadGeneration = 0;
 
   final _searchController = TextEditingController();
   final _listScrollController = ScrollController();
@@ -42,9 +65,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   List<Report> get _visibleReports {
     final query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) return _reports;
+    final homeReports = _reports.where(isHomeReportVisible);
+    if (query.isEmpty) return homeReports.toList(growable: false);
 
-    return _reports
+    return homeReports
         .where((report) {
           final values = [
             report.title,
@@ -96,6 +120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _loadInitialReports() async {
+    final generation = ++_loadGeneration;
     setState(() {
       _isInitialLoading = true;
       _isLoadingMore = false;
@@ -113,18 +138,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       sortBy: _selectedSort,
     );
 
-    if (!mounted) return;
+    if (!mounted || generation != _loadGeneration) return;
 
     result.when(
       success: (data) {
-        // Filter out closed and rejected reports
-        final filteredReports = data.results.where((report) {
-          return report.status != ReportStatus.closed &&
-              report.status != ReportStatus.rejected;
-        }).toList();
+        final mergedReports = mergeHomeReports(<Report>[], data.results);
 
         setState(() {
-          _reports.addAll(filteredReports);
+          _reports.addAll(mergedReports);
           _currentPage = data.page;
           _totalPages = data.totalPages;
           // Set total to the count of displayed reports, not backend total
@@ -144,6 +165,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<void> _loadNextPage() async {
     if (_isInitialLoading || _isLoadingMore || !_hasNextPage) return;
 
+    final generation = _loadGeneration;
     setState(() => _isLoadingMore = true);
 
     try {
@@ -155,20 +177,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         sortBy: _selectedSort,
       );
 
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
 
       result.when(
         success: (data) {
-          final existingIds = _reports.map((r) => r.id).toSet();
-          // Filter out closed and rejected reports, and duplicates
-          final newReports = data.results.where((report) {
-            return report.status != ReportStatus.closed &&
-                report.status != ReportStatus.rejected &&
-                !existingIds.contains(report.id);
-          }).toList();
+          final mergedReports = mergeHomeReports(_reports, data.results);
 
           setState(() {
-            _reports.addAll(newReports);
+            _reports
+              ..clear()
+              ..addAll(mergedReports);
             _currentPage = data.page;
             _totalPages = data.totalPages;
             // Set total to the count of displayed reports, not backend total
@@ -180,7 +198,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     } finally {
       // Always clear the paging flag, even if the future throws, so
       // infinite scroll cannot get stuck after a transient failure.
-      if (mounted) {
+      if (mounted && generation == _loadGeneration) {
         setState(() => _isLoadingMore = false);
       }
     }
@@ -460,13 +478,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return _buildErrorState(theme);
     }
 
-    if (_reports.isEmpty) {
+    final mapReports = _visibleReports;
+    if (mapReports.isEmpty) {
       return _buildEmptyState(theme);
     }
 
-    final mapReports = _visibleReports
-        .where((report) => report.status != ReportStatus.closed)
-        .toList(growable: false);
     final municipalityIds = mapReports
         .map((report) => report.municipalityId)
         .toSet();
@@ -575,11 +591,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return _buildErrorState(theme);
     }
 
-    if (_reports.isEmpty) {
+    final visibleReports = _visibleReports;
+    if (visibleReports.isEmpty) {
       return _buildEmptyState(theme);
     }
 
-    final sectionItems = _buildSectionItems(_visibleReports);
+    final sectionItems = _buildSectionItems(visibleReports);
 
     return ListView.builder(
       controller: _listScrollController,
