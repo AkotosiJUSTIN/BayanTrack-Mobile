@@ -13,6 +13,40 @@ class _OptionsFake extends Fake implements Options {}
 void main() {
   setUpAll(() => registerFallbackValue(_OptionsFake()));
 
+  test('getReports emits the public reports GET path', () async {
+    final dio = _DioMock();
+    when(
+      () => dio.get(
+        ApiConstants.reports,
+        queryParameters: {'page': 1, 'page_size': 20},
+      ),
+    ).thenAnswer(
+      (_) async => Response(
+        data: {
+          'results': [],
+          'count': 0,
+          'total': 0,
+          'page': 1,
+          'page_size': 20,
+          'total_pages': 0,
+        },
+        statusCode: 200,
+        requestOptions: RequestOptions(path: ApiConstants.reports),
+      ),
+    );
+    final repository = ReportsRepositoryImpl(dio);
+
+    final result = await repository.getReports();
+
+    expect(result.isSuccess, isTrue);
+    verify(
+      () => dio.get(
+        ApiConstants.reports,
+        queryParameters: {'page': 1, 'page_size': 20},
+      ),
+    ).called(1);
+  });
+
   test(
     'quick report preserves canonical and compatibility contract fields',
     () async {

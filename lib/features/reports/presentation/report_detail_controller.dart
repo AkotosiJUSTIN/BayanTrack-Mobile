@@ -5,11 +5,13 @@ import '../reports_di.dart';
 
 part 'report_detail_controller.g.dart';
 
+Duration? _noDetailRetry(int retryCount, Object error) => null;
+
 /// Controller for fetching a single report by ID.
 ///
 /// Uses [GetReportUseCase] for proper clean architecture layering.
 /// Returns domain [Report] entity.
-@riverpod
+@Riverpod(retry: _noDetailRetry)
 class ReportDetailController extends _$ReportDetailController {
   @override
   Future<Report> build(String reportId) async {

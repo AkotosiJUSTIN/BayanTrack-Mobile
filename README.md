@@ -28,8 +28,10 @@ is in `pubspec.yaml`).
 ```powershell
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
-flutter run
 ```
+
+Run with target-specific API configuration below. Plain `flutter run` keeps
+emulator default `10.0.2.2`; physical phones need LAN URL or USB reverse.
 
 ### Docker runner
 
