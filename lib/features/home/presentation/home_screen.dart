@@ -746,11 +746,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildEmptyState(ThemeData theme) {
-    return EmptyContentPlaceholder(
-      icon: Icons.location_off_outlined,
-      title: AppLocalizations.of(context).noReportsFound,
-      message: AppLocalizations.of(context).noReportsMatch,
-      onRetry: _onRefresh,
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: EmptyContentPlaceholder(
+            icon: Icons.location_off_outlined,
+            title: AppLocalizations.of(context).noReportsFound,
+            message: AppLocalizations.of(context).noReportsMatch,
+            onRetry: _onRefresh,
+          ),
+        ),
+      ),
     );
   }
 

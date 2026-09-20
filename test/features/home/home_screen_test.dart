@@ -2,6 +2,7 @@ import 'package:bayantrack_mobile/core/domain/failures.dart';
 import 'package:bayantrack_mobile/core/domain/result.dart';
 import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
 import 'package:bayantrack_mobile/features/home/presentation/home_screen.dart';
+import 'package:bayantrack_mobile/features/navigation/main_navigation_shell.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/paginated_reports.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report_enums.dart';
@@ -35,7 +36,7 @@ const _closedReport = Report(
   longitude: 120.57,
 );
 
-Widget _app(_ReportsRepositoryMock repository) {
+Widget _app(_ReportsRepositoryMock repository, {bool withNavigation = false}) {
   return ProviderScope(
     retry: (_, _) => null,
     overrides: [
@@ -47,7 +48,9 @@ Widget _app(_ReportsRepositoryMock repository) {
     child: MaterialApp(
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
-      home: const HomeScreen(),
+      home: withNavigation
+          ? const MainNavigationShell(screens: [HomeScreen()])
+          : const HomeScreen(),
     ),
   );
 }
@@ -137,6 +140,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(calls, 2);
+  });
+
+  testWidgets('Home empty state scrolls with verification banner and nav', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final repository = _ReportsRepositoryMock();
+    _stubReports(
+      repository,
+      () async => const Success(PaginatedReports(results: [], total: 0)),
+    );
+
+    await tester.pumpWidget(_app(repository, withNavigation: true));
+    await tester.pumpAndSettle();
+
+    expect(find.text('User Verification'), findsOneWidget);
+    expect(find.text('No reports found'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Retry'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets(

@@ -736,6 +736,8 @@ void main() {
       find.byKey(const Key('quick-report-upload-evidence')),
       findsOneWidget,
     );
+    expect(tester.getSize(find.text('Camera')).height, lessThan(32));
+    expect(tester.getSize(find.text('Gallery')).height, lessThan(32));
 
     await tester.tap(find.byKey(const Key('quick-report-evidence-camera')));
     await tester.pump();

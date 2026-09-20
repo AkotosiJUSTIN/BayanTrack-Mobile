@@ -2027,26 +2027,45 @@ class _QuickReportEvidenceDialogState
                   ),
                 ],
                 const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton.tonalIcon(
-                        key: const Key('quick-report-evidence-camera'),
-                        onPressed: _isPicking ? null : _addFromCamera,
-                        icon: const Icon(Icons.camera_alt_outlined),
-                        label: Text(l10n.camera),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final buttonStyle = FilledButton.styleFrom(
+                      minimumSize: const Size(0, 52),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: constraints.maxWidth < 300 ? 8 : 12,
+                        vertical: 14,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: FilledButton.tonalIcon(
-                        key: const Key('quick-report-evidence-gallery'),
-                        onPressed: _isPicking ? null : _addFromGallery,
-                        icon: const Icon(Icons.photo_library_outlined),
-                        label: Text(l10n.gallery),
-                      ),
-                    ),
-                  ],
+                    );
+                    final camera = FilledButton.tonalIcon(
+                      key: const Key('quick-report-evidence-camera'),
+                      onPressed: _isPicking ? null : _addFromCamera,
+                      style: buttonStyle,
+                      icon: const Icon(Icons.camera_alt_outlined),
+                      label: Text(l10n.camera, maxLines: 1),
+                    );
+                    final gallery = FilledButton.tonalIcon(
+                      key: const Key('quick-report-evidence-gallery'),
+                      onPressed: _isPicking ? null : _addFromGallery,
+                      style: buttonStyle,
+                      icon: const Icon(Icons.photo_library_outlined),
+                      label: Text(l10n.gallery, maxLines: 1),
+                    );
+
+                    if (constraints.maxWidth < 260) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [camera, const SizedBox(height: 8), gallery],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(child: camera),
+                        const SizedBox(width: 8),
+                        Expanded(child: gallery),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
