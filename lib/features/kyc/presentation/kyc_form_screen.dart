@@ -1489,7 +1489,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   }
 
   Widget _buildContactSection(KycFormState state) {
-    final controller = ref.read(kycFormControllerProvider.notifier);
     final l10n = AppLocalizations.of(context);
 
     return Column(
@@ -1550,7 +1549,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   }
 
   Widget _buildAddressSection(KycFormState state) {
-    final controller = ref.read(kycFormControllerProvider.notifier);
     final l10n = AppLocalizations.of(context);
 
     return Column(
