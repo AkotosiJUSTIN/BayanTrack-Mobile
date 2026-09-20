@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bayantrack_mobile/core/domain/failures.dart';
 import 'package:bayantrack_mobile/core/domain/result.dart';
 import 'package:bayantrack_mobile/core/theme/app_colors.dart';
@@ -15,6 +17,7 @@ import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dar
 import 'package:bayantrack_mobile/features/reports/domain/usecases/get_my_reports_usecase.dart';
 import 'package:bayantrack_mobile/features/reports/domain/usecases/get_reports_usecase.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/my_reports_screen.dart';
+import 'package:bayantrack_mobile/features/reports/presentation/reports_controller.dart';
 import 'package:bayantrack_mobile/features/reports/reports_di.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:bayantrack_mobile/core/theme/app_theme.dart';
@@ -265,6 +268,61 @@ void main() {
 
     expect(find.text('1 awaiting your confirmation'), findsOneWidget);
     expect(find.text('Awaiting your confirmation'), findsOneWidget);
+  });
+
+  testWidgets('My Reports ignores stale refresh responses', (tester) async {
+    final repository = _ReportsRepositoryMock();
+    final firstResponse = Completer<Result<PaginatedReports>>();
+    final secondResponse = Completer<Result<PaginatedReports>>();
+    var calls = 0;
+
+    when(
+      () => repository.getMyReports(
+        page: 1,
+        pageSize: 20,
+        status: null,
+        sortBy: 'date',
+      ),
+    ).thenAnswer((_) {
+      calls++;
+      return calls == 1 ? firstResponse.future : secondResponse.future;
+    });
+
+    await tester.pumpWidget(
+      _app(
+        home: const MyReportsScreen(),
+        overrides: [
+          getMyReportsUseCaseProvider.overrideWithValue(
+            GetMyReportsUseCase(repository: repository),
+          ),
+          userPermissionsProvider.overrideWithValue(UserPermissions(null)),
+        ],
+      ),
+    );
+    await tester.pump();
+    expect(calls, 1);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MyReportsScreen)),
+    );
+    container.read(myReportsRefreshProvider.notifier).increment();
+    await tester.pump();
+    expect(calls, 2);
+
+    const report = Report(id: 'report-1', description: 'Repeated report');
+    firstResponse.complete(
+      const Success(PaginatedReports(results: [report], total: 1)),
+    );
+    await tester.pump();
+    expect(find.text('Repeated report'), findsNothing);
+
+    secondResponse.complete(
+      const Success(PaginatedReports(results: [report], total: 1)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Repeated report'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Notifications keeps unread actions and readable message rows', (
