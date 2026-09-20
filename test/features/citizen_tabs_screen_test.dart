@@ -125,6 +125,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(
+      tester
+          .widget<Scaffold>(find.byType(Scaffold).first)
+          .resizeToAvoidBottomInset,
+      isFalse,
+    );
+
     final search = find.byType(TextField).first;
     await tester.tap(search);
     await tester.pump();

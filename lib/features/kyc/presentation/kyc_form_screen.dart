@@ -323,7 +323,37 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
     }
   }
 
+  void _syncTextFieldsToState() {
+    final state = ref.read(kycFormControllerProvider);
+    final steps = _steps(state);
+    final step = steps[_currentIndex(state)];
+    final controller = ref.read(kycFormControllerProvider.notifier);
+
+    switch (step) {
+      case _KycStep.identity:
+        controller
+          ..setFirstName(_firstNameController.text)
+          ..setMiddleName(_middleNameController.text)
+          ..setLastName(_lastNameController.text);
+      case _KycStep.contact:
+        controller
+          ..setEmail(_emailController.text)
+          ..setMobileNumber(_mobileNumberController.text);
+      case _KycStep.address:
+        controller
+          ..setStreetBarangay(_streetBarangayController.text)
+          ..setCityMunicipality(_cityMunicipalityController.text)
+          ..setProvince(_provinceController.text)
+          ..setZipCode(_zipCodeController.text);
+      case _KycStep.idDetails:
+        controller.setIdNumber(_idNumberController.text);
+      case _:
+        break;
+    }
+  }
+
   void _setCurrentStep(int step) {
+    _syncTextFieldsToState();
     _commitOcrReviewValues();
     setState(() => _currentStep = step);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -645,6 +675,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   }
 
   void _continueStep() {
+    _syncTextFieldsToState();
     _commitOcrReviewValues();
     final state = ref.read(kycFormControllerProvider);
     _stepPlan ??= _stepsForState(state);
@@ -760,6 +791,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   }
 
   Future<void> _submitForm() async {
+    _syncTextFieldsToState();
     // First check which step has errors
     final errorStep = _findStepWithErrors();
 
@@ -1258,7 +1290,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             ],
             onChanged: (v) {
               _clearBackendError('first_name');
-              controller.setFirstName(v);
             },
             validator: (v) {
               if (_backendError('first_name') != null) {
@@ -1287,7 +1318,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             ],
             onChanged: (v) {
               _clearBackendError('middle_name');
-              controller.setMiddleName(v);
             },
             validator: (v) =>
                 _backendError('middle_name') ??
@@ -1314,7 +1344,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             ],
             onChanged: (v) {
               _clearBackendError('last_name');
-              controller.setLastName(v);
             },
             validator: (v) {
               if (_backendError('last_name') != null) {
@@ -1483,7 +1512,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
               ? null
               : (v) {
                   _clearBackendError('email');
-                  controller.setEmail(v);
                 },
           validator: (value) =>
               _backendError('email') ?? Validators.email(value, l10n: l10n),
@@ -1513,7 +1541,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
               ? null
               : (v) {
                   _clearBackendError('mobile_number');
-                  controller.setMobileNumber(v);
                 },
           validator: (v) =>
               _backendError('mobile_number') ?? KycValidators.mobileNumber(v),
@@ -1525,11 +1552,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   Widget _buildAddressSection(KycFormState state) {
     final controller = ref.read(kycFormControllerProvider.notifier);
     final l10n = AppLocalizations.of(context);
-
-    // Update the controller whenever either field changes
-    void updateStreetBarangay() {
-      controller.setStreetBarangay(_streetBarangayController.text);
-    }
 
     return Column(
       children: [
@@ -1553,7 +1575,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           ],
           onChanged: (v) {
             _clearBackendError('street_barangay');
-            updateStreetBarangay();
           },
           validator: (v) =>
               _backendError('street_barangay') ??
@@ -1576,7 +1597,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           ],
           onChanged: (v) {
             _clearBackendError('city_municipality');
-            controller.setCityMunicipality(v);
           },
           validator: (v) =>
               _backendError('city_municipality') ??
@@ -1599,7 +1619,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           ],
           onChanged: (v) {
             _clearBackendError('province');
-            controller.setProvince(v);
           },
           validator: (v) =>
               _backendError('province') ??
@@ -1622,7 +1641,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           ],
           onChanged: (v) {
             _clearBackendError('zip_code');
-            controller.setZipCode(v);
           },
           validator: (v) =>
               _backendError('zip_code') ?? KycValidators.zipCode(v),
@@ -1684,7 +1702,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           ],
           onChanged: (v) {
             _clearBackendError('id_number');
-            controller.setIdNumber(v);
           },
           validator: (v) =>
               _backendError('id_number') ?? KycValidators.idNumber(v),

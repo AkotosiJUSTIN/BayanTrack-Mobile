@@ -778,6 +778,7 @@ void main() {
       expect(find.text('Contact Info'), findsOneWidget);
       await tester.enterText(find.byType(TextFormField).last, '9171234567');
       await tester.pump();
+      expect(container.read(kycFormControllerProvider).mobileNumber, isEmpty);
 
       expect(find.text('Contact Info'), findsOneWidget);
       await tester.tap(

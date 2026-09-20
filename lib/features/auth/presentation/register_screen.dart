@@ -120,13 +120,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isLoading = authState is AuthLoading;
-    final mediaQuery = MediaQuery.of(context);
+    final screenSize = MediaQuery.sizeOf(context);
+    final screenPadding = MediaQuery.paddingOf(context);
+    final viewInsets = MediaQuery.viewInsetsOf(context);
     final usableHeight =
-        mediaQuery.size.height -
-        mediaQuery.padding.vertical -
-        mediaQuery.viewInsets.bottom;
+        screenSize.height - screenPadding.vertical - viewInsets.bottom;
     final compact = usableHeight < 700;
-    final horizontalPadding = mediaQuery.size.width < 360 ? 20.0 : 24.0;
+    final horizontalPadding = screenSize.width < 360 ? 20.0 : 24.0;
     final brandBlue = isDark ? AppColors.primaryLight : _brandBlue;
     final l10n = AppLocalizations.of(context)!;
 

@@ -252,7 +252,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           24,
           24,
           24,
-          24 + MediaQuery.of(context).viewInsets.bottom,
+          24 + MediaQuery.viewInsetsOf(context).bottom,
         ),
         child: Center(
           child: ConstrainedBox(
@@ -764,7 +764,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                 20,
                 16,
                 20,
-                20 + MediaQuery.of(context).viewInsets.bottom,
+                20 + MediaQuery.viewInsetsOf(context).bottom,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,

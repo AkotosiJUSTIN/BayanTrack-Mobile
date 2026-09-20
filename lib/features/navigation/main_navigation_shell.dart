@@ -132,6 +132,9 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
         72.0 + ((textScale - 1).clamp(0.0, 1.0) * 20).toDouble();
 
     return Scaffold(
+      // Home's only input is top-anchored search. Keep the visited-tab stack
+      // from relaying out on every IME inset frame while that field is focused.
+      resizeToAvoidBottomInset: false,
       body: Column(
         children: [
           const EvidenceUploadFeedback(),

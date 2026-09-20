@@ -228,6 +228,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
 
     return Scaffold(
+      // Search is always above the keyboard; resizing would also relayout the
+      // map/list subtree for every IME inset frame.
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text(l10n.home),
         actions: [
@@ -482,7 +485,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       builder: (context, constraints) {
         final viewportHeight = constraints.maxHeight.isFinite
             ? constraints.maxHeight
-            : MediaQuery.of(context).size.height;
+            : MediaQuery.sizeOf(context).height;
 
         return ListView(
           physics: const AlwaysScrollableScrollPhysics(),

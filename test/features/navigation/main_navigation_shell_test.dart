@@ -54,7 +54,9 @@ void main() {
     final fab = tester.widget<FloatingActionButton>(
       find.byType(FloatingActionButton),
     );
+    final shell = tester.widget<Scaffold>(find.byType(Scaffold).first);
 
+    expect(shell.resizeToAvoidBottomInset, isFalse);
     expect(bottomBar.shape, isA<CircularNotchedRectangle>());
     expect(bottomBar.notchMargin, 7);
     expect(bottomBar.color, AppTheme.light.colorScheme.surface);

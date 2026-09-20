@@ -176,8 +176,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                             TextInputType.emailAddress,
                                         textInputAction: TextInputAction.next,
                                         enabled: !isLoading,
-                                        onChanged: (_) =>
-                                            _formKey.currentState?.validate(),
                                         decoration: InputDecoration(
                                           hintText: l10n.enterYourEmail,
                                           prefixIcon: const Icon(
@@ -205,8 +203,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         obscureText: _obscurePassword,
                                         textInputAction: TextInputAction.done,
                                         enabled: !isLoading,
-                                        onChanged: (_) =>
-                                            _formKey.currentState?.validate(),
                                         onFieldSubmitted: (_) => _handleLogin(),
                                         decoration: InputDecoration(
                                           hintText: l10n.enterYourPassword,
