@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../core/presentation/widgets/empty_content_placeholder.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/verification_widgets.dart';
@@ -11,6 +10,7 @@ import '../../home/presentation/widgets/home_report_card.dart';
 import '../domain/entities/report.dart';
 import '../domain/entities/report_enums.dart';
 import '../presentation/report_detail_screen.dart';
+import '../presentation/report_labels.dart';
 import '../presentation/reports_controller.dart';
 import '../reports_di.dart';
 
@@ -478,9 +478,8 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     );
   }
 
-  Color _resolvedColor(ThemeData theme) => theme.brightness == Brightness.dark
-      ? AppColors.resolvedTextDark
-      : AppColors.resolvedText;
+  Color _resolvedColor(ThemeData theme) =>
+      reportStatusForegroundColor(ReportStatus.resolved, theme);
 }
 
 class _ReportSkeleton extends StatelessWidget {

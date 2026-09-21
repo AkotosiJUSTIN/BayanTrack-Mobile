@@ -48,16 +48,45 @@ String localizedPriorityAuthority(Report report, AppLocalizations l10n) {
   return l10n.aiSuggestionPending;
 }
 
-Color reportMapStatusColor(ReportStatus status) => switch (status) {
-  ReportStatus.submitted ||
-  ReportStatus.underReview ||
-  ReportStatus.verified ||
-  ReportStatus.assigned => AppColors.alertMedium,
-  ReportStatus.inProgress => AppColors.primaryLight,
-  ReportStatus.escalated || ReportStatus.endorsed => AppColors.alertHigh,
-  ReportStatus.resolved || ReportStatus.closed => AppColors.success,
-  ReportStatus.rejected => AppColors.alertHigh,
-};
+enum _ReportStatusColorGroup { pending, progress, urgent, success }
+
+_ReportStatusColorGroup _reportStatusColorGroup(ReportStatus status) =>
+    switch (status) {
+      ReportStatus.submitted ||
+      ReportStatus.underReview ||
+      ReportStatus.verified ||
+      ReportStatus.assigned => _ReportStatusColorGroup.pending,
+      ReportStatus.inProgress => _ReportStatusColorGroup.progress,
+      ReportStatus.escalated ||
+      ReportStatus.endorsed ||
+      ReportStatus.rejected => _ReportStatusColorGroup.urgent,
+      ReportStatus.resolved ||
+      ReportStatus.closed => _ReportStatusColorGroup.success,
+    };
+
+Color reportStatusIndicatorColor(ReportStatus status) =>
+    switch (_reportStatusColorGroup(status)) {
+      _ReportStatusColorGroup.pending => AppColors.alertMedium,
+      _ReportStatusColorGroup.progress => AppColors.primaryLight,
+      _ReportStatusColorGroup.urgent => AppColors.alertHigh,
+      _ReportStatusColorGroup.success => AppColors.success,
+    };
+
+Color reportMapStatusColor(ReportStatus status) =>
+    reportStatusIndicatorColor(status);
+
+Color reportStatusForegroundColor(ReportStatus status, ThemeData theme) {
+  final isDark = theme.brightness == Brightness.dark;
+  return switch (_reportStatusColorGroup(status)) {
+    _ReportStatusColorGroup.pending =>
+      isDark ? AppColors.pendingTextDark : AppColors.pendingText,
+    _ReportStatusColorGroup.progress => theme.colorScheme.primary,
+    _ReportStatusColorGroup.urgent =>
+      isDark ? AppColors.rejectedTextDark : AppColors.rejectedText,
+    _ReportStatusColorGroup.success =>
+      isDark ? AppColors.resolvedTextDark : AppColors.resolvedText,
+  };
+}
 
 String localizedRelativeTime(
   BuildContext context,

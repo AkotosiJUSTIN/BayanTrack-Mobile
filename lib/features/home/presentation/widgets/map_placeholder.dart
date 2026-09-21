@@ -60,7 +60,9 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
                     ? HitTestBehavior.deferToChild
                     : HitTestBehavior.opaque,
                 child: Center(
-                  child: _buildMarker(reportMapStatusColor(report.status)),
+                  child: _buildMarker(
+                    reportStatusIndicatorColor(report.status),
+                  ),
                 ),
               ),
             ),

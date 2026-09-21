@@ -55,17 +55,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   int _currentPage = 0;
   int _totalPages = 1;
-  int _totalReports = 0;
-  int _selectedStatusFilterIndex = 0;
   int _loadGeneration = 0;
 
   final _searchController = TextEditingController();
   final _listScrollController = ScrollController();
   final List<Report> _reports = [];
+  final Set<ReportStatus> _selectedStatusFilters = <ReportStatus>{};
 
   List<Report> get _visibleReports {
     final query = _searchController.text.trim().toLowerCase();
-    final homeReports = _reports.where(isHomeReportVisible);
+    final homeReports = _reports
+        .where(isHomeReportVisible)
+        .where(_matchesStatusFilter);
     if (query.isEmpty) return homeReports.toList(growable: false);
 
     return homeReports
@@ -86,18 +87,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         .toList(growable: false);
   }
 
-  final List<String?> _statusFilters = const [
+  final List<ReportStatus?> _statusFilters = const [
     null,
-    'submitted',
-    'under_review',
-    'in_progress',
-    'resolved',
-    'escalated',
+    ReportStatus.submitted,
+    ReportStatus.underReview,
+    ReportStatus.inProgress,
+    ReportStatus.escalated,
+    ReportStatus.resolved,
   ];
 
-  String? get _selectedStatus => _statusFilters[_selectedStatusFilterIndex];
   final String _selectedSort = 'date';
   bool get _hasNextPage => _currentPage < _totalPages;
+
+  bool _matchesStatusFilter(Report report) {
+    if (_selectedStatusFilters.isEmpty) return true;
+
+    return _selectedStatusFilters.any((filter) {
+      if (filter == ReportStatus.underReview) {
+        return report.status == ReportStatus.underReview ||
+            report.status == ReportStatus.verified ||
+            report.status == ReportStatus.assigned ||
+            report.status == ReportStatus.endorsed;
+      }
+      return report.status == filter;
+    });
+  }
+
+  void _toggleStatusFilter(ReportStatus? status) {
+    setState(() {
+      if (status == null) {
+        _selectedStatusFilters.clear();
+      } else if (!_selectedStatusFilters.add(status)) {
+        _selectedStatusFilters.remove(status);
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -127,16 +151,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _loadError = null;
       _currentPage = 0;
       _totalPages = 1;
-      _totalReports = 0;
       _reports.clear();
     });
 
     final getReports = ref.read(getReportsUseCaseProvider);
-    final result = await getReports(
-      page: 1,
-      status: _selectedStatus,
-      sortBy: _selectedSort,
-    );
+    final result = await getReports(page: 1, sortBy: _selectedSort);
 
     if (!mounted || generation != _loadGeneration) return;
 
@@ -148,8 +167,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _reports.addAll(mergedReports);
           _currentPage = data.page;
           _totalPages = data.totalPages;
-          // Set total to the count of displayed reports, not backend total
-          _totalReports = _reports.length;
           _isInitialLoading = false;
         });
       },
@@ -171,11 +188,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     try {
       final nextPage = _currentPage + 1;
       final getReports = ref.read(getReportsUseCaseProvider);
-      final result = await getReports(
-        page: nextPage,
-        status: _selectedStatus,
-        sortBy: _selectedSort,
-      );
+      final result = await getReports(page: nextPage, sortBy: _selectedSort);
 
       if (!mounted || generation != _loadGeneration) return;
 
@@ -189,8 +202,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ..addAll(mergedReports);
             _currentPage = data.page;
             _totalPages = data.totalPages;
-            // Set total to the count of displayed reports, not backend total
-            _totalReports = _reports.length;
           });
         },
         failure: (_) {},
@@ -359,9 +370,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final viewSelector = _buildViewSelector(l10n);
-              final reportCount = _searchController.text.trim().isEmpty
-                  ? _totalReports
-                  : _visibleReports.length;
+              final reportCount = _visibleReports.length;
               final count = Text(
                 l10n.reportCount(reportCount),
                 style: theme.textTheme.titleSmall?.copyWith(
@@ -409,17 +418,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: _statusFilters.length,
             itemBuilder: (context, index) {
-              final isSelected = _selectedStatusFilterIndex == index;
-              final label = _statusFilterLabel(_statusFilters[index], l10n);
+              final status = _statusFilters[index];
+              final isSelected = status == null
+                  ? _selectedStatusFilters.isEmpty
+                  : _selectedStatusFilters.contains(status);
+              final label = _statusFilterLabel(status, l10n);
               return Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: CivicFilterChip(
-                  label: label,
-                  selected: isSelected,
-                  onSelected: (_) {
-                    setState(() => _selectedStatusFilterIndex = index);
-                    _loadInitialReports();
-                  },
+                child: KeyedSubtree(
+                  key: Key('home-status-filter-${status?.apiValue ?? 'all'}'),
+                  child: CivicFilterChip(
+                    label: label,
+                    selected: isSelected,
+                    onSelected: (_) => _toggleStatusFilter(status),
+                  ),
                 ),
               );
             },
@@ -455,14 +467,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  String _statusFilterLabel(String? status, AppLocalizations l10n) {
+  String _statusFilterLabel(ReportStatus? status, AppLocalizations l10n) {
     return switch (status) {
       null => l10n.all,
-      'submitted' => l10n.submitted,
-      'under_review' => l10n.underReview,
-      'in_progress' => l10n.inProgress,
-      'resolved' => l10n.resolvedStatus,
-      'escalated' => l10n.escalated,
+      ReportStatus.submitted => l10n.submitted,
+      ReportStatus.underReview => l10n.underReview,
+      ReportStatus.inProgress => l10n.inProgress,
+      ReportStatus.resolved => l10n.resolvedStatus,
+      ReportStatus.escalated => l10n.escalated,
       _ => l10n.status,
     };
   }
@@ -519,41 +531,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   Positioned(
                     left: 16,
                     bottom: 16,
-                    child: Material(
-                      color: theme.colorScheme.surface.withValues(alpha: 0.92),
-                      elevation: 1,
-                      shadowColor: theme.colorScheme.shadow.withValues(
-                        alpha: 0.08,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.sizeOf(context).width - 32,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+                      child: Material(
+                        color: theme.colorScheme.surface.withValues(
+                          alpha: 0.92,
                         ),
-                        child: Wrap(
-                          spacing: 12,
-                          runSpacing: 8,
-                          children: [
-                            _buildLegendItem(
-                              l10n.submitted,
-                              reportMapStatusColor(ReportStatus.submitted),
-                            ),
-                            _buildLegendItem(
-                              l10n.inProgress,
-                              reportMapStatusColor(ReportStatus.inProgress),
-                            ),
-                            _buildLegendItem(
-                              l10n.escalated,
-                              reportMapStatusColor(ReportStatus.escalated),
-                            ),
-                            _buildLegendItem(
-                              l10n.resolvedStatus,
-                              reportMapStatusColor(ReportStatus.resolved),
-                            ),
-                          ],
+                        elevation: 1,
+                        shadowColor: theme.colorScheme.shadow.withValues(
+                          alpha: 0.08,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          child: Wrap(
+                            spacing: 12,
+                            runSpacing: 8,
+                            children: [
+                              for (final status
+                                  in _statusFilters.whereType<ReportStatus>())
+                                _buildLegendItem(status, l10n),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -567,17 +573,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildLegendItem(String label, Color color) {
+  Widget _buildLegendItem(ReportStatus status, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+    final color = reportStatusIndicatorColor(status);
+    final isSelected = _selectedStatusFilters.contains(status);
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        FilterChip(
+          key: Key('home-map-status-${status.apiValue}'),
+          avatar: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.32),
+                        blurRadius: 4,
+                      ),
+                    ]
+                  : null,
+            ),
+          ),
+          label: Text(_statusFilterLabel(status, l10n)),
+          selected: isSelected,
+          showCheckmark: false,
+          backgroundColor: theme.colorScheme.surfaceContainerLow,
+          selectedColor: color.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.24 : 0.14,
+          ),
+          labelStyle: theme.textTheme.labelMedium?.copyWith(
+            color: isSelected
+                ? reportStatusForegroundColor(status, theme)
+                : theme.colorScheme.onSurface,
+            fontWeight: FontWeight.w700,
+          ),
+          side: BorderSide.none,
+          onSelected: (_) => _toggleStatusFilter(status),
         ),
-        const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 12)),
       ],
     );
   }

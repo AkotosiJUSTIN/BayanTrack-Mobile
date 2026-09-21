@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/api_constants.dart';
 import '../../../../core/presentation/widgets/civic_components.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../reports/domain/entities/report.dart';
 import '../../../reports/domain/entities/report_enums.dart';
@@ -292,23 +291,7 @@ class HomeReportCard extends StatelessWidget {
   );
 
   Color _statusColor(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return switch (report.status) {
-      ReportStatus.submitted =>
-        isDark ? AppColors.pendingTextDark : AppColors.pendingText,
-      ReportStatus.underReview ||
-      ReportStatus.verified ||
-      ReportStatus.assigned ||
-      ReportStatus.escalated ||
-      ReportStatus.endorsed => scheme.primary,
-      ReportStatus.inProgress => scheme.primary,
-      ReportStatus.resolved =>
-        isDark ? AppColors.resolvedTextDark : AppColors.resolvedText,
-      ReportStatus.closed => scheme.onSurfaceVariant,
-      ReportStatus.rejected =>
-        isDark ? AppColors.rejectedTextDark : AppColors.rejectedText,
-    };
+    return reportStatusForegroundColor(report.status, Theme.of(context));
   }
 
   IconData get _statusIcon => switch (report.status) {

@@ -243,9 +243,10 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
   Widget _buildReportContent(ThemeData theme, bool isDark, Report report) {
     final l10n = AppLocalizations.of(context);
-    final successColor = theme.brightness == Brightness.dark
-        ? AppColors.resolvedTextDark
-        : AppColors.resolvedText;
+    final successColor = reportStatusForegroundColor(
+      ReportStatus.resolved,
+      theme,
+    );
     final municipalities = ref.watch(municipalitiesProvider).asData?.value;
     final municipality =
         findMunicipalityMetadata(
@@ -700,10 +701,8 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     return showDialog<void>(
       context: context,
       barrierColor: Colors.black87,
-      builder: (_) => _ResolutionProofGallery(
-        images: images,
-        initialIndex: initialIndex,
-      ),
+      builder: (_) =>
+          _ResolutionProofGallery(images: images, initialIndex: initialIndex),
     );
   }
 
@@ -782,9 +781,10 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   /// submitted their review.
   Widget _buildCitizenReviewBanner(ThemeData theme, Report report) {
     final l10n = AppLocalizations.of(context);
-    final successColor = theme.brightness == Brightness.dark
-        ? AppColors.resolvedTextDark
-        : AppColors.resolvedText;
+    final successColor = reportStatusForegroundColor(
+      ReportStatus.resolved,
+      theme,
+    );
     if (report.status != ReportStatus.resolved) return const SizedBox.shrink();
 
     // Citizen report-detail requests are owner-authorized by the backend.
@@ -1171,48 +1171,13 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
   Widget _buildStatusBadge(BuildContext context, ReportStatus status) {
     final l10n = AppLocalizations.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
-    final (background, foreground, label) = switch (status) {
-      ReportStatus.submitted => (
-        colorScheme.tertiaryContainer,
-        colorScheme.onTertiaryContainer,
-        l10n.submitted,
-      ),
-      ReportStatus.underReview ||
-      ReportStatus.verified ||
-      ReportStatus.assigned ||
-      ReportStatus.escalated ||
-      ReportStatus.endorsed => (
-        colorScheme.secondaryContainer,
-        colorScheme.onSecondaryContainer,
-        l10n.underReview,
-      ),
-      ReportStatus.inProgress => (
-        colorScheme.primaryContainer,
-        colorScheme.onPrimaryContainer,
-        l10n.inProgress,
-      ),
-      ReportStatus.resolved => (
-        AppColors.success.withValues(alpha: 0.16),
-        colorScheme.onSurface,
-        l10n.resolvedStatus,
-      ),
-      ReportStatus.closed => (
-        colorScheme.surfaceContainerHighest,
-        colorScheme.onSurfaceVariant,
-        l10n.closed,
-      ),
-      ReportStatus.rejected => (
-        colorScheme.errorContainer,
-        colorScheme.onErrorContainer,
-        l10n.rejected,
-      ),
-    };
+    final foreground = reportStatusForegroundColor(status, Theme.of(context));
+    final label = localizedReportStatus(status, l10n);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: background,
+        color: foreground.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: foreground.withValues(alpha: 0.22)),
       ),

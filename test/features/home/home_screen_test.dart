@@ -1,5 +1,7 @@
 import 'package:bayantrack_mobile/core/domain/failures.dart';
 import 'package:bayantrack_mobile/core/domain/result.dart';
+import 'package:bayantrack_mobile/core/theme/app_colors.dart';
+import 'package:bayantrack_mobile/core/theme/app_theme.dart';
 import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
 import 'package:bayantrack_mobile/features/home/presentation/home_screen.dart';
 import 'package:bayantrack_mobile/features/navigation/main_navigation_shell.dart';
@@ -8,6 +10,7 @@ import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report_enums.dart';
 import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dart';
 import 'package:bayantrack_mobile/features/reports/domain/usecases/get_reports_usecase.dart';
+import 'package:bayantrack_mobile/features/reports/presentation/report_labels.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/reports_controller.dart';
 import 'package:bayantrack_mobile/features/reports/reports_di.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
@@ -34,6 +37,24 @@ const _closedReport = Report(
   status: ReportStatus.closed,
   latitude: 15.97,
   longitude: 120.57,
+);
+
+const _submittedReport = Report(
+  id: 'submitted-1',
+  title: 'Submitted report',
+  description: 'Submitted report description',
+  status: ReportStatus.submitted,
+  latitude: 15.971,
+  longitude: 120.571,
+);
+
+const _inProgressReport = Report(
+  id: 'in-progress-1',
+  title: 'In progress report',
+  description: 'In progress report description',
+  status: ReportStatus.inProgress,
+  latitude: 15.972,
+  longitude: 120.572,
 );
 
 Widget _app(_ReportsRepositoryMock repository, {bool withNavigation = false}) {
@@ -72,6 +93,19 @@ void _stubReports(
 }
 
 void main() {
+  test('resolved and closed share final green status colors', () {
+    expect(reportMapStatusColor(ReportStatus.resolved), AppColors.success);
+    expect(reportMapStatusColor(ReportStatus.closed), AppColors.success);
+    expect(
+      reportStatusForegroundColor(ReportStatus.resolved, AppTheme.light),
+      AppColors.resolvedText,
+    );
+    expect(
+      reportStatusForegroundColor(ReportStatus.closed, AppTheme.light),
+      AppColors.resolvedText,
+    );
+  });
+
   test(
     'Home policy keeps resolved reports but removes final/duplicate entries',
     () {
@@ -194,4 +228,78 @@ void main() {
       expect(find.byIcon(Icons.location_on), findsNothing);
     },
   );
+
+  testWidgets('map status chips filter loaded reports locally and toggle', (
+    tester,
+  ) async {
+    final repository = _ReportsRepositoryMock();
+    var calls = 0;
+    _stubReports(repository, () async {
+      calls++;
+      return const Success(
+        PaginatedReports(
+          results: [_submittedReport, _inProgressReport, _resolvedReport],
+          total: 3,
+        ),
+      );
+    });
+
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.location_on), findsNWidgets(3));
+    expect(calls, 1);
+
+    await tester.tap(find.byKey(const Key('home-map-status-resolved')));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.location_on), findsOneWidget);
+    expect(calls, 1);
+
+    await tester.tap(find.byKey(const Key('home-map-status-submitted')));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.location_on), findsNWidgets(2));
+
+    await tester.tap(find.byKey(const Key('home-map-status-resolved')));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.location_on), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('home-map-status-submitted')));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.location_on), findsNWidgets(3));
+  });
+
+  testWidgets('refresh preserves active local status filter', (tester) async {
+    final repository = _ReportsRepositoryMock();
+    var calls = 0;
+    _stubReports(repository, () async {
+      calls++;
+      return calls == 1
+          ? const Success(
+              PaginatedReports(
+                results: [_submittedReport, _resolvedReport],
+                total: 2,
+              ),
+            )
+          : const Success(
+              PaginatedReports(
+                results: [_resolvedReport, _inProgressReport],
+                total: 2,
+              ),
+            );
+    });
+
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('home-map-status-resolved')));
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(HomeScreen)),
+    );
+    container.read(myReportsRefreshProvider.notifier).increment();
+    await tester.pumpAndSettle();
+
+    expect(calls, 2);
+    expect(find.byIcon(Icons.location_on), findsOneWidget);
+  });
 }
