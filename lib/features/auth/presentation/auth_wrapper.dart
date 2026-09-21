@@ -6,6 +6,7 @@ import '../../kyc/presentation/kyc_controller.dart';
 import '../../navigation/main_navigation_shell.dart';
 import 'auth_controller.dart';
 import 'login_screen.dart';
+import 'password_expired_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../../../core/presentation/widgets/app_toast.dart';
@@ -244,6 +245,9 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
         }
         ref.invalidate(kycStatusControllerProvider);
         ref.invalidate(profileControllerProvider);
+        Future.microtask(
+          () => ref.read(authControllerProvider.notifier).refreshProfile(),
+        );
         Future.microtask(() async {
           try {
             final pushService = ref.read(pushServiceProvider);
@@ -262,6 +266,10 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     final state = ref.watch(authControllerProvider);
     ref.watch(appLocaleProvider);
     debugPrint('[AuthWrapper] AuthState changed: ${state.runtimeType}');
+
+    if (state is AuthSuccess && state.user?.requiresPasswordChange == true) {
+      return const PasswordExpiredScreen();
+    }
 
     return switch (state) {
       AuthSuccess() => const MainNavigationShell(),

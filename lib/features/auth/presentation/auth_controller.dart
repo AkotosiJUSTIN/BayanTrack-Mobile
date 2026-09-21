@@ -82,6 +82,15 @@ class AuthController extends _$AuthController {
     }
   }
 
+  Future<void> refreshProfile() async {
+    final result = await ref.read(getCurrentUserUseCaseProvider)();
+    if (!ref.mounted) return;
+    result.when(
+      success: (user) => state = AuthSuccess('Session refreshed', user),
+      failure: (_) {},
+    );
+  }
+
   /// Login user
   Future<bool> login(String email, String password) async {
     debugPrint('[AuthController] login() starting');

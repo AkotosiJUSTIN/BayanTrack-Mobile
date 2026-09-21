@@ -89,6 +89,14 @@ sealed class UserProfile with _$UserProfile {
     @JsonKey(name: 'is_active') @Default(true) bool isActive,
     @JsonKey(name: 'created_at') String? createdAt,
     @JsonKey(name: 'updated_at') String? updatedAt,
+    @JsonKey(name: 'password_changed_at') String? passwordChangedAt,
+    @JsonKey(name: 'password_expires_at') String? passwordExpiresAt,
+    @JsonKey(name: 'password_days_remaining') int? passwordDaysRemaining,
+    @JsonKey(name: 'password_warning_level') String? passwordWarningLevel,
+    @JsonKey(name: 'password_expired') @Default(false) bool passwordExpired,
+    @JsonKey(name: 'password_change_required')
+    @Default(false)
+    bool passwordChangeRequired,
   }) = _UserProfile;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) =>

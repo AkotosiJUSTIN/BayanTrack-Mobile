@@ -1466,6 +1466,18 @@ abstract class AppLocalizations {
   /// **'Unable to change your password right now. Please try again.'**
   String get passwordChangeFailed;
 
+  /// No description provided for @passwordExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Password change required'**
+  String get passwordExpiredTitle;
+
+  /// No description provided for @passwordExpiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your password has expired. Change it to continue using BayanTrack.'**
+  String get passwordExpiredMessage;
+
   /// No description provided for @profileLoadFailed.
   ///
   /// In en, this message translates to:

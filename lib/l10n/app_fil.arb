@@ -237,6 +237,8 @@
   "newPasswordMismatch": "Hindi magkatugma ang bagong password at kumpirmasyon.",
   "passwordChanged": "Napaltan na ang iyong password.",
   "passwordChangeFailed": "Hindi mapalitan ang iyong password ngayon. Subukan muli.",
+  "passwordExpiredTitle": "Kailangang palitan ang password",
+  "passwordExpiredMessage": "Nag-expire na ang iyong password. Palitan ito upang magpatuloy sa paggamit ng BayanTrack.",
   "profileLoadFailed": "Hindi ma-load ang profile.",
   "profileUpdateFailed": "Hindi ma-update ang profile. Subukan muli.",
   "saveChanges": "I-save ang mga Pagbabago",

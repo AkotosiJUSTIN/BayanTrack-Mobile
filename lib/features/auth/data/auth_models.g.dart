@@ -86,6 +86,12 @@ _UserProfile _$UserProfileFromJson(Map<String, dynamic> json) => _UserProfile(
   isActive: json['is_active'] as bool? ?? true,
   createdAt: json['created_at'] as String?,
   updatedAt: json['updated_at'] as String?,
+  passwordChangedAt: json['password_changed_at'] as String?,
+  passwordExpiresAt: json['password_expires_at'] as String?,
+  passwordDaysRemaining: (json['password_days_remaining'] as num?)?.toInt(),
+  passwordWarningLevel: json['password_warning_level'] as String?,
+  passwordExpired: json['password_expired'] as bool? ?? false,
+  passwordChangeRequired: json['password_change_required'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$UserProfileToJson(_UserProfile instance) =>
@@ -103,6 +109,12 @@ Map<String, dynamic> _$UserProfileToJson(_UserProfile instance) =>
       'is_active': instance.isActive,
       'created_at': instance.createdAt,
       'updated_at': instance.updatedAt,
+      'password_changed_at': instance.passwordChangedAt,
+      'password_expires_at': instance.passwordExpiresAt,
+      'password_days_remaining': instance.passwordDaysRemaining,
+      'password_warning_level': instance.passwordWarningLevel,
+      'password_expired': instance.passwordExpired,
+      'password_change_required': instance.passwordChangeRequired,
     };
 
 _ProfileUpdateRequest _$ProfileUpdateRequestFromJson(

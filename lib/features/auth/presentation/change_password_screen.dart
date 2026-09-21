@@ -5,10 +5,13 @@ import '../../../core/presentation/widgets/password_strength_indicator.dart';
 import '../../../core/utils/validators.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/auth_models.dart';
+import 'auth_controller.dart';
 import 'profile_controller.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
-  const ChangePasswordScreen({super.key});
+  const ChangePasswordScreen({super.key, this.requiredChange = false});
+
+  final bool requiredChange;
 
   @override
   ConsumerState<ChangePasswordScreen> createState() =>
@@ -54,7 +57,11 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           .changePassword(request);
       if (mounted) {
         AppToast.success(context, l10n.passwordChanged);
-        Navigator.pop(context);
+        if (widget.requiredChange) {
+          await ref.read(authControllerProvider.notifier).logout();
+        } else {
+          Navigator.pop(context);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -69,7 +76,14 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.changePassword)),
+      appBar: AppBar(
+        automaticallyImplyLeading: !widget.requiredChange,
+        title: Text(
+          widget.requiredChange
+              ? l10n.passwordExpiredTitle
+              : l10n.changePassword,
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -83,6 +97,15 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             key: _formKey,
             child: Column(
               children: [
+                if (widget.requiredChange)
+                  Card(
+                    color: Theme.of(context).colorScheme.errorContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(l10n.passwordExpiredMessage),
+                    ),
+                  ),
+                if (widget.requiredChange) const SizedBox(height: 16),
                 TextFormField(
                   controller: _currentController,
                   decoration: InputDecoration(
@@ -187,6 +210,17 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         : Text(l10n.changePassword),
                   ),
                 ),
+                if (widget.requiredChange) ...[
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () => ref
+                              .read(authControllerProvider.notifier)
+                              .logout(),
+                    child: Text(l10n.logout),
+                  ),
+                ],
               ],
             ),
           ),

@@ -1338,7 +1338,7 @@ as String,
 /// @nodoc
 mixin _$UserProfile {
 
-@JsonKey(name: 'id', readValue: _readUserId) String get id; String get email;@JsonKey(name: 'first_name') String get firstName;@JsonKey(name: 'last_name') String get lastName; String? get phone;@JsonKey(name: 'avatar_url') String? get avatarUrl;@JsonKey(name: 'avatar_revision') int get avatarRevision;@JsonKey(name: 'avatar_storage_status') String? get avatarStorageStatus;@JsonKey(name: 'profile_revision') int get profileRevision; String get role;@JsonKey(name: 'is_active') bool get isActive;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;
+@JsonKey(name: 'id', readValue: _readUserId) String get id; String get email;@JsonKey(name: 'first_name') String get firstName;@JsonKey(name: 'last_name') String get lastName; String? get phone;@JsonKey(name: 'avatar_url') String? get avatarUrl;@JsonKey(name: 'avatar_revision') int get avatarRevision;@JsonKey(name: 'avatar_storage_status') String? get avatarStorageStatus;@JsonKey(name: 'profile_revision') int get profileRevision; String get role;@JsonKey(name: 'is_active') bool get isActive;@JsonKey(name: 'created_at') String? get createdAt;@JsonKey(name: 'updated_at') String? get updatedAt;@JsonKey(name: 'password_changed_at') String? get passwordChangedAt;@JsonKey(name: 'password_expires_at') String? get passwordExpiresAt;@JsonKey(name: 'password_days_remaining') int? get passwordDaysRemaining;@JsonKey(name: 'password_warning_level') String? get passwordWarningLevel;@JsonKey(name: 'password_expired') bool get passwordExpired;@JsonKey(name: 'password_change_required') bool get passwordChangeRequired;
 /// Create a copy of UserProfile
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -1351,16 +1351,16 @@ $UserProfileCopyWith<UserProfile> get copyWith => _$UserProfileCopyWithImpl<User
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.avatarRevision, avatarRevision) || other.avatarRevision == avatarRevision)&&(identical(other.avatarStorageStatus, avatarStorageStatus) || other.avatarStorageStatus == avatarStorageStatus)&&(identical(other.profileRevision, profileRevision) || other.profileRevision == profileRevision)&&(identical(other.role, role) || other.role == role)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.avatarRevision, avatarRevision) || other.avatarRevision == avatarRevision)&&(identical(other.avatarStorageStatus, avatarStorageStatus) || other.avatarStorageStatus == avatarStorageStatus)&&(identical(other.profileRevision, profileRevision) || other.profileRevision == profileRevision)&&(identical(other.role, role) || other.role == role)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.passwordChangedAt, passwordChangedAt) || other.passwordChangedAt == passwordChangedAt)&&(identical(other.passwordExpiresAt, passwordExpiresAt) || other.passwordExpiresAt == passwordExpiresAt)&&(identical(other.passwordDaysRemaining, passwordDaysRemaining) || other.passwordDaysRemaining == passwordDaysRemaining)&&(identical(other.passwordWarningLevel, passwordWarningLevel) || other.passwordWarningLevel == passwordWarningLevel)&&(identical(other.passwordExpired, passwordExpired) || other.passwordExpired == passwordExpired)&&(identical(other.passwordChangeRequired, passwordChangeRequired) || other.passwordChangeRequired == passwordChangeRequired));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,email,firstName,lastName,phone,avatarUrl,avatarRevision,avatarStorageStatus,profileRevision,role,isActive,createdAt,updatedAt);
+int get hashCode => Object.hashAll([runtimeType,id,email,firstName,lastName,phone,avatarUrl,avatarRevision,avatarStorageStatus,profileRevision,role,isActive,createdAt,updatedAt,passwordChangedAt,passwordExpiresAt,passwordDaysRemaining,passwordWarningLevel,passwordExpired,passwordChangeRequired]);
 
 @override
 String toString() {
-  return 'UserProfile(id: $id, email: $email, firstName: $firstName, lastName: $lastName, phone: $phone, avatarUrl: $avatarUrl, avatarRevision: $avatarRevision, avatarStorageStatus: $avatarStorageStatus, profileRevision: $profileRevision, role: $role, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'UserProfile(id: $id, email: $email, firstName: $firstName, lastName: $lastName, phone: $phone, avatarUrl: $avatarUrl, avatarRevision: $avatarRevision, avatarStorageStatus: $avatarStorageStatus, profileRevision: $profileRevision, role: $role, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt, passwordChangedAt: $passwordChangedAt, passwordExpiresAt: $passwordExpiresAt, passwordDaysRemaining: $passwordDaysRemaining, passwordWarningLevel: $passwordWarningLevel, passwordExpired: $passwordExpired, passwordChangeRequired: $passwordChangeRequired)';
 }
 
 
@@ -1371,7 +1371,7 @@ abstract mixin class $UserProfileCopyWith<$Res>  {
   factory $UserProfileCopyWith(UserProfile value, $Res Function(UserProfile) _then) = _$UserProfileCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'id', readValue: _readUserId) String id, String email,@JsonKey(name: 'first_name') String firstName,@JsonKey(name: 'last_name') String lastName, String? phone,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'avatar_revision') int avatarRevision,@JsonKey(name: 'avatar_storage_status') String? avatarStorageStatus,@JsonKey(name: 'profile_revision') int profileRevision, String role,@JsonKey(name: 'is_active') bool isActive,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
+@JsonKey(name: 'id', readValue: _readUserId) String id, String email,@JsonKey(name: 'first_name') String firstName,@JsonKey(name: 'last_name') String lastName, String? phone,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'avatar_revision') int avatarRevision,@JsonKey(name: 'avatar_storage_status') String? avatarStorageStatus,@JsonKey(name: 'profile_revision') int profileRevision, String role,@JsonKey(name: 'is_active') bool isActive,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt,@JsonKey(name: 'password_changed_at') String? passwordChangedAt,@JsonKey(name: 'password_expires_at') String? passwordExpiresAt,@JsonKey(name: 'password_days_remaining') int? passwordDaysRemaining,@JsonKey(name: 'password_warning_level') String? passwordWarningLevel,@JsonKey(name: 'password_expired') bool passwordExpired,@JsonKey(name: 'password_change_required') bool passwordChangeRequired
 });
 
 
@@ -1388,7 +1388,7 @@ class _$UserProfileCopyWithImpl<$Res>
 
 /// Create a copy of UserProfile
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? email = null,Object? firstName = null,Object? lastName = null,Object? phone = freezed,Object? avatarUrl = freezed,Object? avatarRevision = null,Object? avatarStorageStatus = freezed,Object? profileRevision = null,Object? role = null,Object? isActive = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? email = null,Object? firstName = null,Object? lastName = null,Object? phone = freezed,Object? avatarUrl = freezed,Object? avatarRevision = null,Object? avatarStorageStatus = freezed,Object? profileRevision = null,Object? role = null,Object? isActive = null,Object? createdAt = freezed,Object? updatedAt = freezed,Object? passwordChangedAt = freezed,Object? passwordExpiresAt = freezed,Object? passwordDaysRemaining = freezed,Object? passwordWarningLevel = freezed,Object? passwordExpired = null,Object? passwordChangeRequired = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
@@ -1403,7 +1403,13 @@ as int,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nu
 as String,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
 as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,passwordChangedAt: freezed == passwordChangedAt ? _self.passwordChangedAt : passwordChangedAt // ignore: cast_nullable_to_non_nullable
+as String?,passwordExpiresAt: freezed == passwordExpiresAt ? _self.passwordExpiresAt : passwordExpiresAt // ignore: cast_nullable_to_non_nullable
+as String?,passwordDaysRemaining: freezed == passwordDaysRemaining ? _self.passwordDaysRemaining : passwordDaysRemaining // ignore: cast_nullable_to_non_nullable
+as int?,passwordWarningLevel: freezed == passwordWarningLevel ? _self.passwordWarningLevel : passwordWarningLevel // ignore: cast_nullable_to_non_nullable
+as String?,passwordExpired: null == passwordExpired ? _self.passwordExpired : passwordExpired // ignore: cast_nullable_to_non_nullable
+as bool,passwordChangeRequired: null == passwordChangeRequired ? _self.passwordChangeRequired : passwordChangeRequired // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -1485,10 +1491,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'id', readValue: _readUserId)  String id,  String email, @JsonKey(name: 'first_name')  String firstName, @JsonKey(name: 'last_name')  String lastName,  String? phone, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'avatar_revision')  int avatarRevision, @JsonKey(name: 'avatar_storage_status')  String? avatarStorageStatus, @JsonKey(name: 'profile_revision')  int profileRevision,  String role, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'id', readValue: _readUserId)  String id,  String email, @JsonKey(name: 'first_name')  String firstName, @JsonKey(name: 'last_name')  String lastName,  String? phone, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'avatar_revision')  int avatarRevision, @JsonKey(name: 'avatar_storage_status')  String? avatarStorageStatus, @JsonKey(name: 'profile_revision')  int profileRevision,  String role, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'password_changed_at')  String? passwordChangedAt, @JsonKey(name: 'password_expires_at')  String? passwordExpiresAt, @JsonKey(name: 'password_days_remaining')  int? passwordDaysRemaining, @JsonKey(name: 'password_warning_level')  String? passwordWarningLevel, @JsonKey(name: 'password_expired')  bool passwordExpired, @JsonKey(name: 'password_change_required')  bool passwordChangeRequired)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _UserProfile() when $default != null:
-return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phone,_that.avatarUrl,_that.avatarRevision,_that.avatarStorageStatus,_that.profileRevision,_that.role,_that.isActive,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phone,_that.avatarUrl,_that.avatarRevision,_that.avatarStorageStatus,_that.profileRevision,_that.role,_that.isActive,_that.createdAt,_that.updatedAt,_that.passwordChangedAt,_that.passwordExpiresAt,_that.passwordDaysRemaining,_that.passwordWarningLevel,_that.passwordExpired,_that.passwordChangeRequired);case _:
   return orElse();
 
 }
@@ -1506,10 +1512,10 @@ return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phone,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'id', readValue: _readUserId)  String id,  String email, @JsonKey(name: 'first_name')  String firstName, @JsonKey(name: 'last_name')  String lastName,  String? phone, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'avatar_revision')  int avatarRevision, @JsonKey(name: 'avatar_storage_status')  String? avatarStorageStatus, @JsonKey(name: 'profile_revision')  int profileRevision,  String role, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'id', readValue: _readUserId)  String id,  String email, @JsonKey(name: 'first_name')  String firstName, @JsonKey(name: 'last_name')  String lastName,  String? phone, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'avatar_revision')  int avatarRevision, @JsonKey(name: 'avatar_storage_status')  String? avatarStorageStatus, @JsonKey(name: 'profile_revision')  int profileRevision,  String role, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'password_changed_at')  String? passwordChangedAt, @JsonKey(name: 'password_expires_at')  String? passwordExpiresAt, @JsonKey(name: 'password_days_remaining')  int? passwordDaysRemaining, @JsonKey(name: 'password_warning_level')  String? passwordWarningLevel, @JsonKey(name: 'password_expired')  bool passwordExpired, @JsonKey(name: 'password_change_required')  bool passwordChangeRequired)  $default,) {final _that = this;
 switch (_that) {
 case _UserProfile():
-return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phone,_that.avatarUrl,_that.avatarRevision,_that.avatarStorageStatus,_that.profileRevision,_that.role,_that.isActive,_that.createdAt,_that.updatedAt);}
+return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phone,_that.avatarUrl,_that.avatarRevision,_that.avatarStorageStatus,_that.profileRevision,_that.role,_that.isActive,_that.createdAt,_that.updatedAt,_that.passwordChangedAt,_that.passwordExpiresAt,_that.passwordDaysRemaining,_that.passwordWarningLevel,_that.passwordExpired,_that.passwordChangeRequired);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -1523,10 +1529,10 @@ return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phone,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'id', readValue: _readUserId)  String id,  String email, @JsonKey(name: 'first_name')  String firstName, @JsonKey(name: 'last_name')  String lastName,  String? phone, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'avatar_revision')  int avatarRevision, @JsonKey(name: 'avatar_storage_status')  String? avatarStorageStatus, @JsonKey(name: 'profile_revision')  int profileRevision,  String role, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'id', readValue: _readUserId)  String id,  String email, @JsonKey(name: 'first_name')  String firstName, @JsonKey(name: 'last_name')  String lastName,  String? phone, @JsonKey(name: 'avatar_url')  String? avatarUrl, @JsonKey(name: 'avatar_revision')  int avatarRevision, @JsonKey(name: 'avatar_storage_status')  String? avatarStorageStatus, @JsonKey(name: 'profile_revision')  int profileRevision,  String role, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'created_at')  String? createdAt, @JsonKey(name: 'updated_at')  String? updatedAt, @JsonKey(name: 'password_changed_at')  String? passwordChangedAt, @JsonKey(name: 'password_expires_at')  String? passwordExpiresAt, @JsonKey(name: 'password_days_remaining')  int? passwordDaysRemaining, @JsonKey(name: 'password_warning_level')  String? passwordWarningLevel, @JsonKey(name: 'password_expired')  bool passwordExpired, @JsonKey(name: 'password_change_required')  bool passwordChangeRequired)?  $default,) {final _that = this;
 switch (_that) {
 case _UserProfile() when $default != null:
-return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phone,_that.avatarUrl,_that.avatarRevision,_that.avatarStorageStatus,_that.profileRevision,_that.role,_that.isActive,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phone,_that.avatarUrl,_that.avatarRevision,_that.avatarStorageStatus,_that.profileRevision,_that.role,_that.isActive,_that.createdAt,_that.updatedAt,_that.passwordChangedAt,_that.passwordExpiresAt,_that.passwordDaysRemaining,_that.passwordWarningLevel,_that.passwordExpired,_that.passwordChangeRequired);case _:
   return null;
 
 }
@@ -1538,7 +1544,7 @@ return $default(_that.id,_that.email,_that.firstName,_that.lastName,_that.phone,
 @JsonSerializable()
 
 class _UserProfile implements UserProfile {
-  const _UserProfile({@JsonKey(name: 'id', readValue: _readUserId) required this.id, required this.email, @JsonKey(name: 'first_name') this.firstName = '', @JsonKey(name: 'last_name') this.lastName = '', this.phone, @JsonKey(name: 'avatar_url') this.avatarUrl, @JsonKey(name: 'avatar_revision') this.avatarRevision = 0, @JsonKey(name: 'avatar_storage_status') this.avatarStorageStatus, @JsonKey(name: 'profile_revision') this.profileRevision = 0, this.role = 'citizen', @JsonKey(name: 'is_active') this.isActive = true, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt});
+  const _UserProfile({@JsonKey(name: 'id', readValue: _readUserId) required this.id, required this.email, @JsonKey(name: 'first_name') this.firstName = '', @JsonKey(name: 'last_name') this.lastName = '', this.phone, @JsonKey(name: 'avatar_url') this.avatarUrl, @JsonKey(name: 'avatar_revision') this.avatarRevision = 0, @JsonKey(name: 'avatar_storage_status') this.avatarStorageStatus, @JsonKey(name: 'profile_revision') this.profileRevision = 0, this.role = 'citizen', @JsonKey(name: 'is_active') this.isActive = true, @JsonKey(name: 'created_at') this.createdAt, @JsonKey(name: 'updated_at') this.updatedAt, @JsonKey(name: 'password_changed_at') this.passwordChangedAt, @JsonKey(name: 'password_expires_at') this.passwordExpiresAt, @JsonKey(name: 'password_days_remaining') this.passwordDaysRemaining, @JsonKey(name: 'password_warning_level') this.passwordWarningLevel, @JsonKey(name: 'password_expired') this.passwordExpired = false, @JsonKey(name: 'password_change_required') this.passwordChangeRequired = false});
   factory _UserProfile.fromJson(Map<String, dynamic> json) => _$UserProfileFromJson(json);
 
 @override@JsonKey(name: 'id', readValue: _readUserId) final  String id;
@@ -1554,6 +1560,12 @@ class _UserProfile implements UserProfile {
 @override@JsonKey(name: 'is_active') final  bool isActive;
 @override@JsonKey(name: 'created_at') final  String? createdAt;
 @override@JsonKey(name: 'updated_at') final  String? updatedAt;
+@override@JsonKey(name: 'password_changed_at') final  String? passwordChangedAt;
+@override@JsonKey(name: 'password_expires_at') final  String? passwordExpiresAt;
+@override@JsonKey(name: 'password_days_remaining') final  int? passwordDaysRemaining;
+@override@JsonKey(name: 'password_warning_level') final  String? passwordWarningLevel;
+@override@JsonKey(name: 'password_expired') final  bool passwordExpired;
+@override@JsonKey(name: 'password_change_required') final  bool passwordChangeRequired;
 
 /// Create a copy of UserProfile
 /// with the given fields replaced by the non-null parameter values.
@@ -1568,16 +1580,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.avatarRevision, avatarRevision) || other.avatarRevision == avatarRevision)&&(identical(other.avatarStorageStatus, avatarStorageStatus) || other.avatarStorageStatus == avatarStorageStatus)&&(identical(other.profileRevision, profileRevision) || other.profileRevision == profileRevision)&&(identical(other.role, role) || other.role == role)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.email, email) || other.email == email)&&(identical(other.firstName, firstName) || other.firstName == firstName)&&(identical(other.lastName, lastName) || other.lastName == lastName)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.avatarRevision, avatarRevision) || other.avatarRevision == avatarRevision)&&(identical(other.avatarStorageStatus, avatarStorageStatus) || other.avatarStorageStatus == avatarStorageStatus)&&(identical(other.profileRevision, profileRevision) || other.profileRevision == profileRevision)&&(identical(other.role, role) || other.role == role)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.passwordChangedAt, passwordChangedAt) || other.passwordChangedAt == passwordChangedAt)&&(identical(other.passwordExpiresAt, passwordExpiresAt) || other.passwordExpiresAt == passwordExpiresAt)&&(identical(other.passwordDaysRemaining, passwordDaysRemaining) || other.passwordDaysRemaining == passwordDaysRemaining)&&(identical(other.passwordWarningLevel, passwordWarningLevel) || other.passwordWarningLevel == passwordWarningLevel)&&(identical(other.passwordExpired, passwordExpired) || other.passwordExpired == passwordExpired)&&(identical(other.passwordChangeRequired, passwordChangeRequired) || other.passwordChangeRequired == passwordChangeRequired));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,email,firstName,lastName,phone,avatarUrl,avatarRevision,avatarStorageStatus,profileRevision,role,isActive,createdAt,updatedAt);
+int get hashCode => Object.hashAll([runtimeType,id,email,firstName,lastName,phone,avatarUrl,avatarRevision,avatarStorageStatus,profileRevision,role,isActive,createdAt,updatedAt,passwordChangedAt,passwordExpiresAt,passwordDaysRemaining,passwordWarningLevel,passwordExpired,passwordChangeRequired]);
 
 @override
 String toString() {
-  return 'UserProfile(id: $id, email: $email, firstName: $firstName, lastName: $lastName, phone: $phone, avatarUrl: $avatarUrl, avatarRevision: $avatarRevision, avatarStorageStatus: $avatarStorageStatus, profileRevision: $profileRevision, role: $role, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'UserProfile(id: $id, email: $email, firstName: $firstName, lastName: $lastName, phone: $phone, avatarUrl: $avatarUrl, avatarRevision: $avatarRevision, avatarStorageStatus: $avatarStorageStatus, profileRevision: $profileRevision, role: $role, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt, passwordChangedAt: $passwordChangedAt, passwordExpiresAt: $passwordExpiresAt, passwordDaysRemaining: $passwordDaysRemaining, passwordWarningLevel: $passwordWarningLevel, passwordExpired: $passwordExpired, passwordChangeRequired: $passwordChangeRequired)';
 }
 
 
@@ -1588,7 +1600,7 @@ abstract mixin class _$UserProfileCopyWith<$Res> implements $UserProfileCopyWith
   factory _$UserProfileCopyWith(_UserProfile value, $Res Function(_UserProfile) _then) = __$UserProfileCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'id', readValue: _readUserId) String id, String email,@JsonKey(name: 'first_name') String firstName,@JsonKey(name: 'last_name') String lastName, String? phone,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'avatar_revision') int avatarRevision,@JsonKey(name: 'avatar_storage_status') String? avatarStorageStatus,@JsonKey(name: 'profile_revision') int profileRevision, String role,@JsonKey(name: 'is_active') bool isActive,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt
+@JsonKey(name: 'id', readValue: _readUserId) String id, String email,@JsonKey(name: 'first_name') String firstName,@JsonKey(name: 'last_name') String lastName, String? phone,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'avatar_revision') int avatarRevision,@JsonKey(name: 'avatar_storage_status') String? avatarStorageStatus,@JsonKey(name: 'profile_revision') int profileRevision, String role,@JsonKey(name: 'is_active') bool isActive,@JsonKey(name: 'created_at') String? createdAt,@JsonKey(name: 'updated_at') String? updatedAt,@JsonKey(name: 'password_changed_at') String? passwordChangedAt,@JsonKey(name: 'password_expires_at') String? passwordExpiresAt,@JsonKey(name: 'password_days_remaining') int? passwordDaysRemaining,@JsonKey(name: 'password_warning_level') String? passwordWarningLevel,@JsonKey(name: 'password_expired') bool passwordExpired,@JsonKey(name: 'password_change_required') bool passwordChangeRequired
 });
 
 
@@ -1605,7 +1617,7 @@ class __$UserProfileCopyWithImpl<$Res>
 
 /// Create a copy of UserProfile
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? email = null,Object? firstName = null,Object? lastName = null,Object? phone = freezed,Object? avatarUrl = freezed,Object? avatarRevision = null,Object? avatarStorageStatus = freezed,Object? profileRevision = null,Object? role = null,Object? isActive = null,Object? createdAt = freezed,Object? updatedAt = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? email = null,Object? firstName = null,Object? lastName = null,Object? phone = freezed,Object? avatarUrl = freezed,Object? avatarRevision = null,Object? avatarStorageStatus = freezed,Object? profileRevision = null,Object? role = null,Object? isActive = null,Object? createdAt = freezed,Object? updatedAt = freezed,Object? passwordChangedAt = freezed,Object? passwordExpiresAt = freezed,Object? passwordDaysRemaining = freezed,Object? passwordWarningLevel = freezed,Object? passwordExpired = null,Object? passwordChangeRequired = null,}) {
   return _then(_UserProfile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
@@ -1620,7 +1632,13 @@ as int,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nu
 as String,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
 as bool,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String?,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,passwordChangedAt: freezed == passwordChangedAt ? _self.passwordChangedAt : passwordChangedAt // ignore: cast_nullable_to_non_nullable
+as String?,passwordExpiresAt: freezed == passwordExpiresAt ? _self.passwordExpiresAt : passwordExpiresAt // ignore: cast_nullable_to_non_nullable
+as String?,passwordDaysRemaining: freezed == passwordDaysRemaining ? _self.passwordDaysRemaining : passwordDaysRemaining // ignore: cast_nullable_to_non_nullable
+as int?,passwordWarningLevel: freezed == passwordWarningLevel ? _self.passwordWarningLevel : passwordWarningLevel // ignore: cast_nullable_to_non_nullable
+as String?,passwordExpired: null == passwordExpired ? _self.passwordExpired : passwordExpired // ignore: cast_nullable_to_non_nullable
+as bool,passwordChangeRequired: null == passwordChangeRequired ? _self.passwordChangeRequired : passwordChangeRequired // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

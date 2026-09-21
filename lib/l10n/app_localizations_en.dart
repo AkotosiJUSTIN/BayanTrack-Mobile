@@ -748,6 +748,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Unable to change your password right now. Please try again.';
 
   @override
+  String get passwordExpiredTitle => 'Password change required';
+
+  @override
+  String get passwordExpiredMessage =>
+      'Your password has expired. Change it to continue using BayanTrack.';
+
+  @override
   String get profileLoadFailed => 'Unable to load profile.';
 
   @override

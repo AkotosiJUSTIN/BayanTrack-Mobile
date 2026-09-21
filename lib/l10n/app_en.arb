@@ -237,6 +237,8 @@
   "newPasswordMismatch": "New password and confirmation do not match.",
   "passwordChanged": "Your password has been changed.",
   "passwordChangeFailed": "Unable to change your password right now. Please try again.",
+  "passwordExpiredTitle": "Password change required",
+  "passwordExpiredMessage": "Your password has expired. Change it to continue using BayanTrack.",
   "profileLoadFailed": "Unable to load profile.",
   "profileUpdateFailed": "Unable to update profile. Please try again.",
   "saveChanges": "Save Changes",

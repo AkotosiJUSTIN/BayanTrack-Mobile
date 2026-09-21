@@ -18,6 +18,12 @@ class User extends Equatable {
   final bool isActive;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final DateTime? passwordChangedAt;
+  final DateTime? passwordExpiresAt;
+  final int? passwordDaysRemaining;
+  final String? passwordWarningLevel;
+  final bool passwordExpired;
+  final bool passwordChangeRequired;
 
   const User({
     required this.id,
@@ -33,6 +39,12 @@ class User extends Equatable {
     this.isActive = true,
     this.createdAt,
     this.updatedAt,
+    this.passwordChangedAt,
+    this.passwordExpiresAt,
+    this.passwordDaysRemaining,
+    this.passwordWarningLevel,
+    this.passwordExpired = false,
+    this.passwordChangeRequired = false,
   });
 
   /// Full display name
@@ -40,6 +52,8 @@ class User extends Equatable {
 
   /// Check if user has a complete profile
   bool get hasCompleteProfile => firstName.isNotEmpty && lastName.isNotEmpty;
+
+  bool get requiresPasswordChange => passwordChangeRequired || passwordExpired;
 
   @override
   List<Object?> get props => [
@@ -56,6 +70,12 @@ class User extends Equatable {
     isActive,
     createdAt,
     updatedAt,
+    passwordChangedAt,
+    passwordExpiresAt,
+    passwordDaysRemaining,
+    passwordWarningLevel,
+    passwordExpired,
+    passwordChangeRequired,
   ];
 
   @override

@@ -752,6 +752,13 @@ class AppLocalizationsFil extends AppLocalizations {
       'Hindi mapalitan ang iyong password ngayon. Subukan muli.';
 
   @override
+  String get passwordExpiredTitle => 'Kailangang palitan ang password';
+
+  @override
+  String get passwordExpiredMessage =>
+      'Nag-expire na ang iyong password. Palitan ito upang magpatuloy sa paggamit ng BayanTrack.';
+
+  @override
   String get profileLoadFailed => 'Hindi ma-load ang profile.';
 
   @override
