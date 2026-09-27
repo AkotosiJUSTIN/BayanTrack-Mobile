@@ -174,9 +174,10 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   }
 
   void _maybeNavigateToWidgetDestination() {
-    if (!mounted ||
-        _widgetNavigationScheduled ||
-        ref.read(authControllerProvider) is! AuthSuccess) {
+    if (!mounted || _widgetNavigationScheduled) return;
+
+    final authState = ref.read(authControllerProvider);
+    if (authState is! AuthSuccess || !authState.mayOpenWidgetDestination) {
       return;
     }
 
@@ -203,6 +204,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
       ).push(MaterialPageRoute(builder: (_) => page));
       unawaited(
         navigation.then<void>((_) {
+          _widgetBridge.finishWidgetDestination();
           _widgetNavigationScheduled = false;
           _maybeNavigateToWidgetDestination();
         }),

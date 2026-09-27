@@ -6,17 +6,20 @@
     android:background="@drawable/widget_surface"
     android:gravity="center_vertical"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:paddingStart="10dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="10dp"
+    android:paddingBottom="8dp">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="28dp"
+        android:layout_height="24dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <ImageView
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:contentDescription="@null"
             android:importantForAccessibility="no"
             android:src="@mipmap/bayantrack_logo" />
@@ -25,11 +28,11 @@
             android:id="@+id/widget_brand"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="7dp"
             android:ellipsize="end"
             android:fontFamily="sans"
             android:maxLines="1"
-            android:text="BayanTrack"
+            android:text="Quick Report"
             android:textColor="@color/widget_on_surface"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -39,13 +42,14 @@
         android:id="@+id/widget_quick_report"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="4dp"
         android:background="@drawable/widget_primary_action"
         android:fontFamily="sans"
         android:gravity="center"
         android:maxLines="1"
-        android:text="Quick Report"
+        android:minHeight="48dp"
+        android:text="Report now"
         android:textColor="@color/widget_on_primary"
-        android:textSize="14sp"
+        android:textSize="13sp"
         android:textStyle="bold" />
 </LinearLayout>

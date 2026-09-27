@@ -8,6 +8,15 @@ const _widgetChannelName = 'bayantrack/widget';
 
 enum WidgetDestination { quickReport, emergencyReport, notifications }
 
+enum QuickReportWidgetStatus {
+  ready,
+  submitting,
+  submitted,
+  failed,
+  networkUnavailable,
+  locationRequired,
+}
+
 WidgetDestination? parseWidgetDestination(Object? raw) {
   if (raw is! String) return null;
 
@@ -69,6 +78,8 @@ class WidgetBridge {
   String _locale = 'en';
   bool _authenticated = false;
   int _unreadCount = 0;
+  QuickReportWidgetStatus _quickReportStatus = QuickReportWidgetStatus.ready;
+  WidgetDestination? _activeDestination;
   Map<String, Object>? _lastSentState;
   bool _initialized = false;
 
@@ -97,16 +108,22 @@ class WidgetBridge {
 
   void ingestRaw(Object? raw) {
     final destination = parseWidgetDestination(raw);
-    if (destination == null || !_destinationQueue.enqueue(destination)) return;
+    if (destination == null || destination == _activeDestination) return;
+    if (!_destinationQueue.enqueue(destination)) return;
     _destinationController.add(destination);
   }
 
-  WidgetDestination? takePendingDestination() =>
-      _authenticated ? _destinationQueue.take() : null;
+  WidgetDestination? takePendingDestination() {
+    if (!_authenticated || _activeDestination != null) return null;
+    return _activeDestination = _destinationQueue.take();
+  }
 
   void restoreDestination(WidgetDestination destination) {
+    if (_activeDestination == destination) _activeDestination = null;
     _destinationQueue.restore(destination);
   }
+
+  void finishWidgetDestination() => _activeDestination = null;
 
   Future<void> syncLocale(Locale locale) {
     _locale = widgetLocaleCode(locale);
@@ -115,7 +132,16 @@ class WidgetBridge {
 
   Future<void> syncAuthenticated(bool authenticated) {
     _authenticated = authenticated;
-    if (!authenticated) _unreadCount = 0;
+    if (!authenticated) {
+      _unreadCount = 0;
+      _quickReportStatus = QuickReportWidgetStatus.ready;
+    }
+    return _sendState();
+  }
+
+  Future<void> syncQuickReportStatus(QuickReportWidgetStatus status) {
+    if (!_authenticated) return Future<void>.value();
+    _quickReportStatus = status;
     return _sendState();
   }
 
@@ -130,10 +156,12 @@ class WidgetBridge {
       'locale': _locale,
       'authenticated': _authenticated,
       'unreadCount': _unreadCount,
+      'quickReportStatus': _quickReportStatus.name,
     };
     if (_lastSentState?['locale'] == state['locale'] &&
         _lastSentState?['authenticated'] == state['authenticated'] &&
-        _lastSentState?['unreadCount'] == state['unreadCount']) {
+        _lastSentState?['unreadCount'] == state['unreadCount'] &&
+        _lastSentState?['quickReportStatus'] == state['quickReportStatus']) {
       return;
     }
     _lastSentState = state;

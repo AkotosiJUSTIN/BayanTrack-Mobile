@@ -41,6 +41,7 @@ void main() {
     await bridge.syncAuthenticated(true);
     expect(bridge.takePendingDestination(), WidgetDestination.quickReport);
     expect(bridge.takePendingDestination(), isNull);
+    bridge.finishWidgetDestination();
   });
 
   test(
@@ -55,6 +56,7 @@ void main() {
 
       await bridge.syncAuthenticated(true);
       expect(bridge.takePendingDestination(), WidgetDestination.notifications);
+      bridge.finishWidgetDestination();
     },
   );
 
@@ -68,9 +70,11 @@ void main() {
       bridge.ingestRaw('quick_report');
       expect(bridge.takePendingDestination(), WidgetDestination.quickReport);
       expect(bridge.takePendingDestination(), isNull);
+      bridge.finishWidgetDestination();
 
       bridge.ingestRaw('notifications');
       expect(bridge.takePendingDestination(), WidgetDestination.notifications);
+      bridge.finishWidgetDestination();
     },
   );
 
@@ -83,6 +87,7 @@ void main() {
     bridge.ingestRaw('quick_report');
     expect(bridge.takePendingDestination(), WidgetDestination.quickReport);
     expect(bridge.takePendingDestination(), isNull);
+    bridge.finishWidgetDestination();
   });
 
   test(
@@ -98,6 +103,7 @@ void main() {
         bridge.takePendingDestination(),
         WidgetDestination.emergencyReport,
       );
+      bridge.finishWidgetDestination();
     },
   );
 
@@ -126,6 +132,7 @@ void main() {
         'locale': 'en',
         'authenticated': true,
         'unreadCount': 3,
+        'quickReportStatus': 'ready',
       });
 
       await bridge.syncUnreadCount(-1);
@@ -135,7 +142,67 @@ void main() {
         'locale': 'en',
         'authenticated': false,
         'unreadCount': 0,
+        'quickReportStatus': 'ready',
       });
+    },
+  );
+
+  test('syncs Quick Report states without exposing report data', () async {
+    final states = <Map<String, Object>>[];
+    final bridge = WidgetBridge(
+      invokeNative: (method, arguments) async {
+        if (method == 'updateState') {
+          states.add(Map<String, Object>.from(arguments! as Map));
+        }
+      },
+    );
+    addTearDown(bridge.dispose);
+
+    await bridge.syncAuthenticated(true);
+    for (final status in QuickReportWidgetStatus.values) {
+      await bridge.syncQuickReportStatus(status);
+      expect(states.last['quickReportStatus'], status.name);
+      expect(states.last.keys, isNot(contains('description')));
+      expect(states.last.keys, isNot(contains('token')));
+    }
+
+    await bridge.syncAuthenticated(false);
+    expect(states.last['authenticated'], isFalse);
+    expect(states.last['quickReportStatus'], 'ready');
+  });
+
+  test('ignores repeated taps for the destination currently open', () async {
+    final bridge = WidgetBridge(invokeNative: (_, _) async => null);
+    addTearDown(bridge.dispose);
+    await bridge.syncAuthenticated(true);
+
+    bridge.ingestRaw('quick_report');
+    expect(bridge.takePendingDestination(), WidgetDestination.quickReport);
+    bridge.ingestRaw('quick_report');
+
+    expect(bridge.pendingDestination, isNull);
+    expect(bridge.takePendingDestination(), isNull);
+    bridge.finishWidgetDestination();
+
+    bridge.ingestRaw('quick_report');
+    expect(bridge.takePendingDestination(), WidgetDestination.quickReport);
+  });
+
+  test(
+    'queues a different widget destination until the open route closes',
+    () async {
+      final bridge = WidgetBridge(invokeNative: (_, _) async => null);
+      addTearDown(bridge.dispose);
+      await bridge.syncAuthenticated(true);
+
+      bridge.ingestRaw('quick_report');
+      expect(bridge.takePendingDestination(), WidgetDestination.quickReport);
+      bridge.ingestRaw('notifications');
+      expect(bridge.pendingDestination, WidgetDestination.notifications);
+      expect(bridge.takePendingDestination(), isNull);
+
+      bridge.finishWidgetDestination();
+      expect(bridge.takePendingDestination(), WidgetDestination.notifications);
     },
   );
 }

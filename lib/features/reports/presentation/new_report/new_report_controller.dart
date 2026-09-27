@@ -432,6 +432,7 @@ class NewReportController extends _$NewReportController {
     required double latitude,
     required double longitude,
     String? location,
+    String? idempotencyKey,
   }) async {
     final useCase = ref.read(createReportUseCaseProvider);
     final result = await useCase(
@@ -451,6 +452,7 @@ class NewReportController extends _$NewReportController {
       declarationConfirmed: true,
       dataProcessingConsent: true,
       isQuickReport: true,
+      idempotencyKey: idempotencyKey,
     );
     return result.when(
       success: (report) => report,

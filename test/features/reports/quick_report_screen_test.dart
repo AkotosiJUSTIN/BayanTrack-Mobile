@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:bayantrack_mobile/core/constants/urdaneta_barangays.dart';
 import 'package:bayantrack_mobile/core/domain/failures.dart';
 import 'package:bayantrack_mobile/core/domain/result.dart';
+import 'package:bayantrack_mobile/core/providers/connectivity_provider.dart';
+import 'package:bayantrack_mobile/core/widget/widget_bridge.dart';
 import 'package:bayantrack_mobile/core/theme/app_theme.dart';
 import 'package:bayantrack_mobile/features/auth/auth_di.dart';
 import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
@@ -58,6 +60,7 @@ class _TestCreateReportUseCase extends CreateReportUseCase {
   final Future<Result<domain_report.Report>> Function(bool isQuickReport)
   _submit;
   int callCount = 0;
+  final List<String?> idempotencyKeys = [];
   bool? lastIsQuickReport;
   String? lastMunicipalityId;
   String? lastBarangayId;
@@ -90,6 +93,7 @@ class _TestCreateReportUseCase extends CreateReportUseCase {
     String? idempotencyKey,
   }) {
     callCount++;
+    idempotencyKeys.add(idempotencyKey);
     lastIsQuickReport = isQuickReport;
     lastMunicipalityId = municipalityId;
     lastBarangayId = barangayId;
@@ -109,6 +113,15 @@ class _CountingNavigatorObserver extends NavigatorObserver {
   }
 }
 
+class _TestConnectivityNotifier extends ConnectivityNotifier {
+  _TestConnectivityNotifier(this.initialValue);
+
+  final bool initialValue;
+
+  @override
+  bool build() => initialValue;
+}
+
 Position _position(double latitude, double longitude) => Position(
   latitude: latitude,
   longitude: longitude,
@@ -121,6 +134,15 @@ Position _position(double latitude, double longitude) => Position(
   speed: 0,
   speedAccuracy: 0,
 );
+
+WidgetBridge _recordWidgetState(List<Map<String, Object>> states) =>
+    WidgetBridge(
+      invokeNative: (method, arguments) async {
+        if (method == 'updateState') {
+          states.add(Map<String, Object>.from(arguments! as Map));
+        }
+      },
+    );
 
 Future<void> _pumpQuickReport(
   WidgetTester tester, {
@@ -135,6 +157,8 @@ Future<void> _pumpQuickReport(
   Future<List<XFile>> Function()? pickMultiImage,
   NavigatorObserver? navigatorObserver,
   bool pushFromRoot = false,
+  bool isOnline = true,
+  WidgetBridge? widgetBridge,
 }) async {
   final appTheme = theme ?? AppTheme.light;
   tester.view.physicalSize = size;
@@ -159,6 +183,7 @@ Future<void> _pumpQuickReport(
     ).thenAnswer((_) async => const Success(<NearbyLandmarkModel>[]));
   }
   final overrides = <Override>[
+    isOnlineProvider.overrideWith(() => _TestConnectivityNotifier(isOnline)),
     userPermissionsProvider.overrideWithValue(UserPermissions(null)),
     authRepositoryProvider.overrideWithValue(auth),
     municipalitiesProvider.overrideWith(_TestMunicipalities.new),
@@ -173,6 +198,11 @@ Future<void> _pumpQuickReport(
     overrides.add(
       createReportUseCaseProvider.overrideWithValue(createReportUseCase),
     );
+  }
+  if (widgetBridge != null) {
+    await widgetBridge.syncAuthenticated(true);
+    addTearDown(widgetBridge.dispose);
+    overrides.add(widgetBridgeProvider.overrideWithValue(widgetBridge));
   }
   final navigatorObservers = <NavigatorObserver>[];
   if (navigatorObserver != null) navigatorObservers.add(navigatorObserver);
@@ -804,6 +834,19 @@ void main() {
     expect(find.text('Error: Refresh location / Manual Pin'), findsOneWidget);
   });
 
+  testWidgets('widget reports location required when GPS is unavailable', (
+    tester,
+  ) async {
+    final states = <Map<String, Object>>[];
+    await _pumpQuickReport(
+      tester,
+      locate: () => Future<Position>.error(StateError('GPS unavailable')),
+      widgetBridge: _recordWidgetState(states),
+    );
+
+    expect(states.last['quickReportStatus'], 'locationRequired');
+  });
+
   testWidgets('outside GPS explains manual selection without blocking access', (
     tester,
   ) async {
@@ -897,10 +940,12 @@ void main() {
         municipalityId: any(named: 'municipalityId'),
       ),
     ).thenAnswer((_) => nearby.future);
+    final states = <Map<String, Object>>[];
     await _pumpQuickReport(
       tester,
       locate: () async => inside,
       reportsRepository: reports,
+      widgetBridge: _recordWidgetState(states),
     );
     await tester.enterText(
       find.byKey(const Key('quick-report-description')),
@@ -911,6 +956,7 @@ void main() {
     await tester.tap(find.byKey(const Key('quick-report-submit')));
     await tester.pump();
     expect(find.text('Submitting Quick Report…'), findsOneWidget);
+    expect(states.last['quickReportStatus'], 'submitting');
     expect(
       tester
           .widget<ElevatedButton>(find.byKey(const Key('quick-report-submit')))
@@ -931,6 +977,7 @@ void main() {
     await tester.tap(find.text('Review mine'));
     await tester.pump();
     expect(find.text('Submit Quick Report'), findsOneWidget);
+    expect(states.last['quickReportStatus'], 'ready');
   });
 
   for (final size in const [Size(360, 800), Size(390, 844), Size(412, 915)]) {
@@ -1030,6 +1077,7 @@ void main() {
       ),
     );
     final observer = _CountingNavigatorObserver();
+    final states = <Map<String, Object>>[];
     when(
       () => reports.getNearbyReports(
         latitude: any(named: 'latitude'),
@@ -1044,6 +1092,7 @@ void main() {
       createReportUseCase: createReport,
       navigatorObserver: observer,
       pushFromRoot: true,
+      widgetBridge: _recordWidgetState(states),
     );
     await tester.enterText(
       find.byKey(const Key('quick-report-description')),
@@ -1060,6 +1109,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('Report submitted'), findsOneWidget);
+    expect(states.last['quickReportStatus'], 'submitted');
     expect(createReport.callCount, 1);
     expect(createReport.lastIsQuickReport, isTrue);
 
@@ -1125,6 +1175,92 @@ void main() {
     final createReport = _TestCreateReportUseCase(
       (_) async => const Err(UnknownFailure('Submission failed')),
     );
+    final states = <Map<String, Object>>[];
+    when(
+      () => reports.getNearbyReports(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+        municipalityId: any(named: 'municipalityId'),
+      ),
+    ).thenAnswer((_) async => const []);
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      reportsRepository: reports,
+      createReportUseCase: createReport,
+      widgetBridge: _recordWidgetState(states),
+    );
+    await tester.enterText(
+      find.byKey(const Key('quick-report-description')),
+      'A fallen tree is blocking both lanes.',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('quick-report-submit')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.textContaining('Submission failed'), findsAtLeastNWidgets(1));
+    expect(find.byKey(const Key('quick-report-submit-error')), findsOneWidget);
+    expect(states.last['quickReportStatus'], 'failed');
+    expect(
+      tester
+          .widget<ElevatedButton>(find.byKey(const Key('quick-report-submit')))
+          .onPressed,
+      isNotNull,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('offline submission reports network unavailable to widget', (
+    tester,
+  ) async {
+    final reports = _ReportsRepositoryMock();
+    final createReport = _TestCreateReportUseCase(
+      (_) async => const Err(NetworkFailure('Network unavailable')),
+    );
+    final states = <Map<String, Object>>[];
+    when(
+      () => reports.getNearbyReports(
+        latitude: any(named: 'latitude'),
+        longitude: any(named: 'longitude'),
+        municipalityId: any(named: 'municipalityId'),
+      ),
+    ).thenAnswer((_) async => const []);
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      reportsRepository: reports,
+      createReportUseCase: createReport,
+      isOnline: false,
+      widgetBridge: _recordWidgetState(states),
+    );
+    await tester.enterText(
+      find.byKey(const Key('quick-report-description')),
+      'A fallen tree is blocking both lanes.',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('quick-report-submit')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(states.last['quickReportStatus'], 'networkUnavailable');
+  });
+
+  testWidgets('retry reuses idempotency key until report input changes', (
+    tester,
+  ) async {
+    final reports = _ReportsRepositoryMock();
+    var attempts = 0;
+    final createReport = _TestCreateReportUseCase((_) async {
+      attempts++;
+      if (attempts < 3) return const Err(NetworkFailure('Request timed out'));
+      return const Success(
+        domain_report.Report(
+          id: 'quick-report-123',
+          description: 'A fallen tree is blocking both lanes.',
+        ),
+      );
+    });
     when(
       () => reports.getNearbyReports(
         latitude: any(named: 'latitude'),
@@ -1143,18 +1279,34 @@ void main() {
       'A fallen tree is blocking both lanes.',
     );
     await tester.pump();
+
+    await tester.tap(find.byKey(const Key('quick-report-submit')));
+    await tester.pump();
+    await tester.pump();
+    expect(find.byKey(const Key('quick-report-submit-error')), findsOneWidget);
+    final firstKey = createReport.idempotencyKeys.single;
+    expect(firstKey, startsWith('quick-'));
+
+    await tester.tap(find.byKey(const Key('quick-report-submit')));
+    await tester.pump();
+    await tester.pump();
+    expect(createReport.idempotencyKeys, [firstKey, firstKey]);
+
+    await tester.enterText(
+      find.byKey(const Key('quick-report-description')),
+      'A fallen tree is blocking the northbound lane.',
+    );
+    await tester.pump();
     await tester.tap(find.byKey(const Key('quick-report-submit')));
     await tester.pump();
     await tester.pump();
 
-    expect(find.textContaining('Submission failed'), findsAtLeastNWidgets(1));
-    expect(find.byKey(const Key('quick-report-submit-error')), findsOneWidget);
-    expect(
-      tester
-          .widget<ElevatedButton>(find.byKey(const Key('quick-report-submit')))
-          .onPressed,
-      isNotNull,
-    );
-    expect(tester.takeException(), isNull);
+    expect(createReport.idempotencyKeys, hasLength(3));
+    expect(createReport.idempotencyKeys.last, startsWith('quick-'));
+    expect(createReport.idempotencyKeys.last, isNot(firstKey));
+    expect(createReport.callCount, 3);
+    await tester.tap(find.byKey(const Key('quick-report-evidence-skip')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
   });
 }

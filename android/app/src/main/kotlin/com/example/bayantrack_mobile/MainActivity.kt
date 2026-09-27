@@ -29,11 +29,14 @@ class MainActivity : FlutterActivity() {
                             val locale = state?.get("locale") as? String
                             val authenticated = state?.get("authenticated") as? Boolean ?: false
                             val unreadCount = (state?.get("unreadCount") as? Number)?.toInt() ?: 0
+                            val quickReportStatus = state?.get("quickReportStatus") as? String
+                                ?: "ready"
                             BayanTrackWidgetProvider.updateState(
                                 context = this,
                                 locale = locale,
                                 authenticated = authenticated,
                                 unreadCount = unreadCount,
+                                quickReportStatus = quickReportStatus,
                             )
                             result.success(null)
                         }

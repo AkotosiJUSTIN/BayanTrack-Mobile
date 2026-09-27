@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../auth_di.dart';
@@ -28,6 +30,8 @@ class AuthSuccess extends AuthState {
   final String? message;
   final User? user;
   const AuthSuccess([this.message, this.user]);
+
+  bool get mayOpenWidgetDestination => user?.requiresPasswordChange == false;
 }
 
 class AuthError extends AuthState {
@@ -42,7 +46,18 @@ class AuthError extends AuthState {
 @riverpod
 class AuthController extends _$AuthController {
   @override
-  AuthState build() => const AuthInitial();
+  AuthState build() {
+    final subscription = ref
+        .watch(authSessionRepositoryProvider)
+        .authStateChanges
+        .listen((authenticated) {
+          if (!authenticated && state is AuthSuccess) {
+            state = const AuthIdle();
+          }
+        });
+    ref.onDispose(() => unawaited(subscription.cancel()));
+    return const AuthInitial();
+  }
 
   /// Check for existing session on app startup
   Future<void> checkAuth() async {

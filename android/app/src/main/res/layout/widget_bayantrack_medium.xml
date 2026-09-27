@@ -10,13 +10,13 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="28dp"
+        android:layout_height="22dp"
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <ImageView
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:contentDescription="@null"
             android:importantForAccessibility="no"
             android:src="@mipmap/bayantrack_logo" />
@@ -25,57 +25,87 @@
             android:id="@+id/widget_brand"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="6dp"
             android:fontFamily="sans"
             android:text="BayanTrack"
             android:textColor="@color/widget_on_surface"
-            android:textSize="14sp"
+            android:textSize="12sp"
             android:textStyle="bold" />
     </LinearLayout>
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="match_parent"
+        android:layout_height="24dp"
+        android:layout_marginTop="3dp"
+        android:fontFamily="sans"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:text="Quick Report"
+        android:textColor="@color/widget_on_surface"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_status"
+        android:layout_width="match_parent"
+        android:layout_height="18dp"
+        android:layout_marginTop="2dp"
+        android:ellipsize="end"
+        android:fontFamily="sans"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:text="Ready when you are."
+        android:textColor="@color/widget_on_surface_secondary"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/widget_quick_report"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="6dp"
-        android:orientation="horizontal">
+        android:background="@drawable/widget_primary_action"
+        android:fontFamily="sans"
+        android:gravity="center"
+        android:maxLines="1"
+        android:minHeight="48dp"
+        android:text="Report now"
+        android:textColor="@color/widget_on_primary"
+        android:textSize="14sp"
+        android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/widget_quick_report"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="6dp"
-            android:layout_weight="1"
-            android:background="@drawable/widget_primary_action"
-            android:fontFamily="sans"
-            android:gravity="center"
-            android:maxLines="1"
-            android:text="Quick Report"
-            android:textColor="@color/widget_on_primary"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+    <LinearLayout
+        android:id="@+id/widget_secondary_actions"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="6dp"
+        android:orientation="horizontal"
+        android:visibility="gone">
 
         <TextView
             android:id="@+id/widget_emergency_report"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="6dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="5dp"
             android:layout_weight="1"
-            android:background="@drawable/widget_primary_action"
+            android:background="@drawable/widget_secondary_action"
             android:fontFamily="sans"
             android:gravity="center"
-            android:maxLines="2"
-            android:text="Emergency Report"
-            android:textColor="@color/widget_on_primary"
-            android:textSize="11sp"
+            android:maxLines="1"
+            android:minHeight="48dp"
+            android:text="Emergency"
+            android:textColor="@color/widget_secondary_text"
+            android:textSize="12sp"
             android:textStyle="bold" />
 
         <LinearLayout
             android:id="@+id/widget_notifications"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="48dp"
             android:layout_weight="1"
             android:background="@drawable/widget_secondary_action"
             android:gravity="center"
+            android:minHeight="48dp"
             android:orientation="horizontal"
             android:paddingStart="6dp"
             android:paddingEnd="6dp">
@@ -95,16 +125,16 @@
             <TextView
                 android:id="@+id/widget_unread_count"
                 android:layout_width="wrap_content"
-                android:layout_height="24dp"
-                android:layout_marginStart="5dp"
+                android:layout_height="22dp"
+                android:layout_marginStart="4dp"
                 android:background="@drawable/widget_badge"
                 android:gravity="center"
-                android:minWidth="24dp"
+                android:minWidth="22dp"
                 android:paddingStart="5dp"
                 android:paddingEnd="5dp"
                 android:text="0"
                 android:textColor="@color/widget_on_badge"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>

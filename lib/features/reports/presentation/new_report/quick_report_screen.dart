@@ -11,8 +11,10 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/urdaneta_geo.dart';
 import '../../../../core/maps/municipality_map.dart';
 import '../../../../core/presentation/widgets/app_toast.dart';
+import '../../../../core/providers/connectivity_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/municipality_geo.dart';
+import '../../../../core/widget/widget_bridge.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/auth_di.dart';
 import '../../../auth/data/auth_models.dart';
@@ -70,12 +72,15 @@ class QuickReportScreen extends ConsumerStatefulWidget {
 class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   final MapController _mapController = MapController();
   final TextEditingController _descriptionController = TextEditingController();
+  String _lastIdempotencyDescription = '';
   ReportCategoryOption? _selectedEmergencyCategory;
   List<ReportCategoryOption> _emergencyCategories = const [];
   bool _isLoadingEmergencyCategories = false;
   String? _emergencyCategoryError;
   late final String _emergencyIdempotencyKey =
       'emergency-${DateTime.now().microsecondsSinceEpoch}';
+  // ponytail: key lasts for this form; persist with a durable draft if quick reports resume after app restarts.
+  String? _quickReportIdempotencyKey;
   final MunicipalityModel _selectedMunicipality = bundledUrdanetaMunicipality;
 
   bool _isSubmitting = false;
@@ -101,6 +106,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   @override
   void initState() {
     super.initState();
+    _descriptionController.addListener(_onQuickReportDescriptionChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _getCurrentLocation();
       if (widget.emergencyMode) _loadEmergencyCategories();
@@ -110,6 +116,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   @override
   void dispose() {
     _landmarkLookupDebounce?.cancel();
+    _descriptionController.removeListener(_onQuickReportDescriptionChanged);
     _mapController.dispose();
     _descriptionController.dispose();
     super.dispose();
@@ -160,6 +167,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   }
 
   void _clearResolvedLocationMetadata() {
+    _resetQuickReportIdempotencyKey();
     _resolvedBarangay = null;
     _isResolvingBarangay = false;
     _resolvedLandmark = null;
@@ -168,6 +176,26 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     _landmarkLookupError = null;
     _landmarkLookupCompleted = false;
   }
+
+  void _syncWidgetStatus(QuickReportWidgetStatus status) {
+    if (!widget.emergencyMode) {
+      unawaited(ref.read(widgetBridgeProvider).syncQuickReportStatus(status));
+    }
+  }
+
+  void _resetQuickReportIdempotencyKey() {
+    _quickReportIdempotencyKey = null;
+  }
+
+  void _onQuickReportDescriptionChanged() {
+    final description = _descriptionController.text;
+    if (description == _lastIdempotencyDescription) return;
+    _lastIdempotencyDescription = description;
+    _resetQuickReportIdempotencyKey();
+  }
+
+  String _getQuickReportIdempotencyKey() => _quickReportIdempotencyKey ??=
+      'quick-${DateTime.now().microsecondsSinceEpoch}';
 
   void _setLandmarkLookupFailure() {
     setState(() {
@@ -180,6 +208,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   }
 
   void _setSelectedPoint(LatLng point) {
+    if (_selectedPoint?.latitude != point.latitude ||
+        _selectedPoint?.longitude != point.longitude) {
+      _resetQuickReportIdempotencyKey();
+    }
     _landmarkLookupDebounce?.cancel();
     _landmarkLookupDebounce = null;
     final l10n = AppLocalizations.of(context);
@@ -190,6 +222,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         _clearResolvedLocationMetadata();
         _locationError = l10n.incidentPinInside(_selectedMunicipality.name);
       });
+      _syncWidgetStatus(QuickReportWidgetStatus.locationRequired);
       return;
     }
 
@@ -203,6 +236,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       _locationError = null;
       _submissionError = null;
     });
+    _syncWidgetStatus(QuickReportWidgetStatus.ready);
 
     unawaited(_resolveBarangay(point, resolutionVersion));
     if (resolveLandmark) {
@@ -269,6 +303,9 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   Future<void> _getCurrentLocation() async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context);
+    if (_selectedPoint == null) {
+      _syncWidgetStatus(QuickReportWidgetStatus.locationRequired);
+    }
 
     setState(() {
       _isLoadingLocation = true;
@@ -420,6 +457,9 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
           _clearResolvedLocationMetadata();
         }
       });
+      if (clearSelection) {
+        _syncWidgetStatus(QuickReportWidgetStatus.locationRequired);
+      }
       return;
     }
 
@@ -500,6 +540,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   }
 
   void _selectLandmarkSuggestion(String suggestion) {
+    if (_resolvedLandmark != suggestion) _resetQuickReportIdempotencyKey();
     setState(() => _resolvedLandmark = suggestion);
   }
 
@@ -523,6 +564,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
     final point = _selectedPoint;
     if (point == null) {
+      _syncWidgetStatus(QuickReportWidgetStatus.locationRequired);
       AppToast.warning(context, l10n.waitingIncidentLocation);
       return;
     }
@@ -544,6 +586,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       _isSubmitting = true;
       _submissionError = null;
     });
+    _syncWidgetStatus(QuickReportWidgetStatus.submitting);
 
     try {
       final nearby = await ref
@@ -595,7 +638,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
           ),
         );
         if (submitAnyway != true) {
-          if (mounted) setState(() => _isSubmitting = false);
+          if (mounted) {
+            setState(() => _isSubmitting = false);
+            _syncWidgetStatus(QuickReportWidgetStatus.ready);
+          }
           return;
         }
       }
@@ -622,6 +668,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
             // The quick flow has no editable landmark field; GPS text must not
             // be persisted as a landmark by the legacy serializer mapping.
             location: null,
+            idempotencyKey: _getQuickReportIdempotencyKey(),
           );
       reportId = report.id;
     } catch (e) {
@@ -633,12 +680,18 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         _isSubmitting = false;
         _submissionError = message;
       });
+      _syncWidgetStatus(
+        ref.read(isOnlineProvider)
+            ? QuickReportWidgetStatus.failed
+            : QuickReportWidgetStatus.networkUnavailable,
+      );
       AppToast.error(context, message);
       return;
     }
 
     if (!mounted) return;
     setState(() => _isSubmitting = false);
+    _syncWidgetStatus(QuickReportWidgetStatus.submitted);
     ref.invalidate(reportsControllerProvider);
     ref.read(myReportsRefreshProvider.notifier).increment();
 
