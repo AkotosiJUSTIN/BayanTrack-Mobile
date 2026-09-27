@@ -24,6 +24,25 @@ class MainActivity : FlutterActivity() {
                 channel.setMethodCallHandler { call, result ->
                     when (call.method) {
                         "getInitialWidgetDestination" -> result.success(takeInitialWidgetDestination())
+                        "acknowledgeWidgetDestination" -> {
+                            val destination = call.arguments as? String
+                            if (destination != null) {
+                                if (pendingWidgetDestination == destination) {
+                                    pendingWidgetDestination = null
+                                }
+                                intent?.takeIf {
+                                    it.getStringExtra(
+                                        BayanTrackWidgetProvider.EXTRA_WIDGET_DESTINATION,
+                                    ) == destination
+                                }?.let { currentIntent ->
+                                    currentIntent.removeExtra(
+                                        BayanTrackWidgetProvider.EXTRA_WIDGET_DESTINATION,
+                                    )
+                                    setIntent(currentIntent)
+                                }
+                            }
+                            result.success(null)
+                        }
                         "updateState" -> {
                             val state = call.arguments as? Map<*, *>
                             val locale = state?.get("locale") as? String

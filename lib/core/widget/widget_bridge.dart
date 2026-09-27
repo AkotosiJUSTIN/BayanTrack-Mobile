@@ -80,6 +80,7 @@ class WidgetBridge {
   int _unreadCount = 0;
   QuickReportWidgetStatus _quickReportStatus = QuickReportWidgetStatus.ready;
   WidgetDestination? _activeDestination;
+  final Set<WidgetDestination> _finishedDestinations = {};
   Map<String, Object>? _lastSentState;
   bool _initialized = false;
 
@@ -102,13 +103,22 @@ class WidgetBridge {
   Future<dynamic> _handleMethodCall(MethodCall call) async {
     if (call.method == 'widgetDestination') {
       ingestRaw(call.arguments);
+      try {
+        await _invoke('acknowledgeWidgetDestination', call.arguments);
+      } catch (_) {
+        // Native retains the intent until Flutter acknowledges its delivery.
+      }
     }
     return null;
   }
 
   void ingestRaw(Object? raw) {
     final destination = parseWidgetDestination(raw);
-    if (destination == null || destination == _activeDestination) return;
+    if (destination == null ||
+        destination == _activeDestination ||
+        _finishedDestinations.contains(destination)) {
+      return;
+    }
     if (!_destinationQueue.enqueue(destination)) return;
     _destinationController.add(destination);
   }
@@ -123,7 +133,13 @@ class WidgetBridge {
     _destinationQueue.restore(destination);
   }
 
-  void finishWidgetDestination() => _activeDestination = null;
+  void finishWidgetDestination() {
+    final destination = _activeDestination;
+    if (destination != null) _finishedDestinations.add(destination);
+    _activeDestination = null;
+  }
+
+  void clearFinishedDestinations() => _finishedDestinations.clear();
 
   Future<void> syncLocale(Locale locale) {
     _locale = widgetLocaleCode(locale);

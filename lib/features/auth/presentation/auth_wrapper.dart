@@ -233,6 +233,10 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.hidden) {
+      _widgetBridge.clearFinishedDestinations();
+    }
+
     // Refresh KYC status when app comes back to foreground
     // This ensures verified status updates after admin verification
     if (state == AppLifecycleState.resumed) {

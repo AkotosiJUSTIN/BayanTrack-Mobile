@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_surface"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingStart="14dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="14dp"
+    android:paddingBottom="8dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:focusable="false"
+        android:importantForAccessibility="no"
+        android:text=""
+        android:textSize="0sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:contentDescription="@null"
+            android:importantForAccessibility="no"
+            android:src="@mipmap/bayantrack_logo" />
+
+        <TextView
+            android:id="@+id/widget_brand"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="7dp"
+            android:layout_weight="1"
+            android:fontFamily="sans"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="BayanTrack"
+            android:textColor="@color/widget_on_surface"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <FrameLayout
+            android:id="@+id/widget_notifications"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:clickable="true"
+            android:contentDescription="Notifications"
+            android:focusable="true"
+            android:foreground="?android:attr/selectableItemBackgroundBorderless">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:importantForAccessibility="no"
+                android:src="@drawable/widget_notification_bell" />
+
+            <TextView
+                android:id="@+id/widget_unread_count"
+                android:layout_width="wrap_content"
+                android:layout_height="18dp"
+                android:layout_gravity="top|end"
+                android:background="@drawable/widget_badge"
+                android:gravity="center"
+                android:minWidth="18dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:text="0"
+                android:textColor="@color/widget_on_badge"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:focusable="false"
+        android:importantForAccessibility="no"
+        android:text=""
+        android:textSize="0sp" />
+
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="match_parent"
+        android:layout_height="22dp"
+        android:layout_marginTop="2dp"
+        android:fontFamily="sans"
+        android:gravity="center_vertical"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:text="Quick Report"
+        android:textColor="@color/widget_on_surface"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_status"
+        android:layout_width="match_parent"
+        android:layout_height="16dp"
+        android:fontFamily="sans"
+        android:gravity="center_vertical"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:text="Report an issue nearby"
+        android:textColor="@color/widget_on_surface_secondary"
+        android:textSize="13sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:focusable="false"
+        android:importantForAccessibility="no"
+        android:text=""
+        android:textSize="0sp" />
+
+    <LinearLayout
+        android:id="@+id/widget_location_row"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/widget_location_info"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:contentDescription="@null"
+            android:importantForAccessibility="no"
+            android:src="@drawable/widget_location_pin" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="7dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_location_label"
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                android:fontFamily="sans"
+                android:gravity="center_vertical"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:text="Incident location"
+                android:textColor="@color/widget_on_surface"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/widget_location_state"
+                android:layout_width="match_parent"
+                android:layout_height="14dp"
+                android:fontFamily="sans"
+                android:gravity="center_vertical"
+                android:includeFontPadding="false"
+                android:maxLines="1"
+                android:text="Not selected"
+                android:textColor="@color/widget_on_surface_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:focusable="false"
+        android:importantForAccessibility="no"
+        android:text=""
+        android:textSize="0sp" />
+
+    <TextView
+        android:id="@+id/widget_quick_report"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/widget_primary_action"
+        android:fontFamily="sans"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:minHeight="48dp"
+        android:text="Set location"
+        android:textColor="@color/widget_on_primary"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:focusable="false"
+        android:importantForAccessibility="no"
+        android:text=""
+        android:textSize="0sp" />
+
+    <TextView
+        android:id="@+id/widget_emergency_report"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/widget_secondary_action"
+        android:fontFamily="sans"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:maxLines="1"
+        android:minHeight="48dp"
+        android:text="Emergency"
+        android:textColor="@color/widget_emergency_text"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:focusable="false"
+        android:importantForAccessibility="no"
+        android:text=""
+        android:textSize="0sp" />
+</LinearLayout>

@@ -49,10 +49,10 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
         private const val KEY_QUICK_REPORT_STATUS = "quick_report_status"
         private const val KEY_QUICK_REPORT_STATUS_UPDATED_AT =
             "quick_report_status_updated_at"
-        private const val MEDIUM_MIN_WIDTH_DP = 180
-        private const val MEDIUM_MIN_HEIGHT_DP = 150
-        private const val EXPANDED_MIN_WIDTH_DP = 280
-        private const val EXPANDED_MIN_HEIGHT_DP = 205
+        private const val MEDIUM_MIN_WIDTH_DP = 220
+        private const val MEDIUM_MIN_HEIGHT_DP = 210
+        private const val EXPANDED_MIN_WIDTH_DP = 220
+        private const val EXPANDED_MIN_HEIGHT_DP = 250
         private const val SUBMITTING_TTL_MILLIS = 2 * 60 * 1000L
         private const val SUBMITTED_TTL_MILLIS = 5 * 60 * 1000L
         private const val STATUS_READY = "ready"
@@ -117,25 +117,28 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
                         SizeF(110f, 110f) to widgetViews(
                             context,
                             R.layout.widget_bayantrack_small,
-                            false,
                             filipino,
                             authenticated,
                             unreadCount,
                             quickReportStatus,
                         ),
-                        SizeF(180f, 150f) to widgetViews(
+                        SizeF(
+                            MEDIUM_MIN_WIDTH_DP.toFloat(),
+                            MEDIUM_MIN_HEIGHT_DP.toFloat(),
+                        ) to widgetViews(
                             context,
                             R.layout.widget_bayantrack_medium,
-                            false,
                             filipino,
                             authenticated,
                             unreadCount,
                             quickReportStatus,
                         ),
-                        SizeF(280f, EXPANDED_MIN_HEIGHT_DP.toFloat()) to widgetViews(
+                        SizeF(
+                            EXPANDED_MIN_WIDTH_DP.toFloat(),
+                            EXPANDED_MIN_HEIGHT_DP.toFloat(),
+                        ) to widgetViews(
                             context,
-                            R.layout.widget_bayantrack_medium,
-                            true,
+                            R.layout.widget_bayantrack_expanded,
                             filipino,
                             authenticated,
                             unreadCount,
@@ -148,16 +151,15 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
                 val height = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
                 val useMediumLayout =
                     width >= MEDIUM_MIN_WIDTH_DP && height >= MEDIUM_MIN_HEIGHT_DP
-                val showSecondaryActions =
+                val useExpandedLayout =
                     width >= EXPANDED_MIN_WIDTH_DP && height >= EXPANDED_MIN_HEIGHT_DP
                 widgetViews(
                     context,
-                    if (useMediumLayout) {
-                        R.layout.widget_bayantrack_medium
-                    } else {
-                        R.layout.widget_bayantrack_small
+                    when {
+                        useExpandedLayout -> R.layout.widget_bayantrack_expanded
+                        useMediumLayout -> R.layout.widget_bayantrack_medium
+                        else -> R.layout.widget_bayantrack_small
                     },
-                    showSecondaryActions,
                     filipino,
                     authenticated,
                     unreadCount,
@@ -171,22 +173,21 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
         private fun widgetViews(
             context: Context,
             layoutId: Int,
-            showSecondaryActions: Boolean,
             filipino: Boolean,
             authenticated: Boolean,
             unreadCount: Int,
             quickReportStatus: String,
         ): RemoteViews {
-            val useMediumLayout = layoutId == R.layout.widget_bayantrack_medium
+            val compact = layoutId == R.layout.widget_bayantrack_small
             val views = RemoteViews(context.packageName, layoutId)
             val quickReportLabel = when {
                 !authenticated -> "Sign in"
                 quickReportStatus == STATUS_SUBMITTING -> "Sending…"
                 quickReportStatus == STATUS_SUBMITTED -> "Sent"
                 quickReportStatus == STATUS_FAILED -> "Retry"
-                quickReportStatus == STATUS_NETWORK_UNAVAILABLE -> "Offline"
+                quickReportStatus == STATUS_NETWORK_UNAVAILABLE -> "Retry"
                 quickReportStatus == STATUS_LOCATION_REQUIRED -> "Set location"
-                else -> "Report now"
+                else -> "Set location"
             }
             val quickReportMessage = when {
                 !authenticated -> "Sign in to report."
@@ -196,14 +197,12 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
                 quickReportStatus == STATUS_NETWORK_UNAVAILABLE -> "Offline. Tap to retry."
                 quickReportStatus == STATUS_LOCATION_REQUIRED ->
                     "Choose a real incident location."
-                else -> "Ready when you are."
+                else -> "Report an issue nearby"
             }
             val notificationsLabel = if (filipino) "Mga Notification" else "Notifications"
 
-            views.setTextViewText(
-                R.id.widget_brand,
-                if (useMediumLayout) "BayanTrack" else "Quick Report",
-            )
+            views.setTextViewText(R.id.widget_brand, "BayanTrack")
+            views.setTextViewText(R.id.widget_title, "Quick Report")
             views.setTextViewText(R.id.widget_quick_report, quickReportLabel)
             views.setContentDescription(
                 R.id.widget_quick_report,
@@ -214,10 +213,12 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
                 navigationPendingIntent(context, QUICK_REPORT_DESTINATION, 1001),
             )
 
-            if (useMediumLayout) {
-                views.setTextViewText(R.id.widget_title, "Quick Report")
+            if (!compact) {
                 views.setTextViewText(R.id.widget_status, quickReportMessage)
-                views.setTextViewText(R.id.widget_emergency_report, "Emergency")
+                views.setContentDescription(
+                    R.id.widget_location_row,
+                    "Incident location. Not selected.",
+                )
                 views.setContentDescription(
                     R.id.widget_emergency_report,
                     "Emergency Report",
@@ -226,7 +227,6 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
                     R.id.widget_emergency_report,
                     navigationPendingIntent(context, EMERGENCY_REPORT_DESTINATION, 1002),
                 )
-                views.setTextViewText(R.id.widget_notifications_label, notificationsLabel)
                 views.setContentDescription(
                     R.id.widget_notifications,
                     if (authenticated && unreadCount > 0) {
@@ -243,10 +243,6 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
                 views.setViewVisibility(
                     R.id.widget_unread_count,
                     if (authenticated && unreadCount > 0) View.VISIBLE else View.GONE,
-                )
-                views.setViewVisibility(
-                    R.id.widget_secondary_actions,
-                    if (showSecondaryActions) View.VISIBLE else View.GONE,
                 )
             }
 
@@ -293,7 +289,9 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
                 action = ACTION_WIDGET_NAVIGATE
                 data = Uri.parse("bayantrack://widget/$destination")
                 putExtra(EXTRA_WIDGET_DESTINATION, destination)
-                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP,
+                )
             }
             return PendingIntent.getActivity(
                 context,

@@ -1,5 +1,6 @@
 import 'package:bayantrack_mobile/core/widget/widget_bridge.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -171,7 +172,7 @@ void main() {
     expect(states.last['quickReportStatus'], 'ready');
   });
 
-  test('ignores repeated taps for the destination currently open', () async {
+  test('ignores repeated destination until the app backgrounds', () async {
     final bridge = WidgetBridge(invokeNative: (_, _) async => null);
     addTearDown(bridge.dispose);
     await bridge.syncAuthenticated(true);
@@ -185,8 +186,32 @@ void main() {
     bridge.finishWidgetDestination();
 
     bridge.ingestRaw('quick_report');
+    expect(bridge.pendingDestination, isNull);
+    expect(bridge.takePendingDestination(), isNull);
+
+    bridge.clearFinishedDestinations();
+    bridge.ingestRaw('quick_report');
     expect(bridge.takePendingDestination(), WidgetDestination.quickReport);
   });
+
+  test(
+    'acknowledges an intent delivered while the app is already running',
+    () async {
+      final channel = _RecordingWidgetChannel();
+      final bridge = WidgetBridge(channel: channel);
+      addTearDown(bridge.dispose);
+
+      await bridge.initialize();
+      channel.pendingDestination = 'quick_report';
+      await channel.dispatch(
+        const MethodCall('widgetDestination', 'quick_report'),
+      );
+
+      expect(bridge.pendingDestination, WidgetDestination.quickReport);
+      expect(channel.pendingDestination, isNull);
+      expect(channel.acknowledgedDestinations, ['quick_report']);
+    },
+  );
 
   test(
     'queues a different widget destination until the open route closes',
@@ -205,4 +230,38 @@ void main() {
       expect(bridge.takePendingDestination(), WidgetDestination.notifications);
     },
   );
+}
+
+class _RecordingWidgetChannel extends MethodChannel {
+  _RecordingWidgetChannel() : super('test/bayantrack/widget');
+
+  Future<dynamic> Function(MethodCall call)? _handler;
+  String? pendingDestination;
+  final List<Object?> acknowledgedDestinations = [];
+
+  Future<void> dispatch(MethodCall call) async {
+    await _handler?.call(call);
+  }
+
+  @override
+  void setMethodCallHandler(
+    Future<dynamic> Function(MethodCall call)? handler,
+  ) {
+    _handler = handler;
+  }
+
+  @override
+  Future<T?> invokeMethod<T>(String method, [dynamic arguments]) async {
+    if (method == 'getInitialWidgetDestination') {
+      final destination = pendingDestination;
+      pendingDestination = null;
+      return destination as T?;
+    }
+    if (method == 'acknowledgeWidgetDestination' &&
+        pendingDestination == arguments) {
+      pendingDestination = null;
+      acknowledgedDestinations.add(arguments);
+    }
+    return null;
+  }
 }
