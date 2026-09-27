@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const _widgetChannelName = 'bayantrack/widget';
 
-enum WidgetDestination { quickReport, emergencyReport, notifications }
+enum WidgetDestination { fastReport, openApp }
 
 enum QuickReportWidgetStatus {
   ready,
@@ -21,13 +21,14 @@ WidgetDestination? parseWidgetDestination(Object? raw) {
   if (raw is! String) return null;
 
   return switch (raw.trim().toLowerCase()) {
-    'quick_report' ||
-    'quick-report' ||
-    'quickreport' => WidgetDestination.quickReport,
-    'emergency_report' ||
-    'emergency-report' ||
-    'emergencyreport' => WidgetDestination.emergencyReport,
-    'notifications' || 'notification' => WidgetDestination.notifications,
+    'fast_report' ||
+    'fast-report' ||
+    'fastreport' ||
+    'bayantrack://fast-report' => WidgetDestination.fastReport,
+    'open_app' ||
+    'open-app' ||
+    'home' ||
+    'bayantrack://home' => WidgetDestination.openApp,
     _ => null,
   };
 }

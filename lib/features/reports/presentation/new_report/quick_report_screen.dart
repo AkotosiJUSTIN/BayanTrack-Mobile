@@ -46,6 +46,7 @@ class QuickReportScreen extends ConsumerStatefulWidget {
     this.locationOverride,
     this.showMapTiles = true,
     this.emergencyMode = false,
+    this.fastReportMode = false,
     this.pickImage,
     this.pickMultiImage,
   });
@@ -58,6 +59,9 @@ class QuickReportScreen extends ConsumerStatefulWidget {
 
   @visibleForTesting
   final bool emergencyMode;
+
+  @visibleForTesting
+  final bool fastReportMode;
 
   @visibleForTesting
   final Future<XFile?> Function(ImageSource source)? pickImage;
@@ -227,7 +231,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     }
 
     final resolutionVersion = ++_locationResolutionVersion;
-    final resolveLandmark = !widget.emergencyMode;
+    final resolveLandmark = !widget.emergencyMode && !widget.fastReportMode;
     setState(() {
       _selectedPoint = point;
       _clearResolvedLocationMetadata();
@@ -546,6 +550,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
   Future<void> _submitQuickReport() async {
     if (_isSubmitting) return;
+    if (widget.fastReportMode) {
+      await _submitFastReport();
+      return;
+    }
     if (widget.emergencyMode) {
       await _submitEmergencyReport();
       return;
@@ -697,6 +705,82 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
     await _offerPhotoUpload(reportId);
     if (!mounted) return;
+    AppToast.success(context, l10n.reportSubmitted);
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  Future<void> _submitFastReport() async {
+    final l10n = AppLocalizations.of(context);
+    final description = _descriptionController.text.trim();
+    final descriptionError = quickReportDescriptionError(
+      description,
+      l10n: l10n,
+    );
+    if (descriptionError != null) {
+      AppToast.warning(context, descriptionError);
+      return;
+    }
+
+    final point = _selectedPoint;
+    if (point == null || !_contains(point)) {
+      _syncWidgetStatus(QuickReportWidgetStatus.locationRequired);
+      AppToast.warning(context, l10n.chooseIncidentLocation);
+      return;
+    }
+    if (_isResolvingBarangay) {
+      AppToast.warning(context, l10n.waitingIncidentLocation);
+      return;
+    }
+    if (!ref.read(isOnlineProvider)) {
+      setState(() => _submissionError = l10n.noInternetConnection);
+      _syncWidgetStatus(QuickReportWidgetStatus.networkUnavailable);
+      AppToast.warning(context, l10n.noInternetConnection);
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+      _submissionError = null;
+    });
+    _syncWidgetStatus(QuickReportWidgetStatus.submitting);
+
+    try {
+      await ref
+          .read(newReportControllerProvider.notifier)
+          .submitFastReport(
+            description: description,
+            municipalityId: _selectedMunicipality.id,
+            barangayId: _resolvedBarangay?.id,
+            barangay: _resolvedBarangay?.name,
+            cityMunicipality: _selectedMunicipality.name,
+            province: _selectedMunicipality.province,
+            latitude: point.latitude,
+            longitude: point.longitude,
+            idempotencyKey: _getQuickReportIdempotencyKey(),
+          );
+    } catch (error) {
+      if (!mounted) return;
+      final message = error is ReportSubmissionFailure
+          ? error.message
+          : l10n.unableSubmitReport;
+      setState(() {
+        _isSubmitting = false;
+        _submissionError = message;
+      });
+      _syncWidgetStatus(
+        ref.read(isOnlineProvider)
+            ? QuickReportWidgetStatus.failed
+            : QuickReportWidgetStatus.networkUnavailable,
+      );
+      AppToast.error(context, message);
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+    _syncWidgetStatus(QuickReportWidgetStatus.submitted);
+    ref.invalidate(reportsControllerProvider);
+    ref.read(myReportsRefreshProvider.notifier).increment();
     AppToast.success(context, l10n.reportSubmitted);
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
@@ -1383,15 +1467,21 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                   label: _isSubmitting
                       ? (widget.emergencyMode
                             ? l10n.submittingEmergencyReport
+                            : widget.fastReportMode
+                            ? l10n.submittingFastReport
                             : l10n.submittingQuickReport)
                       : (widget.emergencyMode
                             ? l10n.submitEmergencyReport
+                            : widget.fastReportMode
+                            ? l10n.submitFastReport
                             : l10n.submitQuickReport),
                   hint: disabledReason,
                   child: ElevatedButton(
                     key: Key(
                       widget.emergencyMode
                           ? 'emergency-report-submit'
+                          : widget.fastReportMode
+                          ? 'fast-report-submit'
                           : 'quick-report-submit',
                     ),
                     onPressed: canSubmit ? _submitQuickReport : null,
@@ -1418,6 +1508,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                 child: Text(
                                   widget.emergencyMode
                                       ? l10n.submittingEmergencyReport
+                                      : widget.fastReportMode
+                                      ? l10n.submittingFastReport
                                       : l10n.submittingQuickReport,
                                 ),
                               ),
@@ -1426,6 +1518,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                         : Text(
                             widget.emergencyMode
                                 ? l10n.submitEmergencyReport
+                                : widget.fastReportMode
+                                ? l10n.submitFastReport
                                 : l10n.submitQuickReport,
                           ),
                   ),
@@ -1460,11 +1554,17 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.emergencyMode ? l10n.emergencyReport : l10n.quickReport,
+          widget.emergencyMode
+              ? l10n.emergencyReport
+              : widget.fastReportMode
+              ? l10n.fastReport
+              : l10n.quickReport,
         ),
         leading: IconButton(
           tooltip: widget.emergencyMode
               ? l10n.closeEmergencyReport
+              : widget.fastReportMode
+              ? l10n.closeFastReport
               : l10n.closeQuickReport,
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
@@ -1487,14 +1587,20 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                     ReportFlowHeader(
                       title: widget.emergencyMode
                           ? l10n.emergencyReport
+                          : widget.fastReportMode
+                          ? l10n.fastReport
                           : l10n.quickReport,
                       guidance: widget.emergencyMode
                           ? l10n.chooseIncidentLocation
+                          : widget.fastReportMode
+                          ? l10n.fastReportGuidance
                           : l10n.selectLocationDescription,
                     ),
                     if (widget.emergencyMode) ...[
                       _buildEmergencyNotice(theme),
                       _buildEmergencyCategory(theme),
+                    ] else if (widget.fastReportMode) ...[
+                      _buildEmergencyNotice(theme),
                     ],
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
@@ -1812,6 +1918,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                               const SizedBox(height: 8),
                               _buildLocationFeedback(theme),
                               if (!widget.emergencyMode &&
+                                  !widget.fastReportMode &&
                                   _selectedPoint != null) ...[
                                 const SizedBox(height: 12),
                                 ReportLocationSummary(

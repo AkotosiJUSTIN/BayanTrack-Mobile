@@ -460,6 +460,42 @@ class NewReportController extends _$NewReportController {
     );
   }
 
+  Future<domain.Report> submitFastReport({
+    required String description,
+    required String municipalityId,
+    String? barangayId,
+    String? barangay,
+    required String cityMunicipality,
+    required String province,
+    required double latitude,
+    required double longitude,
+    String? idempotencyKey,
+  }) async {
+    final useCase = ref.read(createReportUseCaseProvider);
+    final result = await useCase(
+      description: description,
+      isHappeningNow: true,
+      zone: barangay,
+      municipalityId: municipalityId,
+      barangayId: barangayId,
+      barangay: barangay,
+      cityMunicipality: cityMunicipality,
+      province: province,
+      latitude: _formatCoordinate(latitude),
+      longitude: _formatCoordinate(longitude),
+      locationAccuracy: LocationAccuracy.exact.name,
+      declarationConfirmed: true,
+      dataProcessingConsent: true,
+      isQuickReport: true,
+      isEmergency: true,
+      idempotencyKey: idempotencyKey,
+    );
+    return result.when(
+      success: (report) => report,
+      failure: (failure) => throw ReportSubmissionFailure(failure.message),
+    );
+  }
+
   Future<domain.Report> submitEmergencyReport({
     required String category,
     required String municipalityId,
