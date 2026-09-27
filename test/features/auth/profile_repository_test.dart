@@ -77,6 +77,32 @@ void main() {
     expect(result.dataOrNull?.profileRevision, 5);
   });
 
+  test('profile update omits blank backend-optional names', () async {
+    when(
+      () => dio.put(
+        ApiConstants.profileUpdate,
+        data: any<dynamic>(named: 'data'),
+      ),
+    ).thenAnswer(
+      (_) async => _response(
+        ApiConstants.profileUpdate,
+        _profileJson(profileRevision: 5),
+      ),
+    );
+
+    await repository.updateProfile(phone: '+12025550123', expectedRevision: 4);
+
+    final body =
+        verify(
+              () => dio.put(
+                ApiConstants.profileUpdate,
+                data: captureAny<dynamic>(named: 'data'),
+              ),
+            ).captured.single
+            as Map<String, dynamic>;
+    expect(body, {'phone': '+12025550123', 'expected_revision': 4});
+  });
+
   test(
     'avatar upload uses fixed filename, no provider fields, and maps revisions',
     () async {

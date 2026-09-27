@@ -16,6 +16,9 @@ void main() {
       '${root.path}${Platform.pathSeparator}report_evidence_drafts',
     );
     await drafts.create();
+    await File(
+      '${drafts.path}${Platform.pathSeparator}.bayantrack_evidence_drafts',
+    ).create();
     container = ProviderContainer();
     subscription = container.listen(newReportControllerProvider, (_, _) {});
   });
@@ -54,22 +57,20 @@ void main() {
     expect(container.read(newReportControllerProvider).selectedImages, isEmpty);
   });
 
-  test('photos rejected by the limit do not leave drafts behind', () async {
+  test('photos beyond former client limit remain selected', () async {
     final controller = container.read(newReportControllerProvider.notifier);
-    final accepted = <File>[];
-    for (var index = 0; index < NewReportController.maxImages; index++) {
-      accepted.add(await draft('draft_accepted-$index.jpg'));
+    final images = <File>[];
+    for (var index = 0; index < 6; index++) {
+      images.add(await draft('draft_image-$index.jpg'));
     }
-    final rejected = await draft('draft_rejected.jpg');
 
-    controller.addImages([...accepted, rejected]);
-    await _waitForDeletion(rejected);
+    controller.addImages(images);
 
     expect(
       container.read(newReportControllerProvider).selectedImages,
-      hasLength(NewReportController.maxImages),
+      hasLength(images.length),
     );
-    expect(accepted.every((file) => file.existsSync()), isTrue);
+    expect(images.every((file) => file.existsSync()), isTrue);
   });
 
   test(

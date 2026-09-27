@@ -1023,7 +1023,8 @@ class AppLocalizationsFil extends AppLocalizations {
   String get phoneNumber => 'Numero ng telepono';
 
   @override
-  String get phoneHelper => 'Maglagay ng 10 digit, halimbawa 9123456789.';
+  String get phoneHelper =>
+      'Isama ang country code, halimbawa +639123456789 o +12025550123.';
 
   @override
   String get imageTooLarge => 'Pumili ng larawang mas maliit sa 5 MB.';
@@ -1174,9 +1175,11 @@ class AppLocalizationsFil extends AppLocalizations {
   String get addPhotos => 'Magdagdag ng mga Larawan';
 
   @override
-  String photosOfIssue(int count) {
-    return 'Kumuha o pumili ng hanggang $count larawan ng isyu';
-  }
+  String get photosOptional =>
+      'Magdagdag ng mga larawan kung mayroon. Maaari kang magpatuloy kahit wala.';
+
+  @override
+  String get optionalShort => 'Opsyonal';
 
   @override
   String get useButtonsAddPhotos =>

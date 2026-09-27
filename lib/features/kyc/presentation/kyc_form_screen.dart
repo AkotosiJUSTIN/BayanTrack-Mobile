@@ -61,7 +61,6 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
   static final _nameInputRegex = RegExp(
     r"[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF\s\-'.]",
   );
-  static final _addressInputRegex = RegExp(r"[A-Za-z0-9\s,.'#/()\-\n]");
   static final _idNumberRegex = RegExp(r"[A-Za-z0-9\s-]");
 
   // Text controllers for all fields
@@ -1525,16 +1524,15 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             labelText: '${l10n.mobileNumberRequired} *',
             border: _inputBorder(),
             prefixIcon: Icon(Icons.phone),
-            prefixText: '+63 ',
-            hintText: '9123456789',
+            hintText: '+639123456789',
             suffixIcon: _mobileFromProfile
                 ? const Icon(Icons.lock_outline)
                 : null,
           ),
-          keyboardType: TextInputType.number,
+          keyboardType: TextInputType.phone,
           inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(10),
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9+\s-]')),
+            LengthLimitingTextInputFormatter(20),
           ],
           onChanged: _mobileFromProfile
               ? null
@@ -1567,10 +1565,7 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
           textInputAction: TextInputAction.newline,
           minLines: 1,
           maxLines: 2,
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(_addressInputRegex),
-            LengthLimitingTextInputFormatter(255),
-          ],
+          inputFormatters: [LengthLimitingTextInputFormatter(255)],
           onChanged: (v) {
             _clearBackendError('street_barangay');
           },
@@ -1589,16 +1584,17 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             prefixIcon: Icon(Icons.location_city),
           ),
           textCapitalization: TextCapitalization.words,
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(_addressInputRegex),
-            LengthLimitingTextInputFormatter(100),
-          ],
+          inputFormatters: [LengthLimitingTextInputFormatter(100)],
           onChanged: (v) {
             _clearBackendError('city_municipality');
           },
           validator: (v) =>
               _backendError('city_municipality') ??
-              KycValidators.addressField(v, 'City/municipality'),
+              KycValidators.addressField(
+                v,
+                'City/municipality',
+                maxLength: 100,
+              ),
         ),
         const SizedBox(height: 16),
 
@@ -1611,16 +1607,13 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
             prefixIcon: Icon(Icons.map),
           ),
           textCapitalization: TextCapitalization.words,
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(_addressInputRegex),
-            LengthLimitingTextInputFormatter(100),
-          ],
+          inputFormatters: [LengthLimitingTextInputFormatter(100)],
           onChanged: (v) {
             _clearBackendError('province');
           },
           validator: (v) =>
               _backendError('province') ??
-              KycValidators.addressField(v, 'Province'),
+              KycValidators.addressField(v, 'Province', maxLength: 100),
         ),
         const SizedBox(height: 16),
 

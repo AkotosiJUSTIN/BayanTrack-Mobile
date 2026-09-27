@@ -237,6 +237,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     validator: (value) => Validators.lettersOnly(
                       value,
                       fieldName: l10n.firstName,
+                      required: false,
                       l10n: l10n,
                     ),
                   ),
@@ -269,6 +270,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     validator: (value) => Validators.lettersOnly(
                       value,
                       fieldName: l10n.lastName,
+                      required: false,
                       l10n: l10n,
                     ),
                   ),
@@ -292,7 +294,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       hintText: l10n.enterYourEmail,
                       prefixIcon: const Icon(Icons.email_outlined),
                     ),
-                    validator: (value) => Validators.email(value, l10n: l10n),
+                    validator: (value) =>
+                        Validators.registrationEmail(value, l10n: l10n),
                   ),
                 ),
                 const SizedBox(height: 16),

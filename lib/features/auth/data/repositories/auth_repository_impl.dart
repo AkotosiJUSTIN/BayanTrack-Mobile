@@ -131,14 +131,18 @@ class AuthRepositoryImpl implements AuthRepository {
     int? expectedRevision,
   }) async {
     try {
+      final profileData = ProfileUpdateRequest(
+        firstName: firstName,
+        lastName: lastName,
+        phone: phone,
+        expectedRevision: expectedRevision,
+      ).toJson();
+      if (firstName == null) profileData.remove('first_name');
+      if (lastName == null) profileData.remove('last_name');
+      if (expectedRevision == null) profileData.remove('expected_revision');
       final response = await _dio.put(
         ApiConstants.profileUpdate,
-        data: ProfileUpdateRequest(
-          firstName: firstName,
-          lastName: lastName,
-          phone: phone,
-          expectedRevision: expectedRevision,
-        ).toJson(),
+        data: profileData,
       );
       final userData = response.data['user'] ?? response.data;
       final profile = UserProfile.fromJson(userData);

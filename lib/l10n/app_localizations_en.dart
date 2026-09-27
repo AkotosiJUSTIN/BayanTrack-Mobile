@@ -1025,7 +1025,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phoneNumber => 'Phone number';
 
   @override
-  String get phoneHelper => 'Enter 10 digits, for example 9123456789.';
+  String get phoneHelper =>
+      'Include the country code, for example +639123456789 or +12025550123.';
 
   @override
   String get imageTooLarge => 'Choose an image smaller than 5 MB.';
@@ -1173,9 +1174,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addPhotos => 'Add Photos';
 
   @override
-  String photosOfIssue(int count) {
-    return 'Take or select up to $count photos of the issue';
-  }
+  String get photosOptional =>
+      'Add photos if available. You can continue without them.';
+
+  @override
+  String get optionalShort => 'Optional';
 
   @override
   String get useButtonsAddPhotos => 'Use the buttons below to add photos';

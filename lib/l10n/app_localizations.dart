@@ -1931,7 +1931,7 @@ abstract class AppLocalizations {
   /// No description provided for @phoneHelper.
   ///
   /// In en, this message translates to:
-  /// **'Enter 10 digits, for example 9123456789.'**
+  /// **'Include the country code, for example +639123456789 or +12025550123.'**
   String get phoneHelper;
 
   /// No description provided for @imageTooLarge.
@@ -2204,11 +2204,17 @@ abstract class AppLocalizations {
   /// **'Add Photos'**
   String get addPhotos;
 
-  /// No description provided for @photosOfIssue.
+  /// No description provided for @photosOptional.
   ///
   /// In en, this message translates to:
-  /// **'Take or select up to {count} photos of the issue'**
-  String photosOfIssue(int count);
+  /// **'Add photos if available. You can continue without them.'**
+  String get photosOptional;
+
+  /// No description provided for @optionalShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get optionalShort;
 
   /// No description provided for @useButtonsAddPhotos.
   ///

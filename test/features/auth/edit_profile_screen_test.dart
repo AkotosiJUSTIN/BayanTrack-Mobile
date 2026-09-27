@@ -25,15 +25,18 @@ final _syntheticPng = base64Decode(
 );
 
 User _user({
+  String firstName = 'Synthetic',
+  String lastName = 'Citizen',
   String? avatarUrl,
+  String? phone = '+639123456789',
   int profileRevision = 4,
   int avatarRevision = 0,
 }) => User(
   id: 'USR-1',
   email: 'synthetic@example.test',
-  firstName: 'Synthetic',
-  lastName: 'Citizen',
-  phone: '+639123456789',
+  firstName: firstName,
+  lastName: lastName,
+  phone: phone,
   avatarUrl: avatarUrl,
   profileRevision: profileRevision,
   avatarRevision: avatarRevision,
@@ -87,6 +90,95 @@ void main() {
       expect(find.widgetWithText(OutlinedButton, 'Retry'), findsOneWidget);
     },
   );
+
+  testWidgets('profile saves a backend-valid international phone number', (
+    tester,
+  ) async {
+    final repository = _AuthRepositoryMock();
+    when(repository.getProfile).thenAnswer((_) async => Success(_user()));
+    when(
+      () => repository.updateProfile(
+        firstName: 'Synthetic',
+        lastName: 'Citizen',
+        phone: '+12025550123',
+        expectedRevision: 4,
+      ),
+    ).thenAnswer((_) async => Success(_user(phone: '+12025550123')));
+
+    await tester.pumpWidget(_app(repository, pickImage: (_) async => null));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(2), '+12025550123');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Save Changes'));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => repository.updateProfile(
+        firstName: 'Synthetic',
+        lastName: 'Citizen',
+        phone: '+12025550123',
+        expectedRevision: 4,
+      ),
+    ).called(1);
+  });
+
+  testWidgets(
+    'profile can update phone when backend-optional names are blank',
+    (tester) async {
+      final repository = _AuthRepositoryMock();
+      when(repository.getProfile).thenAnswer(
+        (_) async => Success(_user(firstName: '', lastName: '', phone: null)),
+      );
+      when(
+        () => repository.updateProfile(
+          firstName: null,
+          lastName: null,
+          phone: '+12025550123',
+          expectedRevision: 4,
+        ),
+      ).thenAnswer(
+        (_) async =>
+            Success(_user(firstName: '', lastName: '', phone: '+12025550123')),
+      );
+
+      await tester.pumpWidget(_app(repository, pickImage: (_) async => null));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).at(2), '+12025550123');
+      await tester.pump();
+      await tester.tap(find.widgetWithText(FilledButton, 'Save Changes'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => repository.updateProfile(
+          firstName: null,
+          lastName: null,
+          phone: '+12025550123',
+          expectedRevision: 4,
+        ),
+      ).called(1);
+    },
+  );
+
+  testWidgets('profile blocks phone number backend rejects', (tester) async {
+    final repository = _AuthRepositoryMock();
+    when(repository.getProfile).thenAnswer((_) async => Success(_user()));
+
+    await tester.pumpWidget(_app(repository, pickImage: (_) async => null));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).at(2), '09171234567');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Save Changes'));
+    await tester.pumpAndSettle();
+
+    verifyNever(
+      () => repository.updateProfile(
+        firstName: any(named: 'firstName'),
+        lastName: any(named: 'lastName'),
+        phone: any(named: 'phone'),
+        expectedRevision: any(named: 'expectedRevision'),
+      ),
+    );
+  });
 
   testWidgets(
     'avatar failure preserves preview, blocks concurrent save, shows removal, and cleans file',

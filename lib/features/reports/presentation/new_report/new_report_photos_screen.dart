@@ -60,11 +60,8 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
         imageQuality: 85,
       );
       if (photos.isNotEmpty && mounted) {
-        final remaining =
-            NewReportController.maxImages -
-            ref.read(newReportControllerProvider).selectedImages.length;
         final staged = <File>[];
-        for (final photo in photos.take(remaining)) {
+        for (final photo in photos) {
           staged.add(await stageEvidenceFile(photo));
         }
         if (!mounted) return;
@@ -124,15 +121,13 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
                   children: [
                     ReportFlowHeader(
                       title: l10n.addPhotos,
-                      guidance: l10n.photosOfIssue(
-                        NewReportController.maxImages,
-                      ),
+                      guidance: l10n.photosOptional,
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: ReportFlowSection(
                         title: l10n.photos,
-                        trailing: l10n.requiredShort,
+                        trailing: l10n.optionalShort,
                         icon: Icons.photo_library_outlined,
                         child: state.selectedImages.isEmpty
                             ? _buildEmptyState(theme, scheme, l10n)
@@ -171,12 +166,7 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed:
-                              _isPicking ||
-                                  state.selectedImages.length >=
-                                      NewReportController.maxImages
-                              ? null
-                              : _pickFromGallery,
+                          onPressed: _isPicking ? null : _pickFromGallery,
                           icon: const Icon(Icons.photo_library_outlined),
                           label: Text(l10n.gallery),
                         ),
@@ -185,9 +175,7 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen> {
                   ),
                   const SizedBox(height: 12),
                   ElevatedButton(
-                    onPressed: state.hasPhotos && !_isPicking
-                        ? _navigateToLocation
-                        : null,
+                    onPressed: _isPicking ? null : _navigateToLocation,
                     child: Text(l10n.continueLabel),
                   ),
                 ],

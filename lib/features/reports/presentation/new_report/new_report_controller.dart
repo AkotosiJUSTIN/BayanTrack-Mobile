@@ -171,8 +171,6 @@ class NewReportState {
       dataProcessingConsent;
 
   /// Section validations
-  bool get hasPhotos => selectedImages.isNotEmpty;
-
   bool get hasLocation =>
       (zone != null && zone!.isNotEmpty) ||
       (streetLandmark != null && streetLandmark!.isNotEmpty) ||
@@ -186,26 +184,20 @@ class NewReportState {
 /// Controller for managing new report flow state
 @riverpod
 class NewReportController extends _$NewReportController {
-  static const int maxImages = 5;
-
   @override
   NewReportState build() => const NewReportState();
 
   // ==================== IMAGES ====================
 
   void addImage(File image) {
-    if (state.selectedImages.length >= maxImages) {
-      unawaited(discardEvidenceDraft(image));
-      return;
-    }
     state = state.copyWith(selectedImages: [...state.selectedImages, image]);
   }
 
   void addImages(List<File> images) {
-    final remaining = maxImages - state.selectedImages.length;
-    final toAdd = images.take(remaining).toList();
-    state = state.copyWith(selectedImages: [...state.selectedImages, ...toAdd]);
-    unawaited(discardEvidenceDrafts(images.skip(remaining)));
+    if (images.isEmpty) return;
+    state = state.copyWith(
+      selectedImages: [...state.selectedImages, ...images],
+    );
   }
 
   void removeImage(int index) {

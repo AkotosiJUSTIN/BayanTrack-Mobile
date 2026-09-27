@@ -8,13 +8,20 @@ class KycValidators {
   static final _nationalityRegex = RegExp(
     r'^[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF\s\-]+$',
   );
-  static final _mobileRegex = RegExp(r'^09\d{9}$');
+  static final _mobileRegex = RegExp(
+    r'^(?:(?:\+?63|0)9\d{9}|\+[1-9]\d{9,14})$',
+  );
   static final _idNumberRegex = RegExp(r'^[A-Za-z0-9\s-]+$');
   static final _zipRegex = RegExp(r'^\d{4}$');
 
   static String? name(String? value, {String fieldName = 'Name'}) {
     final cleaned = value?.trim() ?? '';
-    if (cleaned.isEmpty) return '$fieldName is required';
+    if (cleaned.isEmpty) {
+      return '$fieldName is required';
+    }
+    if (cleaned.runes.length > 50) {
+      return '$fieldName must be at most 50 characters.';
+    }
     if (!_nameRegex.hasMatch(cleaned)) {
       return '$fieldName may only contain letters, spaces, hyphens, apostrophes, or periods.';
     }
@@ -54,7 +61,7 @@ class KycValidators {
     return null;
   }
 
-  /// Returns the local PH format used by the backend.
+  /// Normalizes local PH input and preserves accepted international numbers.
   static String normalizeMobileNumber(String value) {
     final cleaned = value.trim().replaceAll(RegExp(r'[\s-]'), '');
     if (RegExp(r'^9\d{9}$').hasMatch(cleaned)) return '0$cleaned';
@@ -64,12 +71,9 @@ class KycValidators {
     return cleaned;
   }
 
-  /// Converts a stored local or international number to the 10-digit value
-  /// shown beside the form's +63 prefix.
+  /// Returns stored local or international number for the full-number field.
   static String mobileInputValue(String value) {
-    final normalized = normalizeMobileNumber(value);
-    if (_mobileRegex.hasMatch(normalized)) return normalized.substring(1);
-    return value;
+    return normalizeMobileNumber(value);
   }
 
   static String? mobileNumber(String? value) {
@@ -102,10 +106,17 @@ class KycValidators {
     return null;
   }
 
-  static String? addressField(String? value, String fieldName) {
+  static String? addressField(
+    String? value,
+    String fieldName, {
+    int maxLength = 255,
+  }) {
     final cleaned = value?.trim() ?? '';
-    if (cleaned.length < 2) {
+    if (cleaned.runes.length < 2) {
       return '$fieldName must be at least 2 characters.';
+    }
+    if (cleaned.runes.length > maxLength) {
+      return '$fieldName must be at most $maxLength characters.';
     }
     return null;
   }

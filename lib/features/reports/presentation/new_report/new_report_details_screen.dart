@@ -184,6 +184,7 @@ class _NewReportDetailsScreenState
                                           return Validators.reportText(
                                             v,
                                             isRequired: false,
+                                            maxLength: 200,
                                             l10n: l10n,
                                           );
                                         }

@@ -124,11 +124,22 @@ void main() {
     await tester.pump();
 
     expect(find.text('Step 1 of 4'), findsOneWidget);
-    expect(find.text('Required'), findsOneWidget);
+    expect(find.text('Optional'), findsOneWidget);
+    expect(
+      find.text('Add photos if available. You can continue without them.'),
+      findsOneWidget,
+    );
     expect(find.text('Add Photos'), findsOneWidget);
     expect(find.text('Camera'), findsOneWidget);
     expect(find.text('Gallery'), findsOneWidget);
     expect(find.text('Continue'), findsOneWidget);
+    final continueButton = tester.widget<ElevatedButton>(
+      find.ancestor(
+        of: find.text('Continue'),
+        matching: find.byType(ElevatedButton),
+      ),
+    );
+    expect(continueButton.onPressed, isNotNull);
     expect(tester.takeException(), isNull);
   });
 
