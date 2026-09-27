@@ -62,6 +62,7 @@ class _TestCreateReportUseCase extends CreateReportUseCase {
   int callCount = 0;
   final List<String?> idempotencyKeys = [];
   bool? lastIsQuickReport;
+  bool? lastIsEmergency;
   String? lastMunicipalityId;
   String? lastBarangayId;
   String? lastBarangay;
@@ -95,6 +96,7 @@ class _TestCreateReportUseCase extends CreateReportUseCase {
     callCount++;
     idempotencyKeys.add(idempotencyKey);
     lastIsQuickReport = isQuickReport;
+    lastIsEmergency = isEmergency;
     lastMunicipalityId = municipalityId;
     lastBarangayId = barangayId;
     lastBarangay = barangay;
@@ -159,6 +161,7 @@ Future<void> _pumpQuickReport(
   bool pushFromRoot = false,
   bool isOnline = true,
   WidgetBridge? widgetBridge,
+  bool fastReportMode = false,
 }) async {
   final appTheme = theme ?? AppTheme.light;
   tester.view.physicalSize = size;
@@ -170,6 +173,7 @@ Future<void> _pumpQuickReport(
     key: UniqueKey(),
     locationOverride: locate,
     showMapTiles: false,
+    fastReportMode: fastReportMode,
     pickImage: pickImage,
     pickMultiImage: pickMultiImage,
   );
@@ -1308,5 +1312,76 @@ void main() {
     await tester.tap(find.byKey(const Key('quick-report-evidence-skip')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+  });
+
+  testWidgets('Fast Report submits online with both emergency flags', (
+    tester,
+  ) async {
+    final states = <Map<String, Object>>[];
+    final createReport = _TestCreateReportUseCase(
+      (_) async => const Success(
+        domain_report.Report(
+          id: 'fast-created',
+          description: 'Emergency near the public market',
+          isEmergency: true,
+        ),
+      ),
+    );
+
+    await _pumpQuickReport(
+      tester,
+      locate: () async => _position(15.976, 120.571),
+      createReportUseCase: createReport,
+      widgetBridge: _recordWidgetState(states),
+      fastReportMode: true,
+      pushFromRoot: true,
+    );
+    await tester.enterText(
+      find.byKey(const Key('quick-report-description')),
+      'Emergency near the public market',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('fast-report-submit')));
+    await tester.pumpAndSettle();
+
+    expect(createReport.callCount, 1);
+    expect(createReport.lastIsQuickReport, isTrue);
+    expect(createReport.lastIsEmergency, isTrue);
+    expect(states.last['quickReportStatus'], 'submitted');
+    expect(find.text('Home'), findsOneWidget);
+  });
+
+  testWidgets('offline Fast Report keeps the form and offers retry', (
+    tester,
+  ) async {
+    final states = <Map<String, Object>>[];
+    final createReport = _TestCreateReportUseCase(
+      (_) async => const Success(
+        domain_report.Report(id: 'unused', description: 'unused'),
+      ),
+    );
+
+    await _pumpQuickReport(
+      tester,
+      locate: () async => _position(15.976, 120.571),
+      createReportUseCase: createReport,
+      widgetBridge: _recordWidgetState(states),
+      fastReportMode: true,
+      isOnline: false,
+    );
+    const description = 'Emergency near the public market';
+    await tester.enterText(
+      find.byKey(const Key('quick-report-description')),
+      description,
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('fast-report-submit')));
+    await tester.pump();
+
+    expect(createReport.callCount, 0);
+    expect(find.text(description), findsOneWidget);
+    expect(find.byKey(const Key('quick-report-submit-error')), findsOneWidget);
+    expect(states.last['quickReportStatus'], 'networkUnavailable');
+    expect(find.text('Submit Fast Report'), findsOneWidget);
   });
 }

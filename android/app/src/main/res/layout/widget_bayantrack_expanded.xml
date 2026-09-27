@@ -100,7 +100,7 @@
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:maxLines="1"
-        android:text="Quick Report"
+        android:text="Fast Report"
         android:textColor="@color/widget_on_surface"
         android:textSize="20sp"
         android:textStyle="bold" />
@@ -113,7 +113,7 @@
         android:gravity="center_vertical"
         android:includeFontPadding="false"
         android:maxLines="1"
-        android:text="Report an issue nearby"
+        android:text="Ready"
         android:textColor="@color/widget_on_surface_secondary"
         android:textSize="13sp" />
 
@@ -198,7 +198,7 @@
         android:includeFontPadding="false"
         android:maxLines="1"
         android:minHeight="48dp"
-        android:text="Set location"
+        android:text="Fast Report"
         android:textColor="@color/widget_on_primary"
         android:textSize="14sp"
         android:textStyle="bold" />
@@ -223,7 +223,7 @@
         android:includeFontPadding="false"
         android:maxLines="1"
         android:minHeight="48dp"
-        android:text="Emergency"
+        android:text="Open BayanTrack"
         android:textColor="@color/widget_emergency_text"
         android:textSize="14sp"
         android:textStyle="bold" />

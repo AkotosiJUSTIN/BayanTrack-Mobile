@@ -1,11 +1,21 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../core/presentation/widgets/empty_content_placeholder.dart';
+import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/barangays_provider.dart';
+import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/verification_widgets.dart';
+import '../../images/data/evidence_file_stager.dart';
+import '../../images/data/evidence_upload_queue.dart';
+import '../../images/data/evidence_upload_queue_provider.dart';
 import '../../kyc/presentation/kyc_controller.dart';
 import '../../reports/domain/entities/report.dart';
 import '../../reports/domain/entities/report_enums.dart';
@@ -40,7 +50,11 @@ List<Report> mergeHomeReports(
 
 /// Home screen with map/list toggle and report list.
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.addFollowUpImageOverride});
+
+  @visibleForTesting
+  final Future<bool> Function(String reportId, ImageSource source)?
+  addFollowUpImageOverride;
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -61,6 +75,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _listScrollController = ScrollController();
   final List<Report> _reports = [];
   final Set<ReportStatus> _selectedStatusFilters = <ReportStatus>{};
+  Report? _fastReportFollowUp;
+  String? _fastReportFollowUpError;
+  bool _isUpdatingFastReport = false;
 
   List<Report> get _visibleReports {
     final query = _searchController.text.trim().toLowerCase();
@@ -128,6 +145,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     _listScrollController.addListener(_onListScroll);
     _loadInitialReports();
+    unawaited(_loadFastReportFollowUp());
   }
 
   @override
@@ -139,8 +157,241 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _onRefresh() async {
-    await _loadInitialReports();
+    await Future.wait([_loadInitialReports(), _loadFastReportFollowUp()]);
     ref.invalidate(kycStatusControllerProvider);
+  }
+
+  String _fastReportFollowUpKey(String reportId) =>
+      'fast_report_follow_up_v1_$reportId';
+
+  Future<void> _loadFastReportFollowUp() async {
+    final auth = ref.read(authControllerProvider);
+    if (auth is! AuthSuccess || auth.user == null) return;
+
+    try {
+      final result = await ref.read(getMyReportsUseCaseProvider)(
+        page: 1,
+        pageSize: 20,
+        sortBy: 'date',
+      );
+      final preferences = await SharedPreferences.getInstance();
+      Report? eligible;
+      result.when(
+        success: (data) {
+          final candidates =
+              data.results
+                  .where((report) => report.isEmergency && report.isQuickReport)
+                  .where((report) => report.coreImages.isEmpty)
+                  .where(
+                    (report) =>
+                        preferences.getString(
+                          _fastReportFollowUpKey(report.id),
+                        ) ==
+                        null,
+                  )
+                  .toList()
+                ..sort(
+                  (left, right) => (right.createdAt ?? DateTime(1970))
+                      .compareTo(left.createdAt ?? DateTime(1970)),
+                );
+          eligible = candidates.isEmpty ? null : candidates.first;
+        },
+        failure: (_) {},
+      );
+      if (!mounted) return;
+      setState(() => _fastReportFollowUp = eligible);
+    } catch (_) {
+      // The public dashboard remains usable when the private report list fails.
+    }
+  }
+
+  Future<void> _completeFastReportFollowUp(String outcome) async {
+    final report = _fastReportFollowUp;
+    if (report == null) return;
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(_fastReportFollowUpKey(report.id), outcome);
+    if (mounted) {
+      setState(() {
+        _fastReportFollowUp = null;
+        _fastReportFollowUpError = null;
+        _isUpdatingFastReport = false;
+      });
+    }
+  }
+
+  Future<void> _dismissFastReportFollowUp() =>
+      _completeFastReportFollowUp('dismissed');
+
+  Future<void> _addFastReportDetails() async {
+    final report = _fastReportFollowUp;
+    if (report == null || _isUpdatingFastReport) return;
+    final l10n = AppLocalizations.of(context);
+    final controller = TextEditingController();
+    final details = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.addDetails),
+        content: TextField(
+          key: const Key('fast-report-follow-up-details'),
+          controller: controller,
+          autofocus: true,
+          minLines: 3,
+          maxLines: 6,
+          maxLength: 2000,
+          decoration: InputDecoration(hintText: l10n.emergencyDetailsHint),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = controller.text.trim();
+              if (value.isNotEmpty) Navigator.pop(dialogContext, value);
+            },
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    );
+    // showDialog completes when dismissal starts; keep the controller alive
+    // until the route transition has detached its TextField.
+    unawaited(
+      Future<void>.delayed(kThemeAnimationDuration, controller.dispose),
+    );
+    if (!mounted || details == null) return;
+
+    setState(() {
+      _isUpdatingFastReport = true;
+      _fastReportFollowUpError = null;
+    });
+    final enrichedDescription = report.description.trim().isEmpty
+        ? details
+        : '${report.description.trim()}\n\nAdditional details:\n$details';
+    try {
+      final result = await ref.read(updateReportUseCaseProvider)(
+        id: report.id,
+        description: enrichedDescription,
+      );
+      if (!mounted) return;
+      await result.when(
+        success: (_) async {
+          AppToast.success(context, l10n.detailsSaved);
+          await _completeFastReportFollowUp('details_added');
+        },
+        failure: (failure) async {
+          setState(() {
+            _isUpdatingFastReport = false;
+            _fastReportFollowUpError = failure.message;
+          });
+        },
+      );
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isUpdatingFastReport = false;
+          _fastReportFollowUpError = l10n.unableSubmitReport;
+        });
+      }
+    }
+  }
+
+  Future<void> _addFastReportImage() async {
+    final report = _fastReportFollowUp;
+    if (report == null || _isUpdatingFastReport) return;
+    final l10n = AppLocalizations.of(context);
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: Text(l10n.takePhoto),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(l10n.gallery),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || source == null) return;
+
+    final addFollowUpImageOverride = widget.addFollowUpImageOverride;
+    if (addFollowUpImageOverride != null) {
+      setState(() {
+        _isUpdatingFastReport = true;
+        _fastReportFollowUpError = null;
+      });
+      try {
+        final accepted = await addFollowUpImageOverride(report.id, source);
+        if (!mounted) return;
+        if (accepted) {
+          await _completeFastReportFollowUp('image_added');
+        } else {
+          setState(() {
+            _isUpdatingFastReport = false;
+            _fastReportFollowUpError = l10n.evidenceUploadFailed;
+          });
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _isUpdatingFastReport = false;
+            _fastReportFollowUpError = l10n.evidenceUploadFailed;
+          });
+        }
+      }
+      return;
+    }
+
+    final picked = await ImagePicker().pickImage(
+      source: source,
+      imageQuality: 75,
+    );
+    if (!mounted || picked == null) return;
+    setState(() {
+      _isUpdatingFastReport = true;
+      _fastReportFollowUpError = null;
+    });
+
+    var queueAccepted = false;
+    File? staged;
+    try {
+      staged = await stageEvidenceFile(picked);
+      final auth = ref.read(authControllerProvider);
+      final userId = auth is AuthSuccess ? auth.user?.id : null;
+      if (userId == null) throw StateError('No authenticated user');
+      final queue = await ref.read(evidenceUploadQueueProvider.future);
+      final intents = await queue.enqueue(
+        userId: userId,
+        reportId: report.id,
+        files: [staged],
+      );
+      queueAccepted =
+          intents.length == 1 &&
+          intents.single.state != EvidenceUploadState.missingLocalFile;
+      if (!queueAccepted) throw StateError('Evidence could not be queued');
+      unawaited(queue.resume(userId));
+      if (!mounted) return;
+      AppToast.success(context, l10n.evidenceUploadsPending(1));
+      await _completeFastReportFollowUp('image_added');
+    } catch (_) {
+      if (!queueAccepted && staged != null) await discardEvidenceDraft(staged);
+      if (mounted) {
+        setState(() {
+          _isUpdatingFastReport = false;
+          _fastReportFollowUpError = l10n.evidenceUploadFailed;
+        });
+      }
+    }
   }
 
   Future<void> _loadInitialReports() async {
@@ -253,6 +504,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ref.listen<int>(myReportsRefreshProvider, (previous, next) {
       if (previous != null && next > previous) {
         _loadInitialReports();
+        _loadFastReportFollowUp();
       }
     });
 
@@ -314,6 +566,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         VerificationBanner(permissions: permissions),
+        if (_fastReportFollowUp != null)
+          _buildFastReportFollowUpCard(theme, l10n),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: TextField(
@@ -439,6 +693,87 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         const SizedBox(height: 12),
       ],
+    );
+  }
+
+  Widget _buildFastReportFollowUpCard(ThemeData theme, AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+      child: Card(
+        key: const Key('fast-report-follow-up-card'),
+        color: theme.colorScheme.errorContainer,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.emergency_outlined,
+                    color: theme.colorScheme.onErrorContainer,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      l10n.completeFastReport,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onErrorContainer,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                l10n.completeFastReportBody,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onErrorContainer,
+                ),
+              ),
+              if (_fastReportFollowUpError != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _fastReportFollowUpError!,
+                  key: const Key('fast-report-follow-up-error'),
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
+              ],
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  FilledButton.tonalIcon(
+                    key: const Key('fast-report-add-image'),
+                    onPressed: _isUpdatingFastReport
+                        ? null
+                        : _addFastReportImage,
+                    icon: const Icon(Icons.add_a_photo_outlined),
+                    label: Text(l10n.addImage),
+                  ),
+                  FilledButton.tonalIcon(
+                    key: const Key('fast-report-add-details'),
+                    onPressed: _isUpdatingFastReport
+                        ? null
+                        : _addFastReportDetails,
+                    icon: const Icon(Icons.notes_outlined),
+                    label: Text(l10n.addDetails),
+                  ),
+                  TextButton(
+                    key: const Key('fast-report-dismiss'),
+                    onPressed: _isUpdatingFastReport
+                        ? null
+                        : _dismissFastReportFollowUp,
+                    child: Text(l10n.dismiss),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

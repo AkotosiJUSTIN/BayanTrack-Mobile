@@ -674,6 +674,36 @@ abstract class AppLocalizations {
   /// **'Quick Report'**
   String get quickReport;
 
+  /// No description provided for @fastReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Fast Report'**
+  String get fastReport;
+
+  /// No description provided for @fastReportGuidance.
+  ///
+  /// In en, this message translates to:
+  /// **'For emergencies: confirm your GPS location and briefly describe what is happening.'**
+  String get fastReportGuidance;
+
+  /// No description provided for @submitFastReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Fast Report'**
+  String get submitFastReport;
+
+  /// No description provided for @submittingFastReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting Fast Report…'**
+  String get submittingFastReport;
+
+  /// No description provided for @closeFastReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Fast Report'**
+  String get closeFastReport;
+
   /// No description provided for @emergencyReport.
   ///
   /// In en, this message translates to:
@@ -685,6 +715,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add details'**
   String get addDetails;
+
+  /// No description provided for @addImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add image'**
+  String get addImage;
+
+  /// No description provided for @completeFastReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete your Fast Report'**
+  String get completeFastReport;
+
+  /// No description provided for @completeFastReportBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an image or extra details to help responders follow up.'**
+  String get completeFastReportBody;
 
   /// No description provided for @closeEmergencyReport.
   ///

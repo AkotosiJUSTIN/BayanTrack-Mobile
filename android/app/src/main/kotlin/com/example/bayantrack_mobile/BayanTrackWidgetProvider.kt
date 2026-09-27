@@ -61,9 +61,8 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
         private const val STATUS_FAILED = "failed"
         private const val STATUS_NETWORK_UNAVAILABLE = "networkUnavailable"
         private const val STATUS_LOCATION_REQUIRED = "locationRequired"
-        private const val QUICK_REPORT_DESTINATION = "quick_report"
-        private const val EMERGENCY_REPORT_DESTINATION = "emergency_report"
-        private const val NOTIFICATIONS_DESTINATION = "notifications"
+        private const val FAST_REPORT_DESTINATION = "fast_report"
+        private const val OPEN_APP_DESTINATION = "open_app"
 
         fun updateState(
             context: Context,
@@ -180,69 +179,64 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
         ): RemoteViews {
             val compact = layoutId == R.layout.widget_bayantrack_small
             val views = RemoteViews(context.packageName, layoutId)
-            val quickReportLabel = when {
-                !authenticated -> "Sign in"
-                quickReportStatus == STATUS_SUBMITTING -> "Sending…"
-                quickReportStatus == STATUS_SUBMITTED -> "Sent"
-                quickReportStatus == STATUS_FAILED -> "Retry"
-                quickReportStatus == STATUS_NETWORK_UNAVAILABLE -> "Retry"
-                quickReportStatus == STATUS_LOCATION_REQUIRED -> "Set location"
-                else -> "Set location"
+            val fastReportLabel = when {
+                !authenticated -> if (filipino) "Mag-sign in" else "Sign in"
+                quickReportStatus == STATUS_SUBMITTING ->
+                    if (filipino) "Isinusumite…" else "Submitting…"
+                quickReportStatus == STATUS_SUBMITTED ->
+                    if (filipino) "Naisumite" else "Submitted"
+                quickReportStatus == STATUS_FAILED ->
+                    if (filipino) "Subukan muli" else "Retry"
+                quickReportStatus == STATUS_NETWORK_UNAVAILABLE ->
+                    if (filipino) "Offline / Subukan muli" else "Offline / Retry"
+                else -> "Fast Report"
             }
-            val quickReportMessage = when {
-                !authenticated -> "Sign in to report."
-                quickReportStatus == STATUS_SUBMITTING -> "Submitting report…"
-                quickReportStatus == STATUS_SUBMITTED -> "Report submitted."
-                quickReportStatus == STATUS_FAILED -> "Couldn't send. Tap to retry."
-                quickReportStatus == STATUS_NETWORK_UNAVAILABLE -> "Offline. Tap to retry."
-                quickReportStatus == STATUS_LOCATION_REQUIRED ->
-                    "Choose a real incident location."
-                else -> "Report an issue nearby"
+            val fastReportStatus = when {
+                !authenticated -> if (filipino) "Mag-sign in para mag-report" else "Sign in to report"
+                quickReportStatus == STATUS_SUBMITTING ->
+                    if (filipino) "Isinusumite" else "Submitting"
+                quickReportStatus == STATUS_SUBMITTED ->
+                    if (filipino) "Naisumite" else "Submitted"
+                quickReportStatus == STATUS_FAILED ->
+                    if (filipino) "Nabigo" else "Failed"
+                quickReportStatus == STATUS_NETWORK_UNAVAILABLE ->
+                    if (filipino) "Offline / Subukan muli" else "Offline / Retry"
+                else -> if (filipino) "Handa" else "Ready"
             }
-            val notificationsLabel = if (filipino) "Mga Notification" else "Notifications"
+            val openAppLabel = if (filipino) "Buksan ang BayanTrack" else "Open BayanTrack"
 
             views.setTextViewText(R.id.widget_brand, "BayanTrack")
-            views.setTextViewText(R.id.widget_title, "Quick Report")
-            views.setTextViewText(R.id.widget_quick_report, quickReportLabel)
+            views.setTextViewText(R.id.widget_title, "Fast Report")
+            views.setTextViewText(R.id.widget_quick_report, fastReportLabel)
             views.setContentDescription(
                 R.id.widget_quick_report,
-                "$quickReportMessage $quickReportLabel",
+                "$fastReportStatus. $fastReportLabel",
             )
             views.setOnClickPendingIntent(
                 R.id.widget_quick_report,
-                navigationPendingIntent(context, QUICK_REPORT_DESTINATION, 1001),
+                navigationPendingIntent(context, FAST_REPORT_DESTINATION, 1001),
+            )
+            views.setOnClickPendingIntent(
+                R.id.widget_root,
+                navigationPendingIntent(context, OPEN_APP_DESTINATION, 1002),
             )
 
             if (!compact) {
-                views.setTextViewText(R.id.widget_status, quickReportMessage)
+                views.setTextViewText(R.id.widget_status, fastReportStatus)
                 views.setContentDescription(
                     R.id.widget_location_row,
-                    "Incident location. Not selected.",
+                    if (filipino) "Kukunin ang GPS sa app" else "GPS is collected in the app",
                 )
+                views.setViewVisibility(R.id.widget_notifications, View.GONE)
+                views.setViewVisibility(R.id.widget_unread_count, View.GONE)
+                views.setTextViewText(R.id.widget_emergency_report, openAppLabel)
                 views.setContentDescription(
                     R.id.widget_emergency_report,
-                    "Emergency Report",
+                    openAppLabel,
                 )
                 views.setOnClickPendingIntent(
                     R.id.widget_emergency_report,
-                    navigationPendingIntent(context, EMERGENCY_REPORT_DESTINATION, 1002),
-                )
-                views.setContentDescription(
-                    R.id.widget_notifications,
-                    if (authenticated && unreadCount > 0) {
-                        "$notificationsLabel, $unreadCount unread"
-                    } else {
-                        notificationsLabel
-                    },
-                )
-                views.setOnClickPendingIntent(
-                    R.id.widget_notifications,
-                    navigationPendingIntent(context, NOTIFICATIONS_DESTINATION, 1003),
-                )
-                views.setTextViewText(R.id.widget_unread_count, unreadCount.toString())
-                views.setViewVisibility(
-                    R.id.widget_unread_count,
-                    if (authenticated && unreadCount > 0) View.VISIBLE else View.GONE,
+                    navigationPendingIntent(context, OPEN_APP_DESTINATION, 1002),
                 )
             }
 

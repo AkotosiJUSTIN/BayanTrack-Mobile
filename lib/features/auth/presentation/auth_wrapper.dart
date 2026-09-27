@@ -13,7 +13,6 @@ import '../../../core/presentation/widgets/app_toast.dart';
 import '../../notifications/push_service.dart';
 import '../../notifications/local_notification_service.dart';
 import '../../notifications/presentation/notifications_controller.dart';
-import '../../notifications/presentation/notifications_screen.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/providers/connectivity_provider.dart';
 import '../../../core/providers/locale_provider.dart';
@@ -192,13 +191,13 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
         return;
       }
 
-      final page = switch (destination) {
-        WidgetDestination.quickReport => const QuickReportScreen(),
-        WidgetDestination.emergencyReport => const QuickReportScreen(
-          emergencyMode: true,
-        ),
-        WidgetDestination.notifications => const NotificationsScreen(),
-      };
+      if (destination == WidgetDestination.openApp) {
+        _widgetBridge.finishWidgetDestination();
+        _widgetNavigationScheduled = false;
+        return;
+      }
+
+      final page = const QuickReportScreen(fastReportMode: true);
       final navigation = Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => page));

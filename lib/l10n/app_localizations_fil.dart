@@ -314,10 +314,36 @@ class AppLocalizationsFil extends AppLocalizations {
   String get quickReport => 'Quick Report';
 
   @override
+  String get fastReport => 'Fast Report';
+
+  @override
+  String get fastReportGuidance =>
+      'Para sa emergency: kumpirmahin ang GPS location at ilarawan nang maikli ang nangyayari.';
+
+  @override
+  String get submitFastReport => 'Isumite ang Fast Report';
+
+  @override
+  String get submittingFastReport => 'Isinusumite ang Fast Report…';
+
+  @override
+  String get closeFastReport => 'Isara ang Fast Report';
+
+  @override
   String get emergencyReport => 'Emergency Report';
 
   @override
   String get addDetails => 'Magdagdag ng detalye';
+
+  @override
+  String get addImage => 'Magdagdag ng larawan';
+
+  @override
+  String get completeFastReport => 'Kumpletuhin ang iyong Fast Report';
+
+  @override
+  String get completeFastReportBody =>
+      'Magdagdag ng larawan o detalye upang matulungan ang mga responder.';
 
   @override
   String get closeEmergencyReport => 'Isara ang Emergency Report';

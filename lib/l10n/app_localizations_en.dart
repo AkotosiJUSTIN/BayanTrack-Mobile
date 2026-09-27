@@ -311,10 +311,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickReport => 'Quick Report';
 
   @override
+  String get fastReport => 'Fast Report';
+
+  @override
+  String get fastReportGuidance =>
+      'For emergencies: confirm your GPS location and briefly describe what is happening.';
+
+  @override
+  String get submitFastReport => 'Submit Fast Report';
+
+  @override
+  String get submittingFastReport => 'Submitting Fast Report…';
+
+  @override
+  String get closeFastReport => 'Close Fast Report';
+
+  @override
   String get emergencyReport => 'Emergency Report';
 
   @override
   String get addDetails => 'Add details';
+
+  @override
+  String get addImage => 'Add image';
+
+  @override
+  String get completeFastReport => 'Complete your Fast Report';
+
+  @override
+  String get completeFastReportBody =>
+      'Add an image or extra details to help responders follow up.';
 
   @override
   String get closeEmergencyReport => 'Close Emergency Report';
