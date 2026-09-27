@@ -13,6 +13,7 @@ import '../../kyc/presentation/kyc_controller.dart';
 import '../../kyc/presentation/kyc_form_screen.dart';
 import '../../kyc/presentation/kyc_status_screen.dart';
 import '../../notifications/presentation/notification_settings_screen.dart';
+import '../../help/presentation/help_screens.dart';
 import '../../kyc/domain/entities/kyc_status.dart';
 import '../data/auth_models.dart';
 import '../data/user_permissions.dart';
@@ -97,6 +98,8 @@ class ProfileScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
                   CivicSectionHeading(title: l10n.preferences),
                   _buildPreferencesMenu(context),
+                  const SizedBox(height: 24),
+                  const HelpSafetySection(),
                   const SizedBox(height: 24),
                   _buildLogoutTile(context, ref),
                   const SizedBox(height: 16),
