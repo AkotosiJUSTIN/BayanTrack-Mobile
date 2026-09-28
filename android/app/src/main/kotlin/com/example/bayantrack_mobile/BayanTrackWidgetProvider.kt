@@ -191,6 +191,19 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
                     if (filipino) "Offline / Subukan muli" else "Offline / Retry"
                 else -> "Fast Report"
             }
+            val compactInputLabel = when {
+                !authenticated -> if (filipino) "Mag-sign in para mag-report" else "Sign in to report"
+                quickReportStatus == STATUS_SUBMITTING ->
+                    if (filipino) "Isinusumite…" else "Submitting…"
+                quickReportStatus == STATUS_SUBMITTED ->
+                    if (filipino) "Naisumite" else "Submitted"
+                quickReportStatus == STATUS_FAILED ->
+                    if (filipino) "Subukan muli" else "Retry"
+                quickReportStatus == STATUS_NETWORK_UNAVAILABLE ->
+                    if (filipino) "Offline / Subukan muli" else "Offline / Retry"
+                else -> if (filipino) "Ilarawan ang insidente" else "Describe incident"
+            }
+            val compactSubmitLabel = if (filipino) "I-submit" else "Submit"
             val fastReportStatus = when {
                 !authenticated -> if (filipino) "Mag-sign in para mag-report" else "Sign in to report"
                 quickReportStatus == STATUS_SUBMITTING ->
@@ -207,10 +220,21 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
 
             views.setTextViewText(R.id.widget_brand, "BayanTrack")
             views.setTextViewText(R.id.widget_title, "Fast Report")
-            views.setTextViewText(R.id.widget_quick_report, fastReportLabel)
+            views.setTextViewText(
+                R.id.widget_quick_report,
+                if (compact) compactInputLabel else fastReportLabel,
+            )
             views.setContentDescription(
                 R.id.widget_quick_report,
-                "$fastReportStatus. $fastReportLabel",
+                if (compact) {
+                    if (filipino) {
+                        "Ilarawan ang insidente. Bubuksan ang fast report form."
+                    } else {
+                        "Describe the incident. Opens the fast report form."
+                    }
+                } else {
+                    "$fastReportStatus. $fastReportLabel"
+                },
             )
             views.setOnClickPendingIntent(
                 R.id.widget_quick_report,
@@ -221,7 +245,21 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
                 navigationPendingIntent(context, OPEN_APP_DESTINATION, 1002),
             )
 
-            if (!compact) {
+            if (compact) {
+                views.setTextViewText(R.id.widget_quick_report_submit, compactSubmitLabel)
+                views.setContentDescription(
+                    R.id.widget_quick_report_submit,
+                    if (filipino) {
+                        "I-submit ang fast report. Bubuksan ang fast report form."
+                    } else {
+                        "Submit the fast report. Opens the fast report form."
+                    },
+                )
+                views.setOnClickPendingIntent(
+                    R.id.widget_quick_report_submit,
+                    navigationPendingIntent(context, FAST_REPORT_DESTINATION, 1003),
+                )
+            } else {
                 views.setTextViewText(R.id.widget_status, fastReportStatus)
                 views.setContentDescription(
                     R.id.widget_location_row,
