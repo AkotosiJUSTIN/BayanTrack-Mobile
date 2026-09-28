@@ -16,6 +16,7 @@ void main() {
   late SharedPreferences preferences;
   late DateTime now;
   late bool authenticated;
+  late bool backendReachable;
 
   Future<File> source(String name) async {
     final file = File('${root.path}${Platform.pathSeparator}$name');
@@ -27,12 +28,16 @@ void main() {
     required EvidenceUploader upload,
     int maxRetryCount = 5,
     Duration baseBackoff = const Duration(seconds: 2),
+    Future<Set<String>> Function()? readDraftAttachmentReferences,
+    bool Function()? canReachBackend,
   }) {
     return EvidenceUploadQueue(
       preferences: preferences,
       uploadDirectory: Directory('${root.path}${Platform.pathSeparator}owned'),
       upload: upload,
       isAuthenticated: (_) async => authenticated,
+      canReachBackend: canReachBackend ?? () => backendReachable,
+      readDraftAttachmentReferences: readDraftAttachmentReferences,
       now: () => now,
       maxRetryCount: maxRetryCount,
       baseBackoff: baseBackoff,
@@ -46,6 +51,7 @@ void main() {
     root = await Directory.systemTemp.createTemp('evidence_queue_test_');
     now = DateTime.utc(2026, 7, 26, 12);
     authenticated = true;
+    backendReachable = true;
   });
 
   tearDown(() async {
@@ -110,32 +116,82 @@ void main() {
   });
 
   test(
-    'verified queue copy survives removal of picker and draft files',
+    'unreachable Backend pauses evidence until reachability returns',
     () async {
-      authenticated = false;
-      final picked = await source('picked.jpg');
-      final staged = await stageEvidenceFile(
-        XFile(picked.path),
-        stagingDirectory: root,
+      final uploads = <String>[];
+      final subject = queue(
+        upload:
+            ({
+              required file,
+              required reportId,
+              required evidenceKey,
+              required isPrimary,
+              required cancelToken,
+            }) async {
+              uploads.add(evidenceKey);
+            },
       );
-      await picked.delete();
-      final subject = queue(upload: _successfulUpload);
-
       final added = await subject.enqueue(
         userId: 'user-a',
         reportId: 'report-1',
-        files: [staged],
+        files: [await source('reachability.jpg')],
       );
 
-      expect(await staged.exists(), isFalse);
-      expect(await File(added.single.localFilePath).exists(), isTrue);
-      expect(await File(added.single.localFilePath).length(), 32);
-
-      authenticated = true;
+      backendReachable = false;
       await subject.resume('user-a');
-      expect(subject.state.single.state, EvidenceUploadState.completed);
+      expect(uploads, isEmpty);
+      expect(subject.allState.single.state, EvidenceUploadState.pending);
+
+      backendReachable = true;
+      await subject.resume('user-a');
+      expect(uploads, [added.single.id]);
+      expect(subject.allState.single.state, EvidenceUploadState.completed);
     },
   );
+
+  test('queue cleanup retains staged files referenced by a draft', () async {
+    final picked = await source('draft-photo.jpg');
+    final staged = await stageEvidenceFile(
+      XFile(picked.path),
+      stagingDirectory: root,
+    );
+    await staged.setLastModified(now.subtract(const Duration(days: 8)));
+    final subject = queue(
+      upload: _successfulUpload,
+      readDraftAttachmentReferences: () async => {staged.path},
+    );
+
+    await subject.initialize();
+
+    expect(await staged.exists(), isTrue);
+    subject.dispose();
+  });
+
+  test('staged photo stays queue-owned until upload completes', () async {
+    authenticated = false;
+    final picked = await source('picked.jpg');
+    final staged = await stageEvidenceFile(
+      XFile(picked.path),
+      stagingDirectory: root,
+    );
+    await picked.delete();
+    final subject = queue(upload: _successfulUpload);
+
+    final added = await subject.enqueue(
+      userId: 'user-a',
+      reportId: 'report-1',
+      files: [staged],
+    );
+
+    expect(added.single.localFilePath, staged.path);
+    expect(await staged.exists(), isTrue);
+    expect(await File(added.single.localFilePath).length(), 32);
+
+    authenticated = true;
+    await subject.resume('user-a');
+    expect(subject.state.single.state, EvidenceUploadState.completed);
+    expect(await staged.exists(), isFalse);
+  });
 
   test(
     'retry reuses one evidence key, never recreates report, and completed stays done',
@@ -225,8 +281,8 @@ void main() {
     );
 
     expect(added.single.state, EvidenceUploadState.missingLocalFile);
+    expect(added.single.localFilePath, staged.path);
     expect(await staged.exists(), isTrue);
-    expect(await File(added.single.localFilePath).exists(), isFalse);
   });
 
   test('logout and account change isolate intents', () async {

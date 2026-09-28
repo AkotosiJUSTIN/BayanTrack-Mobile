@@ -81,7 +81,7 @@ class ErrorMapper {
       >= 500 => ServerFailure(
         message ?? 'Server error. Please try again later.',
       ),
-      _ => UnknownFailure(message ?? 'Request failed'),
+      _ => UnknownFailure.withStatus(message ?? 'Request failed', statusCode),
     };
   }
 

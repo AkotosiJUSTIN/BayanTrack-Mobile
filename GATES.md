@@ -1,31 +1,40 @@
-# Gates: citizen mobile public-service redesign
+# Gates: Phase 3 report-create outbox
 
-OWNS: lib/core/presentation/widgets/app_toast.dart, lib/core/presentation/widgets/civic_components.dart, lib/core/presentation/widgets/empty_content_placeholder.dart, lib/core/presentation/widgets/loading_overlay.dart, lib/core/providers/connectivity_provider.dart, lib/core/theme/app_colors.dart, lib/core/theme/app_theme.dart, lib/features/auth/presentation/auth_wrapper.dart, lib/features/auth/presentation/profile_screen.dart, lib/features/auth/presentation/verification_widgets.dart, lib/features/home/presentation/**, lib/features/images/presentation/evidence_upload_status_banner.dart, lib/features/navigation/main_navigation_shell.dart, lib/features/notifications/presentation/notifications_screen.dart, lib/features/reports/presentation/**, lib/features/reports/presentation/widgets/**, lib/features/kyc/presentation/**, lib/l10n/**, lib/main.dart, test/core/presentation/widgets/app_toast_test.dart, test/core/theme/app_theme_contrast_test.dart, test/features/citizen_tabs_screen_test.dart, test/features/auth/profile_locale_test.dart, test/features/reports/**, test/features/kyc/**, test/l10n/**, GATES.md
+OWNS: lib/features/reports/**, lib/features/images/data/evidence_upload_queue.dart, lib/features/images/data/evidence_upload_queue_provider.dart, lib/features/auth/presentation/auth_wrapper.dart, lib/core/domain/failures.dart, lib/core/network/error_mapper.dart, lib/l10n/**, test/features/reports/**, test/features/images/**
 
-Scope: align citizen home, my reports, notifications, profile, report creation, dispute review, identity verification, and report details with one accessible public-service mobile experience, including centralized transient feedback and contrast-safe text/surfaces, while preserving workflow, contracts, validation, permissions, and routing.
+Scope: persist owner-scoped report creation until authenticated Backend acknowledgement, then map and hand off evidence safely.
 
-- [x] G0: the acceptance ledger has valid runnable and manual gates
-  CHECK: node ..\\.agents\\skills\\unlazy\\scripts\\gate-lint.mjs GATES.md
-  EXPECT: LINT OK
-  EVIDENCE: gate-lint passed during the final verification pass; the ledger covers shared surface tokens and the top transient toast overlay.
+- [x] G1: report outbox and screen behavior tests pass
+      CHECK: ..\..\Flutter-SDK\flutter\bin\flutter.bat test test/features/reports/report_create_outbox_test.dart test/features/images/evidence_upload_queue_test.dart --reporter compact
+      EXPECT: All tests passed!
+      EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=C:\Users\domin\Coding\BayanTrack\BayanTrack-Mobile; path=63280f151fa7/72 entries; EXPECT=matched; output-sha256=060e2be819702721961bb7c9fcb8e9abfdc2c0600b265cbed7021e7db1fbf839; output-bytes=15035
 
-- [ ] G1: focused citizen-screen, report, dispute, verification, and localization tests pass
-  CHECK: flutter test test/core/theme/app_theme_contrast_test.dart test/core/presentation/widgets/app_toast_test.dart test/features/citizen_tabs_screen_test.dart test/features/auth/profile_locale_test.dart test/features/reports/new_report_flow_screen_test.dart test/features/reports/quick_report_screen_test.dart test/features/reports/emergency_report_screen_test.dart test/features/reports/citizen_review_screen_test.dart test/features/reports/report_detail_screen_test.dart test/features/kyc/kyc_form_screen_test.dart test/features/kyc/kyc_status_screen_test.dart test/l10n/localization_test.dart && echo focused mobile UI tests passed
-  EXPECT: focused mobile UI tests passed
-  EVIDENCE: focused command executed 40 tests with 38 passing; contrast, citizen tabs, KYC, localization, report, and toast checks pass. Two unrelated Quick Report assertions remain: large-text right overflow and missing description ancestor in the map-controls test.
+- [x] G2: report submit and pending-state screen tests pass
+      CHECK: ..\..\Flutter-SDK\flutter\bin\flutter.bat test test/features/reports/quick_report_screen_test.dart test/features/reports/emergency_report_screen_test.dart test/features/reports/new_report_flow_screen_test.dart test/features/reports/new_report_image_draft_test.dart test/features/reports/report_draft_store_test.dart test/features/reports/my_reports_screen_offline_test.dart --reporter compact
+      EXPECT: All tests passed!
+      EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=C:\Users\domin\Coding\BayanTrack\BayanTrack-Mobile; path=63280f151fa7/72 entries; EXPECT=matched; output-sha256=725e0f1325b1328d202ab53de5cc441fd8da28b8fe2b56de2eb85e565874a918; output-bytes=25355
 
-- [ ] G2: Dart formatting and Flutter static analysis pass
-  CHECK: dart format --output=none --set-exit-if-changed lib test && flutter analyze && echo mobile quality gates passed
-  EXPECT: mobile quality gates passed
-  EVIDENCE: dart format was run; the targeted check still flags profile_screen.dart, while the repository-wide check reports 34 formatter-dirty files. Exact flutter analyze exits 1 with 106 repository warnings/info items.
+- [x] G3: outbox implementation and tests analyze cleanly
+      CHECK: ..\..\Flutter-SDK\flutter\bin\flutter.bat analyze lib/features/reports/data/report_create_outbox.dart test/features/reports/report_create_outbox_test.dart
+      EXPECT: No issues found!
+      EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=C:\Users\domin\Coding\BayanTrack\BayanTrack-Mobile; path=63280f151fa7/72 entries; EXPECT=matched; output-sha256=2922d503530a124129fcbd2462cf1d967f3353c680fc2a18199d33926f09efe0; output-bytes=5930
 
-- [ ] G3: the complete mobile test suite passes
-  CHECK: flutter test && echo full mobile tests passed
-  EXPECT: full mobile tests passed
-  EVIDENCE: full suite completed with 8 failures: six evidence-draft filesystem cleanup tests and two unrelated Quick Report layout/accessibility tests; all other cases passed, including the new contrast regression test.
+- [ ] G4: full Mobile test suite passes
+      CHECK: ..\..\Flutter-SDK\flutter\bin\flutter.bat test
+      EXPECT: All tests passed!
+      EVIDENCE: pending
 
-- [ ] G4: runtime checks cover narrow and large phones, keyboard open, light and dark themes, English and Filipino, focus order, and overflow for the four citizen tabs plus dispute, verification, report details, and transient feedback
-  EVIDENCE: widget viewport tests cover compact and large-text Home layouts; top-toast tests cover replacement, safe top placement, timer, persistence, pause, and horizontal dismissal; debug APK builds successfully. Emulator launch was blocked by INSTALL_FAILED_INSUFFICIENT_STORAGE with about 547 MB free, so the manual theme/keyboard/focus/runtime matrix remains open.
+- [ ] G5: Flutter analyzer reports no issues
+      CHECK: ..\..\Flutter-SDK\flutter\bin\flutter.bat analyze
+      EXPECT: No issues found!
+      EVIDENCE: pending
 
-- [x] G5: affected UI keeps existing workflow, permissions, API contracts, and bilingual localization behavior
-  EVIDENCE: source review confirms existing controller calls, routes, arguments, validation branches, status/priority precedence, and dispute payload fields are unchanged; toast wiring only changes presentation feedback; localization reference check passed with matching English/Filipino ARB and generated delegate files
+- [x] G6: Android debug build succeeds
+      CHECK: ..\..\Flutter-SDK\flutter\bin\flutter.bat build apk --debug
+      EXPECT: Built build\app\outputs\flutter-apk\app-debug.apk
+      EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=C:\Users\domin\Coding\BayanTrack\BayanTrack-Mobile; path=63280f151fa7/72 entries; EXPECT=matched; output-sha256=fd959d067513646a26242d9cd050efd162a7f00c0080e62c7b94a9fba837b509; output-bytes=5961
+
+- [x] G7: tracked diff has no whitespace errors
+      CHECK: powershell -NoProfile -Command "git diff --check; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; Write-Output 'DIFF CHECK PASSED'"
+      EXPECT: DIFF CHECK PASSED
+      EVIDENCE: exit=0; shell=C:\WINDOWS\system32\cmd.exe; cwd=C:\Users\domin\Coding\BayanTrack\BayanTrack-Mobile; path=63280f151fa7/72 entries; EXPECT=matched; output-sha256=ee6c2b00a793313c08ca8b67bddc50dbb7192a5b5e7246c201ed68a011ce194a; output-bytes=4976

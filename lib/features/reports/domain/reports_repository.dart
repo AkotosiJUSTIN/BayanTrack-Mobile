@@ -1,4 +1,5 @@
 import '../../../core/domain/result.dart';
+import 'package:dio/dio.dart';
 import 'entities/paginated_reports.dart';
 import 'entities/report.dart';
 import 'entities/report_stats.dart';
@@ -54,6 +55,7 @@ abstract interface class ReportsRepository {
     bool isQuickReport = false,
     bool isEmergency = false,
     String? idempotencyKey,
+    CancelToken? cancelToken,
   });
 
   /// Update a report

@@ -9,6 +9,7 @@ import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dar
 import 'package:bayantrack_mobile/features/reports/domain/usecases/create_report_usecase.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/new_report/new_report_controller.dart';
 import 'package:bayantrack_mobile/features/reports/reports_di.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -45,6 +46,7 @@ class _RecordingCreateReportUseCase extends CreateReportUseCase {
     bool isQuickReport = false,
     bool isEmergency = false,
     String? idempotencyKey,
+    CancelToken? cancelToken,
   }) async {
     arguments = {
       'municipality_id': municipalityId,

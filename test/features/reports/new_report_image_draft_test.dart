@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:bayantrack_mobile/features/reports/data/report_draft_store.dart';
+import 'package:bayantrack_mobile/features/reports/data/report_models.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/new_report/new_report_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,27 +37,74 @@ void main() {
     return file;
   }
 
-  test('removing a selected image deletes its app-owned draft', () async {
+  test('removing an image leaves cleanup to the durable owner', () async {
     final controller = container.read(newReportControllerProvider.notifier);
     final image = await draft('draft_remove.jpg');
 
     controller.addImage(image);
     controller.removeImage(0);
-    await _waitForDeletion(image);
 
     expect(container.read(newReportControllerProvider).selectedImages, isEmpty);
+    expect(await image.exists(), isTrue);
   });
 
-  test('reset deletes all selected app-owned drafts', () async {
+  test('reset clears form references without deleting staged files', () async {
     final controller = container.read(newReportControllerProvider.notifier);
     final images = [await draft('draft_one.jpg'), await draft('draft_two.jpg')];
 
     controller.addImages(images);
     controller.reset();
-    await Future.wait(images.map(_waitForDeletion));
 
     expect(container.read(newReportControllerProvider).selectedImages, isEmpty);
+    expect(images.every((file) => file.existsSync()), isTrue);
   });
+
+  test(
+    'restores an incomplete full draft without consent or transient state',
+    () async {
+      final controller = container.read(newReportControllerProvider.notifier);
+      final image = await draft('draft_restore.jpg');
+      final now = DateTime.utc(2026, 9, 27);
+      final saved = ReportDraft(
+        schemaVersion: ReportDraft.currentSchemaVersion,
+        draftId: 'full-draft-1',
+        ownerId: 'user-A',
+        type: ReportDraftType.full,
+        createdAt: now,
+        updatedAt: now,
+        resumeStep: 'review',
+        payload: {
+          'category': ReportCategory.floodDisaster.value,
+          'title': 'Road flooding',
+          'description': 'Water covers the road',
+          'incidentDatetime': now.toIso8601String(),
+          'isHappeningNow': true,
+          'streetLandmark': 'Market road',
+          'municipalityId': 'urdaneta',
+          'latitude': 15.979204,
+          'longitude': 120.622210,
+          'locationAccuracy': LocationAccuracy.exact.name,
+        },
+        attachmentRefs: [image.path],
+      );
+
+      controller.restoreDraft(saved, attachments: [image]);
+      final restored = container.read(newReportControllerProvider);
+
+      expect(restored.title, 'Road flooding');
+      expect(restored.description, 'Water covers the road');
+      expect(restored.category, ReportCategory.floodDisaster);
+      expect(restored.selectedImages, [image]);
+      expect(restored.resumeStep, 'review');
+      expect(restored.barangayId, isNull);
+      expect(restored.declarationConfirmed, isFalse);
+      expect(restored.dataProcessingConsent, isFalse);
+      expect(restored.isSubmitting, isFalse);
+      expect(restored.error, isNull);
+      expect(restored.nearbyLandmarkSuggestions, isEmpty);
+      expect(restored.canSubmit, isFalse);
+    },
+  );
 
   test('photos beyond former client limit remain selected', () async {
     final controller = container.read(newReportControllerProvider.notifier);
@@ -90,11 +139,4 @@ void main() {
       expect(await image.exists(), isTrue);
     },
   );
-}
-
-Future<void> _waitForDeletion(File file) async {
-  for (var attempt = 0; attempt < 20 && await file.exists(); attempt++) {
-    await Future<void>.delayed(const Duration(milliseconds: 5));
-  }
-  expect(await file.exists(), isFalse);
 }

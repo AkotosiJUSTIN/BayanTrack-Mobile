@@ -47,6 +47,58 @@ void main() {
   });
 
   test(
+    'restored references require an existing staged file in the owned dir',
+    () async {
+      final source = File('${root.path}${Platform.pathSeparator}picked.jpg');
+      await source.writeAsBytes(List<int>.filled(16, 1));
+      final staged = await stageEvidenceFile(
+        XFile(source.path),
+        stagingDirectory: root,
+      );
+
+      expect(
+        await resolveEvidenceDraftReference(
+          staged.path,
+          stagingDirectory: root,
+        ),
+        isNotNull,
+      );
+      expect(
+        await resolveEvidenceDraftReference(
+          '${staged.parent.path}${Platform.pathSeparator}missing.jpg',
+          stagingDirectory: root,
+        ),
+        isNull,
+      );
+      expect(
+        await resolveEvidenceDraftReference(
+          source.path,
+          stagingDirectory: root,
+        ),
+        isNull,
+      );
+
+      final outside = Directory('${root.path}${Platform.pathSeparator}outside');
+      await outside.create();
+      final marker = File(
+        '${outside.path}${Platform.pathSeparator}.bayantrack_evidence_drafts',
+      );
+      await marker.create();
+      final lookalike = File(
+        '${outside.path}${Platform.pathSeparator}draft_123_0.jpg',
+      );
+      await lookalike.writeAsBytes(List<int>.filled(16, 1));
+      expect(
+        await resolveEvidenceDraftReference(
+          lookalike.path,
+          stagingDirectory: root,
+        ),
+        isNull,
+      );
+    },
+  );
+
+  test(
     'rejects an empty picker file without leaving a partial draft',
     () async {
       final source = File('${root.path}${Platform.pathSeparator}empty.jpg');
@@ -60,7 +112,7 @@ void main() {
       final drafts = Directory(
         '${root.path}${Platform.pathSeparator}report_evidence_drafts',
       );
-      expect(await drafts.list().toList(), isEmpty);
+      expect(await drafts.exists(), isFalse);
     },
   );
 }

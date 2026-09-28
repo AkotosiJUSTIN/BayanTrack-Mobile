@@ -24,6 +24,8 @@ import '../../../auth/presentation/auth_controller.dart';
 import '../../../images/data/evidence_file_stager.dart';
 import '../../../images/data/evidence_upload_queue.dart';
 import '../../../images/data/evidence_upload_queue_provider.dart';
+import '../../data/report_draft_store.dart';
+import '../../data/report_create_outbox.dart';
 import '../../data/reports_repository.dart';
 import '../../data/report_models.dart'
     hide LocationAccuracy, ReportCategory, ReportStatus;
@@ -33,6 +35,7 @@ import '../reports_controller.dart';
 import '../report_labels.dart';
 import 'new_report_controller.dart';
 import 'quick_report_geo.dart';
+import 'report_draft_prompt.dart';
 import 'report_flow_widgets.dart';
 
 enum _QuickLocationInputMode { phone, manual }
@@ -73,18 +76,15 @@ class QuickReportScreen extends ConsumerStatefulWidget {
   ConsumerState<QuickReportScreen> createState() => _QuickReportScreenState();
 }
 
-class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
+class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
+    with WidgetsBindingObserver {
   final MapController _mapController = MapController();
   final TextEditingController _descriptionController = TextEditingController();
-  String _lastIdempotencyDescription = '';
+  String _lastDescription = '';
   ReportCategoryOption? _selectedEmergencyCategory;
   List<ReportCategoryOption> _emergencyCategories = const [];
   bool _isLoadingEmergencyCategories = false;
   String? _emergencyCategoryError;
-  late final String _emergencyIdempotencyKey =
-      'emergency-${DateTime.now().microsecondsSinceEpoch}';
-  // ponytail: key lasts for this form; persist with a durable draft if quick reports resume after app restarts.
-  String? _quickReportIdempotencyKey;
   final MunicipalityModel _selectedMunicipality = bundledUrdanetaMunicipality;
 
   bool _isSubmitting = false;
@@ -106,25 +106,317 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   int _locationResolutionVersion = 0;
   Timer? _landmarkLookupDebounce;
   _QuickLocationInputMode _locationInputMode = _QuickLocationInputMode.phone;
+  bool _draftReady = false;
+  bool _draftRestored = false;
+  bool _canPersistDraft = true;
+  bool _persistDraft = true;
+  String? _draftOwnerId;
+  String? _restoredEmergencyCategoryKey;
+  ReportDraft? _draftRecord;
+  Timer? _draftSaveTimer;
+  late final ReportDraftStore _draftStore;
+  late final ProviderSubscription<AuthState> _authSubscription;
+  Future<void> _draftWriteTail = Future<void>.value();
+
+  ReportDraftType get _draftType =>
+      widget.emergencyMode ? ReportDraftType.emergency : ReportDraftType.quick;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _draftStore = ref.read(reportDraftStoreProvider);
+    _draftOwnerId = _currentOwnerId();
+    _authSubscription = ref.listenManual(authControllerProvider, (_, state) {
+      final nextOwnerId = _ownerIdFor(state);
+      if (_draftOwnerId != nextOwnerId) {
+        _canPersistDraft = false;
+        _draftSaveTimer?.cancel();
+        if (_draftOwnerId != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _descriptionController.clear();
+            _selectedPoint = null;
+            _selectedEmergencyCategory = null;
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          });
+        }
+      }
+    });
     _descriptionController.addListener(_onQuickReportDescriptionChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _getCurrentLocation();
-      if (widget.emergencyMode) _loadEmergencyCategories();
+      unawaited(_prepareDraft());
     });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _draftSaveTimer?.cancel();
+    _authSubscription.close();
+    if (_draftReady && _persistDraft) {
+      unawaited(_enqueueDraftSave(_captureDraftPayload()));
+    }
     _landmarkLookupDebounce?.cancel();
     _descriptionController.removeListener(_onQuickReportDescriptionChanged);
     _mapController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      unawaited(_flushDraftSave());
+    }
+  }
+
+  String? _currentOwnerId() => _ownerIdFor(ref.read(authControllerProvider));
+
+  String? _ownerIdFor(AuthState state) =>
+      state is AuthSuccess ? state.user?.id : null;
+
+  Future<void> _prepareDraft() async {
+    final ownerId = _draftOwnerId;
+    final draft = ownerId == null
+        ? null
+        : await _draftStore.read(ownerId, _draftType);
+    if (!mounted) return;
+    if (ownerId != null &&
+        (!_canPersistDraft || _currentOwnerId() != ownerId)) {
+      Navigator.of(context).pop();
+      return;
+    }
+    if (draft != null) {
+      final action = await showReportDraftPrompt(context, draft: draft);
+      if (!mounted) return;
+      if (!_canPersistDraft || _currentOwnerId() != ownerId) {
+        Navigator.of(context).pop();
+        return;
+      }
+      if (action == ReportDraftAction.resume) {
+        _draftRecord = draft;
+        _restoreDraftPayload(draft);
+        _draftRestored = true;
+        _draftReady = true;
+        await _enqueueDraftSave(_captureDraftPayload());
+      } else if (action == ReportDraftAction.startNew) {
+        await _draftStore.delete(ownerId!, _draftType);
+        if (!mounted) return;
+        if (!_canPersistDraft || _currentOwnerId() != ownerId) return;
+        _draftRecord = null;
+        _draftReady = true;
+      } else if (action == ReportDraftAction.discard) {
+        await _draftStore.delete(ownerId!, _draftType);
+        if (!mounted) return;
+        if (!_canPersistDraft || _currentOwnerId() != ownerId) return;
+        _persistDraft = false;
+        Navigator.of(context).pop();
+        return;
+      } else {
+        _persistDraft = false;
+        Navigator.of(context).pop();
+        return;
+      }
+    } else {
+      _draftReady = true;
+    }
+
+    if (!mounted) return;
+    if (ownerId != null &&
+        (!_canPersistDraft || _currentOwnerId() != ownerId)) {
+      return;
+    }
+    setState(() {});
+    if (widget.emergencyMode) _loadEmergencyCategories();
+    if (_selectedPoint == null) _getCurrentLocation();
+  }
+
+  void _restoreDraftPayload(ReportDraft draft) {
+    final description = draft.payload['description'];
+    if (description is String) {
+      _descriptionController.value = TextEditingValue(
+        text: description,
+        selection: TextSelection.collapsed(offset: description.length),
+      );
+    }
+    final latitude = _draftDouble(draft.payload['latitude']);
+    final longitude = _draftDouble(draft.payload['longitude']);
+    if (latitude != null &&
+        longitude != null &&
+        latitude.isFinite &&
+        longitude.isFinite) {
+      final point = LatLng(latitude, longitude);
+      if (_contains(point)) _selectedPoint = point;
+    }
+    final categoryKey = draft.payload['categoryKey'];
+    _restoredEmergencyCategoryKey = categoryKey is String ? categoryKey : null;
+    _emergencyConfirmed = false;
+  }
+
+  Map<String, Object?> _captureDraftPayload() => {
+    'description': _descriptionController.text,
+    'latitude': _selectedPoint?.latitude,
+    'longitude': _selectedPoint?.longitude,
+    if (widget.emergencyMode)
+      'categoryKey':
+          _selectedEmergencyCategory?.key ?? _restoredEmergencyCategoryKey,
+  };
+
+  bool _hasDraftContent(Map<String, Object?> payload) =>
+      (payload['description'] as String? ?? '').trim().isNotEmpty ||
+      payload['categoryKey'] != null;
+
+  void _scheduleDraftSave() {
+    if (!_draftReady || !_canPersistDraft || !_persistDraft) return;
+    final payload = _captureDraftPayload();
+    _draftSaveTimer?.cancel();
+    _draftSaveTimer = Timer(
+      const Duration(milliseconds: 300),
+      () => unawaited(_enqueueDraftSave(payload)),
+    );
+  }
+
+  Future<void> _flushDraftSave() async {
+    _draftSaveTimer?.cancel();
+    if (_draftReady) await _enqueueDraftSave(_captureDraftPayload());
+  }
+
+  Future<void> _enqueueDraftSave(Map<String, Object?> payload) {
+    final operation = _draftWriteTail.then((_) => _writeDraftSnapshot(payload));
+    _draftWriteTail = operation.catchError((_) {});
+    return operation;
+  }
+
+  Future<void> _writeDraftSnapshot(Map<String, Object?> payload) async {
+    final ownerId = _draftOwnerId;
+    if (!_canPersistDraft || !_persistDraft || ownerId == null) return;
+    final previous =
+        await _draftStore.read(ownerId, _draftType) ?? _draftRecord;
+    if (!_hasDraftContent(payload)) {
+      if (previous != null) {
+        await _draftStore.delete(ownerId, _draftType);
+        _draftRecord = null;
+      }
+      return;
+    }
+    final now = DateTime.now().toUtc();
+    final draft = ReportDraft(
+      schemaVersion: ReportDraft.currentSchemaVersion,
+      draftId: previous?.draftId ?? newReportLocalId(),
+      ownerId: ownerId,
+      type: _draftType,
+      createdAt: previous?.createdAt ?? now,
+      updatedAt: now,
+      resumeStep: 'form',
+      payload: payload,
+      attachmentRefs: const [],
+    );
+    await _draftStore.write(draft);
+    _draftRecord = draft;
+  }
+
+  Future<void> _completeDraft() async {
+    _persistDraft = false;
+    _draftSaveTimer?.cancel();
+    final ownerId = _draftOwnerId;
+    if (ownerId != null) {
+      try {
+        await _draftStore.delete(ownerId, _draftType);
+      } catch (_) {
+        // A successful server submit must not be reported as a failed submit.
+      }
+    }
+    _draftRecord = null;
+  }
+
+  Future<ReportCreateOutboxItem> _submitOutboxSnapshot(
+    Map<String, Object?> payload,
+  ) async {
+    await _flushDraftSave();
+    final ownerId = _draftOwnerId ?? _currentOwnerId();
+    if (ownerId == null || !_canPersistDraft || _currentOwnerId() != ownerId) {
+      throw const ReportSubmissionFailure(
+        'Sign in again to submit this report.',
+      );
+    }
+    final draft = await _draftStore.read(ownerId, _draftType);
+    return ref
+        .read(reportCreateOutboxProvider)
+        .submit(
+          ownerId: ownerId,
+          type: _draftType,
+          payload: payload,
+          sourceDraftId: draft?.draftId,
+          sourceDraftUpdatedAt: draft?.updatedAt,
+        );
+  }
+
+  Map<String, Object?> _quickSubmissionPayload({
+    required String description,
+    String? category,
+    required bool emergency,
+    bool includeLandmark = false,
+  }) => {
+    'category': category,
+    'description': description,
+    'isHappeningNow': true,
+    'zone': _resolvedBarangay?.name,
+    'streetLandmark': includeLandmark ? _resolvedLandmark : null,
+    'municipalityId': _selectedMunicipality.id,
+    'barangayId': _resolvedBarangay?.id,
+    'cityMunicipality': _selectedMunicipality.name,
+    'province': _selectedMunicipality.province,
+    'latitude': _selectedPoint!.latitude.toStringAsFixed(10),
+    'longitude': _selectedPoint!.longitude.toStringAsFixed(10),
+    'locationAccuracy': 'exact',
+    'location': null,
+    'barangay': _resolvedBarangay?.name,
+    'declarationConfirmed': true,
+    'dataProcessingConsent': true,
+    'isQuickReport': true,
+    'isEmergency': emergency,
+  };
+
+  Future<void> _showPendingSync(
+    ReportCreateOutboxItem item, {
+    required bool emergency,
+  }) async {
+    _persistDraft = false;
+    _draftSaveTimer?.cancel();
+    if (!mounted) return;
+    setState(() {
+      _isSubmitting = false;
+      _submissionError = null;
+    });
+    ref.invalidate(reportCreateOutboxItemsProvider(item.ownerId));
+    ref.read(myReportsRefreshProvider.notifier).increment();
+    final l10n = AppLocalizations.of(context);
+    if (emergency) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(l10n.emergencyNotYetTransmitted),
+          content: Text(l10n.emergencyCallGuidance),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(l10n.done),
+            ),
+          ],
+        ),
+      );
+    } else {
+      AppToast.info(context, l10n.reportPendingSync);
+    }
+    if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  double? _draftDouble(Object? value) => value is num
+      ? value.toDouble()
+      : double.tryParse(value?.toString() ?? '');
 
   bool _contains(LatLng point) => municipalityContains(
     _selectedMunicipality,
@@ -171,7 +463,6 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   }
 
   void _clearResolvedLocationMetadata() {
-    _resetQuickReportIdempotencyKey();
     _resolvedBarangay = null;
     _isResolvingBarangay = false;
     _resolvedLandmark = null;
@@ -187,19 +478,12 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     }
   }
 
-  void _resetQuickReportIdempotencyKey() {
-    _quickReportIdempotencyKey = null;
-  }
-
   void _onQuickReportDescriptionChanged() {
     final description = _descriptionController.text;
-    if (description == _lastIdempotencyDescription) return;
-    _lastIdempotencyDescription = description;
-    _resetQuickReportIdempotencyKey();
+    if (description == _lastDescription) return;
+    _lastDescription = description;
+    _scheduleDraftSave();
   }
-
-  String _getQuickReportIdempotencyKey() => _quickReportIdempotencyKey ??=
-      'quick-${DateTime.now().microsecondsSinceEpoch}';
 
   void _setLandmarkLookupFailure() {
     setState(() {
@@ -212,10 +496,6 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   }
 
   void _setSelectedPoint(LatLng point) {
-    if (_selectedPoint?.latitude != point.latitude ||
-        _selectedPoint?.longitude != point.longitude) {
-      _resetQuickReportIdempotencyKey();
-    }
     _landmarkLookupDebounce?.cancel();
     _landmarkLookupDebounce = null;
     final l10n = AppLocalizations.of(context);
@@ -226,6 +506,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         _clearResolvedLocationMetadata();
         _locationError = l10n.incidentPinInside(_selectedMunicipality.name);
       });
+      _scheduleDraftSave();
       _syncWidgetStatus(QuickReportWidgetStatus.locationRequired);
       return;
     }
@@ -240,6 +521,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       _locationError = null;
       _submissionError = null;
     });
+    _scheduleDraftSave();
     _syncWidgetStatus(QuickReportWidgetStatus.ready);
 
     unawaited(_resolveBarangay(point, resolutionVersion));
@@ -278,15 +560,28 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         _emergencyCategories = options.categories
             .where((option) => option.active && option.key.isNotEmpty)
             .toList(growable: false);
+        _restoreEmergencyCategory();
         _isLoadingEmergencyCategories = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _emergencyCategories = offlineReportFormOptions.categories;
+        _restoreEmergencyCategory();
         _isLoadingEmergencyCategories = false;
         _emergencyCategoryError = AppLocalizations.of(context).error;
       });
+    }
+  }
+
+  void _restoreEmergencyCategory() {
+    final key = _restoredEmergencyCategoryKey;
+    if (key == null) return;
+    for (final option in _emergencyCategories) {
+      if (option.key == key) {
+        _selectedEmergencyCategory = option;
+        return;
+      }
     }
   }
 
@@ -544,7 +839,6 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   }
 
   void _selectLandmarkSuggestion(String suggestion) {
-    if (_resolvedLandmark != suggestion) _resetQuickReportIdempotencyKey();
     setState(() => _resolvedLandmark = suggestion);
   }
 
@@ -661,24 +955,28 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
     late final String reportId;
     try {
-      final report = await ref
-          .read(newReportControllerProvider.notifier)
-          .submitQuickReport(
-            description: description,
-            municipalityId: _selectedMunicipality.id,
-            barangayId: _resolvedBarangay?.id,
-            barangay: _resolvedBarangay?.name,
-            streetLandmark: _resolvedLandmark,
-            cityMunicipality: _selectedMunicipality.name,
-            province: _selectedMunicipality.province,
-            latitude: point.latitude,
-            longitude: point.longitude,
-            // The quick flow has no editable landmark field; GPS text must not
-            // be persisted as a landmark by the legacy serializer mapping.
-            location: null,
-            idempotencyKey: _getQuickReportIdempotencyKey(),
-          );
-      reportId = report.id;
+      final item = await _submitOutboxSnapshot(
+        _quickSubmissionPayload(
+          description: description,
+          emergency: false,
+          includeLandmark: true,
+        ),
+      );
+      if (item.status == ReportCreateOutboxStatus.rejected) {
+        throw ReportSubmissionFailure(
+          item.safeError ?? l10n.unableSubmitReport,
+        );
+      }
+      if (item.status != ReportCreateOutboxStatus.synced) {
+        _syncWidgetStatus(QuickReportWidgetStatus.networkUnavailable);
+        await _showPendingSync(item, emergency: false);
+        return;
+      }
+      final serverReportId = item.serverReportId;
+      if (serverReportId == null) {
+        throw ReportSubmissionFailure(l10n.unableSubmitReport);
+      }
+      reportId = serverReportId;
     } catch (e) {
       if (!mounted) return;
       final message = e is ReportSubmissionFailure
@@ -697,6 +995,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       return;
     }
 
+    if (!mounted) return;
+    await _completeDraft();
     if (!mounted) return;
     setState(() => _isSubmitting = false);
     _syncWidgetStatus(QuickReportWidgetStatus.submitted);
@@ -731,13 +1031,6 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       AppToast.warning(context, l10n.waitingIncidentLocation);
       return;
     }
-    if (!ref.read(isOnlineProvider)) {
-      setState(() => _submissionError = l10n.noInternetConnection);
-      _syncWidgetStatus(QuickReportWidgetStatus.networkUnavailable);
-      AppToast.warning(context, l10n.noInternetConnection);
-      return;
-    }
-
     setState(() {
       _isSubmitting = true;
       _submissionError = null;
@@ -745,19 +1038,19 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     _syncWidgetStatus(QuickReportWidgetStatus.submitting);
 
     try {
-      await ref
-          .read(newReportControllerProvider.notifier)
-          .submitFastReport(
-            description: description,
-            municipalityId: _selectedMunicipality.id,
-            barangayId: _resolvedBarangay?.id,
-            barangay: _resolvedBarangay?.name,
-            cityMunicipality: _selectedMunicipality.name,
-            province: _selectedMunicipality.province,
-            latitude: point.latitude,
-            longitude: point.longitude,
-            idempotencyKey: _getQuickReportIdempotencyKey(),
-          );
+      final item = await _submitOutboxSnapshot(
+        _quickSubmissionPayload(description: description, emergency: true),
+      );
+      if (item.status == ReportCreateOutboxStatus.rejected) {
+        throw ReportSubmissionFailure(
+          item.safeError ?? l10n.unableSubmitReport,
+        );
+      }
+      if (item.status != ReportCreateOutboxStatus.synced) {
+        _syncWidgetStatus(QuickReportWidgetStatus.networkUnavailable);
+        await _showPendingSync(item, emergency: true);
+        return;
+      }
     } catch (error) {
       if (!mounted) return;
       final message = error is ReportSubmissionFailure
@@ -776,6 +1069,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       return;
     }
 
+    if (!mounted) return;
+    await _completeDraft();
     if (!mounted) return;
     setState(() => _isSubmitting = false);
     _syncWidgetStatus(QuickReportWidgetStatus.submitted);
@@ -815,24 +1110,33 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     });
 
     try {
-      final report = await ref
-          .read(newReportControllerProvider.notifier)
-          .submitEmergencyReport(
-            category: category.key,
-            municipalityId: _selectedMunicipality.id,
-            barangayId: _resolvedBarangay?.id,
-            barangay: _resolvedBarangay?.name,
-            cityMunicipality: _selectedMunicipality.name,
-            province: _selectedMunicipality.province,
-            latitude: point.latitude,
-            longitude: point.longitude,
-            idempotencyKey: _emergencyIdempotencyKey,
-          );
+      final item = await _submitOutboxSnapshot(
+        _quickSubmissionPayload(
+          description: '',
+          category: category.key,
+          emergency: true,
+        ),
+      );
+      if (item.status == ReportCreateOutboxStatus.rejected) {
+        throw ReportSubmissionFailure(
+          item.safeError ?? l10n.unableSubmitReport,
+        );
+      }
+      if (item.status != ReportCreateOutboxStatus.synced) {
+        await _showPendingSync(item, emergency: true);
+        return;
+      }
+      final reportId = item.serverReportId;
+      if (reportId == null) {
+        throw ReportSubmissionFailure(l10n.unableSubmitReport);
+      }
+      if (!mounted) return;
+      await _completeDraft();
       if (!mounted) return;
       ref.invalidate(reportsControllerProvider);
       ref.read(myReportsRefreshProvider.notifier).increment();
       setState(() => _isSubmitting = false);
-      await _offerEmergencyFollowUp(report.id);
+      await _offerEmergencyFollowUp(reportId);
       if (!mounted) return;
       AppToast.success(context, l10n.reportSubmitted);
       Navigator.of(context).popUntil((route) => route.isFirst);
@@ -1126,6 +1430,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                         .firstWhere((option) => option.key == value);
                     _submissionError = null;
                   });
+                  _scheduleDraftSave();
                 },
         ),
       ),
@@ -1551,6 +1856,21 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         ? null
         : LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
 
+    if (!_draftReady) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(
+            widget.emergencyMode
+                ? l10n.emergencyReport
+                : widget.fastReportMode
+                ? l10n.fastReport
+                : l10n.quickReport,
+          ),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -1567,7 +1887,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
               ? l10n.closeFastReport
               : l10n.closeQuickReport,
           icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () async {
+            await _flushDraftSave();
+            if (context.mounted) Navigator.of(context).pop();
+          },
         ),
       ),
       body: SafeArea(
@@ -1597,6 +1920,18 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                           : l10n.selectLocationDescription,
                     ),
                     if (widget.emergencyMode) ...[
+                      if (_draftRestored)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                          child: Text(
+                            l10n.emergencyNotYetTransmitted,
+                            key: const Key('emergency-draft-not-transmitted'),
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: scheme.error,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
                       _buildEmergencyNotice(theme),
                       _buildEmergencyCategory(theme),
                     ] else if (widget.fastReportMode) ...[

@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/presentation/widgets/civic_components.dart';
+import '../../../core/presentation/widgets/offline_stale_banner.dart';
+import '../../../core/providers/backend_reachability_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/maps/municipality_map.dart';
@@ -48,6 +50,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final backendUnreachable =
+        ref.watch(backendReachabilityProvider) ==
+        BackendReachability.unreachable;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
@@ -56,6 +61,17 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     final reportAsync = ref.watch(
       reportDetailControllerProvider(widget.reportId),
     );
+    ref.listen<BackendReachability>(backendReachabilityProvider, (
+      previous,
+      next,
+    ) {
+      if (previous == BackendReachability.unreachable &&
+          next == BackendReachability.reachable) {
+        ref
+            .read(reportDetailControllerProvider(widget.reportId).notifier)
+            .refresh();
+      }
+    });
 
     return Scaffold(
       body: reportAsync.when(
@@ -107,6 +123,8 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   background: _buildImageCarousel(isDark, imageUrls),
                 ),
               ),
+              if (report.isStale || backendUnreachable)
+                const SliverToBoxAdapter(child: OfflineStaleBanner()),
               SliverToBoxAdapter(
                 child: _buildReportContent(theme, isDark, report),
               ),

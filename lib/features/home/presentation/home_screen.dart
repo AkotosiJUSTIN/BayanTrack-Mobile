@@ -8,6 +8,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../core/presentation/widgets/empty_content_placeholder.dart';
 import '../../../core/presentation/widgets/app_toast.dart';
+import '../../../core/presentation/widgets/offline_stale_banner.dart';
+import '../../../core/providers/backend_reachability_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/barangays_provider.dart';
@@ -64,6 +66,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isMapView = true;
   bool _isNavigatingToReportDetail = false;
   bool _isInitialLoading = true;
+  bool _isStale = false;
   bool _isLoadingMore = false;
   String? _loadError;
 
@@ -397,12 +400,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<void> _loadInitialReports() async {
     final generation = ++_loadGeneration;
     setState(() {
-      _isInitialLoading = true;
+      _isInitialLoading = _reports.isEmpty;
       _isLoadingMore = false;
       _loadError = null;
-      _currentPage = 0;
-      _totalPages = 1;
-      _reports.clear();
+      if (_reports.isEmpty) {
+        _currentPage = 0;
+        _totalPages = 1;
+      }
     });
 
     final getReports = ref.read(getReportsUseCaseProvider);
@@ -415,15 +419,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         final mergedReports = mergeHomeReports(<Report>[], data.results);
 
         setState(() {
-          _reports.addAll(mergedReports);
+          _reports
+            ..clear()
+            ..addAll(mergedReports);
           _currentPage = data.page;
           _totalPages = data.totalPages;
+          _isStale = data.isStale;
           _isInitialLoading = false;
         });
       },
       failure: (failure) {
         setState(() {
-          _loadError = failure.message;
+          _loadError = _reports.isEmpty ? failure.message : null;
+          _isStale = _reports.isNotEmpty;
           _isInitialLoading = false;
         });
       },
@@ -453,6 +461,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ..addAll(mergedReports);
             _currentPage = data.page;
             _totalPages = data.totalPages;
+            _isStale = _isStale || data.isStale;
           });
         },
         failure: (_) {},
@@ -496,6 +505,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final backendUnreachable =
+        ref.watch(backendReachabilityProvider) ==
+        BackendReachability.unreachable;
     final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
@@ -503,6 +515,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Auto-refresh when a new report is created
     ref.listen<int>(myReportsRefreshProvider, (previous, next) {
       if (previous != null && next > previous) {
+        _loadInitialReports();
+        _loadFastReportFollowUp();
+      }
+    });
+    ref.listen<BackendReachability>(backendReachabilityProvider, (
+      previous,
+      next,
+    ) {
+      if (previous == BackendReachability.unreachable &&
+          next == BackendReachability.reachable) {
         _loadInitialReports();
         _loadFastReportFollowUp();
       }
@@ -531,6 +553,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           return Column(
             children: [
+              if (_isStale || backendUnreachable) const OfflineStaleBanner(),
               SizedBox(
                 height: shouldScrollHeader
                     ? constraints.maxHeight * 0.48

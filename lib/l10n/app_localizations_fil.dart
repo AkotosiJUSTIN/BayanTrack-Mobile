@@ -356,6 +356,10 @@ class AppLocalizationsFil extends AppLocalizations {
       'Para sa agarang banta. Hindi kapalit ng emergency hotline ang BayanTrack.';
 
   @override
+  String get emergencyCallGuidance =>
+      'Kung may agarang panganib, tumawag sa lokal na serbisyong pang-emergency kung may cellular call. Hindi pa nakukumpirma ng BayanTrack ang pagtanggap sa ulat na ito.';
+
+  @override
   String get emergencyConfirm =>
       'Kinukumpirma kong emergency ito at tama ang lokasyon.';
 
@@ -372,6 +376,43 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get submittingEmergencyReport => 'Ipinapadala ang Emergency Report…';
+
+  @override
+  String get reportDraftFoundTitle => 'Hindi pa tapos na ulat';
+
+  @override
+  String reportDraftFoundMessage(String reportType) {
+    return 'May naka-save kang draft ng $reportType.';
+  }
+
+  @override
+  String get resumeDraft => 'Ipagpatuloy';
+
+  @override
+  String get startNewReport => 'Magsimula ng Bago';
+
+  @override
+  String get discardDraft => 'Burahin ang Draft';
+
+  @override
+  String get notNow => 'Mamaya Na';
+
+  @override
+  String get discardDraftConfirmationTitle => 'Burahin ang draft na ito?';
+
+  @override
+  String get discardDraftConfirmationMessage =>
+      'Mabubura ang naka-save na ulat at mga larawang hindi na ginagamit.';
+
+  @override
+  String get replaceDraftConfirmationMessage =>
+      'Papalitan ng bagong draft ang naka-save na ulat.';
+
+  @override
+  String get keepDraft => 'Panatilihin ang Draft';
+
+  @override
+  String get emergencyNotYetTransmitted => 'HINDI PA NAIPADALA';
 
   @override
   String get emergencyDetailsHint =>
@@ -496,6 +537,46 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get reportSubmitted => 'Naipadala ang ulat';
+
+  @override
+  String get reportPendingSyncTitle => 'Naghihintay na Ma-sync';
+
+  @override
+  String get reportPendingSync =>
+      'Naka-save sa device na ito. Hindi pa naipapadala sa BayanTrack.';
+
+  @override
+  String get reportOutboxRetrying =>
+      'Ligtas na susubukang muli kapag maaabot na ang BayanTrack.';
+
+  @override
+  String get reportOutboxWaitingAuth =>
+      'Mag-sign in sa orihinal na account upang ipagpatuloy ang ulat na ito.';
+
+  @override
+  String get reportOutboxNeedsEdit =>
+      'Hindi tinanggap ang ulat. I-edit at isumite itong muli.';
+
+  @override
+  String get reportOutboxConflict =>
+      'Hindi makumpirma ang pagsusumite. I-edit ang ulat bago isumite muli.';
+
+  @override
+  String get reportOutboxRetryNow => 'Subukan muli ngayon';
+
+  @override
+  String get reportOutboxEdit => 'I-edit at isumite muli';
+
+  @override
+  String get reportEvidenceHandoffTitle => 'Pag-upload ng ebidensya';
+
+  @override
+  String get reportEvidenceHandoffPending =>
+      'Natanggap na ang ulat. Hinihintay pang ma-upload ang ebidensya.';
+
+  @override
+  String get reportEvidenceHandoffRetry =>
+      'Subukan muling i-upload ang ebidensya';
 
   @override
   String get addOptionalPhoto =>
@@ -983,6 +1064,10 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get noInternetConnection => 'Walang koneksyon sa internet';
+
+  @override
+  String get cachedReportsOffline =>
+      'Hindi maabot ang server. Ipinapakita ang naka-save na mga ulat; maaaring luma ang impormasyon.';
 
   @override
   String get dismiss => 'I-dismiss';

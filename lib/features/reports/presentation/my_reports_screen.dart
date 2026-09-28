@@ -3,14 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../core/presentation/widgets/empty_content_placeholder.dart';
+import '../../../core/presentation/widgets/offline_stale_banner.dart';
+import '../../../core/providers/backend_reachability_provider.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../auth/presentation/auth_controller.dart';
 import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/verification_widgets.dart';
 import '../../home/presentation/widgets/home_report_card.dart';
 import '../domain/entities/report.dart';
 import '../domain/entities/report_enums.dart';
+import '../data/report_create_outbox.dart';
+import '../data/report_draft_store.dart';
 import '../presentation/report_detail_screen.dart';
 import '../presentation/report_labels.dart';
+import 'new_report/new_report_photos_screen.dart';
+import 'new_report/quick_report_screen.dart';
 import '../presentation/reports_controller.dart';
 import '../reports_di.dart';
 
@@ -26,6 +33,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   int _selectedFilter = 0;
 
   bool _isInitialLoading = true;
+  bool _isStale = false;
   bool _isLoadingMore = false;
   bool _isNavigatingToReportDetail = false;
   String? _loadError;
@@ -68,16 +76,19 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
 
   Future<void> _onRefresh() => _loadInitialReports();
 
-  Future<void> _loadInitialReports() async {
+  Future<void> _loadInitialReports({bool clearExisting = false}) async {
     final generation = ++_loadGeneration;
     setState(() {
-      _isInitialLoading = true;
+      _isInitialLoading = clearExisting || _reports.isEmpty;
       _isLoadingMore = false;
       _loadError = null;
-      _currentPage = 0;
-      _totalPages = 1;
-      _totalReports = 0;
-      _reports.clear();
+      if (clearExisting) {
+        _currentPage = 0;
+        _totalPages = 1;
+        _totalReports = 0;
+        _isStale = false;
+        _reports.clear();
+      }
     });
 
     final result = await ref.read(getMyReportsUseCaseProvider)(
@@ -94,16 +105,20 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
           for (final report in data.results) report.id: report,
         };
         setState(() {
-          _reports.addAll(uniqueReports.values);
+          _reports
+            ..clear()
+            ..addAll(uniqueReports.values);
           _currentPage = data.page;
           _totalPages = data.totalPages;
           _totalReports = data.total;
+          _isStale = data.isStale;
           _isInitialLoading = false;
         });
       },
       failure: (failure) {
         setState(() {
-          _loadError = failure.message;
+          _loadError = _reports.isEmpty ? failure.message : null;
+          _isStale = _reports.isNotEmpty;
           _isInitialLoading = false;
         });
       },
@@ -135,6 +150,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
             _currentPage = data.page;
             _totalPages = data.totalPages;
             _totalReports = data.total;
+            _isStale = _isStale || data.isStale;
           });
         },
         failure: (_) {},
@@ -171,12 +187,55 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authControllerProvider);
+    final ownerId = auth is AuthSuccess ? auth.user?.id : null;
+    final outboxItems = ownerId == null
+        ? const <ReportCreateOutboxItem>[]
+        : ref.watch(reportCreateOutboxItemsProvider(ownerId)).asData?.value ??
+              const <ReportCreateOutboxItem>[];
+    final handoffPending = outboxItems
+        .where(
+          (item) =>
+              item.status == ReportCreateOutboxStatus.synced &&
+              !item.evidenceHandedOff &&
+              item.attachmentRefs.isNotEmpty,
+        )
+        .toList();
+    if (ownerId != null) {
+      ref.listen(reportCreateOutboxItemsProvider(ownerId), (previous, next) {
+        final before = previous?.asData?.value;
+        final after = next.asData?.value;
+        if (before == null || after == null) return;
+        final beforePending = before
+            .where((item) => item.isPending)
+            .map((item) => item.localReportId)
+            .toSet();
+        final afterPending = after
+            .where((item) => item.isPending)
+            .map((item) => item.localReportId)
+            .toSet();
+        if (beforePending.difference(afterPending).isNotEmpty) {
+          _loadInitialReports();
+        }
+      });
+    }
+    final reachability = ref.watch(backendReachabilityProvider);
+    final backendUnreachable = reachability == BackendReachability.unreachable;
     final permissions = ref.watch(userPermissionsProvider);
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
     ref.listen<int>(myReportsRefreshProvider, (previous, next) {
       if (next > (previous ?? 0)) _loadInitialReports();
+    });
+    ref.listen<BackendReachability>(backendReachabilityProvider, (
+      previous,
+      next,
+    ) {
+      if (previous == BackendReachability.unreachable &&
+          next == BackendReachability.reachable) {
+        _loadInitialReports();
+      }
     });
 
     return Scaffold(
@@ -199,6 +258,23 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
             SliverToBoxAdapter(
               child: VerificationBanner(permissions: permissions),
             ),
+            if (_isStale || backendUnreachable)
+              const SliverToBoxAdapter(child: OfflineStaleBanner()),
+            if (outboxItems.any((item) => item.isPending))
+              SliverToBoxAdapter(
+                child: _buildPendingOutbox(
+                  outboxItems.where((item) => item.isPending).toList(),
+                  theme,
+                  l10n,
+                ),
+              ),
+            if (handoffPending.isNotEmpty)
+              SliverToBoxAdapter(
+                child: _buildEvidenceHandoff(
+                  handoffPending,
+                  canRetry: reachability == BackendReachability.reachable,
+                ),
+              ),
             SliverToBoxAdapter(child: _buildOverview(theme, l10n)),
             SliverToBoxAdapter(
               child: CivicSectionHeading(title: l10n.filterByStatus),
@@ -210,6 +286,183 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildPendingOutbox(
+    List<ReportCreateOutboxItem> items,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CivicSectionHeading(title: l10n.reportPendingSyncTitle),
+        for (final item in items) _buildPendingItem(item, theme, l10n),
+      ],
+    ),
+  );
+
+  Widget _buildEvidenceHandoff(
+    List<ReportCreateOutboxItem> items, {
+    required bool canRetry,
+  }) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          CivicSectionHeading(title: l10n.reportEvidenceHandoffTitle),
+          for (final item in items)
+            CivicSurface(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    l10n.reportEvidenceHandoffPending,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: canRetry
+                          ? () => ref
+                                .read(reportCreateOutboxProvider)
+                                .resume(item.ownerId)
+                          : null,
+                      icon: const Icon(Icons.refresh),
+                      label: Text(l10n.reportEvidenceHandoffRetry),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingItem(
+    ReportCreateOutboxItem item,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
+    final emergency =
+        item.type == ReportDraftType.emergency ||
+        item.payload['isEmergency'] == true;
+    final title = emergency
+        ? l10n.emergencyReport
+        : item.type == ReportDraftType.quick
+        ? l10n.quickReport
+        : l10n.fullReport;
+    final statusMessage = switch (item.errorKind) {
+      ReportCreateOutboxErrorKind.authentication =>
+        l10n.reportOutboxWaitingAuth,
+      ReportCreateOutboxErrorKind.network ||
+      ReportCreateOutboxErrorKind.server => l10n.reportOutboxRetrying,
+      ReportCreateOutboxErrorKind.conflict => l10n.reportOutboxConflict,
+      ReportCreateOutboxErrorKind.validation ||
+      ReportCreateOutboxErrorKind.unavailable =>
+        item.safeError ?? l10n.reportOutboxNeedsEdit,
+      null => l10n.reportPendingSync,
+    };
+    final themeColors = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: CivicSurface(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  emergency
+                      ? Icons.warning_amber_rounded
+                      : Icons.cloud_upload_outlined,
+                  color: emergency ? themeColors.error : themeColors.primary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(statusMessage, style: theme.textTheme.bodySmall),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (emergency) ...[
+              const SizedBox(height: 10),
+              Text(
+                l10n.emergencyNotYetTransmitted,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: themeColors.error,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                l10n.emergencyCallGuidance,
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
+            if (item.status == ReportCreateOutboxStatus.paused ||
+                item.status == ReportCreateOutboxStatus.retryWaiting)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () => _retryOutbox(item),
+                  icon: const Icon(Icons.refresh),
+                  label: Text(l10n.reportOutboxRetryNow),
+                ),
+              )
+            else if (item.status == ReportCreateOutboxStatus.rejected)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () => _editOutbox(item),
+                  icon: const Icon(Icons.edit_outlined),
+                  label: Text(l10n.reportOutboxEdit),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _retryOutbox(ReportCreateOutboxItem item) async {
+    await ref
+        .read(reportCreateOutboxProvider)
+        .retry(item.ownerId, item.localReportId);
+  }
+
+  Future<void> _editOutbox(ReportCreateOutboxItem item) async {
+    final screen = item.type == ReportDraftType.full
+        ? const NewReportPhotosScreen()
+        : QuickReportScreen(
+            emergencyMode: item.type == ReportDraftType.emergency,
+            fastReportMode:
+                item.type == ReportDraftType.quick &&
+                item.payload['isEmergency'] == true,
+          );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => screen));
   }
 
   Widget _buildOverview(ThemeData theme, AppLocalizations l10n) {
@@ -293,7 +546,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
             selected: selected,
             onSelected: (_) {
               setState(() => _selectedFilter = index);
-              _loadInitialReports();
+              _loadInitialReports(clearExisting: true);
             },
           );
         },
@@ -302,7 +555,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   }
 
   Widget _buildSliverContent(ThemeData theme, AppLocalizations l10n) {
-    if (_isInitialLoading) {
+    if (_isInitialLoading && _reports.isEmpty) {
       return SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         sliver: SliverList.builder(

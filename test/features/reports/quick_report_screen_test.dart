@@ -2,17 +2,22 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bayantrack_mobile/core/constants/urdaneta_barangays.dart';
+import 'package:bayantrack_mobile/core/constants/api_constants.dart';
 import 'package:bayantrack_mobile/core/domain/failures.dart';
 import 'package:bayantrack_mobile/core/domain/result.dart';
 import 'package:bayantrack_mobile/core/providers/connectivity_provider.dart';
+import 'package:bayantrack_mobile/core/providers/backend_reachability_provider.dart';
 import 'package:bayantrack_mobile/core/widget/widget_bridge.dart';
 import 'package:bayantrack_mobile/core/theme/app_theme.dart';
 import 'package:bayantrack_mobile/features/auth/auth_di.dart';
+import 'package:bayantrack_mobile/features/auth/presentation/auth_controller.dart';
 import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
+import 'package:bayantrack_mobile/features/auth/domain/entities/user.dart';
 import 'package:bayantrack_mobile/features/auth/domain/auth_repository.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
 import 'package:bayantrack_mobile/features/reports/data/reports_repository.dart';
+import 'package:bayantrack_mobile/features/reports/data/report_draft_store.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart'
     as domain_report;
 import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dart'
@@ -23,9 +28,11 @@ import 'package:bayantrack_mobile/features/reports/presentation/new_report/quick
 import 'package:bayantrack_mobile/features/reports/presentation/new_report/report_flow_widgets.dart';
 import 'package:bayantrack_mobile/features/reports/reports_di.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
@@ -52,6 +59,19 @@ class _AuthRepositoryMock extends Mock implements AuthRepository {}
 
 class _UnusedDomainReportsRepository extends Mock
     implements domain_repository.ReportsRepository {}
+
+class _StorageMock extends Mock implements FlutterSecureStorage {}
+
+class _MutableAuthController extends AuthController {
+  _MutableAuthController(this.initialState);
+
+  final AuthState initialState;
+
+  @override
+  AuthState build() => initialState;
+
+  void update(AuthState value) => state = value;
+}
 
 class _TestCreateReportUseCase extends CreateReportUseCase {
   _TestCreateReportUseCase(this._submit)
@@ -92,6 +112,7 @@ class _TestCreateReportUseCase extends CreateReportUseCase {
     bool isQuickReport = false,
     bool isEmergency = false,
     String? idempotencyKey,
+    CancelToken? cancelToken,
   }) {
     callCount++;
     idempotencyKeys.add(idempotencyKey);
@@ -122,6 +143,11 @@ class _TestConnectivityNotifier extends ConnectivityNotifier {
 
   @override
   bool build() => initialValue;
+}
+
+class _TestBackendReachabilityNotifier extends BackendReachabilityNotifier {
+  @override
+  BackendReachability build() => BackendReachability.reachable;
 }
 
 Position _position(double latitude, double longitude) => Position(
@@ -162,6 +188,9 @@ Future<void> _pumpQuickReport(
   bool isOnline = true,
   WidgetBridge? widgetBridge,
   bool fastReportMode = false,
+  FlutterSecureStorage? secureStorage,
+  AuthState? authState,
+  AuthController? authController,
 }) async {
   final appTheme = theme ?? AppTheme.light;
   tester.view.physicalSize = size;
@@ -169,6 +198,7 @@ Future<void> _pumpQuickReport(
   addTearDown(tester.view.reset);
 
   final navigatorKey = GlobalKey<NavigatorState>();
+  final storage = secureStorage ?? _authenticatedStorage();
   Widget quickReport() => QuickReportScreen(
     key: UniqueKey(),
     locationOverride: locate,
@@ -188,10 +218,31 @@ Future<void> _pumpQuickReport(
   }
   final overrides = <Override>[
     isOnlineProvider.overrideWith(() => _TestConnectivityNotifier(isOnline)),
+    backendReachabilityProvider.overrideWith(
+      _TestBackendReachabilityNotifier.new,
+    ),
     userPermissionsProvider.overrideWithValue(UserPermissions(null)),
     authRepositoryProvider.overrideWithValue(auth),
+    secureStorageProvider.overrideWithValue(storage),
     municipalitiesProvider.overrideWith(_TestMunicipalities.new),
     municipalityBarangaysProvider.overrideWith(_TestMunicipalityBarangays.new),
+    if (authController != null)
+      authControllerProvider.overrideWith(() => authController)
+    else if (authState != null)
+      authControllerProvider.overrideWithValue(authState),
+    if (authController == null && authState == null)
+      authControllerProvider.overrideWithValue(
+        const AuthSuccess(
+          'test',
+          User(
+            id: 'user-A',
+            email: 'citizen@example.test',
+            firstName: 'Test',
+            lastName: 'Citizen',
+            role: UserRole.citizen,
+          ),
+        ),
+      ),
   ];
   if (reportsRepository != null) {
     overrides.add(
@@ -242,9 +293,234 @@ Future<void> _pumpQuickReport(
   await tester.pump(nearbyLandmarkDebounceDuration);
 }
 
+_StorageMock _authenticatedStorage() {
+  final storage = _StorageMock();
+  final values = <String, String>{ApiConstants.accessTokenKey: 'test-token'};
+  when(
+    () => storage.read(key: any(named: 'key')),
+  ).thenAnswer((invocation) async => values[invocation.namedArguments[#key]]);
+  when(
+    () => storage.write(
+      key: any(named: 'key'),
+      value: any(named: 'value'),
+    ),
+  ).thenAnswer((invocation) async {
+    values[invocation.namedArguments[#key] as String] =
+        invocation.namedArguments[#value] as String;
+  });
+  when(() => storage.delete(key: any(named: 'key'))).thenAnswer((
+    invocation,
+  ) async {
+    values.remove(invocation.namedArguments[#key]);
+  });
+  when(() => storage.readAll()).thenAnswer((_) async => values);
+  return storage;
+}
+
 void main() {
   final inside = _position(15.979204, 120.622210);
   final outside = _position(14.5995, 120.9842);
+
+  testWidgets('quick report restores saved fields and never auto-submits', (
+    tester,
+  ) async {
+    final storage = _StorageMock();
+    final values = <String, String>{};
+    when(
+      () => storage.read(key: any(named: 'key')),
+    ).thenAnswer((invocation) async => values[invocation.namedArguments[#key]]);
+    when(
+      () => storage.write(
+        key: any(named: 'key'),
+        value: any(named: 'value'),
+      ),
+    ).thenAnswer((invocation) async {
+      values[invocation.namedArguments[#key] as String] =
+          invocation.namedArguments[#value] as String;
+    });
+    when(() => storage.delete(key: any(named: 'key'))).thenAnswer((
+      invocation,
+    ) async {
+      values.remove(invocation.namedArguments[#key]);
+    });
+    when(() => storage.readAll()).thenAnswer((_) async => values);
+    final now = DateTime.utc(2026, 9, 27);
+    await ReportDraftStore(storage).write(
+      ReportDraft(
+        schemaVersion: ReportDraft.currentSchemaVersion,
+        draftId: 'quick-draft-1',
+        ownerId: 'user-A',
+        type: ReportDraftType.quick,
+        createdAt: now,
+        updatedAt: now,
+        resumeStep: 'form',
+        payload: {
+          'description': 'Floodwater near the public market',
+          'latitude': 15.979204,
+          'longitude': 120.622210,
+        },
+        attachmentRefs: const [],
+      ),
+    );
+    final createUseCase = _TestCreateReportUseCase(
+      (_) async => const Success(
+        domain_report.Report(id: 'unused', description: 'unused'),
+      ),
+    );
+
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      secureStorage: storage,
+      authState: const AuthSuccess(
+        'test',
+        User(
+          id: 'user-A',
+          email: 'citizen@example.test',
+          firstName: 'Test',
+          lastName: 'Citizen',
+          role: UserRole.citizen,
+        ),
+      ),
+      createReportUseCase: createUseCase,
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump();
+    await tester.tap(find.text('Resume'));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump();
+
+    final description = tester.widget<TextField>(
+      find.byKey(const Key('quick-report-description')),
+    );
+    expect(description.controller?.text, 'Floodwater near the public market');
+    expect(createUseCase.callCount, 0);
+  });
+
+  testWidgets('automatic location alone does not create a blank draft', (
+    tester,
+  ) async {
+    final storage = _StorageMock();
+    final values = <String, String>{};
+    when(
+      () => storage.read(key: any(named: 'key')),
+    ).thenAnswer((invocation) async => values[invocation.namedArguments[#key]]);
+    when(
+      () => storage.write(
+        key: any(named: 'key'),
+        value: any(named: 'value'),
+      ),
+    ).thenAnswer((invocation) async {
+      values[invocation.namedArguments[#key] as String] =
+          invocation.namedArguments[#value] as String;
+    });
+    when(() => storage.delete(key: any(named: 'key'))).thenAnswer((
+      invocation,
+    ) async {
+      values.remove(invocation.namedArguments[#key]);
+    });
+    const owner = AuthSuccess(
+      'test',
+      User(
+        id: 'user-A',
+        email: 'citizen@example.test',
+        firstName: 'Test',
+        lastName: 'Citizen',
+        role: UserRole.citizen,
+      ),
+    );
+
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      secureStorage: storage,
+      authState: owner,
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump();
+
+    expect(
+      await ReportDraftStore(storage).read('user-A', ReportDraftType.quick),
+      isNull,
+    );
+  });
+
+  testWidgets('logout during a save keeps the draft scoped to its owner', (
+    tester,
+  ) async {
+    final storage = _StorageMock();
+    final values = <String, String>{};
+    final writeStarted = Completer<void>();
+    final allowWrite = Completer<void>();
+    when(
+      () => storage.read(key: any(named: 'key')),
+    ).thenAnswer((invocation) async => values[invocation.namedArguments[#key]]);
+    when(
+      () => storage.write(
+        key: any(named: 'key'),
+        value: any(named: 'value'),
+      ),
+    ).thenAnswer((invocation) async {
+      if (!writeStarted.isCompleted) writeStarted.complete();
+      await allowWrite.future;
+      values[invocation.namedArguments[#key] as String] =
+          invocation.namedArguments[#value] as String;
+    });
+    when(() => storage.delete(key: any(named: 'key'))).thenAnswer((
+      invocation,
+    ) async {
+      values.remove(invocation.namedArguments[#key]);
+    });
+    when(() => storage.readAll()).thenAnswer((_) async => values);
+    final auth = _MutableAuthController(
+      const AuthSuccess(
+        'test',
+        User(
+          id: 'user-A',
+          email: 'citizen@example.test',
+          firstName: 'Test',
+          lastName: 'Citizen',
+          role: UserRole.citizen,
+        ),
+      ),
+    );
+
+    await _pumpQuickReport(
+      tester,
+      locate: () async => inside,
+      secureStorage: storage,
+      authController: auth,
+    );
+    await tester.enterText(
+      find.byKey(const Key('quick-report-description')),
+      'Private report for user A',
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+    await writeStarted.future;
+
+    auth.update(const AuthIdle());
+    await tester.pump();
+    await tester.pump();
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('quick-report-description')))
+          .controller
+          ?.text,
+      isEmpty,
+    );
+    allowWrite.complete();
+    await tester.pump(const Duration(milliseconds: 20));
+
+    final store = ReportDraftStore(storage);
+    expect(
+      (await store.read(
+        'user-A',
+        ReportDraftType.quick,
+      ))?.payload['description'],
+      'Private report for user A',
+    );
+    expect(await store.read('user-B', ReportDraftType.quick), isNull);
+  });
 
   testWidgets('verification notice is compact and does not gate reporting', (
     tester,
@@ -1203,7 +1479,10 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.textContaining('Submission failed'), findsAtLeastNWidgets(1));
+    expect(
+      find.textContaining('Report was not accepted. Review it and try again.'),
+      findsAtLeastNWidgets(1),
+    );
     expect(find.byKey(const Key('quick-report-submit-error')), findsOneWidget);
     expect(states.last['quickReportStatus'], 'failed');
     expect(
@@ -1248,22 +1527,19 @@ void main() {
     await tester.pump();
 
     expect(states.last['quickReportStatus'], 'networkUnavailable');
+    expect(find.byKey(const Key('quick-report-submit-error')), findsNothing);
+    expect(
+      find.text('Saved on this device. Not yet transmitted to BayanTrack.'),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('retry reuses idempotency key until report input changes', (
+  testWidgets('transient failure moves quick report to durable Pending Sync', (
     tester,
   ) async {
     final reports = _ReportsRepositoryMock();
-    var attempts = 0;
     final createReport = _TestCreateReportUseCase((_) async {
-      attempts++;
-      if (attempts < 3) return const Err(NetworkFailure('Request timed out'));
-      return const Success(
-        domain_report.Report(
-          id: 'quick-report-123',
-          description: 'A fallen tree is blocking both lanes.',
-        ),
-      );
+      return const Err(NetworkFailure('Request timed out'));
     });
     when(
       () => reports.getNearbyReports(
@@ -1277,6 +1553,7 @@ void main() {
       locate: () async => inside,
       reportsRepository: reports,
       createReportUseCase: createReport,
+      pushFromRoot: true,
     );
     await tester.enterText(
       find.byKey(const Key('quick-report-description')),
@@ -1285,33 +1562,12 @@ void main() {
     await tester.pump();
 
     await tester.tap(find.byKey(const Key('quick-report-submit')));
-    await tester.pump();
-    await tester.pump();
-    expect(find.byKey(const Key('quick-report-submit-error')), findsOneWidget);
-    final firstKey = createReport.idempotencyKeys.single;
-    expect(firstKey, startsWith('quick-'));
+    await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('quick-report-submit')));
-    await tester.pump();
-    await tester.pump();
-    expect(createReport.idempotencyKeys, [firstKey, firstKey]);
-
-    await tester.enterText(
-      find.byKey(const Key('quick-report-description')),
-      'A fallen tree is blocking the northbound lane.',
-    );
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('quick-report-submit')));
-    await tester.pump();
-    await tester.pump();
-
-    expect(createReport.idempotencyKeys, hasLength(3));
-    expect(createReport.idempotencyKeys.last, startsWith('quick-'));
-    expect(createReport.idempotencyKeys.last, isNot(firstKey));
-    expect(createReport.callCount, 3);
-    await tester.tap(find.byKey(const Key('quick-report-evidence-skip')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    expect(createReport.callCount, 1);
+    expect(createReport.idempotencyKeys.single, startsWith('report-key_'));
+    expect(find.text('Home'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Fast Report submits online with both emergency flags', (
@@ -1351,37 +1607,46 @@ void main() {
     expect(find.text('Home'), findsOneWidget);
   });
 
-  testWidgets('offline Fast Report keeps the form and offers retry', (
-    tester,
-  ) async {
-    final states = <Map<String, Object>>[];
-    final createReport = _TestCreateReportUseCase(
-      (_) async => const Success(
-        domain_report.Report(id: 'unused', description: 'unused'),
-      ),
-    );
+  testWidgets(
+    'offline Fast Report stays not transmitted and shows call guidance',
+    (tester) async {
+      final states = <Map<String, Object>>[];
+      final createReport = _TestCreateReportUseCase(
+        (_) async => const Success(
+          domain_report.Report(id: 'unused', description: 'unused'),
+        ),
+      );
 
-    await _pumpQuickReport(
-      tester,
-      locate: () async => _position(15.976, 120.571),
-      createReportUseCase: createReport,
-      widgetBridge: _recordWidgetState(states),
-      fastReportMode: true,
-      isOnline: false,
-    );
-    const description = 'Emergency near the public market';
-    await tester.enterText(
-      find.byKey(const Key('quick-report-description')),
-      description,
-    );
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('fast-report-submit')));
-    await tester.pump();
+      await _pumpQuickReport(
+        tester,
+        locate: () async => _position(15.976, 120.571),
+        createReportUseCase: createReport,
+        widgetBridge: _recordWidgetState(states),
+        fastReportMode: true,
+        isOnline: false,
+      );
+      const description = 'Emergency near the public market';
+      await tester.enterText(
+        find.byKey(const Key('quick-report-description')),
+        description,
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('fast-report-submit')));
+      await tester.pump();
 
-    expect(createReport.callCount, 0);
-    expect(find.text(description), findsOneWidget);
-    expect(find.byKey(const Key('quick-report-submit-error')), findsOneWidget);
-    expect(states.last['quickReportStatus'], 'networkUnavailable');
-    expect(find.text('Submit Fast Report'), findsOneWidget);
-  });
+      expect(createReport.callCount, 0);
+      expect(find.text(description), findsOneWidget);
+      expect(find.text('NOT YET TRANSMITTED'), findsOneWidget);
+      expect(
+        find.textContaining('call local emergency services'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('BayanTrack has not confirmed receipt'),
+        findsOneWidget,
+      );
+      expect(states.last['quickReportStatus'], 'networkUnavailable');
+      expect(find.text('Submit Fast Report'), findsOneWidget);
+    },
+  );
 }

@@ -6,8 +6,9 @@
 sealed class Failure {
   final String message;
   final String? code;
+  final int? statusCode;
 
-  const Failure(this.message, {this.code});
+  const Failure(this.message, {this.code, this.statusCode});
 
   @override
   String toString() => 'Failure($code): $message';
@@ -58,4 +59,7 @@ class CacheFailure extends Failure {
 class UnknownFailure extends Failure {
   const UnknownFailure([super.message = 'An error occurred'])
     : super(code: 'UNKNOWN_ERROR');
+
+  const UnknownFailure.withStatus(super.message, int statusCode)
+    : super(code: 'UNKNOWN_ERROR', statusCode: statusCode);
 }

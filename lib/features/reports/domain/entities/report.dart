@@ -25,6 +25,7 @@ class Report extends Equatable {
   final String id;
   final String? reportId;
   final String? userId;
+  final bool isStale;
 
   // Report Details
   final ReportCategory? category;
@@ -150,6 +151,7 @@ class Report extends Equatable {
     required this.id,
     this.reportId,
     this.userId,
+    this.isStale = false,
     this.category,
     this.categoryKey,
     this.categoryDisplay,
@@ -312,6 +314,7 @@ class Report extends Equatable {
     id,
     reportId,
     userId,
+    isStale,
     category,
     categoryKey,
     categoryDisplay,

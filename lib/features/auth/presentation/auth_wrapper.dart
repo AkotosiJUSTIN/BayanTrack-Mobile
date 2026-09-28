@@ -14,10 +14,13 @@ import '../../notifications/push_service.dart';
 import '../../notifications/local_notification_service.dart';
 import '../../notifications/presentation/notifications_controller.dart';
 import '../../../core/network/dio_provider.dart';
+import '../../../core/providers/backend_reachability_provider.dart';
 import '../../../core/providers/connectivity_provider.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../core/widget/widget_bridge.dart';
 import '../../images/data/evidence_upload_queue_provider.dart';
+import '../../reports/presentation/reports_controller.dart';
+import '../../reports/reports_di.dart';
 import '../../reports/presentation/report_detail_screen.dart';
 import '../../reports/presentation/new_report/quick_report_screen.dart';
 import 'auth_realtime_controller.dart';
@@ -33,6 +36,8 @@ class AuthWrapper extends ConsumerStatefulWidget {
 class _AuthWrapperState extends ConsumerState<AuthWrapper>
     with WidgetsBindingObserver {
   String? _evidenceSyncKey;
+  String? _reportOutboxSyncKey;
+  String? _reportCacheOwnerId;
   late final WidgetBridge _widgetBridge;
   late final StreamSubscription<WidgetDestination>
   _widgetDestinationSubscription;
@@ -52,11 +57,15 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
       (_, next) => _handleAuthState(next),
       fireImmediately: true,
     );
-    ref.listenManual<bool>(
-      isOnlineProvider,
-      (_, next) => _syncEvidenceForCurrentAuth(next),
-      fireImmediately: true,
-    );
+    ref.listenManual<bool>(isOnlineProvider, (_, next) {
+      _syncEvidenceForCurrentAuth(next);
+      _syncReportOutboxForCurrentAuth(next);
+    }, fireImmediately: true);
+    ref.listenManual<BackendReachability>(backendReachabilityProvider, (_, _) {
+      final isOnline = ref.read(isOnlineProvider);
+      _syncEvidenceForCurrentAuth(isOnline);
+      _syncReportOutboxForCurrentAuth(isOnline);
+    }, fireImmediately: true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _maybeNavigateToWidgetDestination();
     });
@@ -98,7 +107,19 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     _maybeNavigateToWidgetDestination();
 
     final userId = state is AuthSuccess ? state.user?.id : null;
+    if (userId != _reportCacheOwnerId) {
+      final previousOwnerId = _reportCacheOwnerId;
+      _reportCacheOwnerId = userId;
+      final cache = ref.read(reportCacheStoreProvider);
+      if (previousOwnerId != null) {
+        unawaited(cache.deleteOwner(previousOwnerId).catchError((_) {}));
+      }
+      if (userId != null) {
+        unawaited(cache.deleteOtherOwners(userId).catchError((_) {}));
+      }
+    }
     _syncEvidenceQueue(userId, ref.read(isOnlineProvider));
+    _syncReportOutbox(userId, ref.read(isOnlineProvider), force: true);
 
     final realtime = ref.read(authRealtimeControllerProvider);
     if (userId == null) {
@@ -120,25 +141,51 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     _syncEvidenceQueue(userId, isOnline);
   }
 
+  void _syncReportOutboxForCurrentAuth(bool isOnline) {
+    final state = ref.read(authControllerProvider);
+    final userId = state is AuthSuccess ? state.user?.id : null;
+    _syncReportOutbox(userId, isOnline);
+  }
+
+  void _syncReportOutbox(String? userId, bool isOnline, {bool force = false}) {
+    final reachable =
+        ref.read(backendReachabilityProvider) == BackendReachability.reachable;
+    final syncKey = '$userId:$isOnline:$reachable';
+    if (!force && _reportOutboxSyncKey == syncKey) return;
+    _reportOutboxSyncKey = syncKey;
+    final outbox = ref.read(reportCreateOutboxProvider);
+    if (userId == null || !isOnline || !reachable) {
+      unawaited(outbox.pause());
+      return;
+    }
+    unawaited(() async {
+      final synchronized = await outbox.resume(userId);
+      if (!mounted || synchronized == 0) return;
+      ref.read(myReportsRefreshProvider.notifier).increment();
+    }());
+  }
+
   Future<void> _initializePush(String? userId) async {
     try {
       final pushService = ref.read(pushServiceProvider);
       final dio = ref.read(dioProvider);
       await pushService.ensureRegistered('android', dio, userId: userId);
 
-      if (!mounted || _pushUserId != userId) return;
+      if (!mounted) return;
+      if (_pushUserId != userId) return;
       pushService.onTokenRefresh((token) async {
         await pushService.registerToken(token, 'android', dio, userId: userId);
       });
 
       // Foreground message handler: show simple in-app snackbar and persist
       pushService.onMessage((message) async {
+        final notificationContext = context;
         final title = message.notification?.title ?? 'Notification';
         final body = message.notification?.body ?? '';
         ref.invalidate(notificationsControllerProvider);
         await LocalNotificationService.showFromRemoteMessage(message);
-        if (!context.mounted) return;
-        AppToast.info(context, '$title: $body');
+        if (!notificationContext.mounted) return;
+        AppToast.info(notificationContext, '$title: $body');
       });
 
       // When a user taps a notification and the app is opened from background
@@ -146,6 +193,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
         final reportId = message.data['report_id'] as String?;
         if (reportId != null) {
           ref.invalidate(notificationsControllerProvider);
+          if (!context.mounted) return;
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => ReportDetailScreen(reportId: reportId),
@@ -155,12 +203,13 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
       });
 
       // If launched from terminated state via notification
+      final initialMessageContext = context;
       final initial = await FirebaseMessaging.instance.getInitialMessage();
       if (initial != null) {
         final reportId = initial.data['report_id'] as String?;
-        if (reportId != null && context.mounted) {
+        if (reportId != null && initialMessageContext.mounted) {
           ref.invalidate(notificationsControllerProvider);
-          Navigator.of(context).push(
+          Navigator.of(initialMessageContext).push(
             MaterialPageRoute(
               builder: (_) => ReportDetailScreen(reportId: reportId),
             ),
@@ -212,14 +261,16 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   }
 
   void _syncEvidenceQueue(String? userId, bool isOnline, {bool force = false}) {
-    final syncKey = '$userId:$isOnline';
+    final reachable =
+        ref.read(backendReachabilityProvider) == BackendReachability.reachable;
+    final syncKey = '$userId:$isOnline:$reachable';
     if (!force && _evidenceSyncKey == syncKey) return;
     _evidenceSyncKey = syncKey;
     Future.microtask(() async {
       try {
         final queue = await ref.read(evidenceUploadQueueProvider.future);
         if (!mounted) return;
-        if (userId != null && isOnline) {
+        if (userId != null && isOnline && reachable) {
           await queue.resume(userId);
         } else {
           await queue.pause();
@@ -246,7 +297,15 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
           Future.microtask(
             () => ref.read(authRealtimeControllerProvider).start(userId),
           );
-          _syncEvidenceQueue(userId, ref.read(isOnlineProvider), force: true);
+          Future.microtask(() async {
+            if (ref.read(isOnlineProvider)) {
+              await ref.read(backendReachabilityProvider.notifier).checkNow();
+            }
+            if (!mounted) return;
+            final isOnline = ref.read(isOnlineProvider);
+            _syncEvidenceQueue(userId, isOnline, force: true);
+            _syncReportOutbox(userId, isOnline, force: true);
+          });
         }
         ref.invalidate(kycStatusControllerProvider);
         ref.invalidate(profileControllerProvider);
@@ -270,6 +329,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   Widget build(BuildContext context) {
     final state = ref.watch(authControllerProvider);
     ref.watch(appLocaleProvider);
+    ref.watch(backendReachabilityProvider);
     debugPrint('[AuthWrapper] AuthState changed: ${state.runtimeType}');
 
     if (state is AuthSuccess && state.user?.requiresPasswordChange == true) {

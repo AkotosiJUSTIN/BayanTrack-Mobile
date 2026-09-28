@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bayantrack_mobile/core/domain/failures.dart';
 import 'package:bayantrack_mobile/core/domain/result.dart';
+import 'package:bayantrack_mobile/core/providers/backend_reachability_provider.dart';
 import 'package:bayantrack_mobile/core/theme/app_colors.dart';
 import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
 import 'package:bayantrack_mobile/features/home/presentation/home_screen.dart';
@@ -29,6 +30,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart' show Override;
 
 class _ReportsRepositoryMock extends Mock implements ReportsRepository {}
 
+class _TestReachability extends BackendReachabilityNotifier {
+  @override
+  BackendReachability build() => BackendReachability.reachable;
+}
+
 class _FailingNotificationsController extends NotificationsController {
   @override
   Future<PaginatedNotifications> build() async {
@@ -44,7 +50,10 @@ Widget _app({
 }) {
   return ProviderScope(
     retry: (_, _) => null,
-    overrides: overrides,
+    overrides: [
+      ...overrides,
+      backendReachabilityProvider.overrideWith(_TestReachability.new),
+    ],
     child: MaterialApp(
       theme: theme,
       locale: locale,

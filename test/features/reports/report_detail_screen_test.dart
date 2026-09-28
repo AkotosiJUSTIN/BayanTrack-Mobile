@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:bayantrack_mobile/core/presentation/widgets/offline_stale_banner.dart';
+import 'package:bayantrack_mobile/core/providers/backend_reachability_provider.dart';
 import 'package:bayantrack_mobile/core/theme/app_theme.dart';
 import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
@@ -20,11 +22,18 @@ class _TestMunicipalities extends Municipalities {
   ];
 }
 
+class _TestReachability extends BackendReachabilityNotifier {
+  @override
+  BackendReachability build() => BackendReachability.reachable;
+}
+
 Report _report({
   ReportStatus status = ReportStatus.inProgress,
   bool withProof = false,
+  bool isStale = false,
 }) => Report(
   id: 'RPT-DETAIL-UI-1',
+  isStale: isStale,
   title: 'Blocked drainage near the market',
   description: 'Water is collecting beside the public market.',
   status: status,
@@ -36,9 +45,7 @@ Report _report({
   zone: 'Zone 3',
   assignedDepartment: 'City Engineering Office',
   images: withProof
-      ? const [
-          ReportImage(id: 'proof-1', url: 'https://example.com/proof.jpg'),
-        ]
+      ? const [ReportImage(id: 'proof-1', url: 'https://example.com/proof.jpg')]
       : const [],
   resolvedProofImageIds: withProof ? const ['proof-1'] : const [],
   createdAt: DateTime(2026, 8, 27, 9, 30),
@@ -58,6 +65,7 @@ Future<void> _pumpDetail(
     ProviderScope(
       overrides: [
         municipalitiesProvider.overrideWith(_TestMunicipalities.new),
+        backendReachabilityProvider.overrideWith(_TestReachability.new),
         reportDetailControllerProvider.overrideWithBuild(
           (_, _) async => report ?? _report(),
         ),
@@ -74,6 +82,16 @@ Future<void> _pumpDetail(
 }
 
 void main() {
+  testWidgets('marks cached report details as stale', (tester) async {
+    await _pumpDetail(tester, report: _report(isStale: true));
+
+    expect(find.byType(OfflineStaleBanner), findsOneWidget);
+    expect(
+      find.textContaining('Backend unavailable. Showing saved reports'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('keeps report details scannable on a narrow phone', (
     tester,
   ) async {

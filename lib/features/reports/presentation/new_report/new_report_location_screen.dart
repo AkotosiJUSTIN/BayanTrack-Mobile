@@ -58,17 +58,21 @@ class _NewReportLocationScreenState
   @override
   void initState() {
     super.initState();
-    ref
-        .read(newReportControllerProvider.notifier)
-        .setMunicipality(
-          id: defaultMunicipalityId,
-          name: UrdanetaGeo.defaultCityMunicipality,
-          province: UrdanetaGeo.defaultProvince,
-        );
     _applyDefaultLocationIfMissing();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final controller = ref.read(newReportControllerProvider.notifier);
+      controller.setResumeStep('location');
+      controller.setMunicipality(
+        id: defaultMunicipalityId,
+        name: UrdanetaGeo.defaultCityMunicipality,
+        province: UrdanetaGeo.defaultProvince,
+      );
+      final state = ref.read(newReportControllerProvider);
+      final hasRestoredCoordinates =
+          state.latitude != null && state.longitude != null;
       _syncInitialSelectionToProvider();
-      _getCurrentLocation();
+      if (!hasRestoredCoordinates) _getCurrentLocation();
     });
   }
 
@@ -459,66 +463,75 @@ class _NewReportLocationScreenState
           _selectedMunicipality.centerLng ?? (bounds.west + bounds.east) / 2,
         );
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.newReport)),
-      body: SafeArea(
-        top: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ReportFlowProgress(step: 2, total: 4),
-            Expanded(
-              child: SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.only(bottom: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ReportFlowHeader(
-                      title: l10n.reportLocation,
-                      guidance: l10n.selectLocationDescription,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          ReportReadOnlyLocationField(
-                            key: const Key('full-report-city'),
-                            label: l10n.city,
-                            value: UrdanetaGeo.displayCityName,
-                            icon: Icons.location_city_outlined,
-                          ),
-                          const SizedBox(height: 16),
-                          _buildModeSelector(),
-                          const SizedBox(height: 16),
-                          _buildMapCard(
-                            context: context,
-                            selectedPoint: selectedPoint,
-                            isDark: theme.brightness == Brightness.dark,
-                            state: state,
-                          ),
-                          if (_error != null) ...[
-                            const SizedBox(height: 12),
-                            _buildErrorBanner(theme),
-                          ],
-                        ],
+    return PopScope<void>(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) {
+          ref
+              .read(newReportControllerProvider.notifier)
+              .setResumeStep('photos');
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: Text(l10n.newReport)),
+        body: SafeArea(
+          top: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ReportFlowProgress(step: 2, total: 4),
+              Expanded(
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ReportFlowHeader(
+                        title: l10n.reportLocation,
+                        guidance: l10n.selectLocationDescription,
                       ),
-                    ),
-                  ],
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            ReportReadOnlyLocationField(
+                              key: const Key('full-report-city'),
+                              label: l10n.city,
+                              value: UrdanetaGeo.displayCityName,
+                              icon: Icons.location_city_outlined,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildModeSelector(),
+                            const SizedBox(height: 16),
+                            _buildMapCard(
+                              context: context,
+                              selectedPoint: selectedPoint,
+                              isDark: theme.brightness == Brightness.dark,
+                              state: state,
+                            ),
+                            if (_error != null) ...[
+                              const SizedBox(height: 12),
+                              _buildErrorBanner(theme),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            ReportFlowBottomBar(
-              child: ElevatedButton(
-                onPressed: state.hasLocation && !_isOutsideServiceArea
-                    ? _navigateToDetails
-                    : null,
-                child: Text(l10n.continueLabel),
+              ReportFlowBottomBar(
+                child: ElevatedButton(
+                  onPressed: state.hasLocation && !_isOutsideServiceArea
+                      ? _navigateToDetails
+                      : null,
+                  child: Text(l10n.continueLabel),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

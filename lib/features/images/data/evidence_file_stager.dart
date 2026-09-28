@@ -11,6 +11,11 @@ Future<File> stageEvidenceFile(
   XFile source, {
   Directory? stagingDirectory,
 }) async {
+  final sourceSize = await source.length();
+  if (sourceSize == 0) {
+    throw const FileSystemException('Evidence draft is empty');
+  }
+
   final root = stagingDirectory ?? await getApplicationSupportDirectory();
   final directory = Directory(
     '${root.path}${Platform.pathSeparator}$_draftDirectoryName',
@@ -27,10 +32,6 @@ Future<File> stageEvidenceFile(
   );
   final partial = File('${target.path}.part');
   try {
-    final sourceSize = await source.length();
-    if (sourceSize == 0) {
-      throw const FileSystemException('Evidence draft is empty');
-    }
     await source.saveTo(partial.path);
     if (await partial.length() != sourceSize) {
       throw const FileSystemException('Evidence draft verification failed');
@@ -58,15 +59,60 @@ Future<bool> isEvidenceDraft(File file) async {
       .where((segment) => segment.isNotEmpty)
       .toList();
   if (parentSegments.isEmpty ||
-      parentSegments.last == 'report_evidence_drafts' &&
-          !file.uri.pathSegments.last.startsWith('draft_')) {
+      parentSegments.last != _draftDirectoryName ||
+      !file.uri.pathSegments.last.startsWith('draft_')) {
     return false;
   }
-  if (parentSegments.last != _draftDirectoryName) return false;
   final marker = File(
     '${file.parent.path}${Platform.pathSeparator}$_draftMarkerName',
   );
   return marker.exists();
+}
+
+Future<File?> resolveEvidenceDraftReference(
+  String path, {
+  Directory? stagingDirectory,
+  bool allowMissing = false,
+}) async {
+  final root = stagingDirectory ?? await getApplicationSupportDirectory();
+  final expectedDirectory = Directory(
+    '${root.path}${Platform.pathSeparator}$_draftDirectoryName',
+  ).absolute;
+  final candidate = File(path).absolute;
+  final segments = candidate.uri.pathSegments;
+  final name = segments.isEmpty ? null : segments.last;
+  if (name == null ||
+      !RegExp(r'^draft_[A-Za-z0-9_-]+\.[A-Za-z0-9]{1,5}$').hasMatch(name) ||
+      candidate.parent.path != expectedDirectory.path) {
+    return null;
+  }
+
+  try {
+    if (!await File(
+      '${expectedDirectory.path}${Platform.pathSeparator}$_draftMarkerName',
+    ).exists()) {
+      return null;
+    }
+    final canonicalRoot = await root.resolveSymbolicLinks();
+    final expectedPath = await expectedDirectory.resolveSymbolicLinks();
+    final canonicalExpectedPath = Directory(
+      '$canonicalRoot${Platform.pathSeparator}$_draftDirectoryName',
+    ).absolute.path;
+    final canonicalParent = await candidate.parent.resolveSymbolicLinks();
+    if (expectedPath != canonicalExpectedPath ||
+        canonicalParent != expectedPath) {
+      return null;
+    }
+    if (!await candidate.exists()) return allowMissing ? candidate : null;
+    final canonicalPath = await candidate.resolveSymbolicLinks();
+    final resolved = File(canonicalPath);
+    if (resolved.parent.path != expectedPath || await resolved.length() == 0) {
+      return null;
+    }
+    return resolved;
+  } on FileSystemException {
+    return null;
+  }
 }
 
 Future<void> discardEvidenceDrafts(Iterable<File> files) async {
@@ -87,7 +133,9 @@ Future<void> cleanupStaleEvidenceDrafts({
   );
   if (!await directory.exists()) return;
 
-  final retained = retainedPaths.map((path) => File(path).absolute.path).toSet();
+  final retained = retainedPaths
+      .map((path) => File(path).absolute.path)
+      .toSet();
   final cutoff = (now ?? DateTime.now)().subtract(maxAge);
   await for (final entity in directory.list()) {
     if (entity is! File || retained.contains(entity.absolute.path)) continue;

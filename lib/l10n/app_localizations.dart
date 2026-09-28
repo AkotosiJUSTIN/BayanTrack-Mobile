@@ -752,6 +752,12 @@ abstract class AppLocalizations {
   /// **'For immediate threats. BayanTrack does not replace emergency hotlines.'**
   String get emergencyReportNotice;
 
+  /// No description provided for @emergencyCallGuidance.
+  ///
+  /// In en, this message translates to:
+  /// **'If someone is in immediate danger, call local emergency services if cellular calling is available. BayanTrack has not confirmed receipt of this report.'**
+  String get emergencyCallGuidance;
+
   /// No description provided for @emergencyConfirm.
   ///
   /// In en, this message translates to:
@@ -781,6 +787,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sending Emergency Report…'**
   String get submittingEmergencyReport;
+
+  /// No description provided for @reportDraftFoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfinished report'**
+  String get reportDraftFoundTitle;
+
+  /// No description provided for @reportDraftFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You have a saved {reportType} draft.'**
+  String reportDraftFoundMessage(String reportType);
+
+  /// No description provided for @resumeDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get resumeDraft;
+
+  /// No description provided for @startNewReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Start New'**
+  String get startNewReport;
+
+  /// No description provided for @discardDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard Draft'**
+  String get discardDraft;
+
+  /// No description provided for @notNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Now'**
+  String get notNow;
+
+  /// No description provided for @discardDraftConfirmationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this draft?'**
+  String get discardDraftConfirmationTitle;
+
+  /// No description provided for @discardDraftConfirmationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This saved report and its unused photos will be deleted.'**
+  String get discardDraftConfirmationMessage;
+
+  /// No description provided for @replaceDraftConfirmationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The saved report will be replaced with a new draft.'**
+  String get replaceDraftConfirmationMessage;
+
+  /// No description provided for @keepDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Draft'**
+  String get keepDraft;
+
+  /// No description provided for @emergencyNotYetTransmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'NOT YET TRANSMITTED'**
+  String get emergencyNotYetTransmitted;
 
   /// No description provided for @emergencyDetailsHint.
   ///
@@ -1015,6 +1087,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Report submitted'**
   String get reportSubmitted;
+
+  /// No description provided for @reportPendingSyncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Sync'**
+  String get reportPendingSyncTitle;
+
+  /// No description provided for @reportPendingSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this device. Not yet transmitted to BayanTrack.'**
+  String get reportPendingSync;
+
+  /// No description provided for @reportOutboxRetrying.
+  ///
+  /// In en, this message translates to:
+  /// **'Will retry safely when BayanTrack is reachable.'**
+  String get reportOutboxRetrying;
+
+  /// No description provided for @reportOutboxWaitingAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with the original account to resume this report.'**
+  String get reportOutboxWaitingAuth;
+
+  /// No description provided for @reportOutboxNeedsEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Report was not accepted. Edit and submit it again.'**
+  String get reportOutboxNeedsEdit;
+
+  /// No description provided for @reportOutboxConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Submission could not be confirmed. Edit report before resubmitting.'**
+  String get reportOutboxConflict;
+
+  /// No description provided for @reportOutboxRetryNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry now'**
+  String get reportOutboxRetryNow;
+
+  /// No description provided for @reportOutboxEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit and resubmit'**
+  String get reportOutboxEdit;
+
+  /// No description provided for @reportEvidenceHandoffTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence upload'**
+  String get reportEvidenceHandoffTitle;
+
+  /// No description provided for @reportEvidenceHandoffPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Report received. Evidence is still waiting to upload.'**
+  String get reportEvidenceHandoffPending;
+
+  /// No description provided for @reportEvidenceHandoffRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry evidence upload'**
+  String get reportEvidenceHandoffRetry;
 
   /// No description provided for @addOptionalPhoto.
   ///
@@ -1855,6 +1993,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No internet connection'**
   String get noInternetConnection;
+
+  /// No description provided for @cachedReportsOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Backend unavailable. Showing saved reports; information may be outdated.'**
+  String get cachedReportsOffline;
 
   /// No description provided for @dismiss.
   ///

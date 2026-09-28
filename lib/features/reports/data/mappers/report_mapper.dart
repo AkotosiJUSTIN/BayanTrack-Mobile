@@ -12,11 +12,12 @@ class ReportMapper {
   ReportMapper._(); // Prevent instantiation
 
   /// Convert DTO Report to domain Report entity
-  static Report fromDto(dto.Report dtoReport) {
+  static Report fromDto(dto.Report dtoReport, {bool isStale = false}) {
     return Report(
       id: dtoReport.id,
       reportId: dtoReport.reportId,
       userId: dtoReport.userId,
+      isStale: isStale,
       category: ReportCategory.fromString(dtoReport.category),
       categoryKey: dtoReport.categoryKey,
       categoryDisplay: dtoReport.categoryDisplay ?? dtoReport.category,
@@ -169,14 +170,20 @@ class ReportMapper {
   }
 
   /// Convert DTO PaginatedReports to domain entity
-  static PaginatedReports paginatedFromDto(dto.PaginatedReports dtoPaginated) {
+  static PaginatedReports paginatedFromDto(
+    dto.PaginatedReports dtoPaginated, {
+    bool isStale = false,
+  }) {
     return PaginatedReports(
-      results: dtoPaginated.results.map(fromDto).toList(),
+      results: dtoPaginated.results
+          .map((report) => fromDto(report, isStale: isStale))
+          .toList(),
       count: dtoPaginated.count,
       total: dtoPaginated.total,
       page: dtoPaginated.page,
       pageSize: dtoPaginated.pageSize,
       totalPages: dtoPaginated.totalPages,
+      isStale: isStale,
     );
   }
 

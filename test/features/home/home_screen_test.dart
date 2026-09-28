@@ -1,5 +1,7 @@
 import 'package:bayantrack_mobile/core/domain/failures.dart';
 import 'package:bayantrack_mobile/core/domain/result.dart';
+import 'package:bayantrack_mobile/core/presentation/widgets/offline_stale_banner.dart';
+import 'package:bayantrack_mobile/core/providers/backend_reachability_provider.dart';
 import 'package:bayantrack_mobile/core/theme/app_colors.dart';
 import 'package:bayantrack_mobile/core/theme/app_theme.dart';
 import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
@@ -26,6 +28,13 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _ReportsRepositoryMock extends Mock implements ReportsRepository {}
+
+class _TestReachability extends BackendReachabilityNotifier {
+  @override
+  BackendReachability build() => BackendReachability.reachable;
+
+  void setReachability(BackendReachability value) => state = value;
+}
 
 const _resolvedReport = Report(
   id: 'resolved-1',
@@ -84,6 +93,7 @@ Widget _app(
   bool withNavigation = false,
   AuthState authState = const AuthInitial(),
   HomeScreen home = const HomeScreen(),
+  BackendReachabilityNotifier Function()? reachabilityBuilder,
 }) {
   return ProviderScope(
     retry: (_, _) => null,
@@ -98,6 +108,9 @@ Widget _app(
         UpdateReportUseCase(repository: repository),
       ),
       authControllerProvider.overrideWithValue(authState),
+      backendReachabilityProvider.overrideWith(
+        reachabilityBuilder ?? _TestReachability.new,
+      ),
       userPermissionsProvider.overrideWithValue(UserPermissions(null)),
     ],
     child: MaterialApp(
@@ -455,5 +468,77 @@ void main() {
     await tester.pumpAndSettle();
     expect(attempts, 2);
     expect(find.byKey(const Key('fast-report-follow-up-card')), findsNothing);
+  });
+
+  testWidgets('Home marks cached public reports as stale', (tester) async {
+    final repository = _ReportsRepositoryMock();
+    _stubReports(
+      repository,
+      () async => const Success(
+        PaginatedReports(results: [_submittedReport], total: 1, isStale: true),
+      ),
+    );
+
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(OfflineStaleBanner), findsOneWidget);
+    expect(
+      find.textContaining('Backend unavailable. Showing saved reports'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Home keeps reports visible when refresh fails', (tester) async {
+    final repository = _ReportsRepositoryMock();
+    var calls = 0;
+    _stubReports(repository, () async {
+      calls++;
+      return calls == 1
+          ? const Success(PaginatedReports(results: [_submittedReport]))
+          : const Err(NetworkFailure('offline'));
+    });
+
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.location_on), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Retry').first);
+    await tester.pumpAndSettle();
+
+    expect(calls, 2);
+    expect(find.byIcon(Icons.location_on), findsOneWidget);
+    expect(find.byType(OfflineStaleBanner), findsOneWidget);
+  });
+
+  testWidgets('Home refreshes after Backend reachability returns', (
+    tester,
+  ) async {
+    final repository = _ReportsRepositoryMock();
+    var calls = 0;
+    _stubReports(repository, () async {
+      calls++;
+      return calls == 1
+          ? const Success(PaginatedReports(results: [_submittedReport]))
+          : const Success(PaginatedReports(results: [_inProgressReport]));
+    });
+
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    expect(find.byType(OfflineStaleBanner), findsNothing);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(HomeScreen)),
+    );
+    (container.read(backendReachabilityProvider.notifier) as _TestReachability)
+        .setReachability(BackendReachability.unreachable);
+    await tester.pump();
+    expect(find.byType(OfflineStaleBanner), findsOneWidget);
+    (container.read(backendReachabilityProvider.notifier) as _TestReachability)
+        .setReachability(BackendReachability.reachable);
+    await tester.pumpAndSettle();
+
+    expect(calls, 2);
+    expect(find.byType(OfflineStaleBanner), findsNothing);
   });
 }

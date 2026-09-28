@@ -9,6 +9,7 @@ class ApiConstants {
     'BAYANTRACK_MEDIA_BASE_URL',
     defaultValue: 'http://10.0.2.2:8000',
   );
+  static const String health = '/health/';
 
   /// Build full URL for an image path
   /// Handles both relative (/media/...) and absolute URLs

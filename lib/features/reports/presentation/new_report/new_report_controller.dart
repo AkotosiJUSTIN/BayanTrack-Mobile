@@ -1,10 +1,9 @@
-import 'dart:async';
 import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/constants/urdaneta_geo.dart';
 import '../../../auth/data/auth_models.dart';
-import '../../../images/data/evidence_file_stager.dart';
 import '../../data/report_models.dart';
+import '../../data/report_draft_store.dart';
 import '../../domain/entities/report.dart' as domain;
 import '../../reports_di.dart';
 import 'quick_report_geo.dart';
@@ -54,7 +53,9 @@ class NewReportState {
 
   // Form state
   final bool isSubmitting;
+  final bool draftCompleted;
   final String? error;
+  final String resumeStep;
 
   const NewReportState({
     this.selectedImages = const [],
@@ -83,7 +84,9 @@ class NewReportState {
     this.declarationConfirmed = false,
     this.dataProcessingConsent = false,
     this.isSubmitting = false,
+    this.draftCompleted = false,
     this.error,
+    this.resumeStep = 'photos',
   });
 
   NewReportState copyWith({
@@ -113,7 +116,9 @@ class NewReportState {
     bool? declarationConfirmed,
     bool? dataProcessingConsent,
     bool? isSubmitting,
+    bool? draftCompleted,
     String? error,
+    String? resumeStep,
     bool clearLocation = false,
     bool clearBarangay = false,
     bool clearStreetLandmark = false,
@@ -158,7 +163,9 @@ class NewReportState {
       dataProcessingConsent:
           dataProcessingConsent ?? this.dataProcessingConsent,
       isSubmitting: isSubmitting ?? this.isSubmitting,
+      draftCompleted: draftCompleted ?? this.draftCompleted,
       error: error,
+      resumeStep: resumeStep ?? this.resumeStep,
     );
   }
 
@@ -203,15 +210,74 @@ class NewReportController extends _$NewReportController {
   void removeImage(int index) {
     if (index < 0 || index >= state.selectedImages.length) return;
     final updated = List<File>.from(state.selectedImages);
-    final removed = updated.removeAt(index);
+    updated.removeAt(index);
     state = state.copyWith(selectedImages: updated);
-    unawaited(discardEvidenceDraft(removed));
   }
 
   void clearImages() {
-    final images = state.selectedImages;
+    if (state.selectedImages.isEmpty) return;
     state = state.copyWith(selectedImages: []);
-    unawaited(discardEvidenceDrafts(images));
+  }
+
+  void setResumeStep(String step) {
+    if (!const {'photos', 'location', 'details', 'review'}.contains(step) ||
+        state.resumeStep == step) {
+      return;
+    }
+    state = state.copyWith(resumeStep: step);
+  }
+
+  void markDraftCompleted() {
+    state = state.copyWith(draftCompleted: true);
+  }
+
+  void restoreDraft(ReportDraft draft, {required List<File> attachments}) {
+    if (draft.type != ReportDraftType.full) return;
+    final payload = draft.payload;
+    ReportCategory? category;
+    for (final item in ReportCategory.values) {
+      if (item.value == payload['category']) category = item;
+    }
+    final accuracy = LocationAccuracy.values.where(
+      (item) => item.name == payload['locationAccuracy'],
+    );
+    final streetLandmark = _draftString(payload['streetLandmark']);
+    final step =
+        const {
+          'photos',
+          'location',
+          'details',
+          'review',
+        }.contains(draft.resumeStep)
+        ? draft.resumeStep
+        : 'photos';
+    state = NewReportState(
+      selectedImages: attachments,
+      category: category,
+      title: _draftString(payload['title']),
+      description: _draftString(payload['description']) ?? '',
+      incidentDatetime: DateTime.tryParse(
+        payload['incidentDatetime']?.toString() ?? '',
+      ),
+      isHappeningNow: payload['isHappeningNow'] == true,
+      zone: _draftString(payload['zone']),
+      streetLandmark: streetLandmark,
+      municipalityId: _draftString(payload['municipalityId']) ?? 'urdaneta',
+      barangayId: null,
+      barangay: _draftString(payload['barangay']),
+      cityMunicipality: _draftString(payload['cityMunicipality']),
+      province: _draftString(payload['province']),
+      latitude: _draftDouble(payload['latitude']),
+      longitude: _draftDouble(payload['longitude']),
+      locationAccuracy: accuracy.isEmpty
+          ? LocationAccuracy.approximate
+          : accuracy.first,
+      location: _draftString(payload['location']),
+      landmarkManuallyEdited: streetLandmark != null,
+      declarationConfirmed: false,
+      dataProcessingConsent: false,
+      resumeStep: step,
+    );
   }
 
   // ==================== REPORT DETAILS (Section A) ====================
@@ -378,7 +444,30 @@ class NewReportController extends _$NewReportController {
     state = state.copyWith(dataProcessingConsent: value);
   }
 
-  Future<domain.Report> submit() async {
+  Map<String, Object?> submissionSnapshot() => {
+    'category': state.category?.value,
+    'title': state.title,
+    'description': state.description,
+    'incidentDatetime': state.incidentDatetime?.toIso8601String(),
+    'isHappeningNow': state.isHappeningNow,
+    'zone': state.zone,
+    'streetLandmark': state.streetLandmark,
+    'municipalityId': state.municipalityId,
+    'barangayId': state.barangayId,
+    'cityMunicipality': state.cityMunicipality,
+    'province': state.province,
+    'latitude': _formatCoordinate(state.latitude),
+    'longitude': _formatCoordinate(state.longitude),
+    'locationAccuracy': state.locationAccuracy.name,
+    'location': state.streetLandmark,
+    'barangay': state.barangay ?? state.zone,
+    'declarationConfirmed': state.declarationConfirmed,
+    'dataProcessingConsent': state.dataProcessingConsent,
+    'isQuickReport': false,
+    'isEmergency': false,
+  };
+
+  Future<domain.Report> submit({String? idempotencyKey}) async {
     if (!state.canSubmit) {
       throw const ReportSubmissionFailure(
         'Please complete all required report fields.',
@@ -408,6 +497,7 @@ class NewReportController extends _$NewReportController {
         barangay: state.barangay ?? state.zone,
         declarationConfirmed: state.declarationConfirmed,
         dataProcessingConsent: state.dataProcessingConsent,
+        idempotencyKey: idempotencyKey,
       );
       return result.when(
         success: (report) => report,
@@ -540,12 +630,20 @@ class NewReportController extends _$NewReportController {
 
   /// Reset the entire form
   void reset() {
-    final images = state.selectedImages;
     state = const NewReportState();
-    unawaited(discardEvidenceDrafts(images));
   }
 
   void resetAfterEvidenceHandoff() {
     state = const NewReportState();
   }
+
+  void resetKeepingDraft() {
+    state = const NewReportState(draftCompleted: true);
+  }
 }
+
+String? _draftString(Object? value) =>
+    value is String && value.isNotEmpty ? value : null;
+
+double? _draftDouble(Object? value) =>
+    value is num ? value.toDouble() : double.tryParse(value?.toString() ?? '');

@@ -353,6 +353,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'For immediate threats. BayanTrack does not replace emergency hotlines.';
 
   @override
+  String get emergencyCallGuidance =>
+      'If someone is in immediate danger, call local emergency services if cellular calling is available. BayanTrack has not confirmed receipt of this report.';
+
+  @override
   String get emergencyConfirm =>
       'I confirm this is an emergency and the location is accurate.';
 
@@ -369,6 +373,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get submittingEmergencyReport => 'Sending Emergency Report…';
+
+  @override
+  String get reportDraftFoundTitle => 'Unfinished report';
+
+  @override
+  String reportDraftFoundMessage(String reportType) {
+    return 'You have a saved $reportType draft.';
+  }
+
+  @override
+  String get resumeDraft => 'Resume';
+
+  @override
+  String get startNewReport => 'Start New';
+
+  @override
+  String get discardDraft => 'Discard Draft';
+
+  @override
+  String get notNow => 'Not Now';
+
+  @override
+  String get discardDraftConfirmationTitle => 'Discard this draft?';
+
+  @override
+  String get discardDraftConfirmationMessage =>
+      'This saved report and its unused photos will be deleted.';
+
+  @override
+  String get replaceDraftConfirmationMessage =>
+      'The saved report will be replaced with a new draft.';
+
+  @override
+  String get keepDraft => 'Keep Draft';
+
+  @override
+  String get emergencyNotYetTransmitted => 'NOT YET TRANSMITTED';
 
   @override
   String get emergencyDetailsHint => 'Add details that can help responders.';
@@ -492,6 +533,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportSubmitted => 'Report submitted';
+
+  @override
+  String get reportPendingSyncTitle => 'Pending Sync';
+
+  @override
+  String get reportPendingSync =>
+      'Saved on this device. Not yet transmitted to BayanTrack.';
+
+  @override
+  String get reportOutboxRetrying =>
+      'Will retry safely when BayanTrack is reachable.';
+
+  @override
+  String get reportOutboxWaitingAuth =>
+      'Sign in with the original account to resume this report.';
+
+  @override
+  String get reportOutboxNeedsEdit =>
+      'Report was not accepted. Edit and submit it again.';
+
+  @override
+  String get reportOutboxConflict =>
+      'Submission could not be confirmed. Edit report before resubmitting.';
+
+  @override
+  String get reportOutboxRetryNow => 'Retry now';
+
+  @override
+  String get reportOutboxEdit => 'Edit and resubmit';
+
+  @override
+  String get reportEvidenceHandoffTitle => 'Evidence upload';
+
+  @override
+  String get reportEvidenceHandoffPending =>
+      'Report received. Evidence is still waiting to upload.';
+
+  @override
+  String get reportEvidenceHandoffRetry => 'Retry evidence upload';
 
   @override
   String get addOptionalPhoto => 'Add an optional photo as evidence?';
@@ -985,6 +1065,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noInternetConnection => 'No internet connection';
+
+  @override
+  String get cachedReportsOffline =>
+      'Backend unavailable. Showing saved reports; information may be outdated.';
 
   @override
   String get dismiss => 'Dismiss';
