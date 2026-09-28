@@ -906,12 +906,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
+                            horizontal: 8,
+                            vertical: 6,
                           ),
                           child: Wrap(
-                            spacing: 12,
-                            runSpacing: 8,
+                            spacing: 8,
+                            runSpacing: 4,
                             children: [
                               for (final status
                                   in _statusFilters.whereType<ReportStatus>())
@@ -944,8 +944,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           avatar: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOut,
-            width: 10,
-            height: 10,
+            width: 8,
+            height: 8,
             decoration: BoxDecoration(
               color: color,
               shape: BoxShape.circle,
@@ -962,11 +962,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           label: Text(_statusFilterLabel(status, l10n)),
           selected: isSelected,
           showCheckmark: false,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
           backgroundColor: theme.colorScheme.surfaceContainerLow,
           selectedColor: color.withValues(
             alpha: theme.brightness == Brightness.dark ? 0.24 : 0.14,
           ),
-          labelStyle: theme.textTheme.labelMedium?.copyWith(
+          labelStyle: theme.textTheme.labelSmall?.copyWith(
             color: isSelected
                 ? reportStatusForegroundColor(status, theme)
                 : theme.colorScheme.onSurface,
