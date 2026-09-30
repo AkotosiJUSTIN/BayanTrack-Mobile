@@ -53,7 +53,7 @@ void main() {
       expect(find.text('Contact Support'), findsNothing);
       await tester.tap(faqEntry);
       await tester.pumpAndSettle();
-      expect(find.text('Frequently Asked Questions'), findsOneWidget);
+      expect(find.text('Help & FAQs'), findsOneWidget);
 
       await tester.pageBack();
       await tester.pumpAndSettle();
@@ -63,7 +63,7 @@ void main() {
       await tester.tap(hotlineEntry);
       await tester.pumpAndSettle();
       expect(find.text('Emergency Hotlines'), findsOneWidget);
-      expect(find.text('Call 911'), findsOneWidget);
+      expect(find.byKey(const ValueKey('hotline-call-911')), findsOneWidget);
     },
   );
 }

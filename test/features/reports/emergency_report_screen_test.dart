@@ -12,6 +12,7 @@ import 'package:bayantrack_mobile/features/auth/auth_di.dart';
 import 'package:bayantrack_mobile/features/auth/domain/entities/user.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/auth_controller.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
+import 'package:bayantrack_mobile/features/help/data/help_content.dart';
 import 'package:bayantrack_mobile/features/reports/data/report_draft_store.dart';
 import 'package:bayantrack_mobile/features/reports/data/reports_repository.dart'
     as data;
@@ -248,6 +249,7 @@ void main() {
       final reportsRepository = _ReportsRepositoryMock();
       final createUseCase = _TestCreateReportUseCase();
       final storage = _authenticatedStorage();
+      final launched = <Uri>[];
       when(
         () => reportsRepository.getFormOptions(),
       ).thenAnswer((_) async => data.offlineReportFormOptions);
@@ -279,6 +281,10 @@ void main() {
               emergencyMode: true,
               showMapTiles: false,
               locationOverride: () async => _position(),
+              launchCall: (uri) async {
+                launched.add(uri);
+                return true;
+              },
             ),
           ),
         ),
@@ -294,6 +300,14 @@ void main() {
         findsOneWidget,
       );
       expect(find.byKey(const Key('quick-report-description')), findsNothing);
+      expect(launched, isEmpty);
+      for (final hotline in emergencyHotlines) {
+        final tile = find.byKey(ValueKey('hotline-call-${hotline.number}'));
+        await tester.ensureVisible(tile);
+        await tester.tap(tile);
+        await tester.pumpAndSettle();
+      }
+      expect(launched, emergencyHotlines.map((h) => hotlineCallUri(h.number)));
 
       await tester.ensureVisible(
         find.byKey(const Key('emergency-report-category')),
@@ -338,6 +352,7 @@ void main() {
       addTearDown(tester.view.reset);
       final reportsRepository = _ReportsRepositoryMock();
       final createUseCase = _TestCreateReportUseCase();
+      final launched = <Uri>[];
       when(
         () => reportsRepository.getFormOptions(),
       ).thenAnswer((_) async => data.offlineReportFormOptions);
@@ -369,11 +384,16 @@ void main() {
               emergencyMode: true,
               showMapTiles: false,
               locationOverride: () async => _position(),
+              launchCall: (uri) async {
+                launched.add(uri);
+                return true;
+              },
             ),
           ),
         ),
       );
       await tester.pumpAndSettle();
+      expect(find.text('NOT YET TRANSMITTED'), findsOneWidget);
       await tester.ensureVisible(
         find.byKey(const Key('emergency-report-category')),
       );
@@ -389,7 +409,13 @@ void main() {
       await tester.tap(find.byKey(const Key('emergency-report-submit')));
       await tester.pumpAndSettle();
 
-      expect(find.text('NOT YET TRANSMITTED'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('NOT YET TRANSMITTED'),
+        ),
+        findsOneWidget,
+      );
       expect(
         find.textContaining('call local emergency services'),
         findsOneWidget,
@@ -398,6 +424,16 @@ void main() {
         find.textContaining('BayanTrack has not confirmed receipt'),
         findsOneWidget,
       );
+      expect(createUseCase.callCount, 0);
+      expect(launched, isEmpty);
+      final dialogCall = find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byKey(const ValueKey('hotline-call-911')),
+      );
+      await tester.ensureVisible(dialogCall);
+      await tester.tap(dialogCall);
+      await tester.pumpAndSettle();
+      expect(launched, [hotlineCallUri(emergencyHotlines.first.number)]);
       expect(createUseCase.callCount, 0);
       expect(tester.takeException(), isNull);
     },

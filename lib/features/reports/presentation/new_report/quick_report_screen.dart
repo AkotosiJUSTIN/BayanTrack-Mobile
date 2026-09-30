@@ -24,6 +24,8 @@ import '../../../auth/presentation/auth_controller.dart';
 import '../../../images/data/evidence_file_stager.dart';
 import '../../../images/data/evidence_upload_queue.dart';
 import '../../../images/data/evidence_upload_queue_provider.dart';
+import '../../../help/data/help_content.dart';
+import '../../../help/presentation/help_screens.dart';
 import '../../data/report_draft_store.dart';
 import '../../data/report_create_outbox.dart';
 import '../../data/reports_repository.dart';
@@ -52,6 +54,7 @@ class QuickReportScreen extends ConsumerStatefulWidget {
     this.fastReportMode = false,
     this.pickImage,
     this.pickMultiImage,
+    this.launchCall,
   });
 
   @visibleForTesting
@@ -71,6 +74,8 @@ class QuickReportScreen extends ConsumerStatefulWidget {
 
   @visibleForTesting
   final Future<List<XFile>> Function()? pickMultiImage;
+
+  final Future<bool> Function(Uri uri)? launchCall;
 
   @override
   ConsumerState<QuickReportScreen> createState() => _QuickReportScreenState();
@@ -399,7 +404,15 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: Text(l10n.emergencyNotYetTransmitted),
-          content: Text(l10n.emergencyCallGuidance),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l10n.emergencyCallGuidance),
+                _emergencyHotlines(),
+              ],
+            ),
+          ),
           actions: [
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext),
@@ -1159,28 +1172,35 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
       context: context,
       showDragHandle: true,
       builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.notes_outlined),
-              title: Text(l10n.addDetails),
-              onTap: () =>
-                  Navigator.pop(sheetContext, _EmergencyFollowUpAction.details),
-            ),
-            ListTile(
-              leading: const Icon(Icons.add_a_photo_outlined),
-              title: Text(l10n.addPhotos),
-              onTap: () =>
-                  Navigator.pop(sheetContext, _EmergencyFollowUpAction.photos),
-            ),
-            ListTile(
-              leading: const Icon(Icons.check_outlined),
-              title: Text(l10n.done),
-              onTap: () =>
-                  Navigator.pop(sheetContext, _EmergencyFollowUpAction.done),
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _emergencyHotlines(),
+              ListTile(
+                leading: const Icon(Icons.notes_outlined),
+                title: Text(l10n.addDetails),
+                onTap: () => Navigator.pop(
+                  sheetContext,
+                  _EmergencyFollowUpAction.details,
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.add_a_photo_outlined),
+                title: Text(l10n.addPhotos),
+                onTap: () => Navigator.pop(
+                  sheetContext,
+                  _EmergencyFollowUpAction.photos,
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.check_outlined),
+                title: Text(l10n.done),
+                onTap: () =>
+                    Navigator.pop(sheetContext, _EmergencyFollowUpAction.done),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1390,6 +1410,24 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _emergencyHotlines() {
+    final point = _selectedPoint;
+    final distance = point == null
+        ? null
+        : _selectedMunicipality.boundary?.distanceToBoundaryMeters(
+            point.latitude,
+            point.longitude,
+          );
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: EmergencyHotlineSection(
+        hotlines: emergencyHotlines,
+        launchCall: widget.launchCall,
+        nearBoundary: distance != null && distance <= 500,
       ),
     );
   }
@@ -1920,7 +1958,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
                           : l10n.selectLocationDescription,
                     ),
                     if (widget.emergencyMode) ...[
-                      if (_draftRestored)
+                      if (_draftRestored || !ref.watch(isOnlineProvider))
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                           child: Text(
@@ -1934,8 +1972,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
                         ),
                       _buildEmergencyNotice(theme),
                       _buildEmergencyCategory(theme),
+                      _emergencyHotlines(),
                     ] else if (widget.fastReportMode) ...[
                       _buildEmergencyNotice(theme),
+                      _emergencyHotlines(),
                     ],
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),

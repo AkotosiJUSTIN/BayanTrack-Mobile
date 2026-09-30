@@ -46,7 +46,7 @@ class HelpSafetySection extends StatelessWidget {
   }
 }
 
-class EmergencyHotlinesScreen extends StatefulWidget {
+class EmergencyHotlinesScreen extends StatelessWidget {
   const EmergencyHotlinesScreen({
     super.key,
     this.hotlines = emergencyHotlines,
@@ -57,63 +57,13 @@ class EmergencyHotlinesScreen extends StatefulWidget {
   final Future<bool> Function(Uri uri)? launchCall;
 
   @override
-  State<EmergencyHotlinesScreen> createState() =>
-      _EmergencyHotlinesScreenState();
-}
-
-class _EmergencyHotlinesScreenState extends State<EmergencyHotlinesScreen> {
-  Future<void> _call(Uri uri) async {
-    try {
-      final launch =
-          widget.launchCall ??
-          (uri) => launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!await launch(uri) && mounted) _showCallFailure(uri);
-    } catch (_) {
-      if (mounted) _showCallFailure(uri);
-    }
-  }
-
-  void _showCallFailure(Uri uri) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Could not open the phone app. Use your dialer to call ${uri.path}.',
-        ),
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(title: const Text('Emergency Hotlines')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
-          const _EmergencyHelpCard(),
-          const SizedBox(height: 24),
-          Text(
-            'Verified emergency numbers',
-            style: theme.textTheme.titleMedium,
-          ),
-          const SizedBox(height: 12),
-          if (widget.hotlines.isEmpty)
-            const _HotlineUnavailable(
-              message: 'No verified hotline numbers are available.',
-            )
-          else
-            for (final hotline in widget.hotlines) ...[
-              _HotlineTile(hotline: hotline, onCall: _call),
-              const SizedBox(height: 12),
-            ],
-          Text(
-            'Help information is stored on this device and available offline.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
+          EmergencyHotlineSection(hotlines: hotlines, launchCall: launchCall),
         ],
       ),
     );
@@ -121,7 +71,9 @@ class _EmergencyHotlinesScreenState extends State<EmergencyHotlinesScreen> {
 }
 
 class HelpFaqScreen extends StatefulWidget {
-  const HelpFaqScreen({super.key});
+  const HelpFaqScreen({super.key, this.launchCall});
+
+  final Future<bool> Function(Uri uri)? launchCall;
 
   @override
   State<HelpFaqScreen> createState() => _HelpFaqScreenState();
@@ -150,7 +102,7 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
-          _EmergencyHelpCard(onPressed: () => _openEmergencyHotlines(context)),
+          EmergencyHotlineSection(launchCall: widget.launchCall),
           const SizedBox(height: 24),
           Text('Frequently Asked Questions', style: theme.textTheme.titleLarge),
           const SizedBox(height: 12),
@@ -262,41 +214,104 @@ class _FaqCategoryTile extends StatelessWidget {
   }
 }
 
-class _HotlineTile extends StatelessWidget {
-  const _HotlineTile({required this.hotline, required this.onCall});
+class EmergencyHotlineSection extends StatefulWidget {
+  const EmergencyHotlineSection({
+    super.key,
+    this.hotlines = emergencyHotlines,
+    this.launchCall,
+    this.nearBoundary = false,
+  });
 
-  final EmergencyHotline hotline;
-  final ValueChanged<Uri> onCall;
+  final List<EmergencyHotline> hotlines;
+  final Future<bool> Function(Uri uri)? launchCall;
+  final bool nearBoundary;
+
+  @override
+  State<EmergencyHotlineSection> createState() =>
+      _EmergencyHotlineSectionState();
+}
+
+class _EmergencyHotlineSectionState extends State<EmergencyHotlineSection> {
+  Future<void> _call(EmergencyHotline hotline) async {
+    final uri = hotlineCallUri(hotline.number);
+    if (uri == null) return;
+    try {
+      final launch =
+          widget.launchCall ??
+          (uri) => launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (await launch(uri)) return;
+    } catch (_) {
+      // Missing dialers are expected on tablets and simulators.
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Phone app unavailable. Call ${hotline.number} using another phone.',
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final contacts = [
+      ...widget.hotlines,
+      if (widget.nearBoundary) ...neighboringEmergencyHotlines,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Emergency Help', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        const Text(emergencyServicesGuidance),
+        const SizedBox(height: 8),
+        if (contacts.isEmpty)
+          const _HotlineUnavailable(
+            message: 'No hotline numbers are configured.',
+          ),
+        for (final hotline in contacts)
+          _HotlineTile(hotline: hotline, onCall: () => _call(hotline)),
+        if (widget.nearBoundary)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              'Location is near the city boundary. Confirm your location with '
+              'emergency services. No neighboring LGU dispatch is confirmed.',
+            ),
+          ),
+        Text(
+          'Contacts available offline. LGU-provided local numbers.',
+          style: theme.textTheme.bodySmall,
+        ),
+      ],
+    );
+  }
+}
+
+class _HotlineTile extends StatelessWidget {
+  const _HotlineTile({required this.hotline, required this.onCall});
+
+  final EmergencyHotline hotline;
+  final VoidCallback onCall;
+
+  @override
+  Widget build(BuildContext context) {
     final uri = hotlineCallUri(hotline.number);
 
-    return CivicSurface(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(hotline.name, style: theme.textTheme.titleMedium),
-          if (uri == null)
-            const _HotlineUnavailable(
-              message:
-                  'Call unavailable: this number is unavailable or invalid.',
-            )
-          else ...[
-            const SizedBox(height: 4),
-            Text(hotline.number, style: theme.textTheme.headlineMedium),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              key: ValueKey('hotline-call-${hotline.number}'),
-              onPressed: () => onCall(uri),
-              icon: const Icon(Icons.call_outlined),
-              label: Text('Call ${hotline.number}'),
-            ),
-          ],
-        ],
+    return ListTile(
+      key: ValueKey('hotline-call-${hotline.number}'),
+      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+      leading: const Icon(Icons.call_outlined),
+      title: Text(hotline.name),
+      subtitle: Text(
+        uri == null ? 'This number is unavailable or invalid.' : hotline.number,
       ),
+      trailing: uri == null ? null : const Icon(Icons.phone_forwarded_outlined),
+      onTap: uri == null ? null : onCall,
+      enabled: uri != null,
+      minVerticalPadding: 12,
     );
   }
 }
@@ -354,7 +369,7 @@ class _EmergencyHelpCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'In immediate danger, contact emergency services directly. BayanTrack does not replace emergency services.',
+            emergencyServicesGuidance,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: scheme.onErrorContainer,
             ),

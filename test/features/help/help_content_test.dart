@@ -2,7 +2,7 @@ import 'package:bayantrack_mobile/features/help/data/help_content.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('bundles all FAQ groups and verified hotline data locally', () {
+  test('bundles all FAQ groups and LGU hotline data locally', () {
     expect(helpFaqCategories.map((category) => category.title), [
       'Getting Started',
       'Reporting an Issue',
@@ -18,7 +18,15 @@ void main() {
       helpFaqCategories.every((category) => category.entries.isNotEmpty),
       isTrue,
     );
-    expect(emergencyHotlines.map((hotline) => hotline.number), ['911']);
+    expect(emergencyHotlines.map((hotline) => (hotline.name, hotline.number)), [
+      ('National Emergency Hotline', '911'),
+      ('Ambulance / Rescue', '+63 917 818 5374'),
+      ('Ambulance / Rescue', '+63 917 159 1545'),
+      ('Bureau of Fire Protection', '+63 917 184 4611'),
+      ('Philippine National Police', '+63 998 589 5135'),
+      ('Philippine National Police', '+63 916 226 3641'),
+    ]);
+    expect(neighboringEmergencyHotlines, isEmpty);
   });
 
   test('FAQ search matches categories, questions, and answers', () {
@@ -38,6 +46,16 @@ void main() {
     expect(
       hotlineCallUri('+639171234567'),
       Uri(scheme: 'tel', path: '+639171234567'),
+    );
+    for (final hotline in emergencyHotlines) {
+      expect(
+        hotlineCallUri(hotline.number).toString(),
+        'tel:${hotline.number.replaceAll(' ', '')}',
+      );
+    }
+    expect(
+      hotlineCallUri(emergencyHotlines[1].number)!.path,
+      isNot(emergencyHotlines[1].number),
     );
     expect(hotlineCallUri(null), isNull);
     expect(hotlineCallUri('  '), isNull);

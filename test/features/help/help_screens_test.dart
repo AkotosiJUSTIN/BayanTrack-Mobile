@@ -8,12 +8,13 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const MaterialApp(home: HelpFaqScreen()));
-
-    expect(find.text('Frequently Asked Questions'), findsOneWidget);
-    expect(find.byKey(const ValueKey('help-faq-search')), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Getting Started'), 250);
+    await tester.ensureVisible(find.text('Getting Started'));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Getting Started'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('What is BayanTrack?'));
     await tester.tap(find.text('What is BayanTrack?'));
     await tester.pumpAndSettle();
 
@@ -27,6 +28,11 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const MaterialApp(home: HelpFaqScreen()));
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('help-faq-search')),
+      250,
+    );
+    await tester.ensureVisible(find.byKey(const ValueKey('help-faq-search')));
 
     await tester.enterText(
       find.byKey(const ValueKey('help-faq-search')),
@@ -51,7 +57,8 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('Call 911'));
+    expect(launched, isEmpty);
+    await tester.tap(find.byKey(const ValueKey('hotline-call-911')));
     await tester.pumpAndSettle();
 
     expect(launched, [Uri(scheme: 'tel', path: '911')]);
@@ -92,10 +99,7 @@ void main() {
       const MaterialApp(home: EmergencyHotlinesScreen(hotlines: [])),
     );
 
-    expect(
-      find.text('No verified hotline numbers are available.'),
-      findsOneWidget,
-    );
+    expect(find.text('No hotline numbers are configured.'), findsOneWidget);
     expect(find.textContaining('Call '), findsNothing);
   });
 
@@ -113,7 +117,7 @@ void main() {
       expect(callButton, findsOneWidget);
       expect(tester.getSize(callButton).height, greaterThanOrEqualTo(48));
       expect(
-        find.textContaining('does not replace emergency services'),
+        find.textContaining('does not replace emergency response services'),
         findsOneWidget,
       );
     },
@@ -122,5 +126,96 @@ void main() {
   test('searchable FAQ content is bundled without a backend provider', () {
     expect(helpFaqCategories, isNotEmpty);
     expect(filterHelpFaqCategories('resolution'), isNotEmpty);
+  });
+
+  for (final throwsError in [false, true]) {
+    testWidgets('missing dialer handled, exception=$throwsError', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: EmergencyHotlinesScreen(
+            launchCall: (_) async {
+              if (throwsError) throw StateError('No dialer');
+              return false;
+            },
+          ),
+        ),
+      );
+      await tester.tap(find.byKey(const ValueKey('hotline-call-911')));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('using another phone'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('FAQ renders every shared contact and only launches after tap', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final launched = <Uri>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: HelpFaqScreen(
+          launchCall: (uri) async {
+            launched.add(uri);
+            return true;
+          },
+        ),
+      ),
+    );
+    expect(launched, isEmpty);
+    for (final hotline in emergencyHotlines) {
+      final tile = find.byKey(ValueKey('hotline-call-${hotline.number}'));
+      await tester.ensureVisible(tile);
+      expect(
+        find.descendant(of: tile, matching: find.text(hotline.name)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: tile, matching: find.text(hotline.number)),
+        findsOneWidget,
+      );
+      await tester.tap(tile);
+      await tester.pumpAndSettle();
+    }
+    expect(launched, emergencyHotlines.map((h) => hotlineCallUri(h.number)));
+  });
+
+  testWidgets('large text fits hotline rows on narrow screen', (tester) async {
+    tester.view.physicalSize = const Size(320, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+          child: const EmergencyHotlinesScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('boundary guidance does not fabricate neighboring contacts', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: EmergencyHotlineSection(nearBoundary: true),
+          ),
+        ),
+      ),
+    );
+    expect(
+      find.textContaining('No neighboring LGU dispatch is confirmed'),
+      findsOneWidget,
+    );
+    expect(find.byType(ListTile), findsNWidgets(emergencyHotlines.length));
   });
 }

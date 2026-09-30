@@ -13,10 +13,15 @@ class HelpFaqCategory {
 }
 
 class EmergencyHotline {
-  const EmergencyHotline({required this.name, required this.number});
+  const EmergencyHotline({
+    required this.name,
+    required this.number,
+    this.municipalityId = 'urdaneta',
+  });
 
   final String name;
   final String number;
+  final String? municipalityId;
 }
 
 const helpFaqCategories = <HelpFaqCategory>[
@@ -267,13 +272,36 @@ const helpFaqCategories = <HelpFaqCategory>[
   ),
 ];
 
-// Verified on 2026-09-27: https://ehotlines.e.gov.ph/ lists 911 as the
-// National Emergency Hotline. The Urdaneta City CDRRMO page at
-// https://www.urdaneta-city.gov.ph/copy-of-gso has placeholder/conflicting
-// contact details; add local numbers only after direct city confirmation.
+// LGU-provided reference, added 2026-09-30. Reverify local contacts against
+// the current official source before production release.
 const emergencyHotlines = <EmergencyHotline>[
-  EmergencyHotline(name: 'National Emergency Hotline', number: '911'),
+  EmergencyHotline(
+    name: 'National Emergency Hotline',
+    number: '911',
+    municipalityId: null,
+  ),
+  EmergencyHotline(name: 'Ambulance / Rescue', number: '+63 917 818 5374'),
+  EmergencyHotline(name: 'Ambulance / Rescue', number: '+63 917 159 1545'),
+  EmergencyHotline(
+    name: 'Bureau of Fire Protection',
+    number: '+63 917 184 4611',
+  ),
+  EmergencyHotline(
+    name: 'Philippine National Police',
+    number: '+63 998 589 5135',
+  ),
+  EmergencyHotline(
+    name: 'Philippine National Police',
+    number: '+63 916 226 3641',
+  ),
 ];
+
+// Add only independently verified neighboring-LGU contacts, with their scope.
+const neighboringEmergencyHotlines = <EmergencyHotline>[];
+
+const emergencyServicesGuidance =
+    'For immediate danger or life-threatening emergencies, contact emergency '
+    'services directly. BayanTrack does not replace emergency response services.';
 
 List<HelpFaqCategory> filterHelpFaqCategories(String query) {
   final normalizedQuery = query.trim().toLowerCase();
@@ -299,9 +327,13 @@ List<HelpFaqCategory> filterHelpFaqCategories(String query) {
 }
 
 Uri? hotlineCallUri(String? number) {
-  final canonicalNumber = number?.trim();
-  if (canonicalNumber == null ||
-      !RegExp(r'^\+?[0-9]{2,20}$').hasMatch(canonicalNumber)) {
+  final formattedNumber = number?.trim();
+  if (formattedNumber == null ||
+      !RegExp(r'^\+?[0-9][0-9 ]*$').hasMatch(formattedNumber)) {
+    return null;
+  }
+  final canonicalNumber = formattedNumber.replaceAll(' ', '');
+  if (!RegExp(r'^\+?[0-9]{2,20}$').hasMatch(canonicalNumber)) {
     return null;
   }
   return Uri(scheme: 'tel', path: canonicalNumber);
