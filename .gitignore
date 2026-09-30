@@ -49,5 +49,8 @@ AGENTS.md
 
 .env
 
-/brag-output-2026-09-22-023404
+# Generated brag outputs
+/alternative-output/
+/brag-*-output/
+/brag-output-*/
 /brag-references
