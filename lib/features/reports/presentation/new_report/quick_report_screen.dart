@@ -22,6 +22,7 @@ import '../../../auth/data/user_permissions.dart';
 import '../../../auth/presentation/barangays_provider.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../images/data/evidence_file_stager.dart';
+import '../../../images/presentation/evidence_photo_review.dart';
 import '../../../images/data/evidence_upload_queue.dart';
 import '../../../images/data/evidence_upload_queue_provider.dart';
 import '../../../help/data/help_content.dart';
@@ -1273,6 +1274,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
       builder: (_) => _QuickReportEvidenceDialog(
         pickImage: _pickImage,
         pickMultiImage: _pickMultiImage,
+        sensitive: widget.emergencyMode,
       ),
     );
     if (!mounted || selected == null || selected.isEmpty) return;
@@ -2398,10 +2400,12 @@ class _QuickReportEvidenceDialog extends StatefulWidget {
   const _QuickReportEvidenceDialog({
     required this.pickImage,
     required this.pickMultiImage,
+    this.sensitive = false,
   });
 
   final Future<XFile?> Function(ImageSource source) pickImage;
   final Future<List<XFile>> Function() pickMultiImage;
+  final bool sensitive;
 
   @override
   State<_QuickReportEvidenceDialog> createState() =>
@@ -2423,7 +2427,13 @@ class _QuickReportEvidenceDialogState
     try {
       final picked = await widget.pickImage(ImageSource.camera);
       if (!mounted || picked == null) return;
-      setState(() => _selected.add(picked));
+      final reviewed = await reviewEvidencePhoto(
+        context,
+        picked,
+        sensitive: widget.sensitive,
+      );
+      if (!mounted || reviewed == null) return;
+      setState(() => _selected.add(reviewed));
     } catch (_) {
       if (mounted) {
         setState(
@@ -2444,7 +2454,16 @@ class _QuickReportEvidenceDialogState
     try {
       final picked = await widget.pickMultiImage();
       if (!mounted || picked.isEmpty) return;
-      setState(() => _selected.addAll(picked));
+      for (final photo in picked) {
+        if (!mounted) return;
+        final reviewed = await reviewEvidencePhoto(
+          context,
+          photo,
+          sensitive: widget.sensitive,
+        );
+        if (!mounted) return;
+        if (reviewed != null) setState(() => _selected.add(reviewed));
+      }
     } catch (_) {
       if (mounted) {
         setState(
@@ -2525,16 +2544,44 @@ class _QuickReportEvidenceDialogState
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: Image.file(
-                                File(photo.path),
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => ColoredBox(
-                                  color: scheme.surfaceContainerHighest,
-                                  child: Icon(
-                                    Icons.broken_image_outlined,
-                                    color: scheme.onSurfaceVariant,
-                                  ),
-                                ),
+                              child: FutureBuilder(
+                                future: photo.readAsBytes(),
+                                builder: (context, snapshot) => snapshot.hasData
+                                    ? Image.memory(
+                                        snapshot.data!,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : const Icon(Icons.photo_outlined),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 2,
+                              right: 2,
+                              child: IconButton.filledTonal(
+                                tooltip: 'Edit',
+                                icon: const Icon(Icons.edit_outlined),
+                                onPressed: _isPicking
+                                    ? null
+                                    : () async {
+                                        setState(() => _isPicking = true);
+                                        try {
+                                          final reviewed =
+                                              await reviewEvidencePhoto(
+                                                context,
+                                                photo,
+                                                sensitive: widget.sensitive,
+                                              );
+                                          if (mounted && reviewed != null) {
+                                            setState(
+                                              () => _selected[index] = reviewed,
+                                            );
+                                          }
+                                        } finally {
+                                          if (mounted) {
+                                            setState(() => _isPicking = false);
+                                          }
+                                        }
+                                      },
                               ),
                             ),
                             Positioned(
@@ -2544,8 +2591,11 @@ class _QuickReportEvidenceDialogState
                                 key: Key('quick-report-evidence-remove-$index'),
                                 tooltip: l10n.removePhoto,
                                 icon: const Icon(Icons.close),
-                                onPressed: () =>
-                                    setState(() => _selected.removeAt(index)),
+                                onPressed: _isPicking
+                                    ? null
+                                    : () => setState(
+                                        () => _selected.removeAt(index),
+                                      ),
                               ),
                             ),
                           ],

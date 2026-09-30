@@ -214,6 +214,13 @@ class NewReportController extends _$NewReportController {
     state = state.copyWith(selectedImages: updated);
   }
 
+  void replaceImage(int index, File image) {
+    if (index < 0 || index >= state.selectedImages.length) return;
+    final updated = List<File>.from(state.selectedImages);
+    updated[index] = image;
+    state = state.copyWith(selectedImages: updated);
+  }
+
   void clearImages() {
     if (state.selectedImages.isEmpty) return;
     state = state.copyWith(selectedImages: []);

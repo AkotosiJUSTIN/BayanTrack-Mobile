@@ -16,6 +16,7 @@ import '../../auth/presentation/barangays_provider.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/verification_widgets.dart';
 import '../../images/data/evidence_file_stager.dart';
+import '../../images/presentation/evidence_photo_review.dart';
 import '../../images/data/evidence_upload_queue.dart';
 import '../../images/data/evidence_upload_queue_provider.dart';
 import '../../kyc/presentation/kyc_controller.dart';
@@ -355,11 +356,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return;
     }
 
-    final picked = await ImagePicker().pickImage(
-      source: source,
-      imageQuality: 75,
-    );
-    if (!mounted || picked == null) return;
     setState(() {
       _isUpdatingFastReport = true;
       _fastReportFollowUpError = null;
@@ -368,7 +364,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     var queueAccepted = false;
     File? staged;
     try {
-      staged = await stageEvidenceFile(picked);
+      final picked = await ImagePicker().pickImage(
+        source: source,
+        imageQuality: 75,
+      );
+      if (!mounted) return;
+      if (picked == null) {
+        setState(() => _isUpdatingFastReport = false);
+        return;
+      }
+      final reviewed = await reviewEvidencePhoto(
+        context,
+        picked,
+        sensitive:
+            report.isEmergency ||
+            (report.assignedDepartmentKey ?? report.assignedDepartment)
+                    ?.trim()
+                    .toLowerCase() ==
+                'mdrrmo',
+      );
+      if (!mounted) return;
+      if (reviewed == null) {
+        setState(() => _isUpdatingFastReport = false);
+        return;
+      }
+      staged = await stageEvidenceFile(reviewed);
       final auth = ref.read(authControllerProvider);
       final userId = auth is AuthSuccess ? auth.user?.id : null;
       if (userId == null) throw StateError('No authenticated user');

@@ -12,6 +12,7 @@ import '../../../auth/data/user_permissions.dart';
 import '../../../auth/presentation/verification_widgets.dart';
 import '../../../images/data/evidence_file_stager.dart';
 import '../../../images/data/evidence_upload_queue_provider.dart';
+import '../../../images/presentation/evidence_photo_review.dart';
 import '../../data/report_draft_store.dart';
 import 'new_report_details_screen.dart';
 import 'new_report_controller.dart';
@@ -333,8 +334,13 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen>
         imageQuality: 85,
       );
       if (photo != null && mounted) {
-        final staged = await stageEvidenceFile(photo);
-        if (!mounted) return;
+        final reviewed = await reviewEvidencePhoto(context, photo);
+        if (!mounted || reviewed == null) return;
+        final staged = await stageEvidenceFile(reviewed);
+        if (!mounted) {
+          await discardEvidenceDraft(staged);
+          return;
+        }
         ref.read(newReportControllerProvider.notifier).addImage(staged);
       }
     } catch (_) {
@@ -355,12 +361,18 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen>
         imageQuality: 85,
       );
       if (photos.isNotEmpty && mounted) {
-        final staged = <File>[];
         for (final photo in photos) {
-          staged.add(await stageEvidenceFile(photo));
+          if (!mounted) return;
+          final reviewed = await reviewEvidencePhoto(context, photo);
+          if (!mounted) return;
+          if (reviewed == null) continue;
+          final staged = await stageEvidenceFile(reviewed);
+          if (!mounted) {
+            await discardEvidenceDraft(staged);
+            return;
+          }
+          ref.read(newReportControllerProvider.notifier).addImage(staged);
         }
-        if (!mounted) return;
-        ref.read(newReportControllerProvider.notifier).addImages(staged);
       }
     } catch (_) {
       if (mounted) AppToast.error(context, l10n.imageAccessError);
@@ -371,6 +383,37 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen>
 
   void _removeImage(int index) {
     ref.read(newReportControllerProvider.notifier).removeImage(index);
+  }
+
+  Future<void> _editImage(File previous) async {
+    if (_isPicking) return;
+    setState(() => _isPicking = true);
+    try {
+      final reviewed = await reviewEvidencePhoto(context, XFile(previous.path));
+      if (!mounted || reviewed == null) return;
+      final index = ref
+          .read(newReportControllerProvider)
+          .selectedImages
+          .indexOf(previous);
+      if (index < 0) return;
+      final staged = await stageEvidenceFile(reviewed);
+      if (!mounted) {
+        await discardEvidenceDraft(staged);
+        return;
+      }
+      ref
+          .read(newReportControllerProvider.notifier)
+          .replaceImage(index, staged);
+      // Save the replacement before releasing an original referenced by a durable draft.
+      await _flushDraftSave();
+      await _discardUnreferenced([previous.path]);
+    } catch (_) {
+      if (mounted) {
+        AppToast.error(context, AppLocalizations.of(context).imageAccessError);
+      }
+    } finally {
+      if (mounted) setState(() => _isPicking = false);
+    }
   }
 
   void _navigateToLocation() {
@@ -551,6 +594,17 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen>
                     Icons.broken_image_outlined,
                     color: scheme.onSurfaceVariant,
                   ),
+                ),
+              ),
+              Positioned(
+                bottom: 4,
+                right: 4,
+                child: IconButton.filledTonal(
+                  tooltip: 'Edit',
+                  onPressed: _isPicking
+                      ? null
+                      : () => _editImage(images[index]),
+                  icon: const Icon(Icons.edit_outlined),
                 ),
               ),
               Positioned(

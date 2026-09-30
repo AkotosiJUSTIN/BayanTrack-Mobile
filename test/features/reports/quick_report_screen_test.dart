@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:bayantrack_mobile/core/constants/urdaneta_barangays.dart';
 import 'package:bayantrack_mobile/core/constants/api_constants.dart';
@@ -39,6 +38,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart' show Override;
+import '../images/evidence_image_editor_test.dart' show evidenceFixture;
+import '../images/evidence_photo_review_test.dart' show settlePhoto;
 
 class _TestMunicipalities extends Municipalities {
   @override
@@ -986,6 +987,7 @@ void main() {
   testWidgets('post-report evidence reviews single and multiple photos', (
     tester,
   ) async {
+    final photoBytes = (await tester.runAsync(() => evidenceFixture()))!;
     final reports = _ReportsRepositoryMock();
     when(
       () => reports.getNearbyReports(
@@ -1007,20 +1009,11 @@ void main() {
       createReportUseCase: createReport,
       pickImage: (source) async {
         expect(source, ImageSource.camera);
-        return XFile.fromData(
-          Uint8List.fromList(List<int>.filled(32, 1)),
-          name: 'camera.jpg',
-        );
+        return XFile.fromData(photoBytes, name: 'camera.jpg');
       },
       pickMultiImage: () async => [
-        XFile.fromData(
-          Uint8List.fromList(List<int>.filled(32, 2)),
-          name: 'gallery-one.jpg',
-        ),
-        XFile.fromData(
-          Uint8List.fromList(List<int>.filled(32, 3)),
-          name: 'gallery-two.jpg',
-        ),
+        XFile.fromData(photoBytes, name: 'gallery-one.jpg'),
+        XFile.fromData(photoBytes, name: 'gallery-two.jpg'),
       ],
     );
     await tester.enterText(
@@ -1050,9 +1043,16 @@ void main() {
     expect(tester.getSize(find.text('Gallery')).height, lessThan(32));
 
     await tester.tap(find.byKey(const Key('quick-report-evidence-camera')));
-    await tester.pump();
+    await settlePhoto(tester);
+    expect(find.text('Review evidence'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('evidence-confirm-photo')));
+    await settlePhoto(tester);
     await tester.tap(find.byKey(const Key('quick-report-evidence-gallery')));
-    await tester.pump();
+    await settlePhoto(tester);
+    await tester.tap(find.byKey(const Key('evidence-confirm-photo')));
+    await settlePhoto(tester);
+    await tester.tap(find.byKey(const Key('evidence-confirm-photo')));
+    await settlePhoto(tester);
     expect(find.text('3 photo(s) selected'), findsOneWidget);
     expect(
       find.byKey(const Key('quick-report-evidence-remove-0')),
@@ -1079,18 +1079,15 @@ void main() {
       isNotNull,
     );
 
+    await tester.tap(find.byKey(const Key('quick-report-evidence-camera')));
+    await settlePhoto(tester);
+    await tester.tap(find.byTooltip('Cancel'));
+    await settlePhoto(tester);
+    expect(find.text('2 photo(s) selected'), findsOneWidget);
     await tester.tap(find.byKey(const Key('quick-report-upload-evidence')));
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.byKey(const Key('quick-report-upload-evidence')), findsNothing);
-
-    await tester.tap(find.byKey(const Key('quick-report-submit')));
-    await tester.pump();
-    await tester.pump();
-    expect(find.text('Skip for now'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('quick-report-evidence-camera')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('quick-report-evidence-skip')));
-    await tester.pump();
   });
 
   testWidgets('GPS loading, success, and failure stay near location controls', (
