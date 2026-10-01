@@ -1,128 +1,71 @@
 # Mobile priority integration
 
-Last updated: August 24, 2026
+Updated October 1, 2026. Mobile consumes Backend priority levels and does not
+calculate priority from report text.
 
-The Mobile application consumes priority values calculated and persisted by
-the Backend. It does not score report text, apply keyword points, detect
-hotspots, or reconstruct the priority rubric.
+## Contract
 
-## Priority contract
-
-The current system uses five levels.
-
-| Score | API value | Display label |
+| Level | API label | Display |
 | --- | --- | --- |
-| 0-20 | `VERY_LOW` | Very low |
-| 21-40 | `LOW` | Low |
-| 41-60 | `MEDIUM` | Medium |
-| 61-80 | `HIGH` | High |
-| 81-100 | `CRITICAL` | Critical |
+| 1 | `very_low` | Very low |
+| 2 | `low` | Low |
+| 3 | `medium` | Medium |
+| 4 | `high` | High |
+| 5 | `critical` | Critical |
 
-The main report fields are:
+Report fields use integer `priority_rank`, `suggested_priority_rank`, and
+`queue_priority_rank`, together with their corresponding level names.
+`staff_priority_level` records the staff decision. `priority_factors` contains
+qualitative evidence, and `priority_review_reasons` explains review flags.
+There are no point scores, weighted components, or base/hotspot additions.
+A queue rank of zero means unassigned; it is not a predicted priority level.
 
-| Field | Mobile use |
-| --- | --- |
-| `suggested_priority_score` | AI model score from `0` to `100`. |
-| `suggested_priority_level` | Level derived from the AI score. |
-| `queue_priority_score` | Backend operational queue score. |
-| `queue_priority_level` | Backend operational queue level. |
-| `staff_priority_level` | Explicit staff-selected level, when present. |
-| `priority_components` | Deterministic rubric factors for compatibility. |
-| `priority_review_reasons` | Policy reasons attached to the suggestion. |
+The Backend converts old stored scores to levels before returning reports.
+Missing optional metadata remains safe for parsing. Unknown response fields
+are ignored. Mobile does not reconstruct legacy score calculations.
 
-Legacy fields such as `priority_level`, `priority_score`, `base_score`, and
-`hotspot_score` remain optional compatibility inputs. New Mobile behavior does
-not calculate from those legacy values.
+## Display
 
-## Display precedence
-
-`Report.displayPriorityLevel` selects the first available value in this order:
+`Report.displayPriorityLevel` uses:
 
 ```dart
 queuePriorityLevel ?? suggestedPriorityLevel ?? priorityLevel
 ```
 
-This keeps Mobile aligned with the Backend queue while still displaying older
-reports that only contain a suggested or legacy level.
+Report lists and details use the same effective level. `PriorityBadge` can
+show an integer rank out of five when `showRank` is enabled. A missing level
+hides the badge. `PriorityReasons` displays reasons without numerical
+component breakdowns.
 
-Report lists sort by `queuePriorityLevel` where queue ordering is required.
-The detail screen and report cards use `displayPriorityLevel` for the badge.
+Staff and emergency queue decisions remain Backend policy. Category and
+department probabilities retain their separate confidence displays.
 
 ## Data path
 
 ```text
-POST /api/reports/
-        |
-        v
-Django calls FastAPI /analyze
-        |
-        v
-Django applies priority policy and stores the report
-        |
-        v
-GET /api/reports/ or GET /api/reports/{id}/
-        |
-        v
-Report DTO -> mapper -> domain Report -> PriorityBadge
+FastAPI /analyze -> Django priority policy and storage
+                -> Report API -> DTO -> ReportMapper -> domain Report
+                -> PriorityBadge
 ```
 
-Relevant files:
+The DTO and domain model retain qualitative `priorityFactors` for consistent
+report metadata. They do not treat these factors as verified neural
+attributions or calculate a new priority from them.
 
-- `lib/features/reports/data/report_models.dart`
-- `lib/features/reports/data/mappers/report_mapper.dart`
-- `lib/features/reports/domain/entities/report.dart`
-- `lib/features/reports/domain/entities/report_enums.dart`
-- `lib/features/reports/presentation/widgets/priority_badge.dart`
-- `lib/features/reports/presentation/report_detail_screen.dart`
-- `lib/features/home/presentation/widgets/home_report_card.dart`
+Restart the AI and Backend services and rebuild clients together for the
+updated contract. See the Backend priority guide at
+`ai-triage/prioritization/README.md` for migration and training details.
 
-## Priority explanation metadata
+## Verify
 
-The Backend also returns `priority_components`, which contains:
-
-```text
-hazard_severity
-human_impact
-infrastructure_damage
-service_disruption
-immediacy
-component_total
-safety_floor
-rubric_total
-```
-
-These values come from a deterministic `severity_rubric_v3` calculation. They
-are not individual outputs or attributions from the neural priority model.
-The full factor explanation currently appears in the Web staff report detail
-view. Mobile retains the map so future citizen-facing presentation can use the
-same Backend data without adding a second scoring implementation.
-
-See the shared
-[AI suggestion and explanation contract](../docs/ai-explanations.md) for the
-formula and distinction between AI suggestions and operational values.
-
-## Compatibility behavior
-
-- Missing optional AI fields do not block report parsing.
-- Unknown response fields remain safe for older Mobile builds.
-- A missing priority level hides the badge instead of inventing a default.
-- Mobile does not derive a level from `priority_components`.
-- Mobile does not use department suggestions as an assignment.
-
-## Verification
-
-Run from `BayanTrack-Mobile`:
+Run from the Mobile repository root:
 
 ```powershell
-dart format --output=none --set-exit-if-changed lib test
-flutter analyze
-flutter test
+flutter test test/features/reports/priority_level_contract_test.dart `
+  test/features/reports/reports_repository_test.dart `
+  test/features/reports/reports_repository_impl_test.dart `
+  test/features/reports/report_detail_screen_test.dart
 ```
 
-Manual checks:
-
-1. Open reports containing each of the five priority levels.
-2. Confirm the list and detail badge match `queue_priority_level` when present.
-3. Confirm a report with only `suggested_priority_level` still displays.
-4. Confirm an older report with only `priority_level` still displays.
-5. Confirm a report without priority metadata opens without an error.
+The new contract checks cover all five levels, qualitative factors, removal
+of score fields from serialization, and badge display as `4 / 5`.

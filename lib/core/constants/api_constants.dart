@@ -3,11 +3,11 @@ class ApiConstants {
   // emulator; physical devices use a LAN URL or 127.0.0.1 with adb reverse.
   static const String baseUrl = String.fromEnvironment(
     'BAYANTRACK_API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000/api',
+    defaultValue: 'http://192.168.1.37:8000/api',
   );
   static const String mediaBaseUrl = String.fromEnvironment(
     'BAYANTRACK_MEDIA_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000',
+    defaultValue: 'http://192.168.1.37:8000',
   );
   static const String health = '/health/';
 

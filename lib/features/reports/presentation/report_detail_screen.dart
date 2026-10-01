@@ -331,7 +331,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   PriorityBadge(
                     priorityLevel: report.displayPriorityLevel,
                     authorityLabel: localizedPriorityAuthority(report, l10n),
-                    showScores: false,
+                    showRank: false,
                   )
                 else
                   Text(l10n.unscored, style: theme.textTheme.labelMedium),

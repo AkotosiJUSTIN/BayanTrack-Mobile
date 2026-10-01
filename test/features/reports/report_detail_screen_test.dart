@@ -102,7 +102,7 @@ void main() {
     expect(find.text('Market Road gate'), findsOneWidget);
     expect(find.text('Current handler'), findsOneWidget);
     expect(
-      find.bySemanticsLabel(RegExp(r'^Operational priority: High')),
+      find.bySemanticsLabel(RegExp(r'^Queue priority: High')),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
@@ -124,13 +124,29 @@ void main() {
       report: _report(status: ReportStatus.resolved, withProof: true),
     );
 
+    await tester.ensureVisible(
+      find
+          .byWidgetPredicate(
+            (widget) =>
+                widget is Semantics &&
+                widget.properties.label == 'Response evidence 1',
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(
-      find.bySemanticsLabel(RegExp(r'^Resolution proof 1$')).first,
+      find.bySemanticsLabel(RegExp(r'^Response evidence 1$')).first,
     );
     await tester.pumpAndSettle();
 
     expect(find.byType(InteractiveViewer), findsOneWidget);
-    expect(find.byType(PageView), findsOneWidget);
+    expect(
+      find.ancestor(
+        of: find.byType(InteractiveViewer),
+        matching: find.byType(PageView),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('keeps the same hierarchy in dark mode', (tester) async {

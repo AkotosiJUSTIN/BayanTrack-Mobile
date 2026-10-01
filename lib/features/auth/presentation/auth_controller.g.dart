@@ -53,7 +53,7 @@ final class AuthControllerProvider
   }
 }
 
-String _$authControllerHash() => r'c8e0600d6fd691a5dc9e80e20f44d23b1be5938d';
+String _$authControllerHash() => r'43236e4b9eb096ec7ba0cd21789278c9437e1990';
 
 /// AuthController - ViewModel for authentication flows.
 ///
