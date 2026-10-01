@@ -353,7 +353,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get emergencyReportNotice =>
-      'Para sa agarang banta. Hindi kapalit ng emergency hotline ang BayanTrack.';
+      'Para sa agarang pagtugon, tumawag sa emergency hotline sa ibaba. Ang pagsusumite ng ulat na ito ay hindi nagpapadala ng responder.';
 
   @override
   String get emergencyCallGuidance =>
@@ -1433,6 +1433,9 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get currentHandler => 'Kasalukuyang humahawak';
+
+  @override
+  String get respondedBy => 'Tumugon';
 
   @override
   String get routingStatus => 'Status ng pag-route';

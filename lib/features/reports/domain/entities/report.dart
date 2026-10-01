@@ -59,6 +59,7 @@ class Report extends Equatable {
   // System Fields
   final ReportStatus status;
   final String? assignedDepartment;
+  final String? respondingAgency;
   final String? adminRemarks;
 
   // AI Fields
@@ -173,6 +174,7 @@ class Report extends Equatable {
     this.isEmergency = false,
     this.status = ReportStatus.submitted,
     this.assignedDepartment,
+    this.respondingAgency,
     this.adminRemarks,
     this.categoryConfidence,
     this.modelVersion,

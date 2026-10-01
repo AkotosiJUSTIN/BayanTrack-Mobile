@@ -399,7 +399,8 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
               report.submittedAt != null ||
               report.verifiedAt != null ||
               report.resolvedAt != null ||
-              report.assignedDepartment != null) ...[
+              report.assignedDepartment != null ||
+              report.respondingAgency != null) ...[
             _buildWorkflowActivity(theme, report),
             const SizedBox(height: 24),
           ],
@@ -761,6 +762,12 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                 _buildInfoRow(
                   l10n.currentHandler,
                   report.assignedDepartment!,
+                  theme,
+                ),
+              if (report.respondingAgency != null)
+                _buildInfoRow(
+                  l10n.respondedBy,
+                  report.respondingAgency!,
                   theme,
                 ),
             ],

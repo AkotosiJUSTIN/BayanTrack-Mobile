@@ -12,7 +12,11 @@ class ReportMapper {
   ReportMapper._(); // Prevent instantiation
 
   /// Convert DTO Report to domain Report entity
-  static Report fromDto(dto.Report dtoReport, {bool isStale = false}) {
+  static Report fromDto(
+    dto.Report dtoReport, {
+    bool isStale = false,
+    String? respondingAgency,
+  }) {
     return Report(
       id: dtoReport.id,
       reportId: dtoReport.reportId,
@@ -45,6 +49,7 @@ class ReportMapper {
       isEmergency: dtoReport.isEmergency,
       status: ReportStatus.fromString(dtoReport.status),
       assignedDepartment: dtoReport.assignedDepartment,
+      respondingAgency: respondingAgency,
       adminRemarks: dtoReport.adminRemarks,
       categoryConfidence: dtoReport.categoryConfidence,
       modelVersion: dtoReport.modelVersion,

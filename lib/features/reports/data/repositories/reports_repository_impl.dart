@@ -217,7 +217,17 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final response = await _dio.get(ApiConstants.reportById(id));
       final dtoReport = dto.Report.fromJson(response.data);
       await _cacheReport(ownerId, id, dtoReport);
-      return Success(ReportMapper.fromDto(dtoReport));
+      final rawAgency = response.data is Map
+          ? response.data['responding_agency']
+          : null;
+      return Success(
+        ReportMapper.fromDto(
+          dtoReport,
+          respondingAgency: rawAgency is String && rawAgency.trim().isNotEmpty
+              ? rawAgency
+              : null,
+        ),
+      );
     } catch (e, stack) {
       final failure = ErrorMapper.mapException(e, stack);
       if (_mayUseStaleCache(failure)) {

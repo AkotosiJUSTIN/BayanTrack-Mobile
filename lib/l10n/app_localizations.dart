@@ -2648,6 +2648,12 @@ abstract class AppLocalizations {
   /// **'Current handler'**
   String get currentHandler;
 
+  /// No description provided for @respondedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Responded by'**
+  String get respondedBy;
+
   /// No description provided for @routingStatus.
   ///
   /// In en, this message translates to:

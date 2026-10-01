@@ -350,7 +350,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emergencyReportNotice =>
-      'For immediate threats. BayanTrack does not replace emergency hotlines.';
+      'For immediate response, call an emergency service using the hotline below. Submitting this report does not dispatch a team.';
 
   @override
   String get emergencyCallGuidance =>
@@ -1430,6 +1430,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get currentHandler => 'Current handler';
+
+  @override
+  String get respondedBy => 'Responded by';
 
   @override
   String get routingStatus => 'Routing status';
