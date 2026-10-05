@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/result.dart';
 import '../../../core/presentation/widgets/app_toast.dart';
+import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/entities/kyc_enums.dart';
@@ -35,17 +36,72 @@ class KycStatusScreen extends ConsumerWidget {
         data: (kycStatus) => kycStatus == null
             ? _buildNoKycView(context, ref)
             : _buildStatusView(context, ref, kycStatus),
-        loading: () => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text(l10n.userVerification),
-            ],
+        loading: () => _buildLoadingState(context),
+        error: (_, _) => _buildErrorState(context, ref),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState(BuildContext context) {
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: AppLocalizations.of(context).loading,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CivicSurface(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CivicSkeletonBlock(width: 32, height: 32),
+                          SizedBox(width: 12),
+                          Expanded(child: CivicSkeletonBlock(height: 24)),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      CivicSkeletonBlock(height: 16),
+                      SizedBox(height: 8),
+                      FractionallySizedBox(
+                        widthFactor: 0.75,
+                        child: CivicSkeletonBlock(height: 16),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const CivicSkeletonBlock(width: 180, height: 18),
+                const SizedBox(height: 8),
+                CivicSurface(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < 4; i++)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Row(
+                            children: [
+                              Expanded(child: CivicSkeletonBlock(height: 14)),
+                              SizedBox(width: 24),
+                              Expanded(child: CivicSkeletonBlock(height: 16)),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        error: (_, _) => _buildErrorState(context, ref),
       ),
     );
   }

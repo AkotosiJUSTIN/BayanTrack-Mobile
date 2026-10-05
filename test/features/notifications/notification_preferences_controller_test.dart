@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:bayantrack_mobile/core/domain/failures.dart';
 import 'package:bayantrack_mobile/core/domain/result.dart';
+import 'package:bayantrack_mobile/core/presentation/widgets/civic_components.dart';
+import 'package:bayantrack_mobile/core/theme/app_theme.dart';
 import 'package:bayantrack_mobile/features/notifications/domain/entities/notification_preferences.dart';
 import 'package:bayantrack_mobile/features/notifications/domain/notifications_repository.dart';
 import 'package:bayantrack_mobile/features/notifications/notifications_di.dart';
@@ -30,6 +34,104 @@ void _stubUpdate(
 }
 
 void main() {
+  for (final theme in [AppTheme.light, AppTheme.dark]) {
+    testWidgets(
+      'settings loading has no interactive switches in ${theme.brightness.name}',
+      (tester) async {
+        tester.view.physicalSize = const Size(320, 640);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final pending = Completer<NotificationPreferences>();
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              notificationPreferencesControllerProvider.overrideWithBuild(
+                (_, _) => pending.future,
+              ),
+            ],
+            child: MaterialApp(
+              supportedLocales: AppLocalizations.supportedLocales,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              theme: theme,
+              home: const NotificationSettingsScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CivicSkeletonBlock), findsWidgets);
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+        expect(find.bySemanticsLabel(RegExp(r'^Loading')), findsOneWidget);
+        expect(find.byType(SwitchListTile), findsNothing);
+        expect(tester.takeException(), isNull);
+
+        pending.complete(NotificationPreferences.defaults);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CivicSkeletonBlock), findsNothing);
+        expect(find.byType(SwitchListTile), findsNWidgets(5));
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets('saving settings keeps the list and progress indicator', (
+    tester,
+  ) async {
+    final repository = _NotificationsRepositoryMock();
+    final pending = Completer<Result<NotificationPreferences>>();
+    when(
+      repository.getPreferences,
+    ).thenAnswer((_) async => const Success(NotificationPreferences.defaults));
+    _stubUpdate(repository, (_) => pending.future);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          notificationsDomainRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: MaterialApp(
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: const NotificationSettingsScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Push Notifications'));
+    await tester.pump();
+
+    expect(find.byType(CivicSkeletonBlock), findsNothing);
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    expect(
+      tester.widgetList<SwitchListTile>(find.byType(SwitchListTile)),
+      everyElement(
+        isA<SwitchListTile>().having(
+          (tile) => tile.onChanged,
+          'onChanged',
+          isNull,
+        ),
+      ),
+    );
+
+    pending.complete(
+      const Success(NotificationPreferences(pushEnabled: false)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(
+      tester
+          .widget<SwitchListTile>(
+            find.widgetWithText(SwitchListTile, 'Push Notifications'),
+          )
+          .value,
+      isFalse,
+    );
+  });
+
   test(
     'successful save adopts returned preferences without stale refetch',
     () async {

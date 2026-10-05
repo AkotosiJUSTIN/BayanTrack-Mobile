@@ -82,13 +82,53 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
               pinned: true,
               title: Text(l10n.reportDetails),
               flexibleSpace: FlexibleSpaceBar(
-                background: _buildImagePlaceholder(isDark),
+                background: const CivicSkeletonBlock(height: 300, radius: 0),
               ),
             ),
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(48),
-                child: Center(child: CircularProgressIndicator()),
+            SliverToBoxAdapter(
+              child: Semantics(
+                container: true,
+                liveRegion: true,
+                label: l10n.loading,
+                child: const Padding(
+                  padding: EdgeInsets.fromLTRB(24, 24, 24, 40),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CivicSkeletonBlock(height: 28),
+                      SizedBox(height: 8),
+                      FractionallySizedBox(
+                        widthFactor: 0.65,
+                        child: CivicSkeletonBlock(height: 28),
+                      ),
+                      SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          CivicSkeletonBlock(width: 80, height: 30),
+                          CivicSkeletonBlock(width: 96, height: 30),
+                          CivicSkeletonBlock(width: 72, height: 30),
+                        ],
+                      ),
+                      SizedBox(height: 12),
+                      CivicSkeletonBlock(width: 140, height: 12),
+                      SizedBox(height: 16),
+                      CivicSkeletonBlock(height: 100),
+                      SizedBox(height: 24),
+                      CivicSkeletonBlock(width: 120, height: 18),
+                      SizedBox(height: 12),
+                      CivicSkeletonBlock(height: 16),
+                      SizedBox(height: 8),
+                      CivicSkeletonBlock(height: 16),
+                      SizedBox(height: 8),
+                      FractionallySizedBox(
+                        widthFactor: 0.75,
+                        child: CivicSkeletonBlock(height: 16),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],

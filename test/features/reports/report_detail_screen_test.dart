@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:bayantrack_mobile/core/domain/result.dart';
+import 'package:bayantrack_mobile/core/presentation/widgets/civic_components.dart';
 import 'package:bayantrack_mobile/core/presentation/widgets/offline_stale_banner.dart';
 import 'package:bayantrack_mobile/core/providers/backend_reachability_provider.dart';
 import 'package:bayantrack_mobile/core/theme/app_theme.dart';
@@ -8,12 +10,17 @@ import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.
 import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report_enums.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report_image.dart';
+import 'package:bayantrack_mobile/features/reports/domain/usecases/get_report_usecase.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/report_detail_controller.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/report_detail_screen.dart';
+import 'package:bayantrack_mobile/features/reports/reports_di.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+class _GetReportMock extends Mock implements GetReportUseCase {}
 
 class _TestMunicipalities extends Municipalities {
   @override
@@ -56,8 +63,11 @@ Future<void> _pumpDetail(
   WidgetTester tester, {
   ThemeData? theme,
   Report? report,
+  Future<Report>? pendingReport,
+  GetReportUseCase? getReport,
+  Size size = const Size(360, 800),
 }) async {
-  tester.view.physicalSize = const Size(360, 800);
+  tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
 
@@ -66,8 +76,11 @@ Future<void> _pumpDetail(
       overrides: [
         municipalitiesProvider.overrideWith(_TestMunicipalities.new),
         backendReachabilityProvider.overrideWith(_TestReachability.new),
+        if (getReport != null)
+          getReportUseCaseProvider.overrideWithValue(getReport),
         reportDetailControllerProvider.overrideWithBuild(
-          (_, _) async => report ?? _report(),
+          (_, _) async =>
+              pendingReport != null ? await pendingReport : report ?? _report(),
         ),
       ],
       child: MaterialApp(
@@ -82,6 +95,57 @@ Future<void> _pumpDetail(
 }
 
 void main() {
+  for (final theme in [AppTheme.light, AppTheme.dark]) {
+    testWidgets('report loading uses skeletons in ${theme.brightness.name}', (
+      tester,
+    ) async {
+      final pending = Completer<Report>();
+      await _pumpDetail(
+        tester,
+        theme: theme,
+        pendingReport: pending.future,
+        size: const Size(320, 640),
+      );
+
+      expect(find.byType(CivicSkeletonBlock), findsWidgets);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.bySemanticsLabel(RegExp(r'^Loading')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      pending.complete(_report());
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CivicSkeletonBlock), findsNothing);
+      expect(find.text('Blocked drainage near the market'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('keeps report content visible during refresh', (tester) async {
+    final getReport = _GetReportMock();
+    final pending = Completer<Result<Report>>();
+    when(() => getReport('RPT-DETAIL-UI-1')).thenAnswer((_) => pending.future);
+    await _pumpDetail(tester, getReport: getReport);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ReportDetailScreen)),
+    );
+    final refresh = container
+        .read(reportDetailControllerProvider('RPT-DETAIL-UI-1').notifier)
+        .refresh();
+    await tester.pump();
+
+    expect(find.text('Blocked drainage near the market'), findsOneWidget);
+    expect(find.byType(CivicSkeletonBlock), findsNothing);
+
+    pending.complete(Success(_report(status: ReportStatus.resolved)));
+    await refresh;
+    await tester.pumpAndSettle();
+
+    expect(find.text('Review & Sign Off'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('marks cached report details as stale', (tester) async {
     await _pumpDetail(tester, report: _report(isStale: true));
 

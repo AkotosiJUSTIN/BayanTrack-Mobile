@@ -32,7 +32,6 @@ class KycStatusController extends _$KycStatusController {
 
   /// Refresh KYC status
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _fetchStatus());
   }
 

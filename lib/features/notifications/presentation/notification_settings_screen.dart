@@ -28,7 +28,7 @@ class _NotificationSettingsScreenState
       appBar: AppBar(title: Text(l10n.notificationSettings)),
       body: prefsAsync.when(
         data: (prefs) => _buildSettingsList(context, prefs),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => _buildLoadingState(context),
         error: (_, _) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -43,6 +43,65 @@ class _NotificationSettingsScreenState
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLoadingState(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: l10n.loading,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        children: [
+          CivicSectionHeading(title: l10n.channels),
+          _buildSkeletonGroup(context, 2),
+          const SizedBox(height: 24),
+          CivicSectionHeading(title: l10n.events),
+          _buildSkeletonGroup(context, 3),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonGroup(BuildContext context, int rowCount) {
+    return CivicSettingsGroup(
+      children: [
+        for (var i = 0; i < rowCount; i++) ...[
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CivicSkeletonBlock(height: 16),
+                      SizedBox(height: 8),
+                      FractionallySizedBox(
+                        widthFactor: 0.75,
+                        child: CivicSkeletonBlock(height: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 24),
+                CivicSkeletonBlock(width: 48, height: 28, radius: 14),
+              ],
+            ),
+          ),
+          if (i < rowCount - 1)
+            Divider(
+              height: 1,
+              indent: 16,
+              endIndent: 16,
+              color: Theme.of(
+                context,
+              ).colorScheme.outlineVariant.withValues(alpha: 0.72),
+            ),
+        ],
+      ],
     );
   }
 
