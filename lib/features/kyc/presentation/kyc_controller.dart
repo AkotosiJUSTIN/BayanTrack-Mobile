@@ -14,7 +14,9 @@ part 'kyc_controller.g.dart';
 
 // ==================== KYC STATUS PROVIDER ====================
 
-@riverpod
+Duration? _noStatusRetry(int retryCount, Object error) => null;
+
+@Riverpod(retry: _noStatusRetry)
 class KycStatusController extends _$KycStatusController {
   @override
   Future<KycStatusEntity?> build() async {
@@ -26,14 +28,14 @@ class KycStatusController extends _$KycStatusController {
     final result = await getKycStatus();
     return result.when(
       success: (entity) => entity,
-      failure: (_) => null, // User might not have submitted KYC yet
+      failure: (failure) => throw Exception(failure.message),
     );
   }
 
   /// Refresh KYC status
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _fetchStatus());
+    final next = await AsyncValue.guard(() => _fetchStatus());
+    if (ref.mounted) state = next;
   }
 
   /// Withdraw a pending submission without changing local state on failure.

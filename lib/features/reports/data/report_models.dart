@@ -316,6 +316,7 @@ sealed class Report with _$Report {
     // System Fields
     @Default('submitted') String status,
     @JsonKey(name: 'assigned_department') String? assignedDepartment,
+    @JsonKey(name: 'responding_agency') String? respondingAgency,
     @JsonKey(name: 'admin_remarks') String? adminRemarks,
 
     // AI Fields

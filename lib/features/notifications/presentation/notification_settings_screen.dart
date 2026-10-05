@@ -28,7 +28,50 @@ class _NotificationSettingsScreenState
       appBar: AppBar(title: Text(l10n.notificationSettings)),
       body: prefsAsync.when(
         data: (prefs) => _buildSettingsList(context, prefs),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Semantics(
+          container: true,
+          liveRegion: true,
+          label: l10n.loading,
+          child: ExcludeSemantics(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              children: [
+                for (final group in [(l10n.channels, 2), (l10n.events, 3)]) ...[
+                  CivicSectionHeading(title: group.$1),
+                  CivicSettingsGroup(
+                    children: [
+                      for (var i = 0; i < group.$2; i++)
+                        const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    CivicSkeletonBlock(height: 20),
+                                    SizedBox(height: 8),
+                                    CivicSkeletonBlock(height: 14),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(width: 16),
+                              CivicSkeletonBlock(
+                                width: 48,
+                                height: 28,
+                                radius: 14,
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ],
+            ),
+          ),
+        ),
         error: (_, _) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,

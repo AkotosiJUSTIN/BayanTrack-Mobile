@@ -18,7 +18,7 @@ final class KycStatusControllerProvider
     : super(
         from: null,
         argument: null,
-        retry: null,
+        retry: _noStatusRetry,
         name: r'kycStatusControllerProvider',
         isAutoDispose: true,
         dependencies: null,
@@ -34,7 +34,7 @@ final class KycStatusControllerProvider
 }
 
 String _$kycStatusControllerHash() =>
-    r'cec91280aad37f39b5d540fa9a717466eec1cd09';
+    r'a3f2caf129d242660a7b5ad439af28b45c29ad10';
 
 abstract class _$KycStatusController extends $AsyncNotifier<KycStatusEntity?> {
   FutureOr<KycStatusEntity?> build();

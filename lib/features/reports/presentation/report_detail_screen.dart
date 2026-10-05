@@ -75,23 +75,41 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
     return Scaffold(
       body: reportAsync.when(
-        loading: () => CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              expandedHeight: 300,
-              pinned: true,
-              title: Text(l10n.reportDetails),
-              flexibleSpace: FlexibleSpaceBar(
-                background: _buildImagePlaceholder(isDark),
+        loading: () => Semantics(
+          container: true,
+          liveRegion: true,
+          label: l10n.loading,
+          child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 300,
+                pinned: true,
+                title: Text(l10n.reportDetails),
+                flexibleSpace: FlexibleSpaceBar(
+                  background: const CivicSkeletonBlock(height: 300, radius: 0),
+                ),
               ),
-            ),
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(48),
-                child: Center(child: CircularProgressIndicator()),
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CivicSkeletonBlock(width: 96, height: 24),
+                      SizedBox(height: 16),
+                      CivicSkeletonBlock(height: 28),
+                      SizedBox(height: 12),
+                      CivicSkeletonBlock(height: 16),
+                      SizedBox(height: 24),
+                      CivicSkeletonBlock(height: 120),
+                      SizedBox(height: 24),
+                      CivicSkeletonBlock(height: 160),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         error: (error, stack) => CustomScrollView(
           slivers: [
@@ -586,11 +604,13 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                     children: [
                       Icon(Icons.auto_awesome, color: AppColors.primaryVariant),
                       const SizedBox(width: 8),
-                      Text(
-                        l10n.aiAnalysis,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryVariant,
+                      Expanded(
+                        child: Text(
+                          l10n.aiAnalysis,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryVariant,
+                          ),
                         ),
                       ),
                     ],
@@ -935,32 +955,35 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   ),
                 ),
               ),
-              if (_isVerifying)
-                const Padding(
-                  padding: EdgeInsets.only(right: 8),
-                  child: SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              else
-                TextButton.icon(
-                  onPressed: _isVerifying
-                      ? null
-                      : () => _handleVerification(report.id),
-                  icon: const Icon(Icons.refresh, size: 16),
-                  label: Text(l10n.verifyNow),
-                  style: TextButton.styleFrom(
-                    minimumSize: const Size(48, 48),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    textStyle: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
             ],
           ),
+          if (_isVerifying)
+            const SizedBox(
+              width: 48,
+              height: 48,
+              child: Center(
+                child: SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            )
+          else
+            TextButton.icon(
+              onPressed: _isVerifying
+                  ? null
+                  : () => _handleVerification(report.id),
+              icon: const Icon(Icons.refresh, size: 16),
+              label: Text(l10n.verifyNow),
+              style: TextButton.styleFrom(
+                minimumSize: const Size(48, 48),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                textStyle: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           const SizedBox(height: 12),
           if (_verificationResult != null) ...[
             _buildVerificationStatus(theme),

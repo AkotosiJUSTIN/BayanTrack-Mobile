@@ -31,8 +31,8 @@ class ReportDetailController extends _$ReportDetailController {
   /// Refresh the report
   Future<void> refresh() async {
     final id = reportId;
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _fetchReport(id));
+    final next = await AsyncValue.guard(() => _fetchReport(id));
+    if (ref.mounted) state = next;
   }
 
   /// Verify the report against blockchain

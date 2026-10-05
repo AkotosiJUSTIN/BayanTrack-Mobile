@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/result.dart';
 import '../../../core/presentation/widgets/app_toast.dart';
+import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../domain/entities/kyc_enums.dart';
@@ -35,14 +36,25 @@ class KycStatusScreen extends ConsumerWidget {
         data: (kycStatus) => kycStatus == null
             ? _buildNoKycView(context, ref)
             : _buildStatusView(context, ref, kycStatus),
-        loading: () => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text(l10n.userVerification),
-            ],
+        loading: () => Semantics(
+          container: true,
+          liveRegion: true,
+          label: l10n.loading,
+          child: ExcludeSemantics(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                const CivicSkeletonBlock(height: 104),
+                const SizedBox(height: 24),
+                const CivicSkeletonBlock(width: 120, height: 24),
+                const SizedBox(height: 16),
+                for (var i = 0; i < 3; i++) ...[
+                  const CivicSkeletonBlock(height: 56),
+                  const SizedBox(height: 16),
+                ],
+                const CivicSkeletonBlock(height: 52),
+              ],
+            ),
           ),
         ),
         error: (_, _) => _buildErrorState(context, ref),
