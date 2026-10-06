@@ -749,7 +749,7 @@ abstract class AppLocalizations {
   /// No description provided for @emergencyReportNotice.
   ///
   /// In en, this message translates to:
-  /// **'For immediate threats. BayanTrack does not replace emergency hotlines.'**
+  /// **'For immediate response, call an emergency service using the hotline below. Submitting this report does not dispatch a team.'**
   String get emergencyReportNotice;
 
   /// No description provided for @emergencyCallGuidance.
