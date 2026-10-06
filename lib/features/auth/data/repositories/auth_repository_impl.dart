@@ -47,6 +47,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String firstName,
     required String lastName,
     required String barangayId,
+    Map<String, String>? termsConsent,
   }) async {
     try {
       final response = await _dio.post(
@@ -61,6 +62,7 @@ class AuthRepositoryImpl implements AuthRepository {
             barangayId: barangayId,
           ).toJson(),
           'client_type': 'mobile',
+          ...?termsConsent,
         },
       );
       // Backend returns tokens on registration (same shape as login)

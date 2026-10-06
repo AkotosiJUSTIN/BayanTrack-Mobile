@@ -30,6 +30,7 @@ void main() {
     Duration baseBackoff = const Duration(seconds: 2),
     Future<Set<String>> Function()? readDraftAttachmentReferences,
     bool Function()? canReachBackend,
+    Future<bool> Function(EvidenceUploadIntent)? canUpload,
   }) {
     return EvidenceUploadQueue(
       preferences: preferences,
@@ -37,6 +38,7 @@ void main() {
       upload: upload,
       isAuthenticated: (_) async => authenticated,
       canReachBackend: canReachBackend ?? () => backendReachable,
+      canUpload: canUpload,
       readDraftAttachmentReferences: readDraftAttachmentReferences,
       now: () => now,
       maxRetryCount: maxRetryCount,
@@ -57,6 +59,87 @@ void main() {
   tearDown(() async {
     if (await root.exists()) await root.delete(recursive: true);
   });
+
+  test(
+    'policy restriction retains evidence and does not consume retries',
+    () async {
+      var restricted = true;
+      final uploads = <String>[];
+      final subject = queue(
+        canUpload: (intent) async => !restricted || intent.isEmergency,
+        upload:
+            ({
+              required file,
+              required reportId,
+              required evidenceKey,
+              required isPrimary,
+              required cancelToken,
+            }) async => uploads.add(reportId),
+      );
+      await subject.enqueue(
+        userId: 'user-a',
+        reportId: 'ordinary',
+        files: [await source('ordinary.jpg')],
+      );
+      await subject.enqueue(
+        userId: 'user-a',
+        reportId: 'emergency',
+        isEmergency: true,
+        files: [await source('emergency.jpg')],
+      );
+      await subject.resume('user-a');
+      expect(uploads, ['emergency']);
+      final paused = subject.state.firstWhere(
+        (item) => item.reportId == 'ordinary',
+      );
+      expect(paused.state, EvidenceUploadState.paused);
+      expect(paused.retryCount, 0);
+      expect(await File(paused.localFilePath).exists(), isTrue);
+      restricted = false;
+      await subject.resume('user-a');
+      expect(uploads, ['emergency', 'ordinary']);
+      subject.dispose();
+    },
+  );
+
+  test(
+    'server policy rejection is paused rather than terminal or retryable',
+    () async {
+      final subject = queue(
+        upload:
+            ({
+              required file,
+              required reportId,
+              required evidenceKey,
+              required isPrimary,
+              required cancelToken,
+            }) async {
+              final request = RequestOptions(path: '/images/upload/');
+              throw DioException.badResponse(
+                statusCode: 403,
+                requestOptions: request,
+                response: Response(
+                  requestOptions: request,
+                  statusCode: 403,
+                  data: {'code': 'terms_acceptance_required'},
+                ),
+              );
+            },
+      );
+      await subject.enqueue(
+        userId: 'user-a',
+        reportId: 'ordinary',
+        files: [await source('ordinary.jpg')],
+      );
+      await subject.resume('user-a');
+      expect(subject.state.single.state, EvidenceUploadState.paused);
+      expect(subject.state.single.error, EvidenceUploadError.systemRestriction);
+      expect(subject.state.single.retryCount, 0);
+      expect(subject.state.single.nextRetryAt, isNull);
+      expect(await File(subject.state.single.localFilePath).exists(), isTrue);
+      subject.dispose();
+    },
+  );
 
   test('failed upload stays durable after report creation', () async {
     final uploads = <String>[];

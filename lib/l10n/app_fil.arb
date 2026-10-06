@@ -685,5 +685,13 @@
   "married": "May Asawa",
   "widowed": "Balo",
   "separated": "Hiwalay",
-  "divorced": "Diborsyado"
+  "divorced": "Diborsyado",
+  "governanceCheckingStatus": "Sinusuri ang kalagayan ng sistema...",
+  "governanceStatusUnavailable": "Hindi makuha ang kalagayan ng sistema.",
+  "governanceReadOnly": "Maintenance: maaari lamang magbasa. Maaari pa ring mag-ulat ng emergency.",
+  "governanceTermsChanged": "Nagbago ang mga tuntunin. Basahin ang kasalukuyang bersyon.",
+  "governanceAcceptanceFailed": "Hindi naitala ang pagtanggap. Pakisubukang muli.",
+  "governanceTermsUnavailable": "Hindi makuha ang kasalukuyang mga tuntunin.",
+  "governanceConsentLabel": "Nabasa ko at sumasang-ayon ako sa mga tuntunin at patakaran sa pribasiya.",
+  "governanceSyncPaused": "Naghihintay ng pagtanggap sa mga tuntunin o pagtatapos ng maintenance."
 }

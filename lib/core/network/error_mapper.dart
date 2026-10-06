@@ -70,6 +70,17 @@ class ErrorMapper {
     final message = _extractMessage(body);
     final fieldErrors = _extractFieldErrors(body);
 
+    final code = body is Map ? body['code'] : null;
+    if ((statusCode == 403 && code == 'terms_acceptance_required') ||
+        (statusCode == 503 && code == 'maintenance_read_only') ||
+        (statusCode == 409 && code == 'terms_version_stale')) {
+      return SystemRestrictionFailure(
+        code as String,
+        message ?? 'Review the current system notice before continuing.',
+        statusCode: statusCode,
+      );
+    }
+
     return switch (statusCode) {
       401 => AuthFailure(message ?? 'Invalid credentials'),
       403 => AuthFailure(message ?? 'Access denied'),

@@ -32,6 +32,12 @@ class AuthFailure extends Failure {
     : super(code: 'AUTH_ERROR');
 }
 
+/// Policy and maintenance restrictions preserve the authenticated session.
+class SystemRestrictionFailure extends Failure {
+  const SystemRestrictionFailure(String code, super.message, {super.statusCode})
+    : super(code: code);
+}
+
 /// Resource not found (404)
 class NotFoundFailure extends Failure {
   const NotFoundFailure([super.message = 'Not found'])

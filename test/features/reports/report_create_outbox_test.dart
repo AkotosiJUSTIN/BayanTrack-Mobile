@@ -74,6 +74,7 @@ void main() {
   ReportCreateOutbox createOutbox(
     ReportCreateRequest submit, {
     ReportOutboxAttachmentHandoff? handoff,
+    bool Function(Map<String, Object?>)? canSubmit,
   }) => ReportCreateOutbox(
     store: ReportCreateOutboxStore(storage),
     drafts: drafts,
@@ -81,6 +82,7 @@ void main() {
     isCurrentOwner: (ownerId) async => signedInOwner == ownerId,
     hasValidSession: (ownerId) async => signedInOwner == ownerId,
     canReachBackend: () => reachable,
+    canSubmit: canSubmit,
     handoffAttachments:
         handoff ??
         (item) async {
@@ -90,6 +92,71 @@ void main() {
         },
     onChanged: (_) {},
     now: () => now,
+  );
+
+  test(
+    'ordinary restriction keeps draft and continues emergency outbox',
+    () async {
+      final sent = <String>[];
+      final subject = createOutbox(({
+        required payload,
+        required idempotencyKey,
+        required cancelToken,
+      }) async {
+        sent.add(payload['description'] as String);
+        return const Err(NetworkFailure());
+      }, canSubmit: (payload) => payload['isEmergency'] == true);
+      final ordinary = await subject.submit(
+        ownerId: 'user-a',
+        type: ReportDraftType.full,
+        payload: const {'description': 'ordinary'},
+        attachmentRefs: const ['/retained/photo.jpg'],
+      );
+      await subject.submit(
+        ownerId: 'user-a',
+        type: ReportDraftType.emergency,
+        payload: const {'description': 'emergency', 'isEmergency': true},
+      );
+      reachable = true;
+      await subject.resume('user-a');
+      final retained = await ReportCreateOutboxStore(
+        storage,
+      ).read('user-a', ordinary.localReportId);
+      expect(sent, ['emergency']);
+      expect(retained!.status, ReportCreateOutboxStatus.paused);
+      expect(retained.attemptCount, 0);
+      expect(retained.attachmentRefs, ['/retained/photo.jpg']);
+      subject.dispose();
+    },
+  );
+
+  test(
+    'server maintenance pauses without scheduled retry or rejection',
+    () async {
+      reachable = true;
+      final subject = createOutbox(
+        ({
+          required payload,
+          required idempotencyKey,
+          required cancelToken,
+        }) async => const Err(
+          SystemRestrictionFailure(
+            'maintenance_read_only',
+            'Maintenance',
+            statusCode: 503,
+          ),
+        ),
+      );
+      final queued = await subject.submit(
+        ownerId: 'user-a',
+        type: ReportDraftType.full,
+        payload: const {'description': 'preserve me'},
+      );
+      expect(queued.status, ReportCreateOutboxStatus.paused);
+      expect(queued.errorKind, ReportCreateOutboxErrorKind.systemRestriction);
+      expect(queued.nextAttemptAt, isNull);
+      subject.dispose();
+    },
   );
 
   EvidenceUploadQueue createEvidenceQueue(ReportCreateOutboxStore store) =>

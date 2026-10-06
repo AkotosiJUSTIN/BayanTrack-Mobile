@@ -29,6 +29,7 @@ enum ReportCreateOutboxErrorKind {
   validation,
   conflict,
   unavailable,
+  systemRestriction,
 }
 
 class ReportCreateOutboxItem {
@@ -422,6 +423,7 @@ class ReportCreateOutbox {
     required ReportOutboxOwnerCheck isCurrentOwner,
     required ReportOutboxOwnerCheck hasValidSession,
     required bool Function() canReachBackend,
+    bool Function(Map<String, Object?> payload)? canSubmit,
     required ReportOutboxAttachmentHandoff handoffAttachments,
     required void Function(String ownerId) onChanged,
     DateTime Function()? now,
@@ -432,6 +434,7 @@ class ReportCreateOutbox {
        _isCurrentOwner = isCurrentOwner,
        _hasValidSession = hasValidSession,
        _canReachBackend = canReachBackend,
+       _canSubmit = canSubmit ?? ((_) => true),
        _handoffAttachments = handoffAttachments,
        _changed = onChanged,
        _now = now ?? DateTime.now;
@@ -442,6 +445,7 @@ class ReportCreateOutbox {
   final ReportOutboxOwnerCheck _isCurrentOwner;
   final ReportOutboxOwnerCheck _hasValidSession;
   final bool Function() _canReachBackend;
+  final bool Function(Map<String, Object?> payload) _canSubmit;
   final ReportOutboxAttachmentHandoff _handoffAttachments;
   final void Function(String ownerId) _changed;
   final DateTime Function() _now;
@@ -635,6 +639,10 @@ class ReportCreateOutbox {
             await _finishAcknowledged(item);
             continue;
           }
+          if (!_canSubmit(item.payload)) {
+            await _saveSystemPaused(item);
+            continue;
+          }
           if (item.status == ReportCreateOutboxStatus.paused) {
             final pending = item.copyWith(
               status: ReportCreateOutboxStatus.pending,
@@ -697,6 +705,7 @@ class ReportCreateOutbox {
         !await _hasValidSession(item.ownerId)) {
       return item;
     }
+    if (!_canSubmit(item.payload)) return _saveSystemPaused(item);
     final started = item.copyWith(
       status: ReportCreateOutboxStatus.pending,
       updatedAt: _now().toUtc(),
@@ -782,6 +791,13 @@ class ReportCreateOutbox {
   }
 
   _ClassifiedFailure _classifyFailure(Failure failure, int attempts) {
+    if (failure is SystemRestrictionFailure) {
+      return _ClassifiedFailure(
+        ReportCreateOutboxStatus.paused,
+        ReportCreateOutboxErrorKind.systemRestriction,
+        _safeText(failure.message),
+      );
+    }
     if (failure is AuthFailure) {
       return const _ClassifiedFailure(
         ReportCreateOutboxStatus.paused,
@@ -849,6 +865,21 @@ class ReportCreateOutbox {
       updatedAt: _now().toUtc(),
       safeError: 'Waiting for the original account session.',
       errorKind: ReportCreateOutboxErrorKind.authentication,
+      clearNextAttemptAt: true,
+    );
+    await _store.write(paused);
+    _notifyChanged(item.ownerId);
+    return paused;
+  }
+
+  Future<ReportCreateOutboxItem> _saveSystemPaused(
+    ReportCreateOutboxItem item,
+  ) async {
+    final paused = item.copyWith(
+      status: ReportCreateOutboxStatus.paused,
+      updatedAt: _now().toUtc(),
+      safeError: 'Waiting for current terms acceptance or maintenance to end.',
+      errorKind: ReportCreateOutboxErrorKind.systemRestriction,
       clearNextAttemptAt: true,
     );
     await _store.write(paused);
@@ -942,6 +973,7 @@ class ReportCreateOutbox {
             .where(
               (item) =>
                   item.status == ReportCreateOutboxStatus.retryWaiting &&
+                  _canSubmit(item.payload) &&
                   item.nextAttemptAt != null,
             )
             .map((item) => item.nextAttemptAt!)

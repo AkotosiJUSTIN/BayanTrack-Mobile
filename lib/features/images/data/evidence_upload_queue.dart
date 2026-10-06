@@ -18,6 +18,7 @@ enum EvidenceUploadState {
   failed,
   missingLocalFile,
   dismissed,
+  paused,
 }
 
 enum EvidenceUploadError {
@@ -26,6 +27,7 @@ enum EvidenceUploadError {
   requestRejected,
   retryLimitReached,
   missingLocalFile,
+  systemRestriction,
 }
 
 @immutable
@@ -40,6 +42,7 @@ class EvidenceUploadIntent {
     this.retryCount = 0,
     this.nextRetryAt,
     this.error,
+    this.isEmergency = false,
   });
 
   final String id;
@@ -51,6 +54,7 @@ class EvidenceUploadIntent {
   final int retryCount;
   final DateTime? nextRetryAt;
   final EvidenceUploadError? error;
+  final bool isEmergency;
 
   EvidenceUploadIntent copyWith({
     EvidenceUploadState? state,
@@ -70,6 +74,7 @@ class EvidenceUploadIntent {
       retryCount: retryCount ?? this.retryCount,
       nextRetryAt: clearNextRetryAt ? null : (nextRetryAt ?? this.nextRetryAt),
       error: clearError ? null : (error ?? this.error),
+      isEmergency: isEmergency,
     );
   }
 
@@ -83,6 +88,7 @@ class EvidenceUploadIntent {
     'retry_count': retryCount,
     'next_retry_at': nextRetryAt?.toUtc().toIso8601String(),
     'error': error?.name,
+    'is_emergency': isEmergency,
   };
 
   static EvidenceUploadIntent? fromJson(Object? value) {
@@ -121,6 +127,7 @@ class EvidenceUploadIntent {
       retryCount: (json['retry_count'] as num?)?.toInt() ?? 0,
       nextRetryAt: DateTime.tryParse(json['next_retry_at']?.toString() ?? ''),
       error: storedError,
+      isEmergency: json['is_emergency'] == true,
     );
   }
 }
@@ -143,6 +150,7 @@ class EvidenceUploadQueue extends ChangeNotifier {
     required EvidenceUploader upload,
     required EvidenceAuthenticationCheck isAuthenticated,
     bool Function()? canReachBackend,
+    Future<bool> Function(EvidenceUploadIntent)? canUpload,
     Future<Set<String>> Function()? readDraftAttachmentReferences,
     DateTime Function()? now,
     this.maxRetryCount = 5,
@@ -154,6 +162,7 @@ class EvidenceUploadQueue extends ChangeNotifier {
        _upload = upload,
        _isAuthenticated = isAuthenticated,
        _canReachBackend = canReachBackend ?? _alwaysReachable,
+       _canUpload = canUpload,
        _readDraftAttachmentReferences = readDraftAttachmentReferences,
        _now = now ?? DateTime.now;
 
@@ -164,6 +173,7 @@ class EvidenceUploadQueue extends ChangeNotifier {
   final EvidenceUploader _upload;
   final EvidenceAuthenticationCheck _isAuthenticated;
   final bool Function() _canReachBackend;
+  final Future<bool> Function(EvidenceUploadIntent)? _canUpload;
   final Future<Set<String>> Function()? _readDraftAttachmentReferences;
   final DateTime Function() _now;
   final int maxRetryCount;
@@ -203,6 +213,7 @@ class EvidenceUploadQueue extends ChangeNotifier {
     required EvidenceUploader upload,
     required EvidenceAuthenticationCheck isAuthenticated,
     bool Function()? canReachBackend,
+    Future<bool> Function(EvidenceUploadIntent)? canUpload,
     Future<Set<String>> Function()? readDraftAttachmentReferences,
   }) async {
     final preferences = await SharedPreferences.getInstance();
@@ -215,6 +226,7 @@ class EvidenceUploadQueue extends ChangeNotifier {
       upload: upload,
       isAuthenticated: isAuthenticated,
       canReachBackend: canReachBackend,
+      canUpload: canUpload,
       readDraftAttachmentReferences: readDraftAttachmentReferences,
     );
     await queue.initialize();
@@ -267,6 +279,7 @@ class EvidenceUploadQueue extends ChangeNotifier {
     required String userId,
     required String reportId,
     required List<File> files,
+    bool isEmergency = false,
   }) async {
     await initialize();
     if (_disposed || userId.isEmpty || reportId.isEmpty || files.isEmpty) {
@@ -344,6 +357,7 @@ class EvidenceUploadQueue extends ChangeNotifier {
         isPrimary: isPrimary,
         state: uploadState,
         error: error,
+        isEmergency: isEmergency,
       );
       prepared.add(intent);
       accepted.add(intent);
@@ -380,6 +394,19 @@ class EvidenceUploadQueue extends ChangeNotifier {
     }
     if (!await _isAuthenticated(userId)) return;
     _activeUserId = userId;
+    for (var index = 0; index < _intents.length; index++) {
+      final item = _intents[index];
+      if (item.ownerUserId == userId &&
+          item.state == EvidenceUploadState.paused &&
+          (_canUpload == null || await _canUpload(item))) {
+        _intents[index] = item.copyWith(
+          state: EvidenceUploadState.pending,
+          clearError: true,
+          clearNextRetryAt: true,
+        );
+      }
+    }
+    await _persist();
     await _drain();
   }
 
@@ -416,6 +443,7 @@ class EvidenceUploadQueue extends ChangeNotifier {
           (id != null && item.id != id) ||
           (item.state != EvidenceUploadState.failed &&
               item.state != EvidenceUploadState.missingLocalFile &&
+              item.state != EvidenceUploadState.paused &&
               item.state != EvidenceUploadState.retryWaiting)) {
         continue;
       }
@@ -510,6 +538,17 @@ class EvidenceUploadQueue extends ChangeNotifier {
           item.state == EvidenceUploadState.dismissed) {
         continue;
       }
+      if (item.state == EvidenceUploadState.paused) continue;
+      if (_canUpload != null && !await _canUpload(item)) {
+        _intents[index] = item.copyWith(
+          state: EvidenceUploadState.paused,
+          clearNextRetryAt: true,
+          error: EvidenceUploadError.systemRestriction,
+        );
+        await _persist();
+        _notify();
+        continue;
+      }
       if (!await File(item.localFilePath).exists()) {
         _intents[index] = item.copyWith(
           state: EvidenceUploadState.missingLocalFile,
@@ -579,7 +618,16 @@ class EvidenceUploadQueue extends ChangeNotifier {
       final statusCode = error is DioException
           ? error.response?.statusCode
           : null;
-      if (statusCode == 401) {
+      final body = error is DioException ? error.response?.data : null;
+      final code = body is Map ? body['code'] : null;
+      if ((statusCode == 403 && code == 'terms_acceptance_required') ||
+          (statusCode == 503 && code == 'maintenance_read_only')) {
+        _intents[failedIndex] = current.copyWith(
+          state: EvidenceUploadState.paused,
+          clearNextRetryAt: true,
+          error: EvidenceUploadError.systemRestriction,
+        );
+      } else if (statusCode == 401) {
         _activeUserId = null;
         _intents[failedIndex] = current.copyWith(
           state: EvidenceUploadState.pending,

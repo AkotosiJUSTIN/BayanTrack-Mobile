@@ -24,6 +24,7 @@ class RegisterUseCase {
     required String firstName,
     required String lastName,
     required String barangayId,
+    Map<String, String>? termsConsent,
   }) async {
     // Step 1: Register with backend (returns tokens)
     final tokensResult = await _authRepository.register(
@@ -33,6 +34,7 @@ class RegisterUseCase {
       firstName: firstName,
       lastName: lastName,
       barangayId: barangayId,
+      termsConsent: termsConsent,
     );
 
     // Step 2: Check if registration succeeded

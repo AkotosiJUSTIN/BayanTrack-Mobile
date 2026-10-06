@@ -2144,4 +2144,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get divorced => 'Divorced';
+
+  @override
+  String get governanceCheckingStatus => 'Checking system status...';
+
+  @override
+  String get governanceStatusUnavailable => 'System status is unavailable.';
+
+  @override
+  String get governanceReadOnly =>
+      'Maintenance: read-only. Emergency reporting remains available.';
+
+  @override
+  String get governanceTermsChanged =>
+      'Terms have changed. Please review the current version.';
+
+  @override
+  String get governanceAcceptanceFailed =>
+      'Acceptance was not saved. Please try again.';
+
+  @override
+  String get governanceTermsUnavailable => 'Current terms could not be loaded.';
+
+  @override
+  String get governanceConsentLabel =>
+      'I have read and agree to these terms and privacy policy.';
+
+  @override
+  String get governanceSyncPaused =>
+      'Waiting for current terms acceptance or maintenance to end.';
 }

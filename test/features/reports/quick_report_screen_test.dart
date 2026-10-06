@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:bayantrack_mobile/features/system_governance/system_governance_models.dart';
+import 'package:bayantrack_mobile/features/system_governance/system_governance_provider.dart';
 
 import 'package:bayantrack_mobile/core/constants/urdaneta_barangays.dart';
 import 'package:bayantrack_mobile/core/constants/api_constants.dart';
@@ -218,6 +220,13 @@ Future<void> _pumpQuickReport(
     ).thenAnswer((_) async => const Success(<NearbyLandmarkModel>[]));
   }
   final overrides = <Override>[
+    systemGovernanceProvider.overrideWithBuild(
+      (_, _) => const SystemGovernanceState(
+        maintenanceEnabled: false,
+        maintenanceMessage: '',
+        termsAcceptanceRequired: false,
+      ),
+    ),
     isOnlineProvider.overrideWith(() => _TestConnectivityNotifier(isOnline)),
     backendReachabilityProvider.overrideWith(
       _TestBackendReachabilityNotifier.new,

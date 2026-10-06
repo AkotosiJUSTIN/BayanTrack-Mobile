@@ -685,5 +685,13 @@
   "married": "Married",
   "widowed": "Widowed",
   "separated": "Separated",
-  "divorced": "Divorced"
+  "divorced": "Divorced",
+  "governanceCheckingStatus": "Checking system status...",
+  "governanceStatusUnavailable": "System status is unavailable.",
+  "governanceReadOnly": "Maintenance: read-only. Emergency reporting remains available.",
+  "governanceTermsChanged": "Terms have changed. Please review the current version.",
+  "governanceAcceptanceFailed": "Acceptance was not saved. Please try again.",
+  "governanceTermsUnavailable": "Current terms could not be loaded.",
+  "governanceConsentLabel": "I have read and agree to these terms and privacy policy.",
+  "governanceSyncPaused": "Waiting for current terms acceptance or maintenance to end."
 }

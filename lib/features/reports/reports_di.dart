@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show Provider;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../auth/auth_di.dart';
 import '../auth/presentation/auth_controller.dart';
+import '../system_governance/system_governance_provider.dart';
 import '../../core/network/dio_provider.dart';
 import '../../core/providers/backend_reachability_provider.dart';
 import '../../core/providers/connectivity_provider.dart';
@@ -144,6 +145,8 @@ final reportCreateOutboxProvider = Provider<ReportCreateOutbox>((ref) {
         ref.read(isOnlineProvider) &&
         ref.read(backendReachabilityProvider) !=
             BackendReachability.unreachable,
+    canSubmit: (payload) =>
+        permitsReportSnapshot(ref.read(systemGovernanceProvider), payload),
     submit:
         ({required payload, required idempotencyKey, required cancelToken}) =>
             createReport(
@@ -200,6 +203,7 @@ final reportCreateOutboxProvider = Provider<ReportCreateOutbox>((ref) {
         userId: item.ownerId,
         reportId: item.serverReportId!,
         files: files,
+        isEmergency: item.payload['isEmergency'] == true,
       );
       if (intents.length != files.length) return false;
       for (var index = 0; index < intents.length; index++) {

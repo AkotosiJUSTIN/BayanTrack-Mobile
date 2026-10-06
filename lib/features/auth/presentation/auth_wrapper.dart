@@ -25,6 +25,9 @@ import '../../reports/presentation/report_detail_screen.dart';
 import '../../reports/presentation/new_report/quick_report_screen.dart';
 import 'auth_realtime_controller.dart';
 import 'profile_controller.dart';
+import '../../system_governance/system_governance_gate.dart';
+import '../../system_governance/system_governance_models.dart';
+import '../../system_governance/system_governance_provider.dart';
 
 class AuthWrapper extends ConsumerStatefulWidget {
   const AuthWrapper({super.key});
@@ -43,6 +46,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   _widgetDestinationSubscription;
   bool _widgetNavigationScheduled = false;
   String? _pushUserId;
+  String? _governanceOwnerId;
 
   @override
   void initState() {
@@ -66,6 +70,17 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
       _syncEvidenceForCurrentAuth(isOnline);
       _syncReportOutboxForCurrentAuth(isOnline);
     }, fireImmediately: true);
+    ref.listenManual<AsyncValue<SystemGovernanceState>>(
+      systemGovernanceProvider,
+      (_, next) {
+        if (next.asData == null) return;
+        final state = ref.read(authControllerProvider);
+        final userId = state is AuthSuccess ? state.user?.id : null;
+        final online = ref.read(isOnlineProvider);
+        _syncEvidenceQueue(userId, online, force: true);
+        _syncReportOutbox(userId, online, force: true);
+      },
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _maybeNavigateToWidgetDestination();
     });
@@ -107,6 +122,11 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     _maybeNavigateToWidgetDestination();
 
     final userId = state is AuthSuccess ? state.user?.id : null;
+    if (_governanceOwnerId != userId) {
+      _governanceOwnerId = userId;
+      ref.invalidate(systemGovernanceProvider);
+      ref.invalidate(publishedTermsProvider);
+    }
     if (userId != _reportCacheOwnerId) {
       final previousOwnerId = _reportCacheOwnerId;
       _reportCacheOwnerId = userId;
@@ -183,6 +203,11 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
         final title = message.notification?.title ?? 'Notification';
         final body = message.notification?.body ?? '';
         ref.invalidate(notificationsControllerProvider);
+        if (message.data['type'] == 'terms_updated' ||
+            message.data['type'] == 'maintenance_changed') {
+          ref.invalidate(publishedTermsProvider);
+          unawaited(ref.read(systemGovernanceProvider.notifier).refresh());
+        }
         await LocalNotificationService.showFromRemoteMessage(message);
         if (!notificationContext.mounted) return;
         AppToast.info(notificationContext, '$title: $body');
@@ -190,8 +215,14 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
 
       // When a user taps a notification and the app is opened from background
       pushService.onMessageOpened((message) {
+        if (message.data['type'] == 'terms_updated' ||
+            message.data['type'] == 'maintenance_changed') {
+          ref.invalidate(publishedTermsProvider);
+          unawaited(ref.read(systemGovernanceProvider.notifier).refresh());
+          return;
+        }
         final reportId = message.data['report_id'] as String?;
-        if (reportId != null) {
+        if (reportId != null && reportId.isNotEmpty) {
           ref.invalidate(notificationsControllerProvider);
           if (!context.mounted) return;
           Navigator.of(context).push(
@@ -206,8 +237,16 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
       final initialMessageContext = context;
       final initial = await FirebaseMessaging.instance.getInitialMessage();
       if (initial != null) {
+        if (initial.data['type'] == 'terms_updated' ||
+            initial.data['type'] == 'maintenance_changed') {
+          ref.invalidate(publishedTermsProvider);
+          unawaited(ref.read(systemGovernanceProvider.notifier).refresh());
+          return;
+        }
         final reportId = initial.data['report_id'] as String?;
-        if (reportId != null && initialMessageContext.mounted) {
+        if (reportId != null &&
+            reportId.isNotEmpty &&
+            initialMessageContext.mounted) {
           ref.invalidate(notificationsControllerProvider);
           Navigator.of(initialMessageContext).push(
             MaterialPageRoute(
@@ -290,6 +329,8 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     // Refresh KYC status when app comes back to foreground
     // This ensures verified status updates after admin verification
     if (state == AppLifecycleState.resumed) {
+      ref.invalidate(publishedTermsProvider);
+      unawaited(ref.read(systemGovernanceProvider.notifier).refresh());
       final authState = ref.read(authControllerProvider);
       if (authState is AuthSuccess) {
         final userId = authState.user?.id;
@@ -337,7 +378,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     }
 
     return switch (state) {
-      AuthSuccess() => const MainNavigationShell(),
+      AuthSuccess() => const SystemGovernanceGate(child: MainNavigationShell()),
       AuthIdle() || AuthError() => const LoginScreen(),
       AuthInitial() || AuthLoading() => const Scaffold(
         body: Center(child: CircularProgressIndicator()),

@@ -143,6 +143,7 @@ class AuthController extends _$AuthController {
     required String firstName,
     required String lastName,
     required String barangayId,
+    Map<String, String>? termsConsent,
   }) async {
     state = const AuthLoading();
 
@@ -154,6 +155,7 @@ class AuthController extends _$AuthController {
       firstName: firstName,
       lastName: lastName,
       barangayId: barangayId,
+      termsConsent: termsConsent,
     );
 
     return result.when(
@@ -277,6 +279,7 @@ class AuthController extends _$AuthController {
   String _failureToMessage(Failure failure) {
     return switch (failure) {
       AuthFailure(:final message) => message,
+      SystemRestrictionFailure(:final message) => message,
       ValidationFailure(:final message, :final fieldErrors) =>
         fieldErrors != null && fieldErrors.isNotEmpty
             ? fieldErrors.entries.map((e) => '${e.key}: ${e.value}').join('\n')

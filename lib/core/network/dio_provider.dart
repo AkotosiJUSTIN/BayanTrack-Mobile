@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../constants/api_constants.dart';
 import '../../features/auth/auth_di.dart';
 import 'auth_interceptor.dart';
+import '../../features/system_governance/system_governance_provider.dart';
 
 part 'dio_provider.g.dart';
 
@@ -48,6 +49,22 @@ Dio dio(Ref ref) {
 
   dio.interceptors.addAll([
     AuthInterceptor(rawDio, sessionRepository),
+    InterceptorsWrapper(
+      onError: (error, handler) {
+        final body = error.response?.data;
+        final code = body is Map ? body['code'] : null;
+        if ((error.response?.statusCode == 403 &&
+                code == 'terms_acceptance_required') ||
+            (error.response?.statusCode == 503 &&
+                code == 'maintenance_read_only')) {
+          ref
+              .read(systemGovernanceProvider.notifier)
+              .noteRestriction(code as String);
+          ref.invalidate(publishedTermsProvider);
+        }
+        handler.next(error);
+      },
+    ),
     // NOTE: LogInterceptor removed - it can expose sensitive data from server errors
   ]);
 

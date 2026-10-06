@@ -3937,6 +3937,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Divorced'**
   String get divorced;
+
+  /// No description provided for @governanceCheckingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking system status...'**
+  String get governanceCheckingStatus;
+
+  /// No description provided for @governanceStatusUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'System status is unavailable.'**
+  String get governanceStatusUnavailable;
+
+  /// No description provided for @governanceReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance: read-only. Emergency reporting remains available.'**
+  String get governanceReadOnly;
+
+  /// No description provided for @governanceTermsChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms have changed. Please review the current version.'**
+  String get governanceTermsChanged;
+
+  /// No description provided for @governanceAcceptanceFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Acceptance was not saved. Please try again.'**
+  String get governanceAcceptanceFailed;
+
+  /// No description provided for @governanceTermsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Current terms could not be loaded.'**
+  String get governanceTermsUnavailable;
+
+  /// No description provided for @governanceConsentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'I have read and agree to these terms and privacy policy.'**
+  String get governanceConsentLabel;
+
+  /// No description provided for @governanceSyncPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for current terms acceptance or maintenance to end.'**
+  String get governanceSyncPaused;
 }
 
 class _AppLocalizationsDelegate

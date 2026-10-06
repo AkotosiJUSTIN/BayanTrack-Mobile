@@ -9,6 +9,8 @@ import '../../../core/utils/validators.dart';
 import '../../../l10n/app_localizations.dart';
 import 'auth_controller.dart';
 import 'barangays_provider.dart';
+import '../../system_governance/system_governance_models.dart';
+import '../../system_governance/system_governance_provider.dart';
 
 const _brandBlue = AppColors.brandBlue;
 const _brandOrange = AppColors.brandOrange;
@@ -32,6 +34,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _termsAndPrivacyAccepted = false;
+  bool _checkingTerms = false;
+  PublishedTerms? _acceptedTerms;
+  String _acceptedLanguage = 'en';
   String? _selectedBarangayId;
 
   bool get _agreeToTerms => _termsAndPrivacyAccepted;
@@ -47,6 +52,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
+    if (_checkingTerms) return;
     if (!_agreeToTerms) {
       AppToast.warning(context, AppLocalizations.of(context)!.termsAndPrivacy);
       return;
@@ -61,6 +67,37 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
 
     if (_formKey.currentState?.validate() ?? false) {
+      setState(() => _checkingTerms = true);
+      try {
+        final latest = await ref
+            .read(systemGovernanceRepositoryProvider)
+            .currentTerms();
+        if (!mounted) return;
+        if (_acceptedTerms?.versionId != latest.versionId ||
+            _acceptedTerms?.checksum != latest.checksum) {
+          setState(() {
+            _termsAndPrivacyAccepted = false;
+            _acceptedTerms = null;
+            _checkingTerms = false;
+          });
+          ref.invalidate(publishedTermsProvider);
+          AppToast.warning(
+            context,
+            AppLocalizations.of(context).governanceTermsChanged,
+          );
+          return;
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(() => _checkingTerms = false);
+          AppToast.error(
+            context,
+            AppLocalizations.of(context).governanceTermsUnavailable,
+          );
+        }
+        return;
+      }
+      setState(() => _checkingTerms = false);
       final success = await ref
           .read(authControllerProvider.notifier)
           .register(
@@ -70,6 +107,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             firstName: _firstNameController.text.trim(),
             lastName: _lastNameController.text.trim(),
             barangayId: _selectedBarangayId!,
+            termsConsent: _acceptedTerms!.consent(_acceptedLanguage),
           );
 
       if (success && mounted) {
@@ -88,23 +126,43 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     Navigator.of(context).pop();
   }
 
-  void _showTermsAndPrivacyPolicy() {
-    _showPolicyDialog(
-      AppLocalizations.of(context)!.termsAndPrivacy,
-      onAccepted: () {
-        _termsAndPrivacyAccepted = true;
-      },
-    );
+  Future<void> _showTermsAndPrivacyPolicy() async {
+    try {
+      final terms = await ref
+          .read(systemGovernanceRepositoryProvider)
+          .currentTerms();
+      if (!mounted) return;
+      final language = Localizations.localeOf(context).languageCode == 'fil'
+          ? 'fil'
+          : 'en';
+      await _showPolicyDialog(
+        terms.translation(language).title,
+        content: terms.translation(language).content,
+        onAccepted: () {
+          _termsAndPrivacyAccepted = true;
+          _acceptedTerms = terms;
+          _acceptedLanguage = language;
+        },
+      );
+    } catch (_) {
+      if (mounted) {
+        AppToast.error(
+          context,
+          AppLocalizations.of(context).governanceTermsUnavailable,
+        );
+      }
+    }
   }
 
   Future<void> _showPolicyDialog(
     String title, {
+    required String content,
     required VoidCallback onAccepted,
   }) async {
     final accepted = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => _PolicyDialog(title: title),
+      builder: (_) => _PolicyDialog(title: title, content: content),
     );
 
     if (accepted == true && mounted) {
@@ -119,7 +177,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final authState = ref.watch(authControllerProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isLoading = authState is AuthLoading;
+    final isLoading = authState is AuthLoading || _checkingTerms;
     final screenSize = MediaQuery.sizeOf(context);
     final screenPadding = MediaQuery.paddingOf(context);
     final viewInsets = MediaQuery.viewInsetsOf(context);
@@ -532,9 +590,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 }
 
 class _PolicyDialog extends StatefulWidget {
-  const _PolicyDialog({required this.title});
+  const _PolicyDialog({required this.title, required this.content});
 
   final String title;
+  final String content;
 
   @override
   State<_PolicyDialog> createState() => _PolicyDialogState();
@@ -737,10 +796,7 @@ class _PolicyDialogState extends State<_PolicyDialog> {
                     controller: _scrollController,
                     thumbVisibility: true,
                     radius: const Radius.circular(10),
-                    child: _buildPolicyContent(
-                      context,
-                      l10n.termsPolicyContent,
-                    ),
+                    child: _buildPolicyContent(context, widget.content),
                   ),
                 ),
               ),

@@ -2153,4 +2153,35 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get divorced => 'Diborsyado';
+
+  @override
+  String get governanceCheckingStatus => 'Sinusuri ang kalagayan ng sistema...';
+
+  @override
+  String get governanceStatusUnavailable =>
+      'Hindi makuha ang kalagayan ng sistema.';
+
+  @override
+  String get governanceReadOnly =>
+      'Maintenance: maaari lamang magbasa. Maaari pa ring mag-ulat ng emergency.';
+
+  @override
+  String get governanceTermsChanged =>
+      'Nagbago ang mga tuntunin. Basahin ang kasalukuyang bersyon.';
+
+  @override
+  String get governanceAcceptanceFailed =>
+      'Hindi naitala ang pagtanggap. Pakisubukang muli.';
+
+  @override
+  String get governanceTermsUnavailable =>
+      'Hindi makuha ang kasalukuyang mga tuntunin.';
+
+  @override
+  String get governanceConsentLabel =>
+      'Nabasa ko at sumasang-ayon ako sa mga tuntunin at patakaran sa pribasiya.';
+
+  @override
+  String get governanceSyncPaused =>
+      'Naghihintay ng pagtanggap sa mga tuntunin o pagtatapos ng maintenance.';
 }

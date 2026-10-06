@@ -364,6 +364,8 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
       ReportCreateOutboxErrorKind.network ||
       ReportCreateOutboxErrorKind.server => l10n.reportOutboxRetrying,
       ReportCreateOutboxErrorKind.conflict => l10n.reportOutboxConflict,
+      ReportCreateOutboxErrorKind.systemRestriction =>
+        l10n.governanceSyncPaused,
       ReportCreateOutboxErrorKind.validation ||
       ReportCreateOutboxErrorKind.unavailable =>
         item.safeError ?? l10n.reportOutboxNeedsEdit,

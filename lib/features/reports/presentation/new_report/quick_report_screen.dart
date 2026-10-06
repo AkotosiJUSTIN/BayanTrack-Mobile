@@ -1314,6 +1314,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
         userId: userId,
         reportId: reportId,
         files: staged,
+        isEmergency: widget.emergencyMode,
       );
       if (intents.length != staged.length) {
         await discardEvidenceDrafts(staged);
