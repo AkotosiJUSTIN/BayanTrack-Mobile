@@ -70,6 +70,17 @@ class ErrorMapper {
     final message = _extractMessage(body);
     final fieldErrors = _extractFieldErrors(body);
 
+    final code = body is Map ? body['code'] : null;
+    if ((statusCode == 403 && code == 'terms_acceptance_required') ||
+        (statusCode == 503 && code == 'maintenance_read_only') ||
+        (statusCode == 409 && code == 'terms_version_stale')) {
+      return SystemRestrictionFailure(
+        code as String,
+        message ?? 'Review the current system notice before continuing.',
+        statusCode: statusCode,
+      );
+    }
+
     return switch (statusCode) {
       401 => AuthFailure(message ?? 'Invalid credentials'),
       403 => AuthFailure(message ?? 'Access denied'),
@@ -81,7 +92,7 @@ class ErrorMapper {
       >= 500 => ServerFailure(
         message ?? 'Server error. Please try again later.',
       ),
-      _ => UnknownFailure(message ?? 'Request failed'),
+      _ => UnknownFailure.withStatus(message ?? 'Request failed', statusCode),
     };
   }
 
@@ -106,14 +117,17 @@ class ErrorMapper {
       return nested.map((k, v) => MapEntry(k.toString(), _flattenError(v)));
     }
 
-    // DRF format: {"field": ["error1", "error2"]}
+    // DRF format: {"field": ["error1", "error2"]} or
+    // {"field": "error"}.
     final errors = <String, String>{};
     for (final entry in body.entries) {
       if (entry.key != 'detail' &&
           entry.key != 'message' &&
           entry.key != 'error' &&
-          entry.value is List) {
-        errors[entry.key] = (entry.value as List).join(', ');
+          (entry.value is List || entry.value is String)) {
+        errors[entry.key] = entry.value is List
+            ? (entry.value as List).join(', ')
+            : entry.value.toString();
       }
     }
     return errors.isNotEmpty ? errors : null;

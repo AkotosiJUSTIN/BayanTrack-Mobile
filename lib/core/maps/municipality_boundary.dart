@@ -1,3 +1,7 @@
+import 'dart:math' as math;
+
+import 'package:latlong2/latlong.dart';
+
 class GeoCoordinate {
   final double latitude;
   final double longitude;
@@ -97,6 +101,46 @@ class MunicipalityBoundary {
       if (!isInHole) return true;
     }
     return false;
+  }
+
+  /// Local boundary proximity for contact guidance, never jurisdiction routing.
+  double? distanceToBoundaryMeters(double latitude, double longitude) {
+    if (!latitude.isFinite ||
+        !longitude.isFinite ||
+        latitude.abs() > 90 ||
+        longitude.abs() > 180 ||
+        polygons.isEmpty) {
+      return null;
+    }
+    final longitudeScale = math.cos(latitude * math.pi / 180);
+    var nearest = double.infinity;
+    const distance = Distance();
+    for (final polygon in polygons) {
+      for (final ring in polygon) {
+        for (var index = 1; index < ring.length; index++) {
+          final start = ring[index - 1];
+          final end = ring[index];
+          final dx = (end.longitude - start.longitude) * longitudeScale;
+          final dy = end.latitude - start.latitude;
+          final lengthSquared = dx * dx + dy * dy;
+          final fraction = lengthSquared == 0
+              ? 0.0
+              : (((longitude - start.longitude) * longitudeScale * dx +
+                            (latitude - start.latitude) * dy) /
+                        lengthSquared)
+                    .clamp(0.0, 1.0);
+          final meters = distance(
+            LatLng(latitude, longitude),
+            LatLng(
+              start.latitude + fraction * dy,
+              start.longitude + fraction * (end.longitude - start.longitude),
+            ),
+          );
+          nearest = math.min(nearest, meters);
+        }
+      }
+    }
+    return nearest.isFinite ? nearest : null;
   }
 
   _PointLocation _ringLocation(

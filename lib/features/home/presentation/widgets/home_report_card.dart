@@ -1,282 +1,318 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/constants/api_constants.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/presentation/widgets/civic_components.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../reports/domain/entities/report.dart';
 import '../../../reports/domain/entities/report_enums.dart';
-import '../../../reports/presentation/widgets/priority_badge.dart';
 import '../../../reports/presentation/report_labels.dart';
+import '../../../reports/presentation/widgets/priority_badge.dart';
 
-/// Report card widget for home screen matching the design mockup.
-/// Shows thumbnail, category, title, location, time, and status badge.
+/// Compact report summary shared by Home and My Reports.
 class HomeReportCard extends StatelessWidget {
+  const HomeReportCard({
+    super.key,
+    required this.report,
+    this.onTap,
+    this.showCitizenReviewState = false,
+  });
+
   final Report report;
   final VoidCallback? onTap;
-
-  const HomeReportCard({super.key, required this.report, this.onTap});
+  final bool showCitizenReviewState;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final linkedReportCount = report.linkedReportCount;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
+    final title = report.title?.trim().isNotEmpty == true
+        ? report.title!.trim()
+        : report.description;
+    final statusLabel = localizedReportStatus(report.status, l10n);
+    final needsReview =
+        showCitizenReviewState &&
+        report.status == ReportStatus.resolved &&
+        report.citizenVerifiedAt == null;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Thumbnail
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.darkSurfaceVariant
-                      : AppColors.lightSurfaceVariant,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: report.coreImages.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          ApiConstants.getImageUrl(report.coreImages.first.url),
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _buildPlaceholderIcon(),
-                        ),
-                      )
-                    : _buildPlaceholderIcon(),
-              ),
-              const SizedBox(width: 12),
-
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Category and status
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            localizedReportCategory(report.category, l10n)
-                                .toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: _getCategoryColor(report.category),
+    return Semantics(
+      button: onTap != null,
+      label: '$title, $statusLabel',
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: CivicSurface(
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLeading(context, title),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 6,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                Text(
+                                  localizedReportCategory(
+                                    report.category,
+                                    l10n,
+                                    fallback: report.categoryDisplay,
+                                  ),
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                CivicStatusChip(
+                                  label: statusLabel,
+                                  color: _statusColor(context),
+                                  icon: _statusIcon,
+                                ),
+                              ],
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const Spacer(),
-                        _buildStatusBadge(context, isDark),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-
-                    // Priority badge (if available)
-                    if (report.displayPriorityLevel != null) ...[
-                      Row(
-                        children: [
-                          PriorityBadge(
-                            priorityLevel: report.displayPriorityLevel,
-                            fontSize: 10,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 3,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            report.priorityIsAdvisory
-                                ? l10n.aiSuggestion
-                                : l10n.queuePriority,
-                            style: theme.textTheme.labelSmall,
-                          ),
-                          if (linkedReportCount > 1 &&
-                              report.isIncidentRepresentative) ...[
-                            const SizedBox(width: 6),
+                            const SizedBox(height: 7),
                             Text(
-                              l10n.linkedReports(linkedReportCount),
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: AppColors.primary,
+                              title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                    ],
-
-                    // Title/Description
-                    Text(
-                      report.description,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Location and time
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 14,
-                          color: isDark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.lightTextSecondary,
                         ),
+                      ),
+                      if (onTap != null) ...[
                         const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            report.zone ?? l10n.unknownLocation,
-                            style: theme.textTheme.bodySmall,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        Icon(
+                          Icons.chevron_right,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (report.displayPriorityLevel != null) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        PriorityBadge(
+                          priorityLevel: report.displayPriorityLevel,
+                          fontSize: 11,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
                           ),
                         ),
-                        Icon(
-                          Icons.access_time,
-                          size: 14,
-                          color: isDark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.lightTextSecondary,
-                        ),
-                        const SizedBox(width: 4),
                         Text(
-                          _formatTimeAgo(context, report.createdAt),
-                          style: theme.textTheme.bodySmall,
+                          report.priorityIsAdvisory
+                              ? l10n.aiSuggestion
+                              : l10n.queuePriority,
+                          style: theme.textTheme.labelSmall,
                         ),
+                        if (report.linkedReportCount > 1 &&
+                            report.isIncidentRepresentative)
+                          Text(
+                            l10n.linkedReports(report.linkedReportCount),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
                       ],
                     ),
                   ],
-                ),
+                  const SizedBox(height: 12),
+                  _buildMetaRow(
+                    context,
+                    icon: Icons.location_on_outlined,
+                    value: _locationLabel(l10n),
+                    includeTime: true,
+                  ),
+                  if (_departmentLabel != null) ...[
+                    const SizedBox(height: 6),
+                    _buildMetaRow(
+                      context,
+                      icon: Icons.account_balance_outlined,
+                      value: _departmentLabel!,
+                      includeTime: false,
+                    ),
+                  ],
+                  if (needsReview) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _statusColor(context).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.rate_review_outlined,
+                            size: 18,
+                            color: _statusColor(context),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l10n.awaitingStaffConfirmation,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: _statusColor(context),
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.chevron_right,
+                            size: 20,
+                            color: _statusColor(context),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildPlaceholderIcon() {
-    return Icon(
-      _getCategoryIcon(report.category),
-      size: 32,
-      color: _getCategoryColor(report.category).withValues(alpha: 0.5),
-    );
+  String? get _departmentLabel {
+    final value = report.assignedDepartment ?? report.departmentDisplay;
+    return value?.trim().isNotEmpty == true ? value!.trim() : null;
   }
 
-  Widget _buildStatusBadge(BuildContext context, bool isDark) {
-    final l10n = AppLocalizations.of(context)!;
-    final (bgColor, textColor, label) = switch (report.status) {
-      ReportStatus.submitted => (
-        isDark ? const Color(0xFF78350F) : const Color(0xFFFEF3C7), // Amber
-        isDark ? const Color(0xFFFCD34D) : const Color(0xFFB45309),
-        l10n.submitted,
-      ),
-      ReportStatus.underReview => (
-        isDark ? const Color(0xFF581C87) : const Color(0xFFF3E8FF), // Violet
-        isDark ? const Color(0xFFD8B4FE) : const Color(0xFF7C3AED),
-        l10n.underReview,
-      ),
-      ReportStatus.inProgress => (
-        isDark ? AppColors.inProgressBgDark : AppColors.inProgressBg,
-        isDark ? AppColors.inProgressTextDark : AppColors.inProgressText,
-        l10n.inProgress,
-      ),
-      ReportStatus.escalated => (
-        isDark ? const Color(0xFF581C87) : const Color(0xFFF3E8FF), // Violet
-        isDark ? const Color(0xFFD8B4FE) : const Color(0xFF7C3AED),
-        l10n.underReview,
-      ),
-      ReportStatus.endorsed => (
-        isDark ? const Color(0xFF581C87) : const Color(0xFFF3E8FF), // Violet
-        isDark ? const Color(0xFFD8B4FE) : const Color(0xFF7C3AED),
-        l10n.underReview,
-      ),
-      ReportStatus.resolved => (
-        isDark ? AppColors.resolvedBgDark : AppColors.resolvedBg,
-        isDark ? AppColors.resolvedTextDark : AppColors.resolvedText,
-        l10n.resolvedStatus,
-      ),
-      ReportStatus.closed => (
-        isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9), // Gray
-        isDark ? const Color(0xFF94A3B8) : const Color(0xFF475569),
-        l10n.closed,
-      ),
-      ReportStatus.rejected => (
-        isDark ? AppColors.rejectedBgDark : AppColors.rejectedBg,
-        isDark ? AppColors.rejectedTextDark : AppColors.rejectedText,
-        l10n.rejected,
-      ),
-      ReportStatus.verified => (
-        isDark ? const Color(0xFF581C87) : const Color(0xFFF3E8FF), // Violet
-        isDark ? const Color(0xFFD8B4FE) : const Color(0xFF7C3AED),
-        l10n.underReview,
-      ),
-      ReportStatus.assigned => (
-        isDark ? const Color(0xFF581C87) : const Color(0xFFF3E8FF), // Violet
-        isDark ? const Color(0xFFD8B4FE) : const Color(0xFF7C3AED),
-        l10n.underReview,
-      ),
-    };
+  String _locationLabel(AppLocalizations l10n) {
+    final values = [
+      report.barangay,
+      report.zone,
+      report.streetLandmark,
+      report.cityMunicipality,
+    ];
+    final value = values
+        .whereType<String>()
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .join(', ');
+    return value.isEmpty ? l10n.unknownLocation : value;
+  }
 
+  Widget _buildLeading(BuildContext context, String title) {
+    final scheme = Theme.of(context).colorScheme;
+    final images = report.coreImages;
+    final image = images.isEmpty ? null : images.first;
+    if (image != null) {
+      return Semantics(
+        image: true,
+        label: '${AppLocalizations.of(context).photos}: $title',
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.network(
+            ApiConstants.getImageUrl(image.url),
+            width: 52,
+            height: 52,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => _buildIconBox(scheme),
+          ),
+        ),
+      );
+    }
+    return _buildIconBox(scheme);
+  }
+
+  Widget _buildIconBox(ColorScheme scheme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      width: 52,
+      height: 52,
       decoration: BoxDecoration(
-        color: bgColor,
+        color: scheme.primaryContainer,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: textColor,
+      child: Icon(_categoryIcon, color: scheme.onPrimaryContainer, size: 26),
+    );
+  }
+
+  Widget _buildMetaRow(
+    BuildContext context, {
+    required IconData icon,
+    required String value,
+    required bool includeTime,
+  }) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(icon, size: 17, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 7),
+        Expanded(
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
         ),
-      ),
+        if (includeTime) ...[
+          const SizedBox(width: 8),
+          Text(
+            _formatTime(context),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ],
     );
   }
 
-  String _formatTimeAgo(BuildContext context, DateTime? date) {
-    return localizedRelativeTime(
-      context,
-      date,
-      AppLocalizations.of(context)!,
-    );
+  String _formatTime(BuildContext context) => localizedRelativeTime(
+    context,
+    report.createdAt,
+    AppLocalizations.of(context),
+  );
+
+  Color _statusColor(BuildContext context) {
+    return reportStatusForegroundColor(report.status, Theme.of(context));
   }
 
-  Color _getCategoryColor(ReportCategory? category) {
-    return switch (category) {
-      ReportCategory.engineeringInfrastructure => AppColors.alertHigh,
-      ReportCategory.floodDisaster => AppColors.alertHigh,
-      ReportCategory.wasteEnvironment => AppColors.alertLow,
-      ReportCategory.publicSafety => AppColors.alertMedium,
-      ReportCategory.publicUtilities => AppColors.alertMedium,
-      null => AppColors.primary,
-    };
-  }
+  IconData get _statusIcon => switch (report.status) {
+    ReportStatus.submitted => Icons.schedule_outlined,
+    ReportStatus.underReview ||
+    ReportStatus.verified ||
+    ReportStatus.assigned ||
+    ReportStatus.escalated ||
+    ReportStatus.endorsed => Icons.fact_check_outlined,
+    ReportStatus.inProgress => Icons.engineering_outlined,
+    ReportStatus.resolved => Icons.check_circle_outline,
+    ReportStatus.closed => Icons.lock_outline,
+    ReportStatus.rejected => Icons.cancel_outlined,
+  };
 
-  IconData _getCategoryIcon(ReportCategory? category) {
-    return switch (category) {
-      ReportCategory.engineeringInfrastructure => Icons.construction_outlined,
-      ReportCategory.floodDisaster => Icons.water_damage_outlined,
-      ReportCategory.wasteEnvironment => Icons.delete_outline,
-      ReportCategory.publicSafety => Icons.shield_outlined,
-      ReportCategory.publicUtilities => Icons.electrical_services,
-      null => Icons.report_problem_outlined,
-    };
-  }
+  IconData get _categoryIcon => switch (report.category) {
+    ReportCategory.engineeringInfrastructure => Icons.construction_outlined,
+    ReportCategory.floodDisaster => Icons.water_damage_outlined,
+    ReportCategory.wasteEnvironment => Icons.delete_outline,
+    ReportCategory.publicSafety => Icons.shield_outlined,
+    ReportCategory.publicUtilities => Icons.electrical_services_outlined,
+    null => Icons.report_problem_outlined,
+  };
 }

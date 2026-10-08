@@ -34,4 +34,21 @@ void main() {
       'Barangay does not belong to municipality.',
     );
   });
+
+  test('maps scalar field validation messages', () {
+    final request = RequestOptions(path: '/verification/submit/');
+    final error = DioException(
+      requestOptions: request,
+      type: DioExceptionType.badResponse,
+      response: Response<Map<String, dynamic>>(
+        requestOptions: request,
+        statusCode: 400,
+        data: {'mobile_number': 'Enter a valid mobile number.'},
+      ),
+    );
+
+    final failure = ErrorMapper.mapException(error) as ValidationFailure;
+
+    expect(failure.errorFor('mobile_number'), 'Enter a valid mobile number.');
+  });
 }

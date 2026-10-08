@@ -40,6 +40,14 @@ class KycRepository {
     return KycStatusResponse.fromJson(_verificationPayload(response.data));
   }
 
+  // ==================== WITHDRAW KYC ====================
+
+  /// Withdraw a pending submission back to editable, unsubmitted state.
+  Future<KycStatusResponse> withdrawKyc() async {
+    final response = await _dio.post(ApiConstants.verificationWithdraw);
+    return KycStatusResponse.fromJson(_verificationPayload(response.data));
+  }
+
   // ==================== SUBMIT KYC ====================
 
   /// Submit KYC documents for verification

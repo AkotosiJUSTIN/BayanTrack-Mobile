@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:signature/signature.dart';
 
 import '../../../core/constants/api_constants.dart';
+import '../../../core/presentation/widgets/app_toast.dart';
+import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/string_utils.dart';
 import '../../../l10n/app_localizations.dart';
@@ -169,7 +171,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
               ? l10n.reportConfirmedResolved
               : l10n.reportReopenedEscalated);
 
-      _showSnackBar(message);
+      AppToast.success(context, message);
 
       // Refresh the detail view and pop back
       ref.invalidate(reportDetailControllerProvider(widget.report.id));
@@ -181,23 +183,13 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
     }
   }
 
-  void _showSnackBar(String message, {bool error = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: error ? AppColors.alertHigh : AppColors.success,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
   // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
+    final successColor = _successColor(theme);
 
     // Guard: already reviewed — show read-only confirmation, no form
     if (widget.report.citizenVerifiedAt != null) {
@@ -212,12 +204,12 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.1),
+                    color: successColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.verified_rounded,
-                    color: AppColors.success,
+                    color: successColor,
                     size: 64,
                   ),
                 ),
@@ -255,30 +247,36 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.reviewResolution), centerTitle: true),
       body: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: EdgeInsets.fromLTRB(
-          20,
-          20,
-          20,
-          20 + MediaQuery.of(context).viewInsets.bottom,
+          24,
+          24,
+          24,
+          24 + MediaQuery.viewInsetsOf(context).bottom,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(theme, isDark),
-            const SizedBox(height: 24),
-            _buildResolutionCard(theme, isDark),
-            const SizedBox(height: 24),
-            _buildResponseEvidence(theme, isDark),
-            const SizedBox(height: 24),
-            _buildRatingSection(theme),
-            const SizedBox(height: 24),
-            _buildNoteSection(theme, isDark),
-            const SizedBox(height: 24),
-            _buildSignatureSection(theme, isDark),
-            const SizedBox(height: 32),
-            _buildActionButtons(theme),
-            const SizedBox(height: 16),
-          ],
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(theme),
+                const SizedBox(height: 24),
+                _buildResolutionCard(theme),
+                const SizedBox(height: 24),
+                _buildResponseEvidence(theme),
+                const SizedBox(height: 24),
+                _buildRatingSection(theme),
+                const SizedBox(height: 24),
+                _buildNoteSection(theme),
+                const SizedBox(height: 24),
+                _buildSignatureSection(theme),
+                const SizedBox(height: 32),
+                _buildActionButtons(theme),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -286,8 +284,9 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
 
   // ── Sub-widgets ────────────────────────────────────────────────────────────
 
-  Widget _buildHeader(ThemeData theme, bool isDark) {
+  Widget _buildHeader(ThemeData theme) {
     final l10n = AppLocalizations.of(context);
+    final successColor = _successColor(theme);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -296,12 +295,12 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.12),
+                color: successColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 Icons.task_alt_rounded,
-                color: AppColors.success,
+                color: successColor,
                 size: 28,
               ),
             ),
@@ -319,9 +318,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                   Text(
                     _reportTitle,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -335,18 +332,10 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
     );
   }
 
-  Widget _buildResolutionCard(ThemeData theme, bool isDark) {
+  Widget _buildResolutionCard(ThemeData theme) {
     final l10n = AppLocalizations.of(context);
-    return Container(
-      width: double.infinity,
+    return CivicSurface(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : Colors.grey.shade200,
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -355,18 +344,14 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
               Icon(
                 Icons.description_outlined,
                 size: 16,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 6),
               Text(
                 l10n.resolutionSummary,
                 style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -378,19 +363,11 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
     );
   }
 
-  Widget _buildResponseEvidence(ThemeData theme, bool isDark) {
+  Widget _buildResponseEvidence(ThemeData theme) {
     final l10n = AppLocalizations.of(context);
     final evidence = widget.report.resolvedProofImages;
-    return Container(
-      width: double.infinity,
+    return CivicSurface(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkSurface : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : Colors.grey.shade200,
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -414,9 +391,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           Text(
             l10n.resolutionProofResolved,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: isDark
-                  ? AppColors.darkTextSecondary
-                  : AppColors.lightTextSecondary,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           if (evidence.isNotEmpty) ...[
@@ -426,7 +401,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: evidence.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                separatorBuilder: (_, _) => const SizedBox(width: 12),
                 itemBuilder: (context, index) {
                   final image = evidence[index];
                   return Semantics(
@@ -438,17 +413,13 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                         ApiConstants.getImageUrl(image.url),
                         width: 148,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
+                        errorBuilder: (_, _, _) => Container(
                           width: 148,
-                          color: isDark
-                              ? AppColors.darkBorder
-                              : Colors.grey.shade200,
+                          color: theme.colorScheme.surfaceContainerHighest,
                           alignment: Alignment.center,
                           child: Icon(
                             Icons.image_not_supported_outlined,
-                            color: isDark
-                                ? AppColors.darkTextSecondary
-                                : AppColors.lightTextSecondary,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -457,7 +428,16 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                 },
               ),
             ),
-          ],
+          ] else
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                l10n.noImages,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -481,22 +461,28 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
             final starIndex = index + 1;
             return Semantics(
               button: true,
+              selected: starIndex == _rating,
               label: '${l10n.rateResponse}: $starIndex',
-              child: GestureDetector(
-                onTap: () => setState(() {
-                  // Tap same star again to deselect
-                  _rating = _rating == starIndex ? 0 : starIndex;
-                }),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Icon(
-                    starIndex <= _rating
-                        ? Icons.star_rounded
-                        : Icons.star_outline_rounded,
-                    size: 36,
-                    color: starIndex <= _rating
-                        ? Colors.amber.shade600
-                        : Colors.grey.shade400,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => setState(() {
+                    // Tap same star again to deselect
+                    _rating = _rating == starIndex ? 0 : starIndex;
+                  }),
+                  child: SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: Icon(
+                      starIndex <= _rating
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
+                      size: 32,
+                      color: starIndex <= _rating
+                          ? Colors.amber.shade600
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),
@@ -508,7 +494,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           Text(
             _ratingLabel(_rating, l10n),
             style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.amber.shade700,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -525,7 +511,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
     _ => '',
   };
 
-  Widget _buildNoteSection(ThemeData theme, bool isDark) {
+  Widget _buildNoteSection(ThemeData theme) {
     final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -543,20 +529,22 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           maxLength: 500,
           decoration: InputDecoration(
             hintText: l10n.resolutionCommentsHint,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
-            fillColor: isDark ? AppColors.darkSurface : Colors.grey.shade50,
+            fillColor: theme.colorScheme.surfaceContainerHighest,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSignatureSection(ThemeData theme, bool isDark) {
+  Widget _buildSignatureSection(ThemeData theme) {
     final l10n = AppLocalizations.of(context);
+    final successColor = _successColor(theme);
+    final errorColor = _errorColor(theme);
     final canvasBorder = _canvasValid
-        ? AppColors.success
-        : (isDark ? AppColors.darkBorder : Colors.grey.shade300);
+        ? successColor
+        : theme.colorScheme.outline;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -574,7 +562,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
             ),
             if (_signatureValid) ...[
               const SizedBox(width: 8),
-              Icon(Icons.verified_rounded, size: 18, color: AppColors.success),
+              Icon(Icons.verified_rounded, size: 18, color: successColor),
             ],
           ],
         ),
@@ -582,19 +570,17 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
         Text(
           l10n.signatureInstructions,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: isDark
-                ? AppColors.darkTextSecondary
-                : AppColors.lightTextSecondary,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 12),
 
         // ── Canvas pad ──────────────────────────────────────────────────────
         ClipRRect(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: canvasBorder, width: 1.5),
             ),
             child: Stack(
@@ -602,9 +588,9 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                 Signature(
                   controller: _signatureController,
                   height: 160,
-                  backgroundColor: isDark
-                      ? const Color(0xFF1E1E1E)
-                      : Colors.white,
+                  // Keep the pad light so the existing black pen stays visible
+                  // in both themes and the exported signature remains legible.
+                  backgroundColor: Colors.white,
                 ),
                 // Placeholder hint
                 if (!_canvasValid)
@@ -614,7 +600,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                         child: Text(
                           l10n.signHere,
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey.shade400,
+                            color: AppColors.lightTextSecondary,
                             fontStyle: FontStyle.italic,
                           ),
                         ),
@@ -627,19 +613,15 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                   right: 6,
                   child: Material(
                     color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(20),
-                      onTap: () {
+                    child: IconButton(
+                      tooltip: l10n.remove,
+                      onPressed: () {
                         _signatureController.clear();
                         setState(() {});
                       },
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Icon(
-                          Icons.refresh_rounded,
-                          size: 18,
-                          color: Colors.grey.shade500,
-                        ),
+                      icon: Icon(
+                        Icons.refresh_rounded,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -653,9 +635,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               l10n.signatureRequired,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: AppColors.alertHigh,
-              ),
+              style: theme.textTheme.bodySmall?.copyWith(color: errorColor),
             ),
           ),
 
@@ -670,11 +650,11 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
             labelText: l10n.fullName,
             hintText: l10n.fullNameHint,
             prefixIcon: const Icon(Icons.person_outline),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             filled: true,
-            fillColor: isDark ? AppColors.darkSurface : Colors.grey.shade50,
+            fillColor: theme.colorScheme.surfaceContainerHighest,
             suffixIcon: _nameValid
-                ? Icon(Icons.check_circle, color: AppColors.success)
+                ? Icon(Icons.check_circle, color: successColor)
                 : null,
           ),
         ),
@@ -683,9 +663,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               l10n.registeredNameRequired,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: AppColors.alertHigh,
-              ),
+              style: theme.textTheme.bodySmall?.copyWith(color: errorColor),
             ),
           ),
       ],
@@ -697,6 +675,14 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Text(
+          l10n.disputeNotice,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 12),
+
         // Primary: Confirm Resolved
         FilledButton.icon(
           key: const ValueKey('citizen-review-confirm'),
@@ -706,24 +692,26 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                   final error = await _submit(satisfied: true);
                   if (!mounted) return;
                   if (error != null) {
-                    _showSnackBar(error, error: true);
+                    AppToast.error(context, error);
                   } else {
                     Navigator.of(context).pop(true);
                   }
                 },
           icon: _isSubmitting
-              ? const SizedBox(
+              ? SizedBox(
                   width: 18,
                   height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.white,
+                    color: theme.colorScheme.onPrimary,
                   ),
                 )
               : const Icon(Icons.check_circle_outline),
           label: Text(l10n.confirmResolved),
           style: FilledButton.styleFrom(
-            backgroundColor: AppColors.success,
+            backgroundColor: theme.colorScheme.primary,
+            foregroundColor: theme.colorScheme.onPrimary,
+            minimumSize: const Size.fromHeight(52),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
         ),
@@ -738,18 +726,12 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
           style: OutlinedButton.styleFrom(
             foregroundColor: theme.colorScheme.primary,
             side: BorderSide(color: theme.colorScheme.primary),
+            minimumSize: const Size.fromHeight(52),
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
         ),
 
         const SizedBox(height: 12),
-        Text(
-          l10n.disputeNotice,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
-          ),
-        ),
       ],
     );
   }
@@ -764,7 +746,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       builder: (sheetContext) {
-        var errorText;
+        String? errorText;
         var isSubmitting = false;
 
         return StatefulBuilder(
@@ -776,12 +758,13 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
               });
             }
 
-            return Padding(
+            return SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: EdgeInsets.fromLTRB(
                 20,
                 16,
                 20,
-                20 + MediaQuery.of(context).viewInsets.bottom,
+                20 + MediaQuery.viewInsetsOf(context).bottom,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -883,4 +866,12 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
 
     if (submitted == true && mounted) Navigator.of(context).pop(true);
   }
+
+  Color _successColor(ThemeData theme) => theme.brightness == Brightness.dark
+      ? AppColors.resolvedTextDark
+      : AppColors.resolvedText;
+
+  Color _errorColor(ThemeData theme) => theme.brightness == Brightness.dark
+      ? AppColors.rejectedTextDark
+      : AppColors.rejectedText;
 }

@@ -16,6 +16,12 @@ abstract final class AppColors {
   static const Color accent = Color(0xFFF97316);
   static const Color accentLight = Color(0xFFFB923C);
 
+  /// Auth / onboarding brand palette (splash, onboarding, login, register).
+  /// Intentionally richer than [primary]/[accent] for the marketing-style
+  /// authentication surfaces; centralized here to avoid duplicated literals.
+  static const Color brandBlue = Color(0xFF064BEE);
+  static const Color brandOrange = Color(0xFFF86A05);
+
   /// Primary variant for AI features
   static const Color primaryVariant = Color(0xFF7C3AED); // Violet 600
 
@@ -46,9 +52,17 @@ abstract final class AppColors {
   static const Color lightSurface = Color(0xFFF8FAFC); // Slate 50
   static const Color lightSurfaceVariant = Color(0xFFF1F5F9); // Slate 100
   static const Color lightTextPrimary = Color(0xFF0F172A); // Slate 900
-  static const Color lightTextSecondary = Color(0xFF64748B); // Slate 500
+  static const Color lightTextSecondary = Color(0xFF475569); // Slate 600
+  static const Color lightTextTertiary = Color(0xFF5B6B82); // Blue slate 550
+  static const Color lightTextDisabled = Color(0xFF94A3B8); // Slate 400
   static const Color lightBorder = Color(0xFFCBD5E1); // Slate 300
   static const Color lightInputFill = Color(0xFFF1F5F9); // Slate 100
+
+  /// Citizen surfaces are intentionally separate from auth/onboarding tokens.
+  static const Color citizenLightPage = Color(0xFFF7F8FA);
+  static const Color citizenLightSurface = Color(0xFFF9FBFD);
+  static const Color citizenLightInput = Color(0xFFEAF0F6);
+  static const Color citizenLightUnreadNotification = Color(0xFFE8F0FF);
 
   // ─────────────────────────────────────────────────────────
   // DARK MODE COLORS
@@ -58,9 +72,16 @@ abstract final class AppColors {
   static const Color darkSurface = Color(0xFF1E293B); // Slate 800
   static const Color darkSurfaceVariant = Color(0xFF334155); // Slate 700
   static const Color darkTextPrimary = Color(0xFFF8FAFC); // Slate 50
-  static const Color darkTextSecondary = Color(0xFF94A3B8); // Slate 400
+  static const Color darkTextSecondary = Color(0xFFCBD5E1); // Slate 300
+  static const Color darkTextTertiary = Color(0xFF94A3B8); // Slate 400
+  static const Color darkTextDisabled = Color(0xFF64748B); // Slate 500
   static const Color darkBorder = Color(0xFF475569); // Slate 600
   static const Color darkInputFill = Color(0xFF1E293B); // Slate 800
+
+  static const Color citizenDarkPage = Color(0xFF0D1117);
+  static const Color citizenDarkSurface = Color(0xFF171C24);
+  static const Color citizenDarkSurfaceVariant = Color(0xFF232B36);
+  static const Color citizenDarkInput = Color(0xFF232B36);
 
   // ─────────────────────────────────────────────────────────
   // STATUS BADGE COLORS (Background / Text pairs)

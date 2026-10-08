@@ -74,6 +74,32 @@ void main() {
       expect(state.isResolvingBarangay, isFalse);
       expect(state.hasLocation, isTrue);
     });
+
+    test('changing coordinates clears stale derived location data', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final controller = container.read(newReportControllerProvider.notifier);
+
+      controller
+        ..setLocation(latitude: 15.98, longitude: 120.62)
+        ..completeBarangayResolution(_barangays.first)
+        ..setStreetLandmark('Public Market')
+        ..beginLandmarkLookup()
+        ..completeLandmarkLookup(
+          const NearbyLandmarkSuggestion(prefill: 'Public Market'),
+        )
+        ..setLocation(latitude: 15.99, longitude: 120.63);
+
+      final state = container.read(newReportControllerProvider);
+      expect(state.latitude, 15.99);
+      expect(state.longitude, 120.63);
+      expect(state.barangay, isNull);
+      expect(state.barangayId, isNull);
+      expect(state.zone, isNull);
+      expect(state.streetLandmark, isNull);
+      expect(state.nearbyLandmarkSuggestions, isEmpty);
+      expect(state.landmarkLookupCompleted, isFalse);
+    });
   });
 
   group('nearby landmark suggestions', () {
@@ -130,6 +156,7 @@ void main() {
         controller.setStreetLandmark('Keep this text');
         controller.beginLandmarkLookup();
         controller.failLandmarkLookup();
+        controller.completeBarangayResolution(_barangays.first);
 
         final state = container.read(newReportControllerProvider);
         expect(state.streetLandmark, 'Keep this text');
@@ -137,5 +164,34 @@ void main() {
         expect(state.landmarkLookupError, isNotNull);
       },
     );
+
+    test('completed empty lookup is represented as no nearby landmark', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final controller = container.read(newReportControllerProvider.notifier);
+
+      controller
+        ..beginLandmarkLookup(clearManual: true)
+        ..completeLandmarkLookup(const NearbyLandmarkSuggestion());
+
+      final state = container.read(newReportControllerProvider);
+      expect(state.landmarkLookupCompleted, isTrue);
+      expect(state.landmarkLookupError, isNull);
+      expect(state.streetLandmark, isNull);
+    });
+
+    test('failed lookup stays distinguishable from an empty result', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final controller = container.read(newReportControllerProvider.notifier);
+
+      controller
+        ..beginLandmarkLookup(clearManual: true)
+        ..failLandmarkLookup();
+
+      final state = container.read(newReportControllerProvider);
+      expect(state.landmarkLookupCompleted, isFalse);
+      expect(state.landmarkLookupError, landmarkLookupUnavailable);
+    });
   });
 }

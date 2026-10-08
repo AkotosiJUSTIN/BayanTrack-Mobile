@@ -8,17 +8,27 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/constants/urdaneta_geo.dart';
 import '../../../../core/maps/municipality_map.dart';
 import '../../../../core/presentation/widgets/app_toast.dart';
+import '../../../../core/providers/connectivity_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/municipality_geo.dart';
+import '../../../../core/widget/widget_bridge.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../auth/auth_di.dart';
 import '../../../auth/data/auth_models.dart';
 import '../../../auth/data/user_permissions.dart';
 import '../../../auth/presentation/barangays_provider.dart';
 import '../../../auth/presentation/auth_controller.dart';
+import '../../../images/data/evidence_file_stager.dart';
+import '../../../images/presentation/evidence_photo_review.dart';
 import '../../../images/data/evidence_upload_queue.dart';
 import '../../../images/data/evidence_upload_queue_provider.dart';
+import '../../../help/data/help_content.dart';
+import '../../../help/presentation/help_screens.dart';
+import '../../data/report_draft_store.dart';
+import '../../data/report_create_outbox.dart';
 import '../../data/reports_repository.dart';
 import '../../data/report_models.dart'
     hide LocationAccuracy, ReportCategory, ReportStatus;
@@ -28,6 +38,8 @@ import '../reports_controller.dart';
 import '../report_labels.dart';
 import 'new_report_controller.dart';
 import 'quick_report_geo.dart';
+import 'report_draft_prompt.dart';
+import 'report_flow_widgets.dart';
 
 enum _QuickLocationInputMode { phone, manual }
 
@@ -40,6 +52,10 @@ class QuickReportScreen extends ConsumerStatefulWidget {
     this.locationOverride,
     this.showMapTiles = true,
     this.emergencyMode = false,
+    this.fastReportMode = false,
+    this.pickImage,
+    this.pickMultiImage,
+    this.launchCall,
   });
 
   @visibleForTesting
@@ -51,20 +67,31 @@ class QuickReportScreen extends ConsumerStatefulWidget {
   @visibleForTesting
   final bool emergencyMode;
 
+  @visibleForTesting
+  final bool fastReportMode;
+
+  @visibleForTesting
+  final Future<XFile?> Function(ImageSource source)? pickImage;
+
+  @visibleForTesting
+  final Future<List<XFile>> Function()? pickMultiImage;
+
+  final Future<bool> Function(Uri uri)? launchCall;
+
   @override
   ConsumerState<QuickReportScreen> createState() => _QuickReportScreenState();
 }
 
-class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
+class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
+    with WidgetsBindingObserver {
   final MapController _mapController = MapController();
   final TextEditingController _descriptionController = TextEditingController();
+  String _lastDescription = '';
   ReportCategoryOption? _selectedEmergencyCategory;
   List<ReportCategoryOption> _emergencyCategories = const [];
   bool _isLoadingEmergencyCategories = false;
   String? _emergencyCategoryError;
-  late final String _emergencyIdempotencyKey =
-      'emergency-${DateTime.now().microsecondsSinceEpoch}';
-  MunicipalityModel _selectedMunicipality = bundledUrdanetaMunicipality;
+  final MunicipalityModel _selectedMunicipality = bundledUrdanetaMunicipality;
 
   bool _isSubmitting = false;
   bool _isLoadingLocation = false;
@@ -75,24 +102,335 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   String? _submissionError;
   Position? _currentPosition;
   LatLng? _selectedPoint;
-  String? _locationLabel;
+  BarangayModel? _resolvedBarangay;
+  bool _isResolvingBarangay = false;
+  String? _resolvedLandmark;
+  List<String> _nearbyLandmarkSuggestions = const [];
+  bool _isResolvingLandmark = false;
+  String? _landmarkLookupError;
+  bool _landmarkLookupCompleted = false;
+  int _locationResolutionVersion = 0;
+  Timer? _landmarkLookupDebounce;
   _QuickLocationInputMode _locationInputMode = _QuickLocationInputMode.phone;
+  bool _draftReady = false;
+  bool _draftRestored = false;
+  bool _canPersistDraft = true;
+  bool _persistDraft = true;
+  String? _draftOwnerId;
+  String? _restoredEmergencyCategoryKey;
+  ReportDraft? _draftRecord;
+  Timer? _draftSaveTimer;
+  late final ReportDraftStore _draftStore;
+  late final ProviderSubscription<AuthState> _authSubscription;
+  Future<void> _draftWriteTail = Future<void>.value();
+
+  ReportDraftType get _draftType =>
+      widget.emergencyMode ? ReportDraftType.emergency : ReportDraftType.quick;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _draftStore = ref.read(reportDraftStoreProvider);
+    _draftOwnerId = _currentOwnerId();
+    _authSubscription = ref.listenManual(authControllerProvider, (_, state) {
+      final nextOwnerId = _ownerIdFor(state);
+      if (_draftOwnerId != nextOwnerId) {
+        _canPersistDraft = false;
+        _draftSaveTimer?.cancel();
+        if (_draftOwnerId != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            _descriptionController.clear();
+            _selectedPoint = null;
+            _selectedEmergencyCategory = null;
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          });
+        }
+      }
+    });
+    _descriptionController.addListener(_onQuickReportDescriptionChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _getCurrentLocation();
-      if (widget.emergencyMode) _loadEmergencyCategories();
+      unawaited(_prepareDraft());
     });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _draftSaveTimer?.cancel();
+    _authSubscription.close();
+    if (_draftReady && _persistDraft) {
+      unawaited(_enqueueDraftSave(_captureDraftPayload()));
+    }
+    _landmarkLookupDebounce?.cancel();
+    _descriptionController.removeListener(_onQuickReportDescriptionChanged);
     _mapController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      unawaited(_flushDraftSave());
+    }
+  }
+
+  String? _currentOwnerId() => _ownerIdFor(ref.read(authControllerProvider));
+
+  String? _ownerIdFor(AuthState state) =>
+      state is AuthSuccess ? state.user?.id : null;
+
+  Future<void> _prepareDraft() async {
+    final ownerId = _draftOwnerId;
+    final draft = ownerId == null
+        ? null
+        : await _draftStore.read(ownerId, _draftType);
+    if (!mounted) return;
+    if (ownerId != null &&
+        (!_canPersistDraft || _currentOwnerId() != ownerId)) {
+      Navigator.of(context).pop();
+      return;
+    }
+    if (draft != null) {
+      final action = await showReportDraftPrompt(context, draft: draft);
+      if (!mounted) return;
+      if (!_canPersistDraft || _currentOwnerId() != ownerId) {
+        Navigator.of(context).pop();
+        return;
+      }
+      if (action == ReportDraftAction.resume) {
+        _draftRecord = draft;
+        _restoreDraftPayload(draft);
+        _draftRestored = true;
+        _draftReady = true;
+        await _enqueueDraftSave(_captureDraftPayload());
+      } else if (action == ReportDraftAction.startNew) {
+        await _draftStore.delete(ownerId!, _draftType);
+        if (!mounted) return;
+        if (!_canPersistDraft || _currentOwnerId() != ownerId) return;
+        _draftRecord = null;
+        _draftReady = true;
+      } else if (action == ReportDraftAction.discard) {
+        await _draftStore.delete(ownerId!, _draftType);
+        if (!mounted) return;
+        if (!_canPersistDraft || _currentOwnerId() != ownerId) return;
+        _persistDraft = false;
+        Navigator.of(context).pop();
+        return;
+      } else {
+        _persistDraft = false;
+        Navigator.of(context).pop();
+        return;
+      }
+    } else {
+      _draftReady = true;
+    }
+
+    if (!mounted) return;
+    if (ownerId != null &&
+        (!_canPersistDraft || _currentOwnerId() != ownerId)) {
+      return;
+    }
+    setState(() {});
+    if (widget.emergencyMode) _loadEmergencyCategories();
+    if (_selectedPoint == null) _getCurrentLocation();
+  }
+
+  void _restoreDraftPayload(ReportDraft draft) {
+    final description = draft.payload['description'];
+    if (description is String) {
+      _descriptionController.value = TextEditingValue(
+        text: description,
+        selection: TextSelection.collapsed(offset: description.length),
+      );
+    }
+    final latitude = _draftDouble(draft.payload['latitude']);
+    final longitude = _draftDouble(draft.payload['longitude']);
+    if (latitude != null &&
+        longitude != null &&
+        latitude.isFinite &&
+        longitude.isFinite) {
+      final point = LatLng(latitude, longitude);
+      if (_contains(point)) _selectedPoint = point;
+    }
+    final categoryKey = draft.payload['categoryKey'];
+    _restoredEmergencyCategoryKey = categoryKey is String ? categoryKey : null;
+    _emergencyConfirmed = false;
+  }
+
+  Map<String, Object?> _captureDraftPayload() => {
+    'description': _descriptionController.text,
+    'latitude': _selectedPoint?.latitude,
+    'longitude': _selectedPoint?.longitude,
+    if (widget.emergencyMode)
+      'categoryKey':
+          _selectedEmergencyCategory?.key ?? _restoredEmergencyCategoryKey,
+  };
+
+  bool _hasDraftContent(Map<String, Object?> payload) =>
+      (payload['description'] as String? ?? '').trim().isNotEmpty ||
+      payload['categoryKey'] != null;
+
+  void _scheduleDraftSave() {
+    if (!_draftReady || !_canPersistDraft || !_persistDraft) return;
+    final payload = _captureDraftPayload();
+    _draftSaveTimer?.cancel();
+    _draftSaveTimer = Timer(
+      const Duration(milliseconds: 300),
+      () => unawaited(_enqueueDraftSave(payload)),
+    );
+  }
+
+  Future<void> _flushDraftSave() async {
+    _draftSaveTimer?.cancel();
+    if (_draftReady) await _enqueueDraftSave(_captureDraftPayload());
+  }
+
+  Future<void> _enqueueDraftSave(Map<String, Object?> payload) {
+    final operation = _draftWriteTail.then((_) => _writeDraftSnapshot(payload));
+    _draftWriteTail = operation.catchError((_) {});
+    return operation;
+  }
+
+  Future<void> _writeDraftSnapshot(Map<String, Object?> payload) async {
+    final ownerId = _draftOwnerId;
+    if (!_canPersistDraft || !_persistDraft || ownerId == null) return;
+    final previous =
+        await _draftStore.read(ownerId, _draftType) ?? _draftRecord;
+    if (!_hasDraftContent(payload)) {
+      if (previous != null) {
+        await _draftStore.delete(ownerId, _draftType);
+        _draftRecord = null;
+      }
+      return;
+    }
+    final now = DateTime.now().toUtc();
+    final draft = ReportDraft(
+      schemaVersion: ReportDraft.currentSchemaVersion,
+      draftId: previous?.draftId ?? newReportLocalId(),
+      ownerId: ownerId,
+      type: _draftType,
+      createdAt: previous?.createdAt ?? now,
+      updatedAt: now,
+      resumeStep: 'form',
+      payload: payload,
+      attachmentRefs: const [],
+    );
+    await _draftStore.write(draft);
+    _draftRecord = draft;
+  }
+
+  Future<void> _completeDraft() async {
+    _persistDraft = false;
+    _draftSaveTimer?.cancel();
+    final ownerId = _draftOwnerId;
+    if (ownerId != null) {
+      try {
+        await _draftStore.delete(ownerId, _draftType);
+      } catch (_) {
+        // A successful server submit must not be reported as a failed submit.
+      }
+    }
+    _draftRecord = null;
+  }
+
+  Future<ReportCreateOutboxItem> _submitOutboxSnapshot(
+    Map<String, Object?> payload,
+  ) async {
+    await _flushDraftSave();
+    final ownerId = _draftOwnerId ?? _currentOwnerId();
+    if (ownerId == null || !_canPersistDraft || _currentOwnerId() != ownerId) {
+      throw const ReportSubmissionFailure(
+        'Sign in again to submit this report.',
+      );
+    }
+    final draft = await _draftStore.read(ownerId, _draftType);
+    return ref
+        .read(reportCreateOutboxProvider)
+        .submit(
+          ownerId: ownerId,
+          type: _draftType,
+          payload: payload,
+          sourceDraftId: draft?.draftId,
+          sourceDraftUpdatedAt: draft?.updatedAt,
+        );
+  }
+
+  Map<String, Object?> _quickSubmissionPayload({
+    required String description,
+    String? category,
+    required bool emergency,
+    bool includeLandmark = false,
+  }) => {
+    'category': category,
+    'description': description,
+    'isHappeningNow': true,
+    'zone': _resolvedBarangay?.name,
+    'streetLandmark': includeLandmark ? _resolvedLandmark : null,
+    'municipalityId': _selectedMunicipality.id,
+    'barangayId': _resolvedBarangay?.id,
+    'cityMunicipality': _selectedMunicipality.name,
+    'province': _selectedMunicipality.province,
+    'latitude': _selectedPoint!.latitude.toStringAsFixed(10),
+    'longitude': _selectedPoint!.longitude.toStringAsFixed(10),
+    'locationAccuracy': 'exact',
+    'location': null,
+    'barangay': _resolvedBarangay?.name,
+    'declarationConfirmed': true,
+    'dataProcessingConsent': true,
+    'isQuickReport': true,
+    'isEmergency': emergency,
+  };
+
+  Future<void> _showPendingSync(
+    ReportCreateOutboxItem item, {
+    required bool emergency,
+  }) async {
+    _persistDraft = false;
+    _draftSaveTimer?.cancel();
+    if (!mounted) return;
+    setState(() {
+      _isSubmitting = false;
+      _submissionError = null;
+    });
+    ref.invalidate(reportCreateOutboxItemsProvider(item.ownerId));
+    ref.read(myReportsRefreshProvider.notifier).increment();
+    final l10n = AppLocalizations.of(context);
+    if (emergency) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(l10n.emergencyNotYetTransmitted),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l10n.emergencyCallGuidance),
+                _emergencyHotlines(),
+              ],
+            ),
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(l10n.done),
+            ),
+          ],
+        ),
+      );
+    } else {
+      AppToast.info(context, l10n.reportPendingSync);
+    }
+    if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  double? _draftDouble(Object? value) => value is num
+      ? value.toDouble()
+      : double.tryParse(value?.toString() ?? '');
 
   bool _contains(LatLng point) => municipalityContains(
     _selectedMunicipality,
@@ -100,51 +438,114 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     point.longitude,
   );
 
-  void _selectMunicipality(MunicipalityModel municipality) {
-    if (municipality.id == _selectedMunicipality.id) return;
-    final bounds = municipality.bounds;
-    if (bounds == null || !municipality.hasUsableBoundary) {
-      setState(
-        () => _locationError = municipalityUnavailableMessage(municipality),
-      );
-      return;
-    }
-    final center = LatLng(
-      municipality.centerLat ?? (bounds.south + bounds.north) / 2,
-      municipality.centerLng ?? (bounds.west + bounds.east) / 2,
+  ThemeData _quickReportTheme(ThemeData theme) {
+    final scheme = theme.colorScheme;
+    final radius = BorderRadius.circular(16);
+    final idleBorder = OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide.none,
     );
-    setState(() {
-      _selectedMunicipality = municipality;
-      _selectedPoint = null;
-      _locationLabel = null;
-      _currentPosition = null;
-      _deviceLocationOutside = false;
-      _locationError = null;
-      _submissionError = null;
-    });
-    _mapController.move(center, 13);
-    if (_locationInputMode == _QuickLocationInputMode.phone) {
-      _getCurrentLocation();
+    final focusBorder = OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide(
+        color: scheme.primary.withValues(alpha: 0.72),
+        width: 1.5,
+      ),
+    );
+    final errorBorder = OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide(color: scheme.error.withValues(alpha: 0.78)),
+    );
+    return theme.copyWith(
+      inputDecorationTheme: theme.inputDecorationTheme.copyWith(
+        filled: true,
+        fillColor: scheme.surfaceContainerHighest.withValues(
+          alpha: theme.brightness == Brightness.dark ? 0.62 : 0.76,
+        ),
+        border: idleBorder,
+        enabledBorder: idleBorder,
+        disabledBorder: idleBorder,
+        focusedBorder: focusBorder,
+        errorBorder: errorBorder,
+        focusedErrorBorder: errorBorder,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
+      ),
+    );
+  }
+
+  void _clearResolvedLocationMetadata() {
+    _resolvedBarangay = null;
+    _isResolvingBarangay = false;
+    _resolvedLandmark = null;
+    _nearbyLandmarkSuggestions = const [];
+    _isResolvingLandmark = false;
+    _landmarkLookupError = null;
+    _landmarkLookupCompleted = false;
+  }
+
+  void _syncWidgetStatus(QuickReportWidgetStatus status) {
+    if (!widget.emergencyMode) {
+      unawaited(ref.read(widgetBridgeProvider).syncQuickReportStatus(status));
     }
   }
 
-  void _setSelectedPoint(LatLng point, {required String locationLabel}) {
+  void _onQuickReportDescriptionChanged() {
+    final description = _descriptionController.text;
+    if (description == _lastDescription) return;
+    _lastDescription = description;
+    _scheduleDraftSave();
+  }
+
+  void _setLandmarkLookupFailure() {
+    setState(() {
+      _isResolvingLandmark = false;
+      _resolvedLandmark = null;
+      _nearbyLandmarkSuggestions = const [];
+      _landmarkLookupError = landmarkLookupUnavailable;
+      _landmarkLookupCompleted = false;
+    });
+  }
+
+  void _setSelectedPoint(LatLng point) {
+    _landmarkLookupDebounce?.cancel();
+    _landmarkLookupDebounce = null;
     final l10n = AppLocalizations.of(context);
     if (!_contains(point)) {
+      _locationResolutionVersion++;
       setState(() {
         _selectedPoint = null;
-        _locationLabel = null;
+        _clearResolvedLocationMetadata();
         _locationError = l10n.incidentPinInside(_selectedMunicipality.name);
       });
+      _scheduleDraftSave();
+      _syncWidgetStatus(QuickReportWidgetStatus.locationRequired);
       return;
     }
 
+    final resolutionVersion = ++_locationResolutionVersion;
+    final resolveLandmark = !widget.emergencyMode && !widget.fastReportMode;
     setState(() {
       _selectedPoint = point;
-      _locationLabel = locationLabel;
+      _clearResolvedLocationMetadata();
+      _isResolvingBarangay = true;
+      _isResolvingLandmark = resolveLandmark;
       _locationError = null;
       _submissionError = null;
     });
+    _scheduleDraftSave();
+    _syncWidgetStatus(QuickReportWidgetStatus.ready);
+
+    unawaited(_resolveBarangay(point, resolutionVersion));
+    if (resolveLandmark) {
+      _landmarkLookupDebounce = Timer(nearbyLandmarkDebounceDuration, () {
+        _landmarkLookupDebounce = null;
+        if (!_isCurrentResolution(point, resolutionVersion)) return;
+        unawaited(_lookupNearbyLandmarks(point, resolutionVersion));
+      });
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -155,11 +556,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   void _onMapTap(LatLng point) {
     if (_locationInputMode != _QuickLocationInputMode.manual) return;
 
-    _setSelectedPoint(
-      point,
-      locationLabel:
-          'Manual pin: ${point.latitude.toStringAsFixed(6)}, ${point.longitude.toStringAsFixed(6)}',
-    );
+    _setSelectedPoint(point);
   }
 
   Future<void> _loadEmergencyCategories() async {
@@ -177,15 +574,28 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         _emergencyCategories = options.categories
             .where((option) => option.active && option.key.isNotEmpty)
             .toList(growable: false);
+        _restoreEmergencyCategory();
         _isLoadingEmergencyCategories = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _emergencyCategories = offlineReportFormOptions.categories;
+        _restoreEmergencyCategory();
         _isLoadingEmergencyCategories = false;
         _emergencyCategoryError = AppLocalizations.of(context).error;
       });
+    }
+  }
+
+  void _restoreEmergencyCategory() {
+    final key = _restoredEmergencyCategoryKey;
+    if (key == null) return;
+    for (final option in _emergencyCategories) {
+      if (option.key == key) {
+        _selectedEmergencyCategory = option;
+        return;
+      }
     }
   }
 
@@ -206,6 +616,9 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   Future<void> _getCurrentLocation() async {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context);
+    if (_selectedPoint == null) {
+      _syncWidgetStatus(QuickReportWidgetStatus.locationRequired);
+    }
 
     setState(() {
       _isLoadingLocation = true;
@@ -346,13 +759,27 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   void _updateLocationFromPosition(Position position) {
     final point = LatLng(position.latitude, position.longitude);
     if (!_contains(point)) {
+      final clearSelection =
+          _locationInputMode == _QuickLocationInputMode.phone;
+      if (clearSelection) _locationResolutionVersion++;
       setState(() {
         _currentPosition = position;
         _deviceLocationOutside = true;
-        if (_locationInputMode == _QuickLocationInputMode.phone) {
+        if (clearSelection) {
           _selectedPoint = null;
-          _locationLabel = null;
+          _clearResolvedLocationMetadata();
         }
+      });
+      if (clearSelection) {
+        _syncWidgetStatus(QuickReportWidgetStatus.locationRequired);
+      }
+      return;
+    }
+
+    if (_locationInputMode != _QuickLocationInputMode.phone) {
+      setState(() {
+        _currentPosition = position;
+        _deviceLocationOutside = false;
       });
       return;
     }
@@ -360,48 +787,81 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     setState(() {
       _currentPosition = position;
       _deviceLocationOutside = false;
-      if (_locationInputMode == _QuickLocationInputMode.phone) {
-        _selectedPoint = point;
-        _locationLabel =
-            '${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}';
-        _locationError = null;
-      }
+      _locationError = null;
     });
 
-    if (_locationInputMode != _QuickLocationInputMode.phone) return;
+    _setSelectedPoint(point);
+  }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _mapController.move(point, 15);
+  bool _isCurrentResolution(LatLng point, int version) {
+    final selected = _selectedPoint;
+    return mounted &&
+        version == _locationResolutionVersion &&
+        selected?.latitude == point.latitude &&
+        selected?.longitude == point.longitude;
+  }
+
+  Future<void> _resolveBarangay(LatLng point, int version) async {
+    BarangayModel? resolved;
+    try {
+      final barangays = await ref.read(
+        municipalityBarangaysProvider(defaultMunicipalityId).future,
+      );
+      resolved = deriveNearestBarangay(
+        barangays,
+        latitude: point.latitude,
+        longitude: point.longitude,
+      );
+    } catch (_) {
+      resolved = null;
+    }
+    if (!_isCurrentResolution(point, version)) return;
+    setState(() {
+      _resolvedBarangay = resolved;
+      _isResolvingBarangay = false;
     });
   }
 
-  BarangayModel? _resolveNearestBarangay(double latitude, double longitude) {
+  Future<void> _lookupNearbyLandmarks(LatLng point, int version) async {
     try {
-      final barangays = ref
-          .read(municipalityBarangaysProvider(_selectedMunicipality.id))
-          .asData
-          ?.value;
-      if (barangays == null || barangays.isEmpty) {
-        debugPrint(
-          'QuickReport: barangay list unavailable; proceeding without derived barangay.',
-        );
-        return null;
-      }
-
-      return deriveNearestBarangay(
-        barangays,
-        latitude: latitude,
-        longitude: longitude,
+      final result = await ref
+          .read(authRepositoryProvider)
+          .getNearbyLandmarks(
+            latitude: point.latitude,
+            longitude: point.longitude,
+          );
+      if (!_isCurrentResolution(point, version)) return;
+      result.when(
+        success: (landmarks) {
+          final suggestion = suggestNearbyLandmark(landmarks);
+          setState(() {
+            _isResolvingLandmark = false;
+            _resolvedLandmark = suggestion.prefill;
+            _nearbyLandmarkSuggestions = suggestion.choices;
+            _landmarkLookupError = null;
+            _landmarkLookupCompleted = true;
+          });
+        },
+        failure: (_) {
+          _setLandmarkLookupFailure();
+        },
       );
-    } catch (e) {
-      debugPrint('QuickReport: failed to derive barangay from geolocation: $e');
-      return null;
+    } catch (_) {
+      if (!_isCurrentResolution(point, version)) return;
+      _setLandmarkLookupFailure();
     }
+  }
+
+  void _selectLandmarkSuggestion(String suggestion) {
+    setState(() => _resolvedLandmark = suggestion);
   }
 
   Future<void> _submitQuickReport() async {
     if (_isSubmitting) return;
+    if (widget.fastReportMode) {
+      await _submitFastReport();
+      return;
+    }
     if (widget.emergencyMode) {
       await _submitEmergencyReport();
       return;
@@ -420,6 +880,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
     final point = _selectedPoint;
     if (point == null) {
+      _syncWidgetStatus(QuickReportWidgetStatus.locationRequired);
       AppToast.warning(context, l10n.waitingIncidentLocation);
       return;
     }
@@ -432,10 +893,16 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       return;
     }
 
+    if (_isResolvingBarangay) {
+      AppToast.warning(context, l10n.waitingIncidentLocation);
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
       _submissionError = null;
     });
+    _syncWidgetStatus(QuickReportWidgetStatus.submitting);
 
     try {
       final nearby = await ref
@@ -487,7 +954,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
           ),
         );
         if (submitAnyway != true) {
-          if (mounted) setState(() => _isSubmitting = false);
+          if (mounted) {
+            setState(() => _isSubmitting = false);
+            _syncWidgetStatus(QuickReportWidgetStatus.ready);
+          }
           return;
         }
       }
@@ -497,28 +967,30 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
 
     if (!mounted) return;
 
-    final nearestBarangay = _resolveNearestBarangay(
-      point.latitude,
-      point.longitude,
-    );
     late final String reportId;
     try {
-      final report = await ref
-          .read(newReportControllerProvider.notifier)
-          .submitQuickReport(
-            description: description,
-            municipalityId: _selectedMunicipality.id,
-            barangayId: nearestBarangay?.id,
-            barangay: nearestBarangay?.name,
-            cityMunicipality: _selectedMunicipality.name,
-            province: _selectedMunicipality.province,
-            latitude: point.latitude,
-            longitude: point.longitude,
-            // The quick flow has no editable landmark field; GPS text must not
-            // be persisted as a landmark by the legacy serializer mapping.
-            location: null,
-          );
-      reportId = report.id;
+      final item = await _submitOutboxSnapshot(
+        _quickSubmissionPayload(
+          description: description,
+          emergency: false,
+          includeLandmark: true,
+        ),
+      );
+      if (item.status == ReportCreateOutboxStatus.rejected) {
+        throw ReportSubmissionFailure(
+          item.safeError ?? l10n.unableSubmitReport,
+        );
+      }
+      if (item.status != ReportCreateOutboxStatus.synced) {
+        _syncWidgetStatus(QuickReportWidgetStatus.networkUnavailable);
+        await _showPendingSync(item, emergency: false);
+        return;
+      }
+      final serverReportId = item.serverReportId;
+      if (serverReportId == null) {
+        throw ReportSubmissionFailure(l10n.unableSubmitReport);
+      }
+      reportId = serverReportId;
     } catch (e) {
       if (!mounted) return;
       final message = e is ReportSubmissionFailure
@@ -528,16 +1000,96 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         _isSubmitting = false;
         _submissionError = message;
       });
+      _syncWidgetStatus(
+        ref.read(isOnlineProvider)
+            ? QuickReportWidgetStatus.failed
+            : QuickReportWidgetStatus.networkUnavailable,
+      );
       AppToast.error(context, message);
       return;
     }
 
     if (!mounted) return;
+    await _completeDraft();
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+    _syncWidgetStatus(QuickReportWidgetStatus.submitted);
     ref.invalidate(reportsControllerProvider);
     ref.read(myReportsRefreshProvider.notifier).increment();
 
     await _offerPhotoUpload(reportId);
     if (!mounted) return;
+    AppToast.success(context, l10n.reportSubmitted);
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  Future<void> _submitFastReport() async {
+    final l10n = AppLocalizations.of(context);
+    final description = _descriptionController.text.trim();
+    final descriptionError = quickReportDescriptionError(
+      description,
+      l10n: l10n,
+    );
+    if (descriptionError != null) {
+      AppToast.warning(context, descriptionError);
+      return;
+    }
+
+    final point = _selectedPoint;
+    if (point == null || !_contains(point)) {
+      _syncWidgetStatus(QuickReportWidgetStatus.locationRequired);
+      AppToast.warning(context, l10n.chooseIncidentLocation);
+      return;
+    }
+    if (_isResolvingBarangay) {
+      AppToast.warning(context, l10n.waitingIncidentLocation);
+      return;
+    }
+    setState(() {
+      _isSubmitting = true;
+      _submissionError = null;
+    });
+    _syncWidgetStatus(QuickReportWidgetStatus.submitting);
+
+    try {
+      final item = await _submitOutboxSnapshot(
+        _quickSubmissionPayload(description: description, emergency: true),
+      );
+      if (item.status == ReportCreateOutboxStatus.rejected) {
+        throw ReportSubmissionFailure(
+          item.safeError ?? l10n.unableSubmitReport,
+        );
+      }
+      if (item.status != ReportCreateOutboxStatus.synced) {
+        _syncWidgetStatus(QuickReportWidgetStatus.networkUnavailable);
+        await _showPendingSync(item, emergency: true);
+        return;
+      }
+    } catch (error) {
+      if (!mounted) return;
+      final message = error is ReportSubmissionFailure
+          ? error.message
+          : l10n.unableSubmitReport;
+      setState(() {
+        _isSubmitting = false;
+        _submissionError = message;
+      });
+      _syncWidgetStatus(
+        ref.read(isOnlineProvider)
+            ? QuickReportWidgetStatus.failed
+            : QuickReportWidgetStatus.networkUnavailable,
+      );
+      AppToast.error(context, message);
+      return;
+    }
+
+    if (!mounted) return;
+    await _completeDraft();
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+    _syncWidgetStatus(QuickReportWidgetStatus.submitted);
+    ref.invalidate(reportsControllerProvider);
+    ref.read(myReportsRefreshProvider.notifier).increment();
     AppToast.success(context, l10n.reportSubmitted);
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
@@ -561,34 +1113,44 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       return;
     }
 
+    if (_isResolvingBarangay) {
+      AppToast.warning(context, l10n.waitingIncidentLocation);
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
       _submissionError = null;
     });
 
-    final nearestBarangay = _resolveNearestBarangay(
-      point.latitude,
-      point.longitude,
-    );
     try {
-      final report = await ref
-          .read(newReportControllerProvider.notifier)
-          .submitEmergencyReport(
-            category: category.key,
-            municipalityId: _selectedMunicipality.id,
-            barangayId: nearestBarangay?.id,
-            barangay: nearestBarangay?.name,
-            cityMunicipality: _selectedMunicipality.name,
-            province: _selectedMunicipality.province,
-            latitude: point.latitude,
-            longitude: point.longitude,
-            idempotencyKey: _emergencyIdempotencyKey,
-          );
+      final item = await _submitOutboxSnapshot(
+        _quickSubmissionPayload(
+          description: '',
+          category: category.key,
+          emergency: true,
+        ),
+      );
+      if (item.status == ReportCreateOutboxStatus.rejected) {
+        throw ReportSubmissionFailure(
+          item.safeError ?? l10n.unableSubmitReport,
+        );
+      }
+      if (item.status != ReportCreateOutboxStatus.synced) {
+        await _showPendingSync(item, emergency: true);
+        return;
+      }
+      final reportId = item.serverReportId;
+      if (reportId == null) {
+        throw ReportSubmissionFailure(l10n.unableSubmitReport);
+      }
+      if (!mounted) return;
+      await _completeDraft();
       if (!mounted) return;
       ref.invalidate(reportsControllerProvider);
       ref.read(myReportsRefreshProvider.notifier).increment();
       setState(() => _isSubmitting = false);
-      await _offerEmergencyFollowUp(report.id);
+      await _offerEmergencyFollowUp(reportId);
       if (!mounted) return;
       AppToast.success(context, l10n.reportSubmitted);
       Navigator.of(context).popUntil((route) => route.isFirst);
@@ -611,28 +1173,35 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       context: context,
       showDragHandle: true,
       builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.notes_outlined),
-              title: Text(l10n.addDetails),
-              onTap: () =>
-                  Navigator.pop(sheetContext, _EmergencyFollowUpAction.details),
-            ),
-            ListTile(
-              leading: const Icon(Icons.add_a_photo_outlined),
-              title: Text(l10n.addPhotos),
-              onTap: () =>
-                  Navigator.pop(sheetContext, _EmergencyFollowUpAction.photos),
-            ),
-            ListTile(
-              leading: const Icon(Icons.check_outlined),
-              title: Text(l10n.done),
-              onTap: () =>
-                  Navigator.pop(sheetContext, _EmergencyFollowUpAction.done),
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _emergencyHotlines(),
+              ListTile(
+                leading: const Icon(Icons.notes_outlined),
+                title: Text(l10n.addDetails),
+                onTap: () => Navigator.pop(
+                  sheetContext,
+                  _EmergencyFollowUpAction.details,
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.add_a_photo_outlined),
+                title: Text(l10n.addPhotos),
+                onTap: () => Navigator.pop(
+                  sheetContext,
+                  _EmergencyFollowUpAction.photos,
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.check_outlined),
+                title: Text(l10n.done),
+                onTap: () =>
+                    Navigator.pop(sheetContext, _EmergencyFollowUpAction.done),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -641,7 +1210,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       case _EmergencyFollowUpAction.details:
         await _addEmergencyDetails(reportId);
       case _EmergencyFollowUpAction.photos:
-        await _queuePhoto(reportId);
+        await _offerPhotoUpload(reportId);
       case _EmergencyFollowUpAction.done:
         return;
     }
@@ -700,38 +1269,29 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   }
 
   Future<void> _offerPhotoUpload(String reportId) async {
-    final l10n = AppLocalizations.of(context);
-    final addPhoto = await showDialog<bool>(
+    final selected = await showDialog<List<XFile>>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.reportSubmitted),
-        content: Text(l10n.addOptionalPhoto),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(l10n.done),
-          ),
-          FilledButton.icon(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            icon: const Icon(Icons.add_a_photo_outlined),
-            label: Text(l10n.addPhoto),
-          ),
-        ],
+      builder: (_) => _QuickReportEvidenceDialog(
+        pickImage: _pickImage,
+        pickMultiImage: _pickMultiImage,
+        sensitive: widget.emergencyMode,
       ),
     );
-    if (addPhoto != true || !mounted) return;
+    if (!mounted || selected == null || selected.isEmpty) return;
 
-    await _queuePhoto(reportId);
+    await _queuePhotos(reportId, selected);
   }
 
-  Future<void> _queuePhoto(String reportId) async {
-    final l10n = AppLocalizations.of(context);
+  Future<XFile?> _pickImage(ImageSource source) =>
+      widget.pickImage?.call(source) ??
+      ImagePicker().pickImage(source: source, imageQuality: 75);
 
-    final picked = await ImagePicker().pickImage(
-      source: ImageSource.camera,
-      imageQuality: 75,
-    );
-    if (picked == null || !mounted) return;
+  Future<List<XFile>> _pickMultiImage() =>
+      widget.pickMultiImage?.call() ??
+      ImagePicker().pickMultiImage(imageQuality: 75);
+
+  Future<void> _queuePhotos(String reportId, List<XFile> picked) async {
+    final l10n = AppLocalizations.of(context);
     final auth = ref.read(authControllerProvider);
     final userId = auth is AuthSuccess ? auth.user?.id : null;
     if (userId == null) {
@@ -739,14 +1299,32 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       return;
     }
 
+    final staged = <File>[];
+    var queueAccepted = false;
     try {
+      for (final source in picked) {
+        staged.add(await stageEvidenceFile(source));
+      }
+      if (!mounted) {
+        await discardEvidenceDrafts(staged);
+        return;
+      }
       final queue = await ref.read(evidenceUploadQueueProvider.future);
       final intents = await queue.enqueue(
         userId: userId,
         reportId: reportId,
-        files: [File(picked.path)],
+        files: staged,
+        isEmergency: widget.emergencyMode,
       );
-      if (intents.single.state == EvidenceUploadState.missingLocalFile) {
+      if (intents.length != staged.length) {
+        await discardEvidenceDrafts(staged);
+        if (mounted) AppToast.warning(context, l10n.evidenceUploadFailed);
+        return;
+      }
+      queueAccepted = true;
+      if (intents.any(
+        (intent) => intent.state == EvidenceUploadState.missingLocalFile,
+      )) {
         if (mounted) {
           AppToast.warning(context, l10n.evidenceFileMissing);
         }
@@ -754,9 +1332,10 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
       }
       unawaited(queue.resume(userId));
       if (mounted) {
-        AppToast.success(context, l10n.evidenceUploadsPending(1));
+        AppToast.success(context, l10n.evidenceUploadsPending(picked.length));
       }
     } catch (_) {
+      if (!queueAccepted) await discardEvidenceDrafts(staged);
       if (!mounted) return;
       AppToast.warning(context, l10n.evidenceUploadFailed);
     }
@@ -777,6 +1356,9 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
           ? l10n.tapMapIncident
           : l10n.chooseIncidentLocation;
     }
+    if (_isResolvingBarangay) {
+      return l10n.waitingIncidentLocation;
+    }
     if (widget.emergencyMode) {
       if (_selectedEmergencyCategory == null) {
         return l10n.emergencyCategoryRequired;
@@ -792,31 +1374,63 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
   Widget _buildEmergencyNotice(ThemeData theme) {
     final scheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context);
-    return Container(
-      key: const Key('emergency-report-notice'),
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: scheme.errorContainer,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: scheme.error.withValues(alpha: 0.45)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.warning_amber_rounded, color: scheme.onErrorContainer),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              l10n.emergencyReportNotice,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: scheme.onErrorContainer,
-                fontWeight: FontWeight.w600,
-                height: 1.3,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Material(
+        key: const Key('emergency-report-notice'),
+        color: scheme.errorContainer.withValues(
+          alpha: theme.brightness == Brightness.dark ? 0.42 : 0.78,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: scheme.error.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  color: scheme.onErrorContainer,
+                  size: 20,
+                ),
               ),
-            ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l10n.emergencyReportNotice,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: scheme.onErrorContainer,
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Widget _emergencyHotlines() {
+    final point = _selectedPoint;
+    final distance = point == null
+        ? null
+        : _selectedMunicipality.boundary?.distanceToBoundaryMeters(
+            point.latitude,
+            point.longitude,
+          );
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: EmergencyHotlineSection(
+        hotlines: emergencyHotlines,
+        launchCall: widget.launchCall,
+        nearBoundary: distance != null && distance <= 500,
       ),
     );
   }
@@ -826,37 +1440,40 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: DropdownButtonFormField<String>(
-        key: const Key('emergency-report-category'),
-        initialValue: _selectedEmergencyCategory?.key,
-        isExpanded: true,
-        decoration: InputDecoration(
-          labelText: l10n.emergencyIncidentType,
-          prefixIcon: const Icon(Icons.category_outlined),
-          helperText: _isLoadingEmergencyCategories
-              ? l10n.loading
-              : _emergencyCategoryError,
-          helperStyle: TextStyle(color: scheme.onSurfaceVariant),
+      child: Theme(
+        data: _quickReportTheme(theme),
+        child: DropdownButtonFormField<String>(
+          key: const Key('emergency-report-category'),
+          initialValue: _selectedEmergencyCategory?.key,
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: l10n.emergencyIncidentType,
+            prefixIcon: const Icon(Icons.category_outlined),
+            helperText: _isLoadingEmergencyCategories
+                ? l10n.loading
+                : _emergencyCategoryError ?? l10n.requiredShort,
+            helperStyle: TextStyle(color: scheme.onSurfaceVariant),
+          ),
+          items: _emergencyCategories
+              .map(
+                (option) => DropdownMenuItem<String>(
+                  value: option.key,
+                  child: Text(option.label),
+                ),
+              )
+              .toList(),
+          onChanged: _isSubmitting || _isLoadingEmergencyCategories
+              ? null
+              : (value) {
+                  if (value == null) return;
+                  setState(() {
+                    _selectedEmergencyCategory = _emergencyCategories
+                        .firstWhere((option) => option.key == value);
+                    _submissionError = null;
+                  });
+                  _scheduleDraftSave();
+                },
         ),
-        items: _emergencyCategories
-            .map(
-              (option) => DropdownMenuItem<String>(
-                value: option.key,
-                child: Text(option.label),
-              ),
-            )
-            .toList(),
-        onChanged: _isSubmitting || _isLoadingEmergencyCategories
-            ? null
-            : (value) {
-                if (value == null) return;
-                setState(() {
-                  _selectedEmergencyCategory = _emergencyCategories.firstWhere(
-                    (option) => option.key == value,
-                  );
-                  _submissionError = null;
-                });
-              },
       ),
     );
   }
@@ -873,9 +1490,24 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
             : (value) => setState(() => _emergencyConfirmed = value ?? false),
         controlAffinity: ListTileControlAffinity.leading,
         contentPadding: EdgeInsets.zero,
-        title: Text(
-          l10n.emergencyConfirm,
-          style: theme.textTheme.bodyMedium?.copyWith(height: 1.3),
+        title: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                l10n.emergencyConfirm,
+                style: theme.textTheme.bodyMedium?.copyWith(height: 1.3),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              l10n.requiredShort,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -891,27 +1523,43 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     return Semantics(
       container: true,
       label: l10n.verificationNotice,
-      child: Container(
-        key: const Key('quick-report-verification-notice'),
-        margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: scheme.primary.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: scheme.primary.withValues(alpha: 0.18)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.verified_user_outlined, color: scheme.primary, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                l10n.verificationNotice,
-                style: theme.textTheme.bodyMedium?.copyWith(height: 1.3),
-              ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+        child: Material(
+          key: const Key('quick-report-verification-notice'),
+          color: scheme.primary.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.16 : 0.08,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: scheme.primary.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.verified_user_outlined,
+                    color: scheme.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    l10n.verificationNotice,
+                    style: theme.textTheme.bodyMedium?.copyWith(height: 1.3),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -926,28 +1574,43 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         container: true,
         liveRegion: true,
         label: '${l10n.error}. $error',
-        child: Container(
+        child: Material(
           key: const Key('quick-report-location-error'),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: scheme.error.withValues(alpha: 0.09),
-            borderRadius: BorderRadius.circular(12),
+          color: scheme.errorContainer.withValues(
+            alpha: theme.brightness == Brightness.dark ? 0.36 : 0.72,
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.error_outline, color: scheme.error, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  error,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: scheme.error,
-                    fontWeight: FontWeight.w600,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: scheme.error.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.error_outline,
+                    color: scheme.onErrorContainer,
+                    size: 20,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    error,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: scheme.onErrorContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -968,64 +1631,77 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
         label: manualSelected
             ? l10n.incidentLocationSelected
             : l10n.locationOutsideCity(_selectedMunicipality.name),
-        child: Container(
+        child: Material(
           key: const Key('quick-report-outside-location'),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: BorderRadius.circular(12),
+          color: background.withValues(alpha: isDark ? 0.46 : 0.74),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.info_outline, color: foreground, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          manualSelected
-                              ? l10n.incidentLocationSelected
-                              : l10n.locationOutsideCity(
-                                  _selectedMunicipality.name,
-                                ),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: foreground,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          manualSelected
-                              ? l10n.phoneOutsideBoundary
-                              : l10n.selectIncidentInside(
-                                  _selectedMunicipality.name,
-                                ),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: foreground,
-                            height: 1.3,
-                          ),
-                        ),
-                      ],
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: foreground.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.info_outline,
+                        color: foreground,
+                        size: 20,
+                      ),
                     ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            manualSelected
+                                ? l10n.incidentLocationSelected
+                                : l10n.locationOutsideCity(
+                                    _selectedMunicipality.name,
+                                  ),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: foreground,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            manualSelected
+                                ? l10n.phoneOutsideBoundary
+                                : l10n.selectIncidentInside(
+                                    _selectedMunicipality.name,
+                                  ),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: foreground,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (_locationInputMode == _QuickLocationInputMode.phone) ...[
+                  const SizedBox(height: 4),
+                  TextButton.icon(
+                    key: const Key('quick-report-switch-manual'),
+                    onPressed: () =>
+                        _switchLocationMode(_QuickLocationInputMode.manual),
+                    icon: const Icon(Icons.add_location_alt_outlined),
+                    label: Text(l10n.switchManualPin),
                   ),
                 ],
-              ),
-              if (_locationInputMode == _QuickLocationInputMode.phone) ...[
-                const SizedBox(height: 4),
-                TextButton.icon(
-                  key: const Key('quick-report-switch-manual'),
-                  onPressed: () =>
-                      _switchLocationMode(_QuickLocationInputMode.manual),
-                  icon: const Icon(Icons.add_location_alt_outlined),
-                  label: Text(l10n.switchManualPin),
-                ),
               ],
-            ],
+            ),
           ),
         ),
       );
@@ -1084,6 +1760,11 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     return Material(
       key: const Key('quick-report-submit-bar'),
       color: theme.scaffoldBackgroundColor,
+      elevation: theme.brightness == Brightness.dark ? 0 : 3,
+      shadowColor: scheme.shadow.withValues(
+        alpha: theme.brightness == Brightness.dark ? 0 : 0.12,
+      ),
+      surfaceTintColor: Colors.transparent,
       child: SafeArea(
         top: false,
         minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -1132,15 +1813,21 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                   label: _isSubmitting
                       ? (widget.emergencyMode
                             ? l10n.submittingEmergencyReport
+                            : widget.fastReportMode
+                            ? l10n.submittingFastReport
                             : l10n.submittingQuickReport)
                       : (widget.emergencyMode
                             ? l10n.submitEmergencyReport
+                            : widget.fastReportMode
+                            ? l10n.submitFastReport
                             : l10n.submitQuickReport),
                   hint: disabledReason,
                   child: ElevatedButton(
                     key: Key(
                       widget.emergencyMode
                           ? 'emergency-report-submit'
+                          : widget.fastReportMode
+                          ? 'fast-report-submit'
                           : 'quick-report-submit',
                     ),
                     onPressed: canSubmit ? _submitQuickReport : null,
@@ -1167,6 +1854,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                 child: Text(
                                   widget.emergencyMode
                                       ? l10n.submittingEmergencyReport
+                                      : widget.fastReportMode
+                                      ? l10n.submittingFastReport
                                       : l10n.submittingQuickReport,
                                 ),
                               ),
@@ -1175,6 +1864,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                         : Text(
                             widget.emergencyMode
                                 ? l10n.submitEmergencyReport
+                                : widget.fastReportMode
+                                ? l10n.submitFastReport
                                 : l10n.submitQuickReport,
                           ),
                   ),
@@ -1205,21 +1896,42 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
     final devicePoint = _currentPosition == null
         ? null
         : LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
-    final municipalities =
-        ref.watch(municipalitiesProvider).asData?.value ??
-        const [bundledUrdanetaMunicipality];
+
+    if (!_draftReady) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(
+            widget.emergencyMode
+                ? l10n.emergencyReport
+                : widget.fastReportMode
+                ? l10n.fastReport
+                : l10n.quickReport,
+          ),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.emergencyMode ? l10n.emergencyReport : l10n.quickReport,
+          widget.emergencyMode
+              ? l10n.emergencyReport
+              : widget.fastReportMode
+              ? l10n.fastReport
+              : l10n.quickReport,
         ),
         leading: IconButton(
           tooltip: widget.emergencyMode
               ? l10n.closeEmergencyReport
+              : widget.fastReportMode
+              ? l10n.closeFastReport
               : l10n.closeQuickReport,
           icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () async {
+            await _flushDraftSave();
+            if (context.mounted) Navigator.of(context).pop();
+          },
         ),
       ),
       body: SafeArea(
@@ -1235,9 +1947,38 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildVerificationNotice(permissions, theme),
+                    ReportFlowProgress(step: 1, total: 1),
+                    ReportFlowHeader(
+                      title: widget.emergencyMode
+                          ? l10n.emergencyReport
+                          : widget.fastReportMode
+                          ? l10n.fastReport
+                          : l10n.quickReport,
+                      guidance: widget.emergencyMode
+                          ? l10n.chooseIncidentLocation
+                          : widget.fastReportMode
+                          ? l10n.fastReportGuidance
+                          : l10n.selectLocationDescription,
+                    ),
                     if (widget.emergencyMode) ...[
+                      if (_draftRestored || !ref.watch(isOnlineProvider))
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                          child: Text(
+                            l10n.emergencyNotYetTransmitted,
+                            key: const Key('emergency-draft-not-transmitted'),
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: scheme.error,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
                       _buildEmergencyNotice(theme),
                       _buildEmergencyCategory(theme),
+                      _emergencyHotlines(),
+                    ] else if (widget.fastReportMode) ...[
+                      _buildEmergencyNotice(theme),
+                      _emergencyHotlines(),
                     ],
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
@@ -1251,62 +1992,12 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          if (municipalities.length == 1)
-                            Semantics(
-                              label:
-                                  '${_selectedMunicipality.name} ${l10n.cityBoundary}',
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.crop_square,
-                                    size: 18,
-                                    color: scheme.primary,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Flexible(
-                                    child: Text(
-                                      '${_selectedMunicipality.name}, ${_selectedMunicipality.province} · ${l10n.cityBoundary}',
-                                      style: theme.textTheme.bodyMedium
-                                          ?.copyWith(
-                                            color: scheme.onSurface.withValues(
-                                              alpha: 0.72,
-                                            ),
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          else
-                            DropdownButtonFormField<String>(
-                              initialValue: _selectedMunicipality.id,
-                              isExpanded: true,
-                              decoration: InputDecoration(
-                                labelText: l10n.cityBoundary,
-                                prefixIcon: Icon(Icons.location_city_outlined),
-                                isDense: true,
-                              ),
-                              items: municipalities
-                                  .map(
-                                    (item) => DropdownMenuItem(
-                                      value: item.id,
-                                      child: Text(
-                                        '${item.name}, ${item.province}',
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: _isSubmitting
-                                  ? null
-                                  : (value) {
-                                      if (value == null) return;
-                                      _selectMunicipality(
-                                        municipalities.firstWhere(
-                                          (item) => item.id == value,
-                                        ),
-                                      );
-                                    },
-                            ),
+                          ReportReadOnlyLocationField(
+                            key: const Key('quick-report-city'),
+                            label: l10n.city,
+                            value: UrdanetaGeo.displayCityName,
+                            icon: Icons.location_city_outlined,
+                          ),
                           const SizedBox(height: 10),
                           Semantics(
                             container: true,
@@ -1315,6 +2006,45 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                               key: const Key('quick-report-location-mode'),
                               expandedInsets: EdgeInsets.zero,
                               showSelectedIcon: false,
+                              style: ButtonStyle(
+                                side: WidgetStateProperty.all(BorderSide.none),
+                                shape: WidgetStateProperty.all(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                backgroundColor:
+                                    WidgetStateProperty.resolveWith((states) {
+                                      if (states.contains(
+                                        WidgetState.selected,
+                                      )) {
+                                        return scheme.primaryContainer;
+                                      }
+                                      return scheme.surfaceContainerHighest
+                                          .withValues(
+                                            alpha:
+                                                theme.brightness ==
+                                                    Brightness.dark
+                                                ? 0.68
+                                                : 0.72,
+                                          );
+                                    }),
+                                foregroundColor:
+                                    WidgetStateProperty.resolveWith((states) {
+                                      if (states.contains(
+                                        WidgetState.selected,
+                                      )) {
+                                        return scheme.onPrimaryContainer;
+                                      }
+                                      return scheme.onSurface;
+                                    }),
+                                padding: WidgetStateProperty.all(
+                                  const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 12,
+                                  ),
+                                ),
+                              ),
                               segments: [
                                 ButtonSegment(
                                   value: _QuickLocationInputMode.phone,
@@ -1337,16 +2067,20 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Card(
-                        margin: EdgeInsets.zero,
-                        elevation: 0,
-                        color: scheme.surface,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: scheme.outline),
+                      child: Material(
+                        key: const Key('quick-report-location-card'),
+                        color: scheme.surfaceContainerLow,
+                        elevation: theme.brightness == Brightness.dark ? 0 : 2,
+                        shadowColor: scheme.shadow.withValues(
+                          alpha: theme.brightness == Brightness.dark ? 0 : 0.12,
                         ),
+                        surfaceTintColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        clipBehavior: Clip.antiAlias,
                         child: Padding(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -1362,7 +2096,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                                   key: const Key('quick-report-map'),
                                   height: 210,
                                   child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(16),
                                     child: Stack(
                                       children: [
                                         FlutterMap(
@@ -1561,6 +2295,27 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                               ),
                               const SizedBox(height: 8),
                               _buildLocationFeedback(theme),
+                              if (!widget.emergencyMode &&
+                                  !widget.fastReportMode &&
+                                  _selectedPoint != null) ...[
+                                const SizedBox(height: 12),
+                                ReportLocationSummary(
+                                  city: UrdanetaGeo.displayCityName,
+                                  showCity: false,
+                                  barangay: _resolvedBarangay?.name,
+                                  isResolvingBarangay: _isResolvingBarangay,
+                                  landmark: _resolvedLandmark,
+                                  isResolvingLandmark: _isResolvingLandmark,
+                                  landmarkLookupError: _landmarkLookupError,
+                                  landmarkLookupCompleted:
+                                      _landmarkLookupCompleted,
+                                  landmarkSuggestions:
+                                      _nearbyLandmarkSuggestions,
+                                  onLandmarkSelected: _selectLandmarkSuggestion,
+                                  coordinates:
+                                      '${_selectedPoint!.latitude.toStringAsFixed(6)}, ${_selectedPoint!.longitude.toStringAsFixed(6)}',
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -1575,11 +2330,23 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              l10n.shortDescription,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    l10n.shortDescription,
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                                Text(
+                                  l10n.requiredShort,
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: scheme.primary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -1593,21 +2360,24 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
                               container: true,
                               label: l10n.shortDescription,
                               hint: l10n.shortDescriptionSemantics,
-                              child: TextField(
-                                key: const Key('quick-report-description'),
-                                controller: _descriptionController,
-                                minLines: 2,
-                                maxLines: 4,
-                                maxLength: quickReportDescriptionMaxLength,
-                                textInputAction: TextInputAction.newline,
-                                onChanged: (_) {
-                                  if (_submissionError != null) {
-                                    setState(() => _submissionError = null);
-                                  }
-                                },
-                                decoration: InputDecoration(
-                                  hintText: l10n.whatIsHappening,
-                                  alignLabelWithHint: true,
+                              child: Theme(
+                                data: _quickReportTheme(theme),
+                                child: TextField(
+                                  key: const Key('quick-report-description'),
+                                  controller: _descriptionController,
+                                  minLines: 2,
+                                  maxLines: 4,
+                                  maxLength: quickReportDescriptionMaxLength,
+                                  textInputAction: TextInputAction.newline,
+                                  onChanged: (_) {
+                                    if (_submissionError != null) {
+                                      setState(() => _submissionError = null);
+                                    }
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: l10n.whatIsHappening,
+                                    alignLabelWithHint: true,
+                                  ),
                                 ),
                               ),
                             ),
@@ -1623,6 +2393,287 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _QuickReportEvidenceDialog extends StatefulWidget {
+  const _QuickReportEvidenceDialog({
+    required this.pickImage,
+    required this.pickMultiImage,
+    this.sensitive = false,
+  });
+
+  final Future<XFile?> Function(ImageSource source) pickImage;
+  final Future<List<XFile>> Function() pickMultiImage;
+  final bool sensitive;
+
+  @override
+  State<_QuickReportEvidenceDialog> createState() =>
+      _QuickReportEvidenceDialogState();
+}
+
+class _QuickReportEvidenceDialogState
+    extends State<_QuickReportEvidenceDialog> {
+  final List<XFile> _selected = [];
+  bool _isPicking = false;
+  String? _error;
+
+  Future<void> _addFromCamera() async {
+    if (_isPicking) return;
+    setState(() {
+      _isPicking = true;
+      _error = null;
+    });
+    try {
+      final picked = await widget.pickImage(ImageSource.camera);
+      if (!mounted || picked == null) return;
+      final reviewed = await reviewEvidencePhoto(
+        context,
+        picked,
+        sensitive: widget.sensitive,
+      );
+      if (!mounted || reviewed == null) return;
+      setState(() => _selected.add(reviewed));
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _error = AppLocalizations.of(context).evidenceUploadFailed,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isPicking = false);
+    }
+  }
+
+  Future<void> _addFromGallery() async {
+    if (_isPicking) return;
+    setState(() {
+      _isPicking = true;
+      _error = null;
+    });
+    try {
+      final picked = await widget.pickMultiImage();
+      if (!mounted || picked.isEmpty) return;
+      for (final photo in picked) {
+        if (!mounted) return;
+        final reviewed = await reviewEvidencePhoto(
+          context,
+          photo,
+          sensitive: widget.sensitive,
+        );
+        if (!mounted) return;
+        if (reviewed != null) setState(() => _selected.add(reviewed));
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _error = AppLocalizations.of(context).evidenceUploadFailed,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isPicking = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return AlertDialog(
+      title: Text(l10n.reportSubmitted),
+      content: SizedBox(
+        width: 420,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 390),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(l10n.photoEvidenceSelectionHint),
+                const SizedBox(height: 14),
+                if (_selected.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerHighest.withValues(
+                        alpha: theme.brightness == Brightness.dark
+                            ? 0.52
+                            : 0.72,
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.photo_library_outlined,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(l10n.noPhotosYet)),
+                      ],
+                    ),
+                  )
+                else ...[
+                  Text(
+                    l10n.selectedPhotoCount(_selected.length),
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
+                    itemCount: _selected.length,
+                    itemBuilder: (context, index) {
+                      final photo = _selected[index];
+                      return Semantics(
+                        container: true,
+                        image: true,
+                        label: '${l10n.photos} ${index + 1}',
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: FutureBuilder(
+                                future: photo.readAsBytes(),
+                                builder: (context, snapshot) => snapshot.hasData
+                                    ? Image.memory(
+                                        snapshot.data!,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : const Icon(Icons.photo_outlined),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 2,
+                              right: 2,
+                              child: IconButton.filledTonal(
+                                tooltip: 'Edit',
+                                icon: const Icon(Icons.edit_outlined),
+                                onPressed: _isPicking
+                                    ? null
+                                    : () async {
+                                        setState(() => _isPicking = true);
+                                        try {
+                                          final reviewed =
+                                              await reviewEvidencePhoto(
+                                                context,
+                                                photo,
+                                                sensitive: widget.sensitive,
+                                              );
+                                          if (mounted && reviewed != null) {
+                                            setState(
+                                              () => _selected[index] = reviewed,
+                                            );
+                                          }
+                                        } finally {
+                                          if (mounted) {
+                                            setState(() => _isPicking = false);
+                                          }
+                                        }
+                                      },
+                              ),
+                            ),
+                            Positioned(
+                              top: 2,
+                              right: 2,
+                              child: IconButton.filledTonal(
+                                key: Key('quick-report-evidence-remove-$index'),
+                                tooltip: l10n.removePhoto,
+                                icon: const Icon(Icons.close),
+                                onPressed: _isPicking
+                                    ? null
+                                    : () => setState(
+                                        () => _selected.removeAt(index),
+                                      ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+                if (_error != null) ...[
+                  const SizedBox(height: 10),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(_error!, style: TextStyle(color: scheme.error)),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final buttonStyle = FilledButton.styleFrom(
+                      minimumSize: const Size(0, 52),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: constraints.maxWidth < 300 ? 8 : 12,
+                        vertical: 14,
+                      ),
+                    );
+                    final camera = FilledButton.tonalIcon(
+                      key: const Key('quick-report-evidence-camera'),
+                      onPressed: _isPicking ? null : _addFromCamera,
+                      style: buttonStyle,
+                      icon: const Icon(Icons.camera_alt_outlined),
+                      label: Text(l10n.camera, maxLines: 1),
+                    );
+                    final gallery = FilledButton.tonalIcon(
+                      key: const Key('quick-report-evidence-gallery'),
+                      onPressed: _isPicking ? null : _addFromGallery,
+                      style: buttonStyle,
+                      icon: const Icon(Icons.photo_library_outlined),
+                      label: Text(l10n.gallery, maxLines: 1),
+                    );
+
+                    if (constraints.maxWidth < 260) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [camera, const SizedBox(height: 8), gallery],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(child: camera),
+                        const SizedBox(width: 8),
+                        Expanded(child: gallery),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          key: const Key('quick-report-evidence-skip'),
+          onPressed: _isPicking ? null : () => Navigator.pop(context),
+          child: Text(l10n.skipPhotoEvidence),
+        ),
+        FilledButton.icon(
+          key: const Key('quick-report-upload-evidence'),
+          onPressed: _selected.isEmpty || _isPicking
+              ? null
+              : () =>
+                    Navigator.pop(context, List<XFile>.unmodifiable(_selected)),
+          icon: const Icon(Icons.cloud_upload_outlined),
+          label: Text(l10n.uploadEvidence),
+        ),
+      ],
     );
   }
 }

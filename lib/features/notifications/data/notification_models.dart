@@ -18,6 +18,8 @@ enum NotificationType {
   reportUpdated,
   @JsonValue('kyc_update')
   kycUpdate,
+  @JsonValue('terms_updated')
+  termsUpdated,
   @JsonValue('system')
   system,
 }

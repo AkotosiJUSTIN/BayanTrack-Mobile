@@ -25,6 +25,7 @@ class Report extends Equatable {
   final String id;
   final String? reportId;
   final String? userId;
+  final bool isStale;
 
   // Report Details
   final ReportCategory? category;
@@ -58,6 +59,7 @@ class Report extends Equatable {
   // System Fields
   final ReportStatus status;
   final String? assignedDepartment;
+  final String? respondingAgency;
   final String? adminRemarks;
 
   // AI Fields
@@ -71,11 +73,10 @@ class Report extends Equatable {
   final bool isMultiIssue;
   final List<String> rulesApplied;
   final String? priority;
-  final int? priorityScore;
+  final int? priorityRank;
   final PriorityLevel? priorityLevel;
-  final double? suggestedPriorityScore;
+  final int? suggestedPriorityRank;
   final PriorityLevel? suggestedPriorityLevel;
-  final double? queuePriorityScore;
   final PriorityLevel? queuePriorityLevel;
   final int queuePriorityRank;
   final PriorityLevel? staffPriorityLevel;
@@ -90,13 +91,10 @@ class Report extends Equatable {
   final bool priorityModelValidated;
   final String? priorityCalibrationVersion;
   final double? emergencyProbability;
-  final Map<String, double> priorityComponents;
+  final Map<String, String> priorityFactors;
   final String? priorityPolicyVersion;
   final List<String> priorityRulesApplied;
   final List<String> priorityReasons;
-  final int? baseScore;
-  final int? hotspotScore;
-  final double? urgencyScore;
   final double? credibilityScore;
   // Routing metadata (new)
   final String? recommendedDepartment;
@@ -150,6 +148,7 @@ class Report extends Equatable {
     required this.id,
     this.reportId,
     this.userId,
+    this.isStale = false,
     this.category,
     this.categoryKey,
     this.categoryDisplay,
@@ -175,6 +174,7 @@ class Report extends Equatable {
     this.isEmergency = false,
     this.status = ReportStatus.submitted,
     this.assignedDepartment,
+    this.respondingAgency,
     this.adminRemarks,
     this.categoryConfidence,
     this.modelVersion,
@@ -186,11 +186,10 @@ class Report extends Equatable {
     this.isMultiIssue = false,
     this.rulesApplied = const [],
     this.priority,
-    this.priorityScore,
+    this.priorityRank,
     this.priorityLevel,
-    this.suggestedPriorityScore,
+    this.suggestedPriorityRank,
     this.suggestedPriorityLevel,
-    this.queuePriorityScore,
     this.queuePriorityLevel,
     this.queuePriorityRank = 0,
     this.staffPriorityLevel,
@@ -205,13 +204,10 @@ class Report extends Equatable {
     this.priorityModelValidated = false,
     this.priorityCalibrationVersion,
     this.emergencyProbability,
-    this.priorityComponents = const {},
+    this.priorityFactors = const {},
     this.priorityPolicyVersion,
     this.priorityRulesApplied = const [],
     this.priorityReasons = const [],
-    this.baseScore,
-    this.hotspotScore,
-    this.urgencyScore,
     this.credibilityScore,
     this.recommendedDepartment,
     this.departmentConfidence,
@@ -269,6 +265,12 @@ class Report extends Equatable {
   PriorityLevel? get displayPriorityLevel =>
       queuePriorityLevel ?? suggestedPriorityLevel ?? priorityLevel;
 
+  /// Quick Reports are marked by the backend's central priority policy.
+  /// Include the legacy reason so older records remain recognizable.
+  bool get isQuickReport =>
+      priorityRulesApplied.contains('quick_report_flag_set') ||
+      priorityReasons.contains('quick_report_flag_set');
+
   Set<String> get _supplementalImageIds => {
     ...resolvedProofImageIds,
     if (closureSignatureImageId != null) closureSignatureImageId!,
@@ -306,6 +308,7 @@ class Report extends Equatable {
     id,
     reportId,
     userId,
+    isStale,
     category,
     categoryKey,
     categoryDisplay,

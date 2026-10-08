@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/presentation/widgets/civic_components.dart';
 import '../domain/entities/notification_preferences.dart';
 import 'notifications_controller.dart';
 import '../../../l10n/app_localizations.dart';
@@ -21,18 +22,61 @@ class _NotificationSettingsScreenState
   @override
   Widget build(BuildContext context) {
     final prefsAsync = ref.watch(notificationPreferencesControllerProvider);
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.notificationSettings)),
       body: prefsAsync.when(
         data: (prefs) => _buildSettingsList(context, prefs),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(
+        loading: () => Semantics(
+          container: true,
+          liveRegion: true,
+          label: l10n.loading,
+          child: ExcludeSemantics(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              children: [
+                for (final group in [(l10n.channels, 2), (l10n.events, 3)]) ...[
+                  CivicSectionHeading(title: group.$1),
+                  CivicSettingsGroup(
+                    children: [
+                      for (var i = 0; i < group.$2; i++)
+                        const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    CivicSkeletonBlock(height: 20),
+                                    SizedBox(height: 8),
+                                    CivicSkeletonBlock(height: 14),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(width: 16),
+                              CivicSkeletonBlock(
+                                width: 48,
+                                height: 28,
+                                radius: 14,
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ],
+            ),
+          ),
+        ),
+        error: (_, _) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('${l10n.error}: $err'),
+              Text(l10n.notificationsNetworkError, textAlign: TextAlign.center),
               TextButton(
                 onPressed: () =>
                     ref.invalidate(notificationPreferencesControllerProvider),
@@ -49,71 +93,119 @@ class _NotificationSettingsScreenState
     BuildContext context,
     NotificationPreferences prefs,
   ) {
+    final l10n = AppLocalizations.of(context);
     return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
         if (_isSaving) const LinearProgressIndicator(),
         if (_saveError != null)
-          ListTile(
-            title: Text(
-              _saveError!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-            trailing: TextButton(
-              onPressed: _isSaving ? null : _retrySave,
-              child: Text(AppLocalizations.of(context)!.retry),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: CivicSurface(
+              child: ListTile(
+                title: Text(
+                  _saveError!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+                trailing: TextButton(
+                  onPressed: _isSaving ? null : _retrySave,
+                  child: Text(l10n.retry),
+                ),
+              ),
             ),
           ),
-        _buildSectionHeader(context, AppLocalizations.of(context)!.channels),
-        SwitchListTile(
-          title: Text(AppLocalizations.of(context)!.notificationsEmail),
-          subtitle: Text(AppLocalizations.of(context)!.emailUpdates),
-          value: prefs.emailEnabled,
-          onChanged: _isSaving ? null : (val) => _update(emailEnabled: val),
+        CivicSectionHeading(title: l10n.channels),
+        CivicSettingsGroup(
+          children: [
+            _buildSwitchTile(
+              context,
+              title: l10n.notificationsEmail,
+              subtitle: l10n.emailUpdates,
+              value: prefs.emailEnabled,
+              onChanged: _isSaving
+                  ? null
+                  : (value) => _update(emailEnabled: value),
+            ),
+            _buildSwitchTile(
+              context,
+              title: l10n.notificationsPush,
+              subtitle: l10n.pushUpdates,
+              value: prefs.pushEnabled,
+              showDivider: false,
+              onChanged: _isSaving
+                  ? null
+                  : (value) => _update(pushEnabled: value),
+            ),
+          ],
         ),
-        SwitchListTile(
-          title: Text(AppLocalizations.of(context)!.notificationsPush),
-          subtitle: Text(AppLocalizations.of(context)!.pushUpdates),
-          value: prefs.pushEnabled,
-          onChanged: _isSaving ? null : (val) => _update(pushEnabled: val),
-        ),
-        const Divider(),
-        _buildSectionHeader(context, AppLocalizations.of(context)!.events),
-        SwitchListTile(
-          title: Text(AppLocalizations.of(context)!.notifyStatusChange),
-          subtitle: Text(AppLocalizations.of(context)!.statusChangeUpdates),
-          value: prefs.notifyOnStatusChange,
-          onChanged: _isSaving
-              ? null
-              : (val) => _update(notifyOnStatusChange: val),
-        ),
-        SwitchListTile(
-          title: Text(AppLocalizations.of(context)!.notifyComment),
-          subtitle: Text(AppLocalizations.of(context)!.commentUpdates),
-          value: prefs.notifyOnComment,
-          onChanged: _isSaving ? null : (val) => _update(notifyOnComment: val),
-        ),
-        SwitchListTile(
-          title: Text(AppLocalizations.of(context)!.notifyAssignment),
-          subtitle: Text(AppLocalizations.of(context)!.assignmentUpdates),
-          value: prefs.notifyOnAssignment,
-          onChanged: _isSaving
-              ? null
-              : (val) => _update(notifyOnAssignment: val),
+        const SizedBox(height: 24),
+        CivicSectionHeading(title: l10n.events),
+        CivicSettingsGroup(
+          children: [
+            _buildSwitchTile(
+              context,
+              title: l10n.notifyStatusChange,
+              subtitle: l10n.statusChangeUpdates,
+              value: prefs.notifyOnStatusChange,
+              onChanged: _isSaving
+                  ? null
+                  : (value) => _update(notifyOnStatusChange: value),
+            ),
+            _buildSwitchTile(
+              context,
+              title: l10n.notifyComment,
+              subtitle: l10n.commentUpdates,
+              value: prefs.notifyOnComment,
+              onChanged: _isSaving
+                  ? null
+                  : (value) => _update(notifyOnComment: value),
+            ),
+            _buildSwitchTile(
+              context,
+              title: l10n.notifyAssignment,
+              subtitle: l10n.assignmentUpdates,
+              value: prefs.notifyOnAssignment,
+              showDivider: false,
+              onChanged: _isSaving
+                  ? null
+                  : (value) => _update(notifyOnAssignment: value),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.bold,
+  Widget _buildSwitchTile(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool>? onChanged,
+    bool showDivider = true,
+  }) {
+    return Column(
+      children: [
+        SwitchListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
+          ),
+          title: Text(title),
+          subtitle: Text(subtitle),
+          value: value,
+          onChanged: onChanged,
         ),
-      ),
+        if (showDivider)
+          Divider(
+            height: 1,
+            indent: 16,
+            endIndent: 16,
+            color: Theme.of(
+              context,
+            ).colorScheme.outlineVariant.withValues(alpha: 0.72),
+          ),
+      ],
     );
   }
 

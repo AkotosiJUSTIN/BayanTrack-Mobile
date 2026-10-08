@@ -41,6 +41,7 @@ const _$NotificationTypeEnumMap = {
   NotificationType.assignment: 'assignment',
   NotificationType.reportUpdated: 'report_updated',
   NotificationType.kycUpdate: 'kyc_update',
+  NotificationType.termsUpdated: 'terms_updated',
   NotificationType.system: 'system',
 };
 

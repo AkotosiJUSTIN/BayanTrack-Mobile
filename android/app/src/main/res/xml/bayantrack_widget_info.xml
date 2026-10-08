@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Refresh transient local status; this does not poll the network. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/widget_description"
     android:initialLayout="@layout/widget_bayantrack_small"
     android:minHeight="110dp"
     android:minWidth="110dp"
+    android:minResizeHeight="110dp"
+    android:minResizeWidth="110dp"
+    android:maxResizeHeight="320dp"
     android:previewImage="@mipmap/bayantrack_logo"
     android:resizeMode="horizontal|vertical"
-    android:updatePeriodMillis="0"
+    android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen" />

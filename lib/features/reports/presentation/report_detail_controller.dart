@@ -5,11 +5,13 @@ import '../reports_di.dart';
 
 part 'report_detail_controller.g.dart';
 
+Duration? _noDetailRetry(int retryCount, Object error) => null;
+
 /// Controller for fetching a single report by ID.
 ///
 /// Uses [GetReportUseCase] for proper clean architecture layering.
 /// Returns domain [Report] entity.
-@riverpod
+@Riverpod(retry: _noDetailRetry)
 class ReportDetailController extends _$ReportDetailController {
   @override
   Future<Report> build(String reportId) async {
@@ -29,8 +31,8 @@ class ReportDetailController extends _$ReportDetailController {
   /// Refresh the report
   Future<void> refresh() async {
     final id = reportId;
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _fetchReport(id));
+    final next = await AsyncValue.guard(() => _fetchReport(id));
+    if (ref.mounted) state = next;
   }
 
   /// Verify the report against blockchain

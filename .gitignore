@@ -48,3 +48,9 @@ app.*.map.json
 AGENTS.md
 
 .env
+
+# Generated brag outputs
+/alternative-output/
+/brag-*-output/
+/brag-output-*/
+/brag-references

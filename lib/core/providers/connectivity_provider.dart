@@ -1,9 +1,12 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Provides a stream of connectivity results to detect online/offline state.
-final connectivityStreamProvider = StreamProvider<List<ConnectivityResult>>((ref) {
+final connectivityStreamProvider = StreamProvider<List<ConnectivityResult>>((
+  ref,
+) {
   return Connectivity().onConnectivityChanged;
 });
 
@@ -21,13 +24,15 @@ class ConnectivityNotifier extends Notifier<bool> {
   bool build() {
     // Listen to connectivity changes
     Connectivity().onConnectivityChanged.listen((results) {
-      final isConnected = results.isNotEmpty &&
+      final isConnected =
+          results.isNotEmpty &&
           !results.every((r) => r == ConnectivityResult.none);
       state = isConnected;
     });
     // Check initial connectivity
     Connectivity().checkConnectivity().then((results) {
-      final isConnected = results.isNotEmpty &&
+      final isConnected =
+          results.isNotEmpty &&
           !results.every((r) => r == ConnectivityResult.none);
       state = isConnected;
     });
@@ -50,31 +55,38 @@ class OfflineBanner extends ConsumerWidget {
 
     if (isOnline) return const SizedBox.shrink();
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      color: Colors.red.shade700,
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.wifi_off_rounded,
-            color: Colors.white,
-            size: 18,
-          ),
-          SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              'No Internet Connection',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
+    final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
+    return Semantics(
+      liveRegion: true,
+      label: l10n.noInternetConnection,
+      child: Material(
+        color: scheme.errorContainer,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.wifi_off_rounded,
+                color: scheme.onErrorContainer,
+                size: 18,
               ),
-              overflow: TextOverflow.ellipsis,
-            ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  l10n.noInternetConnection,
+                  style: TextStyle(
+                    color: scheme.onErrorContainer,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

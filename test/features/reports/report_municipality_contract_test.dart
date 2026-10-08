@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:bayantrack_mobile/core/domain/result.dart';
 import 'package:bayantrack_mobile/features/reports/data/report_models.dart'
     as dto;
+import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart';
 import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dart';
 import 'package:bayantrack_mobile/features/reports/domain/usecases/create_report_usecase.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/new_report/new_report_controller.dart';
 import 'package:bayantrack_mobile/features/reports/reports_di.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -44,6 +46,7 @@ class _RecordingCreateReportUseCase extends CreateReportUseCase {
     bool isQuickReport = false,
     bool isEmergency = false,
     String? idempotencyKey,
+    CancelToken? cancelToken,
   }) async {
     arguments = {
       'municipality_id': municipalityId,
@@ -55,6 +58,8 @@ class _RecordingCreateReportUseCase extends CreateReportUseCase {
       'longitude': longitude,
       'street_landmark': streetLandmark,
       'is_quick_report': isQuickReport,
+      'is_emergency': isEmergency,
+      'idempotency_key': idempotencyKey,
     };
     return Success(Report(id: 'created', description: description));
   }
@@ -114,8 +119,17 @@ void main() {
           name: 'Other City',
           province: 'Pangasinan',
         )
-        ..setBarangay(id: 'other_city:barangay_a', name: 'Barangay A')
         ..setLocation(latitude: 15.9, longitude: 120.6)
+        ..completeBarangayResolution(
+          const BarangayModel(
+            id: 'other_city:barangay_a',
+            name: 'Barangay A',
+            centerLat: 15.9,
+            centerLng: 120.6,
+            municipalityId: 'other_city',
+          ),
+        )
+        ..setStreetLandmark('Barangay A Market')
         ..setDeclarationConfirmed(true)
         ..setDataProcessingConsent(true)
         ..addImage(File('unused-test-image.jpg'));
@@ -128,6 +142,7 @@ void main() {
       expect(useCase.arguments?['city_municipality'], 'Other City');
       expect(useCase.arguments?['latitude'], '15.9000000000');
       expect(useCase.arguments?['longitude'], '120.6000000000');
+      expect(useCase.arguments?['street_landmark'], 'Barangay A Market');
       expect(useCase.arguments?['is_quick_report'], isFalse);
     },
   );
@@ -145,6 +160,7 @@ void main() {
       municipalityId: 'urdaneta',
       barangayId: 'bactad_east',
       barangay: 'Bactad East',
+      streetLandmark: 'Bactad East Public Market',
       cityMunicipality: 'Urdaneta',
       province: 'Pangasinan',
       latitude: 15.981394,
@@ -156,6 +172,33 @@ void main() {
     expect(useCase.arguments?['barangay'], 'Bactad East');
     expect(useCase.arguments?['zone'], 'Bactad East');
     expect(useCase.arguments?['is_quick_report'], isTrue);
+    expect(useCase.arguments?['street_landmark'], 'Bactad East Public Market');
+  });
+
+  test('fast report sends both emergency and quick-report semantics', () async {
+    final useCase = _RecordingCreateReportUseCase();
+    final container = ProviderContainer(
+      overrides: [createReportUseCaseProvider.overrideWithValue(useCase)],
+    );
+    addTearDown(container.dispose);
+    final controller = container.read(newReportControllerProvider.notifier);
+
+    await controller.submitFastReport(
+      description: 'Floodwater is entering nearby homes',
+      municipalityId: 'urdaneta',
+      barangayId: 'poblacion',
+      barangay: 'Poblacion',
+      cityMunicipality: 'Urdaneta',
+      province: 'Pangasinan',
+      latitude: 15.976,
+      longitude: 120.571,
+      idempotencyKey: 'fast-report-test-key',
+    );
+
+    expect(useCase.arguments?['is_quick_report'], isTrue);
+    expect(useCase.arguments?['is_emergency'], isTrue);
+    expect(useCase.arguments?['idempotency_key'], 'fast-report-test-key');
+    expect(useCase.arguments?['street_landmark'], isNull);
   });
 
   test('clearLocation removes every stale location and barangay field', () {

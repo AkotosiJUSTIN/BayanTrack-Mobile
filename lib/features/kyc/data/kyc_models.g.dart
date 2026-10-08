@@ -120,6 +120,9 @@ const _$IdTypeEnumMap = {
   IdType.umid: 'umid',
   IdType.postal: 'postal',
   IdType.voters: 'voters',
+  IdType.gsisECard: 'gsis_ecard',
+  IdType.philHealth: 'philhealth',
+  IdType.prcProfessionalId: 'prc',
 };
 
 const _$PrecheckStatusEnumMap = {

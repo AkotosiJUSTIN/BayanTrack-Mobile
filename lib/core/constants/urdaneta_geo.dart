@@ -6,8 +6,10 @@ class UrdanetaGeo {
 
   static const String municipalityId = 'urdaneta';
   static const String psgcCode = '0105546000';
-  static const String sourceVersion = 'geoBoundaries gbOpen PHL ADM3; 2023-12-12';
-  static const String geometrySha256 = 'b3bd091a81f307f4425a54949531890ec812805f4815f16f3e95ca0806c63883';
+  static const String sourceVersion =
+      'geoBoundaries gbOpen PHL ADM3; 2023-12-12';
+  static const String geometrySha256 =
+      'b3bd091a81f307f4425a54949531890ec812805f4815f16f3e95ca0806c63883';
 
   static const double south = 15.933519105000073;
   static const double west = 120.48823926300008;
@@ -926,11 +928,17 @@ class UrdanetaGeo {
     GeoCoordinate(16.00938856700003, 120.61152744100002),
   ];
 
-  static const MunicipalityBoundary boundaryGeometry = MunicipalityBoundary(type: 'Polygon', polygons: [[boundary]]);
+  static const MunicipalityBoundary boundaryGeometry = MunicipalityBoundary(
+    type: 'Polygon',
+    polygons: [
+      [boundary],
+    ],
+  );
 
   static const double defaultLat = 15.9530;
   static const double defaultLng = 120.5772;
   static const String defaultLocationLabel = 'Nancayasan, Urdaneta, Pangasinan';
   static const String defaultCityMunicipality = 'Urdaneta';
+  static const String displayCityName = 'Urdaneta City';
   static const String defaultProvince = 'Pangasinan';
 }

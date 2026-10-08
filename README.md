@@ -28,8 +28,57 @@ is in `pubspec.yaml`).
 ```powershell
 flutter pub get
 dart run build_runner build --delete-conflicting-outputs
-flutter run
 ```
+
+Run with target-specific API configuration below. Plain `flutter run` keeps
+emulator default `10.0.2.2`; physical phones need LAN URL or USB reverse.
+
+### Docker runner
+
+The root Compose file includes an opt-in `mobile` profile. It builds the
+Flutter/Android toolchain, mounts this repository, and stays idle until a
+Flutter command is run; ordinary `docker compose up` never starts it.
+
+From the workspace root:
+
+```powershell
+docker compose --profile mobile build mobile
+docker compose --profile mobile up -d backend mobile
+docker compose exec mobile flutter pub get
+docker compose exec mobile dart run build_runner build --delete-conflicting-outputs
+docker compose exec mobile flutter devices
+```
+
+The emulator or USB phone remains on the host. The container uses the host ADB
+server, so start an Android emulator on the host for emulator mode, or enable
+USB debugging and connect the phone for USB mode.
+
+Emulator mode: in a host terminal, start an Android emulator first:
+
+```powershell
+emulator -list-avds
+emulator -avd <avd-name>
+```
+
+Then use the existing `10.0.2.2` defaults:
+
+```powershell
+docker compose exec mobile flutter run -d <emulator-id> `
+  --dart-define=BAYANTRACK_API_BASE_URL=http://10.0.2.2:8000/api `
+  --dart-define=BAYANTRACK_MEDIA_BASE_URL=http://10.0.2.2:8000
+```
+
+USB mode uses the ADB reverse tunnel:
+
+```powershell
+docker compose exec mobile adb reverse tcp:8000 tcp:8000
+docker compose exec mobile flutter run -d <phone-id> `
+  --dart-define=BAYANTRACK_API_BASE_URL=http://127.0.0.1:8000/api `
+  --dart-define=BAYANTRACK_MEDIA_BASE_URL=http://127.0.0.1:8000
+```
+
+Use `docker compose exec mobile flutter devices` to get the IDs. Stop the idle
+runner with `docker compose stop mobile`.
 
 API addressing is supplied at run time with `--dart-define`:
 

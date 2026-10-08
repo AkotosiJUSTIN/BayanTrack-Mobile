@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:bayantrack_mobile/features/images/data/evidence_file_stager.dart';
 import 'package:bayantrack_mobile/features/images/data/evidence_upload_queue.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -14,6 +16,7 @@ void main() {
   late SharedPreferences preferences;
   late DateTime now;
   late bool authenticated;
+  late bool backendReachable;
 
   Future<File> source(String name) async {
     final file = File('${root.path}${Platform.pathSeparator}$name');
@@ -25,12 +28,18 @@ void main() {
     required EvidenceUploader upload,
     int maxRetryCount = 5,
     Duration baseBackoff = const Duration(seconds: 2),
+    Future<Set<String>> Function()? readDraftAttachmentReferences,
+    bool Function()? canReachBackend,
+    Future<bool> Function(EvidenceUploadIntent)? canUpload,
   }) {
     return EvidenceUploadQueue(
       preferences: preferences,
       uploadDirectory: Directory('${root.path}${Platform.pathSeparator}owned'),
       upload: upload,
       isAuthenticated: (_) async => authenticated,
+      canReachBackend: canReachBackend ?? () => backendReachable,
+      canUpload: canUpload,
+      readDraftAttachmentReferences: readDraftAttachmentReferences,
       now: () => now,
       maxRetryCount: maxRetryCount,
       baseBackoff: baseBackoff,
@@ -44,11 +53,93 @@ void main() {
     root = await Directory.systemTemp.createTemp('evidence_queue_test_');
     now = DateTime.utc(2026, 7, 26, 12);
     authenticated = true;
+    backendReachable = true;
   });
 
   tearDown(() async {
     if (await root.exists()) await root.delete(recursive: true);
   });
+
+  test(
+    'policy restriction retains evidence and does not consume retries',
+    () async {
+      var restricted = true;
+      final uploads = <String>[];
+      final subject = queue(
+        canUpload: (intent) async => !restricted || intent.isEmergency,
+        upload:
+            ({
+              required file,
+              required reportId,
+              required evidenceKey,
+              required isPrimary,
+              required cancelToken,
+            }) async => uploads.add(reportId),
+      );
+      await subject.enqueue(
+        userId: 'user-a',
+        reportId: 'ordinary',
+        files: [await source('ordinary.jpg')],
+      );
+      await subject.enqueue(
+        userId: 'user-a',
+        reportId: 'emergency',
+        isEmergency: true,
+        files: [await source('emergency.jpg')],
+      );
+      await subject.resume('user-a');
+      expect(uploads, ['emergency']);
+      final paused = subject.state.firstWhere(
+        (item) => item.reportId == 'ordinary',
+      );
+      expect(paused.state, EvidenceUploadState.paused);
+      expect(paused.retryCount, 0);
+      expect(await File(paused.localFilePath).exists(), isTrue);
+      restricted = false;
+      await subject.resume('user-a');
+      expect(uploads, ['emergency', 'ordinary']);
+      subject.dispose();
+    },
+  );
+
+  test(
+    'server policy rejection is paused rather than terminal or retryable',
+    () async {
+      final subject = queue(
+        upload:
+            ({
+              required file,
+              required reportId,
+              required evidenceKey,
+              required isPrimary,
+              required cancelToken,
+            }) async {
+              final request = RequestOptions(path: '/images/upload/');
+              throw DioException.badResponse(
+                statusCode: 403,
+                requestOptions: request,
+                response: Response(
+                  requestOptions: request,
+                  statusCode: 403,
+                  data: {'code': 'terms_acceptance_required'},
+                ),
+              );
+            },
+      );
+      await subject.enqueue(
+        userId: 'user-a',
+        reportId: 'ordinary',
+        files: [await source('ordinary.jpg')],
+      );
+      await subject.resume('user-a');
+      expect(subject.state.single.state, EvidenceUploadState.paused);
+      expect(subject.state.single.error, EvidenceUploadError.systemRestriction);
+      expect(subject.state.single.retryCount, 0);
+      expect(subject.state.single.nextRetryAt, isNull);
+      expect(await File(subject.state.single.localFilePath).exists(), isTrue);
+      subject.dispose();
+    },
+  );
 
   test('failed upload stays durable after report creation', () async {
     final uploads = <String>[];
@@ -105,6 +196,84 @@ void main() {
     expect(restored.allState.single.id, added.single.id);
     expect(restored.allState.single.state, EvidenceUploadState.pending);
     expect(await File(ownedPath).exists(), isTrue);
+  });
+
+  test(
+    'unreachable Backend pauses evidence until reachability returns',
+    () async {
+      final uploads = <String>[];
+      final subject = queue(
+        upload:
+            ({
+              required file,
+              required reportId,
+              required evidenceKey,
+              required isPrimary,
+              required cancelToken,
+            }) async {
+              uploads.add(evidenceKey);
+            },
+      );
+      final added = await subject.enqueue(
+        userId: 'user-a',
+        reportId: 'report-1',
+        files: [await source('reachability.jpg')],
+      );
+
+      backendReachable = false;
+      await subject.resume('user-a');
+      expect(uploads, isEmpty);
+      expect(subject.allState.single.state, EvidenceUploadState.pending);
+
+      backendReachable = true;
+      await subject.resume('user-a');
+      expect(uploads, [added.single.id]);
+      expect(subject.allState.single.state, EvidenceUploadState.completed);
+    },
+  );
+
+  test('queue cleanup retains staged files referenced by a draft', () async {
+    final picked = await source('draft-photo.jpg');
+    final staged = await stageEvidenceFile(
+      XFile(picked.path),
+      stagingDirectory: root,
+    );
+    await staged.setLastModified(now.subtract(const Duration(days: 8)));
+    final subject = queue(
+      upload: _successfulUpload,
+      readDraftAttachmentReferences: () async => {staged.path},
+    );
+
+    await subject.initialize();
+
+    expect(await staged.exists(), isTrue);
+    subject.dispose();
+  });
+
+  test('staged photo stays queue-owned until upload completes', () async {
+    authenticated = false;
+    final picked = await source('picked.jpg');
+    final staged = await stageEvidenceFile(
+      XFile(picked.path),
+      stagingDirectory: root,
+    );
+    await picked.delete();
+    final subject = queue(upload: _successfulUpload);
+
+    final added = await subject.enqueue(
+      userId: 'user-a',
+      reportId: 'report-1',
+      files: [staged],
+    );
+
+    expect(added.single.localFilePath, staged.path);
+    expect(await staged.exists(), isTrue);
+    expect(await File(added.single.localFilePath).length(), 32);
+
+    authenticated = true;
+    await subject.resume('user-a');
+    expect(subject.state.single.state, EvidenceUploadState.completed);
+    expect(await staged.exists(), isFalse);
   });
 
   test(
@@ -175,6 +344,28 @@ void main() {
     await subject.resume('user-a');
 
     expect(subject.state.last.state, EvidenceUploadState.missingLocalFile);
+  });
+
+  test('empty draft is preserved when durable ingestion fails', () async {
+    final draftDirectory = Directory(
+      '${root.path}${Platform.pathSeparator}report_evidence_drafts',
+    );
+    await draftDirectory.create();
+    final staged = File(
+      '${draftDirectory.path}${Platform.pathSeparator}draft_empty.jpg',
+    );
+    await staged.create();
+    final subject = queue(upload: _successfulUpload);
+
+    final added = await subject.enqueue(
+      userId: 'user-a',
+      reportId: 'report-1',
+      files: [staged],
+    );
+
+    expect(added.single.state, EvidenceUploadState.missingLocalFile);
+    expect(added.single.localFilePath, staged.path);
+    expect(await staged.exists(), isTrue);
   });
 
   test('logout and account change isolate intents', () async {

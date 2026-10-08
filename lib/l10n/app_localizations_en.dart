@@ -182,8 +182,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get termsAndPrivacy => 'Terms & Conditions and Privacy Policy';
 
   @override
+  String get policyDialogSubtitle =>
+      'Review how BayanTrack handles community reports and protects your account';
+
+  @override
   String get termsPolicyContent =>
-      '========================================\nTERMS & CONDITIONS\n========================================\n\nBy using BayanTrack, you agree to provide accurate information and use the service responsibly. Reports should describe real community concerns and must not contain abusive, unlawful, or misleading content.\n\nBayanTrack may process the information you submit to route reports, communicate updates, and support verification. Keep your account details secure and do not share your password.\n\n========================================\nPRIVACY POLICY\n========================================\n\nWe use the information and evidence you submit to review, route, and resolve reports. We retain it as required for service operations and applicable policy. We may share relevant report details with authorized local government personnel who need them to act.\n\nBy tapping Accept, you acknowledge you have read and understood both the Terms & Conditions and Privacy Policy.';
+      'BAYANTRACK TERMS & CONDITIONS\n\n1. Purpose\nBayanTrack helps residents send community reports to their barangay and follow the progress of concerns that affect their neighborhood.\n\n2. Use the service responsibly\nUse your own account and submit reports about real community concerns. Do not upload abusive, unlawful, discriminatory, or deliberately misleading content.\n\n3. Reports and evidence\nDescribe what happened, where it happened, and when it happened as accurately as you can. Only share photos, videos, and other evidence that you are allowed to share. BayanTrack may route a report and its evidence to authorized barangay or city personnel for review and action.\n\n4. Account security\nKeep your email address and password private. You are responsible for activity made through your account. Contact the BayanTrack team if you believe your account has been accessed by someone else.\n\nBAYANTRACK PRIVACY POLICY\n\n1. Information we receive\nWe collect the details you provide when you register, including your name, email address, and selected barangay. We also receive the report details, location, attachments, and updates you choose to submit.\n\n2. How we use your information\nWe use this information to verify accounts, route reports to the right barangay, send status updates, prevent misuse, and improve BayanTrack\'s community reporting service.\n\n3. Who may access it\nRelevant report details may be viewed by authorized BayanTrack administrators and local government personnel who need the information to review or respond to the concern. We do not sell your personal information.\n\n4. Your choices\nPlease keep your account information accurate and tell us if it needs to be corrected. We keep information only for as long as it is needed for service operations, reporting history, safety, and applicable requirements.\n\nBy tapping Accept, you confirm that you have read and understood the BayanTrack Terms & Conditions and Privacy Policy.';
 
   @override
   String get creatingAccount => 'Creating account';
@@ -307,10 +311,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickReport => 'Quick Report';
 
   @override
+  String get fastReport => 'Fast Report';
+
+  @override
+  String get fastReportGuidance =>
+      'For emergencies: confirm your GPS location and briefly describe what is happening.';
+
+  @override
+  String get submitFastReport => 'Submit Fast Report';
+
+  @override
+  String get submittingFastReport => 'Submitting Fast Report…';
+
+  @override
+  String get closeFastReport => 'Close Fast Report';
+
+  @override
   String get emergencyReport => 'Emergency Report';
 
   @override
   String get addDetails => 'Add details';
+
+  @override
+  String get addImage => 'Add image';
+
+  @override
+  String get completeFastReport => 'Complete your Fast Report';
+
+  @override
+  String get completeFastReportBody =>
+      'Add an image or extra details to help responders follow up.';
 
   @override
   String get closeEmergencyReport => 'Close Emergency Report';
@@ -320,7 +350,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emergencyReportNotice =>
-      'For immediate threats. BayanTrack does not replace emergency hotlines.';
+      'For immediate response, call an emergency service using the hotline below. Submitting this report does not dispatch a team.';
+
+  @override
+  String get emergencyCallGuidance =>
+      'If someone is in immediate danger, call local emergency services if cellular calling is available. BayanTrack has not confirmed receipt of this report.';
 
   @override
   String get emergencyConfirm =>
@@ -339,6 +373,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get submittingEmergencyReport => 'Sending Emergency Report…';
+
+  @override
+  String get reportDraftFoundTitle => 'Unfinished report';
+
+  @override
+  String reportDraftFoundMessage(String reportType) {
+    return 'You have a saved $reportType draft.';
+  }
+
+  @override
+  String get resumeDraft => 'Resume';
+
+  @override
+  String get startNewReport => 'Start New';
+
+  @override
+  String get discardDraft => 'Discard Draft';
+
+  @override
+  String get notNow => 'Not Now';
+
+  @override
+  String get discardDraftConfirmationTitle => 'Discard this draft?';
+
+  @override
+  String get discardDraftConfirmationMessage =>
+      'This saved report and its unused photos will be deleted.';
+
+  @override
+  String get replaceDraftConfirmationMessage =>
+      'The saved report will be replaced with a new draft.';
+
+  @override
+  String get keepDraft => 'Keep Draft';
+
+  @override
+  String get emergencyNotYetTransmitted => 'NOT YET TRANSMITTED';
 
   @override
   String get emergencyDetailsHint => 'Add details that can help responders.';
@@ -371,6 +442,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get failedLoadNotifications => 'Failed to load notifications';
+
+  @override
+  String get notificationsNetworkError =>
+      'We’re having trouble loading notifications. Please check your internet connection and try again.';
+
+  @override
+  String get notificationsUpdateFailed =>
+      'Could not update notifications. Please try again.';
 
   @override
   String get newReport => 'New Report';
@@ -456,7 +535,61 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportSubmitted => 'Report submitted';
 
   @override
+  String get reportPendingSyncTitle => 'Pending Sync';
+
+  @override
+  String get reportPendingSync =>
+      'Saved on this device. Not yet transmitted to BayanTrack.';
+
+  @override
+  String get reportOutboxRetrying =>
+      'Will retry safely when BayanTrack is reachable.';
+
+  @override
+  String get reportOutboxWaitingAuth =>
+      'Sign in with the original account to resume this report.';
+
+  @override
+  String get reportOutboxNeedsEdit =>
+      'Report was not accepted. Edit and submit it again.';
+
+  @override
+  String get reportOutboxConflict =>
+      'Submission could not be confirmed. Edit report before resubmitting.';
+
+  @override
+  String get reportOutboxRetryNow => 'Retry now';
+
+  @override
+  String get reportOutboxEdit => 'Edit and resubmit';
+
+  @override
+  String get reportEvidenceHandoffTitle => 'Evidence upload';
+
+  @override
+  String get reportEvidenceHandoffPending =>
+      'Report received. Evidence is still waiting to upload.';
+
+  @override
+  String get reportEvidenceHandoffRetry => 'Retry evidence upload';
+
+  @override
   String get addOptionalPhoto => 'Add an optional photo as evidence?';
+
+  @override
+  String get photoEvidenceSelectionHint =>
+      'Choose one or more photos to attach to this report.';
+
+  @override
+  String selectedPhotoCount(int count) {
+    return '$count photo(s) selected';
+  }
+
+  @override
+  String get uploadEvidence => 'Upload evidence';
+
+  @override
+  String get skipPhotoEvidence => 'Skip for now';
 
   @override
   String get reviewMine => 'Review mine';
@@ -612,7 +745,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get submitVerification => 'Submit Verification';
 
   @override
-  String get resubmitDocuments => 'Resubmit Documents';
+  String get resubmitDocuments => 'Correct & Resubmit';
+
+  @override
+  String get withdrawSubmission => 'Withdraw submission';
+
+  @override
+  String get withdrawSubmissionTitle => 'Withdraw pending submission?';
+
+  @override
+  String get withdrawSubmissionDescription =>
+      'Your application will be removed from staff review. You can edit and submit it again.';
+
+  @override
+  String get withdrawalSucceeded =>
+      'Submission withdrawn. You can edit and submit again.';
 
   @override
   String get viewStatus => 'View Status';
@@ -707,6 +854,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Unable to change your password right now. Please try again.';
 
   @override
+  String get passwordExpiredTitle => 'Password change required';
+
+  @override
+  String get passwordExpiredMessage =>
+      'Your password has expired. Change it to continue using BayanTrack.';
+
+  @override
   String get profileLoadFailed => 'Unable to load profile.';
 
   @override
@@ -721,6 +875,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get takePhoto => 'Take Photo';
+
+  @override
+  String get flashlightOn => 'Turn flashlight on';
+
+  @override
+  String get flashlightOff => 'Turn flashlight off';
 
   @override
   String get chooseFromGallery => 'Choose from Gallery';
@@ -755,6 +915,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchReports => 'Search reports…';
+
+  @override
+  String get browseReports => 'Browse public reports';
+
+  @override
+  String get homeGuidance =>
+      'See what is happening around you and follow community updates.';
+
+  @override
+  String get filterByStatus => 'Filter by status';
+
+  @override
+  String get myReportsGuidance =>
+      'Track reports you submitted and any next steps.';
+
+  @override
+  String reportsAwaitingReview(int count) {
+    return '$count awaiting your confirmation';
+  }
+
+  @override
+  String get notificationsGuidance =>
+      'Updates about your reports and verification appear here.';
+
+  @override
+  String get unread => 'Unread';
+
+  @override
+  String unreadNotifications(int count) {
+    return '$count unread';
+  }
 
   @override
   String reportCount(int count) {
@@ -867,6 +1058,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get evidenceUploadCompleted => 'Evidence upload completed.';
 
   @override
+  String get accountSecurity => 'Account & security';
+
+  @override
+  String get preferences => 'Preferences';
+
+  @override
+  String get noInternetConnection => 'No internet connection';
+
+  @override
+  String get cachedReportsOffline =>
+      'Backend unavailable. Showing saved reports; information may be outdated.';
+
+  @override
   String get dismiss => 'Dismiss';
 
   @override
@@ -931,7 +1135,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get phoneNumber => 'Phone number';
 
   @override
-  String get phoneHelper => 'Enter 10 digits, for example 9123456789.';
+  String get phoneHelper =>
+      'Include the country code, for example +639123456789 or +12025550123.';
 
   @override
   String get imageTooLarge => 'Choose an image smaller than 5 MB.';
@@ -1079,9 +1284,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addPhotos => 'Add Photos';
 
   @override
-  String photosOfIssue(int count) {
-    return 'Take or select up to $count photos of the issue';
-  }
+  String get photosOptional =>
+      'Add photos if available. You can continue without them.';
+
+  @override
+  String get optionalShort => 'Optional';
 
   @override
   String get useButtonsAddPhotos => 'Use the buttons below to add photos';
@@ -1091,7 +1298,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectLocationDescription =>
-      'Select a city, then use phone GPS or a manual pin within its boundary.';
+      'Use phone GPS or a manual pin within Urdaneta City.';
 
   @override
   String get phoneLocation => 'Phone Location';
@@ -1223,6 +1430,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get currentHandler => 'Current handler';
+
+  @override
+  String get respondedBy => 'Responded by';
 
   @override
   String get routingStatus => 'Routing status';
@@ -1488,7 +1698,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mobileNumberRequired => 'Mobile Number';
 
   @override
-  String get mobileNumberDigits => 'Mobile number must be exactly 10 digits';
+  String get mobileNumberDigits =>
+      'Enter a valid Philippine mobile number (09xxxxxxxxx or +639xxxxxxxxx)';
 
   @override
   String get houseStreet => 'House No. / Street';
@@ -1519,6 +1730,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get uploadGovId => 'Upload clear photos of your Government ID';
+
+  @override
+  String get scanId => 'Scan ID';
+
+  @override
+  String get scanIdDescription =>
+      'Use a clear front photo. Text recognition runs on this device.';
+
+  @override
+  String get fitIdInsideFrame => 'Fit your ID inside the frame';
+
+  @override
+  String get keepIdFlatReadable => 'Keep it flat and readable';
+
+  @override
+  String get chooseVerificationMethod => 'Choose how to verify';
+
+  @override
+  String get chooseVerificationMethodDescription =>
+      'Choose whether to scan an ID for review or enter your details yourself.';
+
+  @override
+  String get scanIdOptionTitle => 'Scan an ID';
+
+  @override
+  String get scanIdOptionDescription =>
+      'Extract details from your ID for review, then complete the rest of the form.';
+
+  @override
+  String get manualEntryOptionTitle => 'Enter details manually';
+
+  @override
+  String get manualEntryOptionDescription =>
+      'Fill in your identity details yourself. OCR is skipped.';
 
   @override
   String get maxImageFormats => 'Max 10MB each • JPG, PNG formats';
@@ -1579,6 +1824,38 @@ class AppLocalizationsEn extends AppLocalizations {
       'Unable to submit user verification. Please try again.';
 
   @override
+  String get reviewExtractedDetails => 'Review extracted details';
+
+  @override
+  String get reviewExtractedDetailsDescription =>
+      'Check each suggestion and edit anything before continuing.';
+
+  @override
+  String get ocrScanning => 'Reading your ID on this device…';
+
+  @override
+  String get ocrPartial =>
+      'Some details were found. Check them and fill any blanks.';
+
+  @override
+  String get ocrUnreadable =>
+      'We couldn\'t read this image. Retake the photo or enter details manually.';
+
+  @override
+  String get ocrUnsupported =>
+      'OCR is not available for this ID type yet. Enter details manually.';
+
+  @override
+  String get ocrManualReview => 'Check this field';
+
+  @override
+  String get ocrHighConfidence => 'Clear text match';
+
+  @override
+  String get ocrAuthenticityNotice =>
+      'OCR only helps fill the form. It does not verify that the ID is authentic.';
+
+  @override
   String get fixFormErrors => 'Please fix the highlighted errors in the form';
 
   @override
@@ -1608,6 +1885,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get idFrontRequired => 'Please upload a photo of your ID (front side)';
+
+  @override
+  String get idBackRequired => 'Please upload a photo of your ID (back side)';
 
   @override
   String get selfieRequired => 'Please upload a selfie photo';
@@ -1640,6 +1920,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get submittedInformation => 'Submitted Information';
+
+  @override
+  String get noVerificationSubmitted => 'No verification submitted yet';
 
   @override
   String get resubmissions => 'Resubmissions';
@@ -1833,6 +2116,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get idVoters => 'Voter\'s ID';
 
   @override
+  String get idGsisECard => 'GSIS eCard';
+
+  @override
+  String get idPhilHealth => 'PhilHealth ID';
+
+  @override
+  String get idPrc => 'PRC Professional ID';
+
+  @override
   String get male => 'Male';
 
   @override
@@ -1852,4 +2144,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get divorced => 'Divorced';
+
+  @override
+  String get governanceCheckingStatus => 'Checking system status...';
+
+  @override
+  String get governanceStatusUnavailable => 'System status is unavailable.';
+
+  @override
+  String get governanceReadOnly =>
+      'Maintenance: read-only. Emergency reporting remains available.';
+
+  @override
+  String get governanceTermsChanged =>
+      'Terms have changed. Please review the current version.';
+
+  @override
+  String get governanceAcceptanceFailed =>
+      'Acceptance was not saved. Please try again.';
+
+  @override
+  String get governanceTermsUnavailable => 'Current terms could not be loaded.';
+
+  @override
+  String get governanceConsentLabel =>
+      'I have read and agree to these terms and privacy policy.';
+
+  @override
+  String get governanceSyncPaused =>
+      'Waiting for current terms acceptance or maintenance to end.';
 }

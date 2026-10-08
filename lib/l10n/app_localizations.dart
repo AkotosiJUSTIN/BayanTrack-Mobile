@@ -428,10 +428,16 @@ abstract class AppLocalizations {
   /// **'Terms & Conditions and Privacy Policy'**
   String get termsAndPrivacy;
 
+  /// No description provided for @policyDialogSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Review how BayanTrack handles community reports and protects your account'**
+  String get policyDialogSubtitle;
+
   /// No description provided for @termsPolicyContent.
   ///
   /// In en, this message translates to:
-  /// **'========================================\nTERMS & CONDITIONS\n========================================\n\nBy using BayanTrack, you agree to provide accurate information and use the service responsibly. Reports should describe real community concerns and must not contain abusive, unlawful, or misleading content.\n\nBayanTrack may process the information you submit to route reports, communicate updates, and support verification. Keep your account details secure and do not share your password.\n\n========================================\nPRIVACY POLICY\n========================================\n\nWe use the information and evidence you submit to review, route, and resolve reports. We retain it as required for service operations and applicable policy. We may share relevant report details with authorized local government personnel who need them to act.\n\nBy tapping Accept, you acknowledge you have read and understood both the Terms & Conditions and Privacy Policy.'**
+  /// **'BAYANTRACK TERMS & CONDITIONS\n\n1. Purpose\nBayanTrack helps residents send community reports to their barangay and follow the progress of concerns that affect their neighborhood.\n\n2. Use the service responsibly\nUse your own account and submit reports about real community concerns. Do not upload abusive, unlawful, discriminatory, or deliberately misleading content.\n\n3. Reports and evidence\nDescribe what happened, where it happened, and when it happened as accurately as you can. Only share photos, videos, and other evidence that you are allowed to share. BayanTrack may route a report and its evidence to authorized barangay or city personnel for review and action.\n\n4. Account security\nKeep your email address and password private. You are responsible for activity made through your account. Contact the BayanTrack team if you believe your account has been accessed by someone else.\n\nBAYANTRACK PRIVACY POLICY\n\n1. Information we receive\nWe collect the details you provide when you register, including your name, email address, and selected barangay. We also receive the report details, location, attachments, and updates you choose to submit.\n\n2. How we use your information\nWe use this information to verify accounts, route reports to the right barangay, send status updates, prevent misuse, and improve BayanTrack\'s community reporting service.\n\n3. Who may access it\nRelevant report details may be viewed by authorized BayanTrack administrators and local government personnel who need the information to review or respond to the concern. We do not sell your personal information.\n\n4. Your choices\nPlease keep your account information accurate and tell us if it needs to be corrected. We keep information only for as long as it is needed for service operations, reporting history, safety, and applicable requirements.\n\nBy tapping Accept, you confirm that you have read and understood the BayanTrack Terms & Conditions and Privacy Policy.'**
   String get termsPolicyContent;
 
   /// No description provided for @creatingAccount.
@@ -668,6 +674,36 @@ abstract class AppLocalizations {
   /// **'Quick Report'**
   String get quickReport;
 
+  /// No description provided for @fastReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Fast Report'**
+  String get fastReport;
+
+  /// No description provided for @fastReportGuidance.
+  ///
+  /// In en, this message translates to:
+  /// **'For emergencies: confirm your GPS location and briefly describe what is happening.'**
+  String get fastReportGuidance;
+
+  /// No description provided for @submitFastReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Fast Report'**
+  String get submitFastReport;
+
+  /// No description provided for @submittingFastReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Submitting Fast Report…'**
+  String get submittingFastReport;
+
+  /// No description provided for @closeFastReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Close Fast Report'**
+  String get closeFastReport;
+
   /// No description provided for @emergencyReport.
   ///
   /// In en, this message translates to:
@@ -679,6 +715,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add details'**
   String get addDetails;
+
+  /// No description provided for @addImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add image'**
+  String get addImage;
+
+  /// No description provided for @completeFastReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete your Fast Report'**
+  String get completeFastReport;
+
+  /// No description provided for @completeFastReportBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Add an image or extra details to help responders follow up.'**
+  String get completeFastReportBody;
 
   /// No description provided for @closeEmergencyReport.
   ///
@@ -695,8 +749,14 @@ abstract class AppLocalizations {
   /// No description provided for @emergencyReportNotice.
   ///
   /// In en, this message translates to:
-  /// **'For immediate threats. BayanTrack does not replace emergency hotlines.'**
+  /// **'For immediate response, call an emergency service using the hotline below. Submitting this report does not dispatch a team.'**
   String get emergencyReportNotice;
+
+  /// No description provided for @emergencyCallGuidance.
+  ///
+  /// In en, this message translates to:
+  /// **'If someone is in immediate danger, call local emergency services if cellular calling is available. BayanTrack has not confirmed receipt of this report.'**
+  String get emergencyCallGuidance;
 
   /// No description provided for @emergencyConfirm.
   ///
@@ -727,6 +787,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sending Emergency Report…'**
   String get submittingEmergencyReport;
+
+  /// No description provided for @reportDraftFoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfinished report'**
+  String get reportDraftFoundTitle;
+
+  /// No description provided for @reportDraftFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You have a saved {reportType} draft.'**
+  String reportDraftFoundMessage(String reportType);
+
+  /// No description provided for @resumeDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get resumeDraft;
+
+  /// No description provided for @startNewReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Start New'**
+  String get startNewReport;
+
+  /// No description provided for @discardDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard Draft'**
+  String get discardDraft;
+
+  /// No description provided for @notNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Now'**
+  String get notNow;
+
+  /// No description provided for @discardDraftConfirmationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard this draft?'**
+  String get discardDraftConfirmationTitle;
+
+  /// No description provided for @discardDraftConfirmationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This saved report and its unused photos will be deleted.'**
+  String get discardDraftConfirmationMessage;
+
+  /// No description provided for @replaceDraftConfirmationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'The saved report will be replaced with a new draft.'**
+  String get replaceDraftConfirmationMessage;
+
+  /// No description provided for @keepDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Draft'**
+  String get keepDraft;
+
+  /// No description provided for @emergencyNotYetTransmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'NOT YET TRANSMITTED'**
+  String get emergencyNotYetTransmitted;
 
   /// No description provided for @emergencyDetailsHint.
   ///
@@ -787,6 +913,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to load notifications'**
   String get failedLoadNotifications;
+
+  /// No description provided for @notificationsNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'We’re having trouble loading notifications. Please check your internet connection and try again.'**
+  String get notificationsNetworkError;
+
+  /// No description provided for @notificationsUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update notifications. Please try again.'**
+  String get notificationsUpdateFailed;
 
   /// No description provided for @newReport.
   ///
@@ -950,11 +1088,101 @@ abstract class AppLocalizations {
   /// **'Report submitted'**
   String get reportSubmitted;
 
+  /// No description provided for @reportPendingSyncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Sync'**
+  String get reportPendingSyncTitle;
+
+  /// No description provided for @reportPendingSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this device. Not yet transmitted to BayanTrack.'**
+  String get reportPendingSync;
+
+  /// No description provided for @reportOutboxRetrying.
+  ///
+  /// In en, this message translates to:
+  /// **'Will retry safely when BayanTrack is reachable.'**
+  String get reportOutboxRetrying;
+
+  /// No description provided for @reportOutboxWaitingAuth.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with the original account to resume this report.'**
+  String get reportOutboxWaitingAuth;
+
+  /// No description provided for @reportOutboxNeedsEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Report was not accepted. Edit and submit it again.'**
+  String get reportOutboxNeedsEdit;
+
+  /// No description provided for @reportOutboxConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Submission could not be confirmed. Edit report before resubmitting.'**
+  String get reportOutboxConflict;
+
+  /// No description provided for @reportOutboxRetryNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry now'**
+  String get reportOutboxRetryNow;
+
+  /// No description provided for @reportOutboxEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit and resubmit'**
+  String get reportOutboxEdit;
+
+  /// No description provided for @reportEvidenceHandoffTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Evidence upload'**
+  String get reportEvidenceHandoffTitle;
+
+  /// No description provided for @reportEvidenceHandoffPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Report received. Evidence is still waiting to upload.'**
+  String get reportEvidenceHandoffPending;
+
+  /// No description provided for @reportEvidenceHandoffRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry evidence upload'**
+  String get reportEvidenceHandoffRetry;
+
   /// No description provided for @addOptionalPhoto.
   ///
   /// In en, this message translates to:
   /// **'Add an optional photo as evidence?'**
   String get addOptionalPhoto;
+
+  /// No description provided for @photoEvidenceSelectionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose one or more photos to attach to this report.'**
+  String get photoEvidenceSelectionHint;
+
+  /// No description provided for @selectedPhotoCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} photo(s) selected'**
+  String selectedPhotoCount(int count);
+
+  /// No description provided for @uploadEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload evidence'**
+  String get uploadEvidence;
+
+  /// No description provided for @skipPhotoEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip for now'**
+  String get skipPhotoEvidence;
 
   /// No description provided for @reviewMine.
   ///
@@ -1253,8 +1481,32 @@ abstract class AppLocalizations {
   /// No description provided for @resubmitDocuments.
   ///
   /// In en, this message translates to:
-  /// **'Resubmit Documents'**
+  /// **'Correct & Resubmit'**
   String get resubmitDocuments;
+
+  /// No description provided for @withdrawSubmission.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw submission'**
+  String get withdrawSubmission;
+
+  /// No description provided for @withdrawSubmissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdraw pending submission?'**
+  String get withdrawSubmissionTitle;
+
+  /// No description provided for @withdrawSubmissionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Your application will be removed from staff review. You can edit and submit it again.'**
+  String get withdrawSubmissionDescription;
+
+  /// No description provided for @withdrawalSucceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Submission withdrawn. You can edit and submit again.'**
+  String get withdrawalSucceeded;
 
   /// No description provided for @viewStatus.
   ///
@@ -1400,6 +1652,18 @@ abstract class AppLocalizations {
   /// **'Unable to change your password right now. Please try again.'**
   String get passwordChangeFailed;
 
+  /// No description provided for @passwordExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Password change required'**
+  String get passwordExpiredTitle;
+
+  /// No description provided for @passwordExpiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your password has expired. Change it to continue using BayanTrack.'**
+  String get passwordExpiredMessage;
+
   /// No description provided for @profileLoadFailed.
   ///
   /// In en, this message translates to:
@@ -1429,6 +1693,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Take Photo'**
   String get takePhoto;
+
+  /// No description provided for @flashlightOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn flashlight on'**
+  String get flashlightOn;
+
+  /// No description provided for @flashlightOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn flashlight off'**
+  String get flashlightOff;
 
   /// No description provided for @chooseFromGallery.
   ///
@@ -1495,6 +1771,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search reports…'**
   String get searchReports;
+
+  /// No description provided for @browseReports.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse public reports'**
+  String get browseReports;
+
+  /// No description provided for @homeGuidance.
+  ///
+  /// In en, this message translates to:
+  /// **'See what is happening around you and follow community updates.'**
+  String get homeGuidance;
+
+  /// No description provided for @filterByStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by status'**
+  String get filterByStatus;
+
+  /// No description provided for @myReportsGuidance.
+  ///
+  /// In en, this message translates to:
+  /// **'Track reports you submitted and any next steps.'**
+  String get myReportsGuidance;
+
+  /// No description provided for @reportsAwaitingReview.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} awaiting your confirmation'**
+  String reportsAwaitingReview(int count);
+
+  /// No description provided for @notificationsGuidance.
+  ///
+  /// In en, this message translates to:
+  /// **'Updates about your reports and verification appear here.'**
+  String get notificationsGuidance;
+
+  /// No description provided for @unread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get unread;
+
+  /// No description provided for @unreadNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} unread'**
+  String unreadNotifications(int count);
 
   /// No description provided for @reportCount.
   ///
@@ -1652,6 +1976,30 @@ abstract class AppLocalizations {
   /// **'Evidence upload completed.'**
   String get evidenceUploadCompleted;
 
+  /// No description provided for @accountSecurity.
+  ///
+  /// In en, this message translates to:
+  /// **'Account & security'**
+  String get accountSecurity;
+
+  /// No description provided for @preferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get preferences;
+
+  /// No description provided for @noInternetConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection'**
+  String get noInternetConnection;
+
+  /// No description provided for @cachedReportsOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Backend unavailable. Showing saved reports; information may be outdated.'**
+  String get cachedReportsOffline;
+
   /// No description provided for @dismiss.
   ///
   /// In en, this message translates to:
@@ -1775,7 +2123,7 @@ abstract class AppLocalizations {
   /// No description provided for @phoneHelper.
   ///
   /// In en, this message translates to:
-  /// **'Enter 10 digits, for example 9123456789.'**
+  /// **'Include the country code, for example +639123456789 or +12025550123.'**
   String get phoneHelper;
 
   /// No description provided for @imageTooLarge.
@@ -2048,11 +2396,17 @@ abstract class AppLocalizations {
   /// **'Add Photos'**
   String get addPhotos;
 
-  /// No description provided for @photosOfIssue.
+  /// No description provided for @photosOptional.
   ///
   /// In en, this message translates to:
-  /// **'Take or select up to {count} photos of the issue'**
-  String photosOfIssue(int count);
+  /// **'Add photos if available. You can continue without them.'**
+  String get photosOptional;
+
+  /// No description provided for @optionalShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get optionalShort;
 
   /// No description provided for @useButtonsAddPhotos.
   ///
@@ -2069,7 +2423,7 @@ abstract class AppLocalizations {
   /// No description provided for @selectLocationDescription.
   ///
   /// In en, this message translates to:
-  /// **'Select a city, then use phone GPS or a manual pin within its boundary.'**
+  /// **'Use phone GPS or a manual pin within Urdaneta City.'**
   String get selectLocationDescription;
 
   /// No description provided for @phoneLocation.
@@ -2293,6 +2647,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Current handler'**
   String get currentHandler;
+
+  /// No description provided for @respondedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Responded by'**
+  String get respondedBy;
 
   /// No description provided for @routingStatus.
   ///
@@ -2783,7 +3143,7 @@ abstract class AppLocalizations {
   /// No description provided for @mobileNumberDigits.
   ///
   /// In en, this message translates to:
-  /// **'Mobile number must be exactly 10 digits'**
+  /// **'Enter a valid Philippine mobile number (09xxxxxxxxx or +639xxxxxxxxx)'**
   String get mobileNumberDigits;
 
   /// No description provided for @houseStreet.
@@ -2845,6 +3205,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Upload clear photos of your Government ID'**
   String get uploadGovId;
+
+  /// No description provided for @scanId.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan ID'**
+  String get scanId;
+
+  /// No description provided for @scanIdDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a clear front photo. Text recognition runs on this device.'**
+  String get scanIdDescription;
+
+  /// No description provided for @fitIdInsideFrame.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit your ID inside the frame'**
+  String get fitIdInsideFrame;
+
+  /// No description provided for @keepIdFlatReadable.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep it flat and readable'**
+  String get keepIdFlatReadable;
+
+  /// No description provided for @chooseVerificationMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how to verify'**
+  String get chooseVerificationMethod;
+
+  /// No description provided for @chooseVerificationMethodDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose whether to scan an ID for review or enter your details yourself.'**
+  String get chooseVerificationMethodDescription;
+
+  /// No description provided for @scanIdOptionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan an ID'**
+  String get scanIdOptionTitle;
+
+  /// No description provided for @scanIdOptionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract details from your ID for review, then complete the rest of the form.'**
+  String get scanIdOptionDescription;
+
+  /// No description provided for @manualEntryOptionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter details manually'**
+  String get manualEntryOptionTitle;
+
+  /// No description provided for @manualEntryOptionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in your identity details yourself. OCR is skipped.'**
+  String get manualEntryOptionDescription;
 
   /// No description provided for @maxImageFormats.
   ///
@@ -2948,6 +3368,60 @@ abstract class AppLocalizations {
   /// **'Unable to submit user verification. Please try again.'**
   String get verificationSubmitFailed;
 
+  /// No description provided for @reviewExtractedDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Review extracted details'**
+  String get reviewExtractedDetails;
+
+  /// No description provided for @reviewExtractedDetailsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Check each suggestion and edit anything before continuing.'**
+  String get reviewExtractedDetailsDescription;
+
+  /// No description provided for @ocrScanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading your ID on this device…'**
+  String get ocrScanning;
+
+  /// No description provided for @ocrPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Some details were found. Check them and fill any blanks.'**
+  String get ocrPartial;
+
+  /// No description provided for @ocrUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t read this image. Retake the photo or enter details manually.'**
+  String get ocrUnreadable;
+
+  /// No description provided for @ocrUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'OCR is not available for this ID type yet. Enter details manually.'**
+  String get ocrUnsupported;
+
+  /// No description provided for @ocrManualReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Check this field'**
+  String get ocrManualReview;
+
+  /// No description provided for @ocrHighConfidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear text match'**
+  String get ocrHighConfidence;
+
+  /// No description provided for @ocrAuthenticityNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'OCR only helps fill the form. It does not verify that the ID is authentic.'**
+  String get ocrAuthenticityNotice;
+
   /// No description provided for @fixFormErrors.
   ///
   /// In en, this message translates to:
@@ -3008,6 +3482,12 @@ abstract class AppLocalizations {
   /// **'Please upload a photo of your ID (front side)'**
   String get idFrontRequired;
 
+  /// No description provided for @idBackRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please upload a photo of your ID (back side)'**
+  String get idBackRequired;
+
   /// No description provided for @selfieRequired.
   ///
   /// In en, this message translates to:
@@ -3067,6 +3547,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Submitted Information'**
   String get submittedInformation;
+
+  /// No description provided for @noVerificationSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'No verification submitted yet'**
+  String get noVerificationSubmitted;
 
   /// No description provided for @resubmissions.
   ///
@@ -3392,6 +3878,24 @@ abstract class AppLocalizations {
   /// **'Voter\'s ID'**
   String get idVoters;
 
+  /// No description provided for @idGsisECard.
+  ///
+  /// In en, this message translates to:
+  /// **'GSIS eCard'**
+  String get idGsisECard;
+
+  /// No description provided for @idPhilHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'PhilHealth ID'**
+  String get idPhilHealth;
+
+  /// No description provided for @idPrc.
+  ///
+  /// In en, this message translates to:
+  /// **'PRC Professional ID'**
+  String get idPrc;
+
   /// No description provided for @male.
   ///
   /// In en, this message translates to:
@@ -3433,6 +3937,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Divorced'**
   String get divorced;
+
+  /// No description provided for @governanceCheckingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking system status...'**
+  String get governanceCheckingStatus;
+
+  /// No description provided for @governanceStatusUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'System status is unavailable.'**
+  String get governanceStatusUnavailable;
+
+  /// No description provided for @governanceReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance: read-only. Emergency reporting remains available.'**
+  String get governanceReadOnly;
+
+  /// No description provided for @governanceTermsChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms have changed. Please review the current version.'**
+  String get governanceTermsChanged;
+
+  /// No description provided for @governanceAcceptanceFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Acceptance was not saved. Please try again.'**
+  String get governanceAcceptanceFailed;
+
+  /// No description provided for @governanceTermsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Current terms could not be loaded.'**
+  String get governanceTermsUnavailable;
+
+  /// No description provided for @governanceConsentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'I have read and agree to these terms and privacy policy.'**
+  String get governanceConsentLabel;
+
+  /// No description provided for @governanceSyncPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for current terms acceptance or maintenance to end.'**
+  String get governanceSyncPaused;
 }
 
 class _AppLocalizationsDelegate

@@ -6,8 +6,9 @@
 sealed class Failure {
   final String message;
   final String? code;
+  final int? statusCode;
 
-  const Failure(this.message, {this.code});
+  const Failure(this.message, {this.code, this.statusCode});
 
   @override
   String toString() => 'Failure($code): $message';
@@ -29,6 +30,12 @@ class ServerFailure extends Failure {
 class AuthFailure extends Failure {
   const AuthFailure([super.message = 'Authentication error'])
     : super(code: 'AUTH_ERROR');
+}
+
+/// Policy and maintenance restrictions preserve the authenticated session.
+class SystemRestrictionFailure extends Failure {
+  const SystemRestrictionFailure(String code, super.message, {super.statusCode})
+    : super(code: code);
 }
 
 /// Resource not found (404)
@@ -58,4 +65,7 @@ class CacheFailure extends Failure {
 class UnknownFailure extends Failure {
   const UnknownFailure([super.message = 'An error occurred'])
     : super(code: 'UNKNOWN_ERROR');
+
+  const UnknownFailure.withStatus(super.message, int statusCode)
+    : super(code: 'UNKNOWN_ERROR', statusCode: statusCode);
 }

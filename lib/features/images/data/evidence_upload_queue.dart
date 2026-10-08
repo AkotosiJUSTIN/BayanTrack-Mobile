@@ -8,6 +8,8 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'evidence_file_stager.dart';
+
 enum EvidenceUploadState {
   pending,
   uploading,
@@ -16,6 +18,7 @@ enum EvidenceUploadState {
   failed,
   missingLocalFile,
   dismissed,
+  paused,
 }
 
 enum EvidenceUploadError {
@@ -24,6 +27,7 @@ enum EvidenceUploadError {
   requestRejected,
   retryLimitReached,
   missingLocalFile,
+  systemRestriction,
 }
 
 @immutable
@@ -38,6 +42,7 @@ class EvidenceUploadIntent {
     this.retryCount = 0,
     this.nextRetryAt,
     this.error,
+    this.isEmergency = false,
   });
 
   final String id;
@@ -49,6 +54,7 @@ class EvidenceUploadIntent {
   final int retryCount;
   final DateTime? nextRetryAt;
   final EvidenceUploadError? error;
+  final bool isEmergency;
 
   EvidenceUploadIntent copyWith({
     EvidenceUploadState? state,
@@ -68,6 +74,7 @@ class EvidenceUploadIntent {
       retryCount: retryCount ?? this.retryCount,
       nextRetryAt: clearNextRetryAt ? null : (nextRetryAt ?? this.nextRetryAt),
       error: clearError ? null : (error ?? this.error),
+      isEmergency: isEmergency,
     );
   }
 
@@ -81,6 +88,7 @@ class EvidenceUploadIntent {
     'retry_count': retryCount,
     'next_retry_at': nextRetryAt?.toUtc().toIso8601String(),
     'error': error?.name,
+    'is_emergency': isEmergency,
   };
 
   static EvidenceUploadIntent? fromJson(Object? value) {
@@ -119,6 +127,7 @@ class EvidenceUploadIntent {
       retryCount: (json['retry_count'] as num?)?.toInt() ?? 0,
       nextRetryAt: DateTime.tryParse(json['next_retry_at']?.toString() ?? ''),
       error: storedError,
+      isEmergency: json['is_emergency'] == true,
     );
   }
 }
@@ -140,6 +149,9 @@ class EvidenceUploadQueue extends ChangeNotifier {
     required Directory uploadDirectory,
     required EvidenceUploader upload,
     required EvidenceAuthenticationCheck isAuthenticated,
+    bool Function()? canReachBackend,
+    Future<bool> Function(EvidenceUploadIntent)? canUpload,
+    Future<Set<String>> Function()? readDraftAttachmentReferences,
     DateTime Function()? now,
     this.maxRetryCount = 5,
     this.baseBackoff = const Duration(seconds: 2),
@@ -149,6 +161,9 @@ class EvidenceUploadQueue extends ChangeNotifier {
        _uploadDirectory = uploadDirectory,
        _upload = upload,
        _isAuthenticated = isAuthenticated,
+       _canReachBackend = canReachBackend ?? _alwaysReachable,
+       _canUpload = canUpload,
+       _readDraftAttachmentReferences = readDraftAttachmentReferences,
        _now = now ?? DateTime.now;
 
   static const _storageKey = 'pending_evidence_uploads_v1';
@@ -157,6 +172,9 @@ class EvidenceUploadQueue extends ChangeNotifier {
   final Directory _uploadDirectory;
   final EvidenceUploader _upload;
   final EvidenceAuthenticationCheck _isAuthenticated;
+  final bool Function() _canReachBackend;
+  final Future<bool> Function(EvidenceUploadIntent)? _canUpload;
+  final Future<Set<String>> Function()? _readDraftAttachmentReferences;
   final DateTime Function() _now;
   final int maxRetryCount;
   final Duration baseBackoff;
@@ -178,12 +196,25 @@ class EvidenceUploadQueue extends ChangeNotifier {
         : _intents.where((item) => item.ownerUserId == _activeUserId),
   );
 
+  Set<String> get referencedFilePaths => Set.unmodifiable(
+    _intents
+        .where(
+          (item) =>
+              item.state != EvidenceUploadState.completed &&
+              item.state != EvidenceUploadState.dismissed,
+        )
+        .map((item) => File(item.localFilePath).absolute.path),
+  );
+
   @visibleForTesting
   List<EvidenceUploadIntent> get allState => List.unmodifiable(_intents);
 
   static Future<EvidenceUploadQueue> open({
     required EvidenceUploader upload,
     required EvidenceAuthenticationCheck isAuthenticated,
+    bool Function()? canReachBackend,
+    Future<bool> Function(EvidenceUploadIntent)? canUpload,
+    Future<Set<String>> Function()? readDraftAttachmentReferences,
   }) async {
     final preferences = await SharedPreferences.getInstance();
     final supportDirectory = await getApplicationSupportDirectory();
@@ -194,6 +225,9 @@ class EvidenceUploadQueue extends ChangeNotifier {
       ),
       upload: upload,
       isAuthenticated: isAuthenticated,
+      canReachBackend: canReachBackend,
+      canUpload: canUpload,
+      readDraftAttachmentReferences: readDraftAttachmentReferences,
     );
     await queue.initialize();
     return queue;
@@ -226,7 +260,18 @@ class EvidenceUploadQueue extends ChangeNotifier {
     }
     _initialized = true;
     await _persist();
-    await _cleanupTerminalFiles();
+    final draftReferences = await _loadDraftAttachmentReferences();
+    await _cleanupTerminalFiles(retainedDraftPaths: draftReferences);
+    await _cleanupOrphanedUploadFiles();
+    if (draftReferences != null) {
+      await cleanupStaleEvidenceDrafts(
+        stagingDirectory: _uploadDirectory.parent,
+        retainedPaths: [
+          ..._intents.map((item) => item.localFilePath),
+          ...draftReferences,
+        ],
+      );
+    }
     _notify();
   }
 
@@ -234,6 +279,7 @@ class EvidenceUploadQueue extends ChangeNotifier {
     required String userId,
     required String reportId,
     required List<File> files,
+    bool isEmergency = false,
   }) async {
     await initialize();
     if (_disposed || userId.isEmpty || reportId.isEmpty || files.isEmpty) {
@@ -243,14 +289,32 @@ class EvidenceUploadQueue extends ChangeNotifier {
       _activeUserId = userId;
     }
     await _uploadDirectory.create(recursive: true);
-    final added = <EvidenceUploadIntent>[];
+    final prepared = <EvidenceUploadIntent>[];
+    final accepted = <EvidenceUploadIntent>[];
+    final copiedFiles = <File>[];
+    var hasPrimary = false;
 
     for (var index = 0; index < files.length; index++) {
       final source = files[index];
+      EvidenceUploadIntent? existing;
+      for (final intent in _intents) {
+        if (intent.ownerUserId == userId &&
+            intent.reportId == reportId &&
+            File(intent.localFilePath).absolute.path == source.absolute.path) {
+          existing = intent;
+          break;
+        }
+      }
+      if (existing != null) {
+        accepted.add(existing);
+        hasPrimary = hasPrimary || existing.isPrimary;
+        continue;
+      }
       final id = _newEvidenceKey();
       final target = File(
         '${_uploadDirectory.path}${Platform.pathSeparator}$id${_safeExtension(source)}',
       );
+      var queuedFilePath = source.path;
       var uploadState = EvidenceUploadState.pending;
       EvidenceUploadError? error;
       try {
@@ -258,38 +322,91 @@ class EvidenceUploadQueue extends ChangeNotifier {
           uploadState = EvidenceUploadState.missingLocalFile;
           error = EvidenceUploadError.missingLocalFile;
         } else {
-          await source.copy(target.path);
+          final sourceSize = await source.length();
+          if (sourceSize == 0) {
+            uploadState = EvidenceUploadState.missingLocalFile;
+            error = EvidenceUploadError.missingLocalFile;
+          } else if (!await isEvidenceDraft(source)) {
+            final partial = File('${target.path}.part');
+            await source.copy(partial.path);
+            if (await partial.length() != sourceSize) {
+              throw const FileSystemException(
+                'Evidence copy verification failed',
+              );
+            }
+            await partial.rename(target.path);
+            queuedFilePath = target.path;
+            copiedFiles.add(target);
+          }
         }
       } on FileSystemException {
+        await _deleteOwnedFile('${target.path}.part');
+        await _deleteOwnedFile(target.path);
         uploadState = EvidenceUploadState.missingLocalFile;
         error = EvidenceUploadError.missingLocalFile;
       }
 
+      final isPrimary =
+          uploadState == EvidenceUploadState.pending && !hasPrimary;
+      hasPrimary = hasPrimary || isPrimary;
       final intent = EvidenceUploadIntent(
         id: id,
         ownerUserId: userId,
         reportId: reportId,
-        localFilePath: target.path,
-        isPrimary: index == 0,
+        localFilePath: queuedFilePath,
+        isPrimary: isPrimary,
         state: uploadState,
         error: error,
+        isEmergency: isEmergency,
       );
-      _intents.add(intent);
-      added.add(intent);
-      await _persist();
+      prepared.add(intent);
+      accepted.add(intent);
+    }
+
+    if (prepared.isNotEmpty) {
+      _intents.addAll(prepared);
+      try {
+        await _persist();
+      } catch (_) {
+        _intents.removeRange(
+          _intents.length - prepared.length,
+          _intents.length,
+        );
+        for (final file in copiedFiles) {
+          await _deleteOwnedFile(file.path);
+        }
+        rethrow;
+      }
       _notify();
     }
-    return List.unmodifiable(added);
+    return List.unmodifiable(accepted);
   }
 
   Future<void> resume(String userId) async {
     await initialize();
     if (_disposed || userId.isEmpty) return;
+    if (!_canReachBackend()) {
+      await pause();
+      return;
+    }
     if (_activeUserId != null && _activeUserId != userId) {
       await pause();
     }
     if (!await _isAuthenticated(userId)) return;
     _activeUserId = userId;
+    for (var index = 0; index < _intents.length; index++) {
+      final item = _intents[index];
+      if (item.ownerUserId == userId &&
+          item.state == EvidenceUploadState.paused &&
+          (_canUpload == null || await _canUpload(item))) {
+        _intents[index] = item.copyWith(
+          state: EvidenceUploadState.pending,
+          clearError: true,
+          clearNextRetryAt: true,
+        );
+      }
+    }
+    await _persist();
     await _drain();
   }
 
@@ -326,6 +443,7 @@ class EvidenceUploadQueue extends ChangeNotifier {
           (id != null && item.id != id) ||
           (item.state != EvidenceUploadState.failed &&
               item.state != EvidenceUploadState.missingLocalFile &&
+              item.state != EvidenceUploadState.paused &&
               item.state != EvidenceUploadState.retryWaiting)) {
         continue;
       }
@@ -391,7 +509,11 @@ class EvidenceUploadQueue extends ChangeNotifier {
       try {
         while (!_disposed) {
           final userId = _activeUserId;
-          if (userId == null || !await _isAuthenticated(userId)) break;
+          if (userId == null ||
+              !_canReachBackend() ||
+              !await _isAuthenticated(userId)) {
+            break;
+          }
           final index = await _nextReadyIndex(userId);
           if (index < 0) break;
           await _attempt(_intents[index]);
@@ -414,6 +536,17 @@ class EvidenceUploadQueue extends ChangeNotifier {
           item.state == EvidenceUploadState.failed ||
           item.state == EvidenceUploadState.missingLocalFile ||
           item.state == EvidenceUploadState.dismissed) {
+        continue;
+      }
+      if (item.state == EvidenceUploadState.paused) continue;
+      if (_canUpload != null && !await _canUpload(item)) {
+        _intents[index] = item.copyWith(
+          state: EvidenceUploadState.paused,
+          clearNextRetryAt: true,
+          error: EvidenceUploadError.systemRestriction,
+        );
+        await _persist();
+        _notify();
         continue;
       }
       if (!await File(item.localFilePath).exists()) {
@@ -485,7 +618,16 @@ class EvidenceUploadQueue extends ChangeNotifier {
       final statusCode = error is DioException
           ? error.response?.statusCode
           : null;
-      if (statusCode == 401) {
+      final body = error is DioException ? error.response?.data : null;
+      final code = body is Map ? body['code'] : null;
+      if ((statusCode == 403 && code == 'terms_acceptance_required') ||
+          (statusCode == 503 && code == 'maintenance_read_only')) {
+        _intents[failedIndex] = current.copyWith(
+          state: EvidenceUploadState.paused,
+          clearNextRetryAt: true,
+          error: EvidenceUploadError.systemRestriction,
+        );
+      } else if (statusCode == 401) {
         _activeUserId = null;
         _intents[failedIndex] = current.copyWith(
           state: EvidenceUploadState.pending,
@@ -534,7 +676,7 @@ class EvidenceUploadQueue extends ChangeNotifier {
   void _scheduleNext() {
     _retryTimer?.cancel();
     _retryTimer = null;
-    if (!autoSchedule || _activeUserId == null) return;
+    if (!autoSchedule || _activeUserId == null || !_canReachBackend()) return;
     final now = _now();
     final next = _intents
         .where(
@@ -559,29 +701,68 @@ class EvidenceUploadQueue extends ChangeNotifier {
 
   Future<void> _persist() async {
     if (!_initialized || _disposed) return;
-    await _preferences.setString(
+    final saved = await _preferences.setString(
       _storageKey,
       jsonEncode(_intents.map((item) => item.toJson()).toList()),
     );
+    if (!saved) {
+      throw const FileSystemException('Evidence queue metadata was not saved');
+    }
   }
 
-  Future<void> _cleanupTerminalFiles() async {
+  Future<void> _cleanupTerminalFiles({Set<String>? retainedDraftPaths}) async {
     for (final item in _intents) {
       if (item.state == EvidenceUploadState.completed ||
           item.state == EvidenceUploadState.dismissed) {
-        await _deleteOwnedFile(item.localFilePath);
+        await _deleteOwnedFile(
+          item.localFilePath,
+          retainedDraftPaths: retainedDraftPaths,
+        );
       }
     }
   }
 
-  Future<void> _deleteOwnedFile(String path) async {
+  Future<void> _deleteOwnedFile(
+    String path, {
+    Set<String>? retainedDraftPaths,
+  }) async {
     final ownedRoot = _uploadDirectory.absolute.path;
     final file = File(path).absolute;
+    if (await isEvidenceDraft(file)) {
+      final retained =
+          retainedDraftPaths ?? await _loadDraftAttachmentReferences();
+      if (retained == null || retained.contains(file.path)) return;
+      await discardEvidenceDraft(file);
+      return;
+    }
     if (!file.path.startsWith('$ownedRoot${Platform.pathSeparator}')) return;
     try {
       if (await file.exists()) await file.delete();
     } on FileSystemException {
       // A later restore retries terminal-file cleanup.
+    }
+  }
+
+  Future<Set<String>?> _loadDraftAttachmentReferences() async {
+    final readReferences = _readDraftAttachmentReferences;
+    if (readReferences == null) return <String>{};
+    try {
+      return (await readReferences())
+          .map((path) => File(path).absolute.path)
+          .toSet();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _cleanupOrphanedUploadFiles() async {
+    if (!await _uploadDirectory.exists()) return;
+    final retained = _intents
+        .map((item) => File(item.localFilePath).absolute.path)
+        .toSet();
+    await for (final entity in _uploadDirectory.list()) {
+      if (entity is! File || retained.contains(entity.absolute.path)) continue;
+      await _deleteOwnedFile(entity.path);
     }
   }
 
@@ -606,6 +787,8 @@ class EvidenceUploadQueue extends ChangeNotifier {
   void _notify() {
     if (!_disposed) notifyListeners();
   }
+
+  static bool _alwaysReachable() => true;
 
   @override
   void dispose() {

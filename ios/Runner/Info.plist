@@ -14,6 +14,17 @@
 		<string>6.0</string>
 		<key>CFBundleName</key>
 		<string>bayantrack_mobile</string>
+		<key>CFBundleURLTypes</key>
+		<array>
+			<dict>
+				<key>CFBundleURLName</key>
+				<string>com.example.bayantrackMobile.widget</string>
+				<key>CFBundleURLSchemes</key>
+				<array>
+					<string>bayantrack</string>
+				</array>
+			</dict>
+		</array>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>
@@ -52,7 +63,7 @@
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Choose a photo to use as your profile picture or report evidence.</string>
 		<key>NSCameraUsageDescription</key>
-		<string>Take a photo for your profile picture or report evidence.</string>
+		<string>Take a photo for your profile picture, report evidence, or identity verification.</string>
 		<key>NSAppTransportSecurity</key>
 		<dict>
 			<key>NSAllowsArbitraryLoads</key>

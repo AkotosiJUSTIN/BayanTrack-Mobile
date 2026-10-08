@@ -1,14 +1,15 @@
 class ApiConstants {
-  // Pass complete URLs at build/run time. The default targets an Android
-  // emulator; physical devices use a LAN URL or 127.0.0.1 with adb reverse.
+  // Default to the deployed backend. Pass complete URLs at build/run time
+  // to override these defaults for local development.
   static const String baseUrl = String.fromEnvironment(
     'BAYANTRACK_API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000/api',
+    defaultValue: 'https://api.bayantrack.app/api',
   );
   static const String mediaBaseUrl = String.fromEnvironment(
     'BAYANTRACK_MEDIA_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000',
+    defaultValue: 'https://api.bayantrack.app',
   );
+  static const String health = '/health/';
 
   /// Build full URL for an image path
   /// Handles both relative (/media/...) and absolute URLs
@@ -65,6 +66,7 @@ class ApiConstants {
   static const String verificationIdTypes = '/auth/verification/id-types/';
   static const String verificationSubmit = '/auth/verification/submit/';
   static const String verificationStatus = '/auth/verification/status/';
+  static const String verificationWithdraw = '/auth/verification/withdraw/';
   static const String verificationResubmit = '/auth/verification/resubmit/';
   static const String verificationFormOptions =
       '/auth/verification/form-options/';
@@ -73,6 +75,7 @@ class ApiConstants {
   static const String kycIdTypes = '/auth/kyc/id-types/';
   static const String kycSubmit = '/auth/kyc/submit/';
   static const String kycStatus = '/auth/kyc/status/';
+  static const String kycWithdraw = '/auth/kyc/withdraw/';
   static const String kycResubmit = '/auth/kyc/resubmit/';
   static const String kycFormOptions = '/auth/kyc/form-options/';
 

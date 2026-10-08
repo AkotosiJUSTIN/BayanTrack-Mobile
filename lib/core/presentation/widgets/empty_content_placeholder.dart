@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// A consistent empty state placeholder to be used across the app.
@@ -23,7 +22,7 @@ class EmptyContentPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final scheme = theme.colorScheme;
 
     return Center(
       child: Padding(
@@ -32,29 +31,20 @@ class EmptyContentPlaceholder extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.darkSurfaceVariant
-                    : AppColors.lightSurfaceVariant,
-                shape: BoxShape.circle,
+                color: scheme.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Icon(
-                icon,
-                size: 48,
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.lightTextSecondary,
-              ),
+              child: Icon(icon, size: 32, color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: 24),
             Text(
               title,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: isDark
-                    ? AppColors.darkTextPrimary
-                    : AppColors.lightTextPrimary,
+                color: scheme.onSurface,
               ),
               textAlign: TextAlign.center,
             ),
@@ -63,9 +53,7 @@ class EmptyContentPlaceholder extends StatelessWidget {
               Text(
                 message!,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
+                  color: scheme.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -74,7 +62,7 @@ class EmptyContentPlaceholder extends StatelessWidget {
               const SizedBox(height: 24),
               FilledButton.tonal(
                 onPressed: onRetry,
-                child: Text(retryLabel ?? AppLocalizations.of(context)!.retry),
+                child: Text(retryLabel ?? AppLocalizations.of(context).retry),
               ),
             ],
           ],

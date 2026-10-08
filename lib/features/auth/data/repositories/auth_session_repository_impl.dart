@@ -10,6 +10,7 @@ class AuthSessionRepositoryImpl implements AuthSessionRepository {
   final FlutterSecureStorage _storage;
   final StreamController<bool> _authStateController =
       StreamController<bool>.broadcast();
+  Future<void> _tail = Future<void>.value();
 
   AuthSessionRepositoryImpl(this._storage);
 
@@ -46,7 +47,34 @@ class AuthSessionRepositoryImpl implements AuthSessionRepository {
   Future<void> saveTokens({
     required String accessToken,
     required String refreshToken,
-  }) async {
+  }) => _serialize(() => _writeTokens(accessToken, refreshToken));
+
+  @override
+  Future<bool> saveTokensIfRefreshTokenMatches({
+    required String expectedRefreshToken,
+    required String accessToken,
+    required String refreshToken,
+  }) => _serialize(() async {
+    final current = await _storage.read(key: ApiConstants.refreshTokenKey);
+    if (current != expectedRefreshToken) return false;
+    await _writeTokens(accessToken, refreshToken);
+    return true;
+  });
+
+  @override
+  Future<void> clearSession() => _serialize(_clearSession);
+
+  @override
+  Future<bool> clearSessionIfRefreshTokenMatches(
+    String? expectedRefreshToken,
+  ) => _serialize(() async {
+    final current = await _storage.read(key: ApiConstants.refreshTokenKey);
+    if (current != expectedRefreshToken) return false;
+    await _clearSession();
+    return true;
+  });
+
+  Future<void> _writeTokens(String accessToken, String refreshToken) async {
     await _storage.write(key: ApiConstants.accessTokenKey, value: accessToken);
     await _storage.write(
       key: ApiConstants.refreshTokenKey,
@@ -55,11 +83,22 @@ class AuthSessionRepositoryImpl implements AuthSessionRepository {
     _authStateController.add(true);
   }
 
-  @override
-  Future<void> clearSession() async {
+  Future<void> _clearSession() async {
     await _storage.delete(key: ApiConstants.accessTokenKey);
     await _storage.delete(key: ApiConstants.refreshTokenKey);
     _authStateController.add(false);
+  }
+
+  Future<T> _serialize<T>(Future<T> Function() action) async {
+    final previous = _tail;
+    final done = Completer<void>();
+    _tail = done.future;
+    await previous;
+    try {
+      return await action();
+    } finally {
+      done.complete();
+    }
   }
 
   @override

@@ -6,19 +6,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const _widgetChannelName = 'bayantrack/widget';
 
-enum WidgetDestination { quickReport, emergencyReport, notifications }
+enum WidgetDestination { fastReport, openApp }
+
+enum QuickReportWidgetStatus {
+  ready,
+  submitting,
+  submitted,
+  failed,
+  networkUnavailable,
+  locationRequired,
+}
 
 WidgetDestination? parseWidgetDestination(Object? raw) {
   if (raw is! String) return null;
 
   return switch (raw.trim().toLowerCase()) {
-    'quick_report' ||
-    'quick-report' ||
-    'quickreport' => WidgetDestination.quickReport,
-    'emergency_report' ||
-    'emergency-report' ||
-    'emergencyreport' => WidgetDestination.emergencyReport,
-    'notifications' || 'notification' => WidgetDestination.notifications,
+    'fast_report' ||
+    'fast-report' ||
+    'fastreport' ||
+    'bayantrack://fast-report' => WidgetDestination.fastReport,
+    'open_app' ||
+    'open-app' ||
+    'home' ||
+    'bayantrack://home' => WidgetDestination.openApp,
     _ => null,
   };
 }
@@ -69,6 +79,9 @@ class WidgetBridge {
   String _locale = 'en';
   bool _authenticated = false;
   int _unreadCount = 0;
+  QuickReportWidgetStatus _quickReportStatus = QuickReportWidgetStatus.ready;
+  WidgetDestination? _activeDestination;
+  final Set<WidgetDestination> _finishedDestinations = {};
   Map<String, Object>? _lastSentState;
   bool _initialized = false;
 
@@ -91,22 +104,43 @@ class WidgetBridge {
   Future<dynamic> _handleMethodCall(MethodCall call) async {
     if (call.method == 'widgetDestination') {
       ingestRaw(call.arguments);
+      try {
+        await _invoke('acknowledgeWidgetDestination', call.arguments);
+      } catch (_) {
+        // Native retains the intent until Flutter acknowledges its delivery.
+      }
     }
     return null;
   }
 
   void ingestRaw(Object? raw) {
     final destination = parseWidgetDestination(raw);
-    if (destination == null || !_destinationQueue.enqueue(destination)) return;
+    if (destination == null ||
+        destination == _activeDestination ||
+        _finishedDestinations.contains(destination)) {
+      return;
+    }
+    if (!_destinationQueue.enqueue(destination)) return;
     _destinationController.add(destination);
   }
 
-  WidgetDestination? takePendingDestination() =>
-      _authenticated ? _destinationQueue.take() : null;
+  WidgetDestination? takePendingDestination() {
+    if (!_authenticated || _activeDestination != null) return null;
+    return _activeDestination = _destinationQueue.take();
+  }
 
   void restoreDestination(WidgetDestination destination) {
+    if (_activeDestination == destination) _activeDestination = null;
     _destinationQueue.restore(destination);
   }
+
+  void finishWidgetDestination() {
+    final destination = _activeDestination;
+    if (destination != null) _finishedDestinations.add(destination);
+    _activeDestination = null;
+  }
+
+  void clearFinishedDestinations() => _finishedDestinations.clear();
 
   Future<void> syncLocale(Locale locale) {
     _locale = widgetLocaleCode(locale);
@@ -115,7 +149,16 @@ class WidgetBridge {
 
   Future<void> syncAuthenticated(bool authenticated) {
     _authenticated = authenticated;
-    if (!authenticated) _unreadCount = 0;
+    if (!authenticated) {
+      _unreadCount = 0;
+      _quickReportStatus = QuickReportWidgetStatus.ready;
+    }
+    return _sendState();
+  }
+
+  Future<void> syncQuickReportStatus(QuickReportWidgetStatus status) {
+    if (!_authenticated) return Future<void>.value();
+    _quickReportStatus = status;
     return _sendState();
   }
 
@@ -130,10 +173,12 @@ class WidgetBridge {
       'locale': _locale,
       'authenticated': _authenticated,
       'unreadCount': _unreadCount,
+      'quickReportStatus': _quickReportStatus.name,
     };
     if (_lastSentState?['locale'] == state['locale'] &&
         _lastSentState?['authenticated'] == state['authenticated'] &&
-        _lastSentState?['unreadCount'] == state['unreadCount']) {
+        _lastSentState?['unreadCount'] == state['unreadCount'] &&
+        _lastSentState?['quickReportStatus'] == state['quickReportStatus']) {
       return;
     }
     _lastSentState = state;

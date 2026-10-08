@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../../../core/domain/result.dart';
 import '../entities/report.dart';
 import '../reports_repository.dart';
@@ -32,6 +34,7 @@ class CreateReportUseCase {
     bool isQuickReport = false,
     bool isEmergency = false,
     String? idempotencyKey,
+    CancelToken? cancelToken,
   }) {
     return _repository.createReport(
       category: category,
@@ -56,6 +59,7 @@ class CreateReportUseCase {
       isQuickReport: isQuickReport,
       isEmergency: isEmergency,
       idempotencyKey: idempotencyKey,
+      cancelToken: cancelToken,
     );
   }
 }

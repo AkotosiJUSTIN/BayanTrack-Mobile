@@ -178,6 +178,43 @@ void main() {
           ),
         ).called(1);
       });
+
+      test('keeps public report when optional reporter id is absent', () async {
+        when(
+          () => mockDio.get(
+            ApiConstants.reports,
+            queryParameters: any(named: 'queryParameters'),
+          ),
+        ).thenAnswer(
+          (_) async => Response(
+            data: {
+              'results': [
+                {
+                  'id': 'public_without_reporter',
+                  'description': 'Open drainage report',
+                  'status': 'submitted',
+                  'latitude': '15.97',
+                  'longitude': '120.57',
+                  'images': [],
+                },
+              ],
+              'count': 1,
+              'total': 1,
+              'page': 1,
+              'page_size': 20,
+              'total_pages': 1,
+            },
+            statusCode: 200,
+            requestOptions: RequestOptions(path: ApiConstants.reports),
+          ),
+        );
+
+        final result = await reportsRepository.getReports();
+
+        expect(result.results, hasLength(1));
+        expect(result.results.single.id, 'public_without_reporter');
+        expect(result.results.single.userId, isNull);
+      });
     });
 
     group('getMyReports', () {

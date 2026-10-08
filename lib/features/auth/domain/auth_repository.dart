@@ -24,6 +24,7 @@ abstract interface class AuthRepository {
     required String firstName,
     required String lastName,
     required String barangayId,
+    Map<String, String>? termsConsent,
   });
 
   /// Refresh access token using refresh token

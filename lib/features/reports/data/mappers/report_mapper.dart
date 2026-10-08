@@ -12,11 +12,12 @@ class ReportMapper {
   ReportMapper._(); // Prevent instantiation
 
   /// Convert DTO Report to domain Report entity
-  static Report fromDto(dto.Report dtoReport) {
+  static Report fromDto(dto.Report dtoReport, {bool isStale = false}) {
     return Report(
       id: dtoReport.id,
       reportId: dtoReport.reportId,
       userId: dtoReport.userId,
+      isStale: isStale,
       category: ReportCategory.fromString(dtoReport.category),
       categoryKey: dtoReport.categoryKey,
       categoryDisplay: dtoReport.categoryDisplay ?? dtoReport.category,
@@ -44,6 +45,9 @@ class ReportMapper {
       isEmergency: dtoReport.isEmergency,
       status: ReportStatus.fromString(dtoReport.status),
       assignedDepartment: dtoReport.assignedDepartment,
+      respondingAgency: dtoReport.respondingAgency?.trim().isNotEmpty == true
+          ? dtoReport.respondingAgency
+          : null,
       adminRemarks: dtoReport.adminRemarks,
       categoryConfidence: dtoReport.categoryConfidence,
       modelVersion: dtoReport.modelVersion,
@@ -55,13 +59,12 @@ class ReportMapper {
       isMultiIssue: dtoReport.isMultiIssue,
       rulesApplied: dtoReport.rulesApplied,
       priority: dtoReport.priority,
-      priorityScore: dtoReport.priorityScore,
+      priorityRank: dtoReport.priorityRank,
       priorityLevel: PriorityLevel.fromString(dtoReport.priorityLevel),
-      suggestedPriorityScore: dtoReport.suggestedPriorityScore,
+      suggestedPriorityRank: dtoReport.suggestedPriorityRank,
       suggestedPriorityLevel: PriorityLevel.fromString(
         dtoReport.suggestedPriorityLevel,
       ),
-      queuePriorityScore: dtoReport.queuePriorityScore,
       queuePriorityLevel: PriorityLevel.fromString(
         dtoReport.queuePriorityLevel,
       ),
@@ -80,13 +83,10 @@ class ReportMapper {
       priorityModelValidated: dtoReport.priorityModelValidated,
       priorityCalibrationVersion: dtoReport.priorityCalibrationVersion,
       emergencyProbability: dtoReport.emergencyProbability,
-      priorityComponents: dtoReport.priorityComponents,
+      priorityFactors: dtoReport.priorityFactors,
       priorityPolicyVersion: dtoReport.priorityPolicyVersion,
       priorityRulesApplied: dtoReport.priorityRulesApplied,
       priorityReasons: dtoReport.priorityReasons ?? [],
-      baseScore: dtoReport.baseScore,
-      hotspotScore: dtoReport.hotspotScore,
-      urgencyScore: dtoReport.urgencyScore,
       recommendedDepartment: dtoReport.recommendedDepartment,
       departmentConfidence: dtoReport.departmentConfidence,
       routingReasons: dtoReport.routingReasons ?? [],
@@ -169,14 +169,20 @@ class ReportMapper {
   }
 
   /// Convert DTO PaginatedReports to domain entity
-  static PaginatedReports paginatedFromDto(dto.PaginatedReports dtoPaginated) {
+  static PaginatedReports paginatedFromDto(
+    dto.PaginatedReports dtoPaginated, {
+    bool isStale = false,
+  }) {
     return PaginatedReports(
-      results: dtoPaginated.results.map(fromDto).toList(),
+      results: dtoPaginated.results
+          .map((report) => fromDto(report, isStale: isStale))
+          .toList(),
       count: dtoPaginated.count,
       total: dtoPaginated.total,
       page: dtoPaginated.page,
       pageSize: dtoPaginated.pageSize,
       totalPages: dtoPaginated.totalPages,
+      isStale: isStale,
     );
   }
 

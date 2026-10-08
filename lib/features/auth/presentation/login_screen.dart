@@ -8,7 +8,7 @@ import 'auth_controller.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 
-const _brandBlue = Color(0xFF064BEE);
+const _brandBlue = AppColors.brandBlue;
 
 /// Login screen matching the BayanTrack design mockup.
 /// Features: Bantay artwork and email/password authentication.
@@ -176,8 +176,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                             TextInputType.emailAddress,
                                         textInputAction: TextInputAction.next,
                                         enabled: !isLoading,
-                                        onChanged: (_) =>
-                                            _formKey.currentState?.validate(),
                                         decoration: InputDecoration(
                                           hintText: l10n.enterYourEmail,
                                           prefixIcon: const Icon(
@@ -205,8 +203,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         obscureText: _obscurePassword,
                                         textInputAction: TextInputAction.done,
                                         enabled: !isLoading,
-                                        onChanged: (_) =>
-                                            _formKey.currentState?.validate(),
                                         onFieldSubmitted: (_) => _handleLogin(),
                                         decoration: InputDecoration(
                                           hintText: l10n.enterYourPassword,

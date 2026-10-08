@@ -30,7 +30,7 @@ final class ReportDetailControllerProvider
     required ReportDetailControllerFamily super.from,
     required String super.argument,
   }) : super(
-         retry: null,
+         retry: _noDetailRetry,
          name: r'reportDetailControllerProvider',
          isAutoDispose: true,
          dependencies: null,
@@ -64,7 +64,7 @@ final class ReportDetailControllerProvider
 }
 
 String _$reportDetailControllerHash() =>
-    r'22d886339d7181f20670fbe6f0dcc1b1272ae140';
+    r'99939e4cdb7687f09cf78a7703bc04b7d28f6538';
 
 /// Controller for fetching a single report by ID.
 ///
@@ -82,7 +82,7 @@ final class ReportDetailControllerFamily extends $Family
         > {
   ReportDetailControllerFamily._()
     : super(
-        retry: null,
+        retry: _noDetailRetry,
         name: r'reportDetailControllerProvider',
         dependencies: null,
         $allTransitiveDependencies: null,

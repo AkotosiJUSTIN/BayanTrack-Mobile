@@ -12,6 +12,9 @@ import 'package:bayantrack_mobile/features/auth/presentation/auth_controller.dar
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/register_screen.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
+import 'package:bayantrack_mobile/features/system_governance/system_governance_models.dart';
+import 'package:bayantrack_mobile/features/system_governance/system_governance_provider.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,6 +36,26 @@ class _LoadingBarangays extends Barangays {
 }
 
 class _RegisterUseCaseMock extends Mock implements RegisterUseCase {}
+
+final _registrationTerms = PublishedTerms(
+  versionId: 'published-test-version',
+  checksum: 'published-test-checksum',
+  translations: {
+    for (final language in ['en', 'fil'])
+      language: LegalTranslation(
+        title: 'Terms and Privacy',
+        terms: List.filled(20, 'Published registration terms.').join('\n\n'),
+        privacy: 'Published registration privacy.',
+      ),
+  },
+);
+
+class _PublishedTermsRepository extends SystemGovernanceRepository {
+  _PublishedTermsRepository() : super(Dio());
+
+  @override
+  Future<PublishedTerms> currentTerms() async => _registrationTerms;
+}
 
 const _user = User(
   id: 'USR-1',
@@ -243,6 +266,7 @@ void main() {
         firstName: any(named: 'firstName'),
         lastName: any(named: 'lastName'),
         barangayId: any(named: 'barangayId'),
+        termsConsent: any(named: 'termsConsent'),
       ),
     ).thenAnswer((_) async => const Success(_user));
 
@@ -318,6 +342,7 @@ void main() {
         firstName: 'Ada',
         lastName: 'Lovelace',
         barangayId: barangay.id,
+        termsConsent: _registrationTerms.consent('en'),
       ),
     ).called(1);
     expect(find.text('Login origin'), findsOneWidget);
@@ -344,6 +369,9 @@ Future<void> _pumpRegister(
     ProviderScope(
       key: UniqueKey(),
       overrides: [
+        systemGovernanceRepositoryProvider.overrideWithValue(
+          _PublishedTermsRepository(),
+        ),
         if (registerUseCase == null)
           authControllerProvider.overrideWithValue(authState)
         else

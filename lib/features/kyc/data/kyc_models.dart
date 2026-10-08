@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../../core/utils/kyc_validators.dart';
 
 part 'kyc_models.freezed.dart';
 part 'kyc_models.g.dart';
@@ -72,7 +73,30 @@ enum IdType {
   postal,
   @JsonValue('voters')
   voters,
+  @JsonValue('gsis_ecard')
+  gsisECard,
+  @JsonValue('philhealth')
+  philHealth,
+  @JsonValue('prc')
+  prcProfessionalId,
 }
+
+/// New citizen submissions expose only these ID choices.
+///
+/// Other enum members remain for decoding and resubmitting legacy records.
+const supportedCitizenIdTypes = <IdType>[
+  IdType.nationalId,
+  IdType.driversLicense,
+  IdType.passport,
+  IdType.umid,
+];
+
+const supportedCitizenIdApiValues = <String>{
+  'national_id',
+  'drivers_license',
+  'passport',
+  'umid',
+};
 
 extension IdTypeExtension on IdType {
   String get displayName {
@@ -93,6 +117,12 @@ extension IdTypeExtension on IdType {
         return 'Postal ID';
       case IdType.voters:
         return "Voter's ID";
+      case IdType.gsisECard:
+        return 'GSIS eCard';
+      case IdType.philHealth:
+        return 'PhilHealth ID';
+      case IdType.prcProfessionalId:
+        return 'PRC Professional ID';
     }
   }
 
@@ -114,6 +144,12 @@ extension IdTypeExtension on IdType {
         return 'postal';
       case IdType.voters:
         return 'voters';
+      case IdType.gsisECard:
+        return 'gsis_ecard';
+      case IdType.philHealth:
+        return 'philhealth';
+      case IdType.prcProfessionalId:
+        return 'prc';
     }
   }
 
@@ -209,7 +245,7 @@ sealed class KycStatusResponse with _$KycStatusResponse {
     String? id,
     @JsonKey(name: 'user_id') String? userId,
     @JsonKey(name: 'kyc_status') required KycStatus kycStatus,
-    
+
     // Basic Identity Information
     @JsonKey(name: 'full_name') @Default('') String fullName,
     @JsonKey(name: 'first_name') String? firstName,
@@ -219,34 +255,35 @@ sealed class KycStatusResponse with _$KycStatusResponse {
     Sex? sex,
     String? nationality,
     @JsonKey(name: 'civil_status') CivilStatus? civilStatus,
-    
+
     // Contact Information
     String? email,
     @JsonKey(name: 'mobile_number') String? mobileNumber,
-    
+
     // Address Information
     @JsonKey(name: 'street_barangay') String? streetBarangay,
     @JsonKey(name: 'city_municipality') String? cityMunicipality,
     String? province,
     @JsonKey(name: 'zip_code') String? zipCode,
-    
+
     // Government ID Details
     @JsonKey(name: 'id_type') IdType? idType,
     @JsonKey(name: 'id_number') String? idNumber,
     @JsonKey(name: 'id_expiry_date') String? idExpiryDate,
-    
+
     // ID Images
     @JsonKey(name: 'id_front_image_url') String? idFrontImageUrl,
     @JsonKey(name: 'id_back_image_url') String? idBackImageUrl,
     @JsonKey(name: 'id_image_url') String? idImageUrl, // Legacy
-    
     // Selfie Images
     @JsonKey(name: 'selfie_image_url') String? selfieImageUrl,
     @JsonKey(name: 'selfie_with_id_image_url') String? selfieWithIdImageUrl,
-    
+
     // Declaration
-    @JsonKey(name: 'declaration_accepted') @Default(false) bool declarationAccepted,
-    
+    @JsonKey(name: 'declaration_accepted')
+    @Default(false)
+    bool declarationAccepted,
+
     // Verification Status
     @JsonKey(name: 'precheck_status') PrecheckStatus? precheckStatus,
     @JsonKey(name: 'precheck_notes') String? precheckNotes,
@@ -255,7 +292,7 @@ sealed class KycStatusResponse with _$KycStatusResponse {
     @JsonKey(name: 'verified_by') String? verifiedBy,
     @JsonKey(name: 'verified_by_role') String? verifiedByRole,
     @JsonKey(name: 'resubmission_count') @Default(0) int resubmissionCount,
-    
+
     // Timestamps
     @JsonKey(name: 'submitted_at') String? submittedAt,
     @JsonKey(name: 'verified_at') String? verifiedAt,
@@ -285,7 +322,9 @@ sealed class KycFormOptionsResponse with _$KycFormOptionsResponse {
   const factory KycFormOptionsResponse({
     @JsonKey(name: 'id_types') @Default([]) List<KycOptionItem> idTypes,
     @JsonKey(name: 'sex_options') @Default([]) List<KycOptionItem> sexOptions,
-    @JsonKey(name: 'civil_statuses') @Default([]) List<KycOptionItem> civilStatuses,
+    @JsonKey(name: 'civil_statuses')
+    @Default([])
+    List<KycOptionItem> civilStatuses,
   }) = _KycFormOptionsResponse;
 
   factory KycFormOptionsResponse.fromJson(Map<String, dynamic> json) =>
@@ -294,10 +333,8 @@ sealed class KycFormOptionsResponse with _$KycFormOptionsResponse {
 
 @freezed
 sealed class KycOptionItem with _$KycOptionItem {
-  const factory KycOptionItem({
-    required String value,
-    required String label,
-  }) = _KycOptionItem;
+  const factory KycOptionItem({required String value, required String label}) =
+      _KycOptionItem;
 
   factory KycOptionItem.fromJson(Map<String, dynamic> json) =>
       _$KycOptionItemFromJson(json);
@@ -315,30 +352,30 @@ class KycSubmitRequest {
   final Sex? sex;
   final String nationality;
   final CivilStatus? civilStatus;
-  
+
   // B. Contact Information
   final String email;
   final String mobileNumber;
-  
+
   // C. Address Information
   final String streetBarangay;
   final String cityMunicipality;
   final String province;
   final String? zipCode;
-  
+
   // D. Government ID Details
   final IdType idType;
   final String idNumber;
   final String? idExpiryDate;
-  
+
   // E. ID Upload Images
   final String idFrontImagePath;
   final String? idBackImagePath;
-  
+
   // F. Selfie Verification
   final String selfieImagePath;
   final String? selfieWithIdImagePath;
-  
+
   // G. Declaration
   final bool declarationAccepted;
 
@@ -374,9 +411,11 @@ class KycSubmitRequest {
 
   /// Computed full name for display
   String get fullName {
-    final parts = [firstName, middleName, lastName]
-        .where((p) => p != null && p.isNotEmpty)
-        .toList();
+    final parts = [
+      firstName,
+      middleName,
+      lastName,
+    ].where((p) => p != null && p.isNotEmpty).toList();
     return parts.join(' ');
   }
 
@@ -385,15 +424,18 @@ class KycSubmitRequest {
     return {
       // Basic Identity
       'first_name': firstName,
-      if (middleName != null && middleName!.isNotEmpty) 'middle_name': middleName!,
+      if (middleName != null && middleName!.isNotEmpty)
+        'middle_name': middleName!,
       'last_name': lastName,
-      if (dateOfBirth != null) 'date_of_birth': dateOfBirth!,
+      ...(dateOfBirth == null
+          ? const <String, String>{}
+          : {'date_of_birth': dateOfBirth!}),
       if (sex != null) 'sex': sex!.apiValue,
       'nationality': nationality,
       if (civilStatus != null) 'civil_status': civilStatus!.apiValue,
       // Contact
       'email': email,
-      'mobile_number': mobileNumber,
+      'mobile_number': KycValidators.normalizeMobileNumber(mobileNumber),
       // Address
       'street_barangay': streetBarangay,
       'city_municipality': cityMunicipality,
@@ -402,7 +444,9 @@ class KycSubmitRequest {
       // ID Details
       'id_type': idType.apiValue,
       'id_number': idNumber,
-      if (idExpiryDate != null) 'id_expiry_date': idExpiryDate!,
+      ...(idExpiryDate == null
+          ? const <String, String>{}
+          : {'id_expiry_date': idExpiryDate!}),
       // Declaration
       'declaration_accepted': declarationAccepted.toString(),
     };

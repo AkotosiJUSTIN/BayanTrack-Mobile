@@ -13,9 +13,17 @@ const realtimeEventNames = <String>{
   'verification.queue_changed',
   'integrity.changed',
   'user_directory.changed',
+  'system.state_changed',
 };
 
-enum RealtimeTarget { reports, notifications, verification, integrity, profile }
+enum RealtimeTarget {
+  reports,
+  notifications,
+  verification,
+  integrity,
+  profile,
+  system,
+}
 
 class RealtimeEvent {
   const RealtimeEvent({
@@ -132,6 +140,7 @@ class RealtimeEventRouter {
 }
 
 Set<RealtimeTarget> invalidationTargets(RealtimeEvent event) {
+  if (event.name == 'system.state_changed') return {RealtimeTarget.system};
   if (event.name == 'user_directory.changed') {
     return {RealtimeTarget.profile};
   }

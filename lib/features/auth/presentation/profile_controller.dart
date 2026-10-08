@@ -109,6 +109,12 @@ class ProfileController extends _$ProfileController {
     isActive: user.isActive,
     createdAt: user.createdAt?.toIso8601String(),
     updatedAt: user.updatedAt?.toIso8601String(),
+    passwordChangedAt: user.passwordChangedAt?.toIso8601String(),
+    passwordExpiresAt: user.passwordExpiresAt?.toIso8601String(),
+    passwordDaysRemaining: user.passwordDaysRemaining,
+    passwordWarningLevel: user.passwordWarningLevel,
+    passwordExpired: user.passwordExpired,
+    passwordChangeRequired: user.passwordChangeRequired,
   );
 }
 

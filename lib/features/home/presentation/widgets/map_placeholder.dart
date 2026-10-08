@@ -44,8 +44,8 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
         .map(
           (report) => Marker(
             point: LatLng(report.latitude!, report.longitude!),
-            width: 40,
-            height: 40,
+            width: 48,
+            height: 48,
             child: Tooltip(
               message: _buildTooltipMessage(report, l10n),
               waitDuration: const Duration(milliseconds: 150),
@@ -56,7 +56,14 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
                 onTap: widget.onMarkerTap == null
                     ? null
                     : () => widget.onMarkerTap!(report),
-                child: _buildMarker(_colorForStatus(report.status)),
+                behavior: widget.onMarkerTap == null
+                    ? HitTestBehavior.deferToChild
+                    : HitTestBehavior.opaque,
+                child: Center(
+                  child: _buildMarker(
+                    reportStatusIndicatorColor(report.status),
+                  ),
+                ),
               ),
             ),
           ),
@@ -155,45 +162,23 @@ class _MapPlaceholderState extends State<MapPlaceholder> {
   Widget _buildNoCoordinatesBanner(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor.withValues(alpha: 0.92),
+        color: theme.colorScheme.surface.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-        ),
       ),
       child: Row(
         children: [
           Icon(Icons.info_outline, color: AppColors.primary, size: 18),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              l10n.noReportsYet,
-              style: theme.textTheme.bodySmall,
-            ),
+            child: Text(l10n.noReportsYet, style: theme.textTheme.bodySmall),
           ),
         ],
       ),
     );
-  }
-
-  Color _colorForStatus(ReportStatus status) {
-    return switch (status) {
-      ReportStatus.submitted => AppColors.alertMedium,
-      ReportStatus.underReview => AppColors.alertMedium,
-      ReportStatus.verified => AppColors.alertMedium,
-      ReportStatus.assigned => AppColors.alertMedium,
-      ReportStatus.inProgress => const Color(0xFF3B82F6), // Blue
-      ReportStatus.escalated => AppColors.alertMedium,
-      ReportStatus.endorsed => AppColors.alertMedium,
-      ReportStatus.resolved => AppColors.success,
-      ReportStatus.closed => AppColors.success,
-      ReportStatus.rejected => AppColors.alertHigh,
-    };
   }
 
   String _buildTooltipMessage(Report report, AppLocalizations l10n) {

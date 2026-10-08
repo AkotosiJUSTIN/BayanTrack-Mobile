@@ -9,6 +9,7 @@ class PaginatedReports extends Equatable {
   final int page;
   final int pageSize;
   final int totalPages;
+  final bool isStale;
 
   const PaginatedReports({
     required this.results,
@@ -17,6 +18,7 @@ class PaginatedReports extends Equatable {
     this.page = 1,
     this.pageSize = 20,
     this.totalPages = 1,
+    this.isStale = false,
   });
 
   /// Check if there are more pages
@@ -36,5 +38,6 @@ class PaginatedReports extends Equatable {
     page,
     pageSize,
     totalPages,
+    isStale,
   ];
 }

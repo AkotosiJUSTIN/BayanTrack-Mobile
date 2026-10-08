@@ -73,7 +73,10 @@ enum IdType {
   sss,
   umid,
   postal,
-  voters;
+  voters,
+  gsisECard,
+  philHealth,
+  prcProfessionalId;
 
   String get displayName => switch (this) {
     passport => 'Passport',
@@ -84,6 +87,9 @@ enum IdType {
     umid => 'UMID',
     postal => 'Postal ID',
     voters => "Voter's ID",
+    gsisECard => 'GSIS eCard',
+    philHealth => 'PhilHealth ID',
+    prcProfessionalId => 'PRC Professional ID',
   };
 
   /// API value for submission.
@@ -96,6 +102,9 @@ enum IdType {
     umid => 'umid',
     postal => 'postal',
     voters => 'voters',
+    gsisECard => 'gsis_ecard',
+    philHealth => 'philhealth',
+    prcProfessionalId => 'prc',
   };
 
   /// Whether this ID type requires a back image.
@@ -114,6 +123,9 @@ enum IdType {
       'umid' => umid,
       'postal' => postal,
       'voters' => voters,
+      'gsis_ecard' => gsisECard,
+      'philhealth' => philHealth,
+      'prc' => prcProfessionalId,
       _ => nationalId,
     };
   }

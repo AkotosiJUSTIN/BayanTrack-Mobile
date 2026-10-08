@@ -11,15 +11,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class _FailingProfileController extends ProfileController {
+  @override
+  Future<UserProfile> build() async {
+    throw Exception('private backend details');
+  }
+}
+
 void main() {
   testWidgets('Profile language setting switches the app immediately', (
     tester,
   ) async {
+    addTearDown(tester.view.reset);
+    tester.view.physicalSize = const Size(960, 1600);
+    tester.view.devicePixelRatio = 3;
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
 
     await tester.pumpWidget(
       ProviderScope(
+        retry: (_, _) => null,
         overrides: [
           sharedPrefsProvider.overrideWithValue(prefs),
           userPermissionsProvider.overrideWithValue(UserPermissions(null)),
@@ -37,6 +48,12 @@ void main() {
             locale: ref.watch(appLocaleProvider),
             supportedLocales: AppLocalizations.supportedLocales,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(1.3)),
+              child: child!,
+            ),
             home: const ProfileScreen(),
           ),
         ),
@@ -44,9 +61,21 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Language'), findsOneWidget);
-    await tester.ensureVisible(find.text('Language'));
-    await tester.tap(find.text('Language'));
+    final scrollable = tester.state<ScrollableState>(find.byType(Scrollable));
+    scrollable.position.jumpTo(scrollable.position.maxScrollExtent);
+    await tester.pump();
+    final language = find.byKey(
+      const ValueKey('profile-language'),
+      skipOffstage: false,
+    );
+    expect(language, findsOneWidget);
+    scrollable.position.jumpTo(
+      (scrollable.position.maxScrollExtent - 160)
+          .clamp(0.0, scrollable.position.maxScrollExtent)
+          .toDouble(),
+    );
+    await tester.pump();
+    await tester.tap(language);
     await tester.pumpAndSettle();
     expect(find.text('Filipino'), findsOneWidget);
 
@@ -55,5 +84,39 @@ void main() {
 
     expect(find.text('Wika'), findsOneWidget);
     expect(prefs.getString('app_locale'), 'fil');
+  });
+
+  testWidgets('Profile failure shows safe retry guidance', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        retry: (_, _) => null,
+        overrides: [
+          sharedPrefsProvider.overrideWithValue(prefs),
+          userPermissionsProvider.overrideWithValue(UserPermissions(null)),
+          profileControllerProvider.overrideWith(_FailingProfileController.new),
+          profileStatsControllerProvider.overrideWithBuild(
+            (_, _) => const {'total': 0, 'resolved': 0, 'pending': 0},
+          ),
+          kycStatusControllerProvider.overrideWithBuild((_, _) async => null),
+        ],
+        child: const MaterialApp(
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: ProfileScreen(),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(
+      find.text('Unable to load profile.', skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(find.text('private backend details'), findsNothing);
+    expect(find.widgetWithText(FilledButton, 'Retry'), findsOneWidget);
   });
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../auth_di.dart';
@@ -28,6 +30,8 @@ class AuthSuccess extends AuthState {
   final String? message;
   final User? user;
   const AuthSuccess([this.message, this.user]);
+
+  bool get mayOpenWidgetDestination => user?.requiresPasswordChange == false;
 }
 
 class AuthError extends AuthState {
@@ -42,7 +46,18 @@ class AuthError extends AuthState {
 @riverpod
 class AuthController extends _$AuthController {
   @override
-  AuthState build() => const AuthInitial();
+  AuthState build() {
+    final subscription = ref
+        .watch(authSessionRepositoryProvider)
+        .authStateChanges
+        .listen((authenticated) {
+          if (!authenticated && state is AuthSuccess) {
+            state = const AuthIdle();
+          }
+        });
+    ref.onDispose(() => unawaited(subscription.cancel()));
+    return const AuthInitial();
+  }
 
   /// Check for existing session on app startup
   Future<void> checkAuth() async {
@@ -82,6 +97,15 @@ class AuthController extends _$AuthController {
     }
   }
 
+  Future<void> refreshProfile() async {
+    final result = await ref.read(getCurrentUserUseCaseProvider)();
+    if (!ref.mounted) return;
+    result.when(
+      success: (user) => state = AuthSuccess('Session refreshed', user),
+      failure: (_) {},
+    );
+  }
+
   /// Login user
   Future<bool> login(String email, String password) async {
     debugPrint('[AuthController] login() starting');
@@ -119,6 +143,7 @@ class AuthController extends _$AuthController {
     required String firstName,
     required String lastName,
     required String barangayId,
+    Map<String, String>? termsConsent,
   }) async {
     state = const AuthLoading();
 
@@ -130,6 +155,7 @@ class AuthController extends _$AuthController {
       firstName: firstName,
       lastName: lastName,
       barangayId: barangayId,
+      termsConsent: termsConsent,
     );
 
     return result.when(
@@ -253,6 +279,7 @@ class AuthController extends _$AuthController {
   String _failureToMessage(Failure failure) {
     return switch (failure) {
       AuthFailure(:final message) => message,
+      SystemRestrictionFailure(:final message) => message,
       ValidationFailure(:final message, :final fieldErrors) =>
         fieldErrors != null && fieldErrors.isNotEmpty
             ? fieldErrors.entries.map((e) => '${e.key}: ${e.value}').join('\n')

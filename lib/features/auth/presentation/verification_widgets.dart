@@ -183,100 +183,81 @@ class VerificationBanner extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final actionLabel = localizedVerificationActionLabel(permissions, l10n);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: statusColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: statusColor.withValues(alpha: 0.28)),
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxWidth < 360;
+    final statusMessage = localizedVerificationStatusMessage(permissions, l10n);
+    final action = TextButton.icon(
+      onPressed: () => _navigateToKyc(context, permissions, ref),
+      style: TextButton.styleFrom(
+        foregroundColor: theme.colorScheme.primary,
+        minimumSize: const Size(0, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+      ),
+      icon: const Icon(Icons.arrow_forward, size: 18),
+      label: Text(actionLabel),
+    );
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        _getStatusIcon(permissions.currentStatus),
-                        color: statusColor,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.userVerification,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: theme.colorScheme.onSurface,
-                            ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+      child: Semantics(
+        container: true,
+        label: '${l10n.userVerification}: $statusMessage',
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+          decoration: BoxDecoration(
+            color: Color.alphaBlend(
+              statusColor.withValues(alpha: 0.08),
+              theme.colorScheme.surface,
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 420;
+              final content = Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    _getStatusIcon(permissions.currentStatus),
+                    color: statusColor,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.userVerification,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: theme.colorScheme.onSurface,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            localizedVerificationStatusMessage(permissions, l10n),
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.78,
-                              ),
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                if (compact)
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () =>
-                          _navigateToKyc(context, permissions, ref),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.alertMedium,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 11),
-                      ),
-                      child: Text(actionLabel),
-                    ),
-                  )
-                else
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: ElevatedButton(
-                      onPressed: () =>
-                          _navigateToKyc(context, permissions, ref),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.alertMedium,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 11,
                         ),
-                      ),
-                      child: Text(actionLabel),
+                        const SizedBox(height: 3),
+                        Text(
+                          statusMessage,
+                          maxLines: compact ? 3 : 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-              ],
-            );
-          },
+                  if (!compact) ...[const SizedBox(width: 8), action],
+                ],
+              );
+
+              return compact
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [content, action],
+                    )
+                  : content;
+            },
+          ),
         ),
       ),
     );
@@ -369,9 +350,11 @@ class InlineVerificationPrompt extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.alertMedium.withValues(alpha: 0.1),
+        color: Color.alphaBlend(
+          AppColors.alertMedium.withValues(alpha: 0.1),
+          Theme.of(context).colorScheme.surface,
+        ),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.alertMedium.withValues(alpha: 0.3)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -393,7 +376,7 @@ class InlineVerificationPrompt extends ConsumerWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
-              color: Theme.of(context).colorScheme.outline,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 16),

@@ -47,6 +47,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String firstName,
     required String lastName,
     required String barangayId,
+    Map<String, String>? termsConsent,
   }) async {
     try {
       final response = await _dio.post(
@@ -61,6 +62,7 @@ class AuthRepositoryImpl implements AuthRepository {
             barangayId: barangayId,
           ).toJson(),
           'client_type': 'mobile',
+          ...?termsConsent,
         },
       );
       // Backend returns tokens on registration (same shape as login)
@@ -131,14 +133,18 @@ class AuthRepositoryImpl implements AuthRepository {
     int? expectedRevision,
   }) async {
     try {
+      final profileData = ProfileUpdateRequest(
+        firstName: firstName,
+        lastName: lastName,
+        phone: phone,
+        expectedRevision: expectedRevision,
+      ).toJson();
+      if (firstName == null) profileData.remove('first_name');
+      if (lastName == null) profileData.remove('last_name');
+      if (expectedRevision == null) profileData.remove('expected_revision');
       final response = await _dio.put(
         ApiConstants.profileUpdate,
-        data: ProfileUpdateRequest(
-          firstName: firstName,
-          lastName: lastName,
-          phone: phone,
-          expectedRevision: expectedRevision,
-        ).toJson(),
+        data: profileData,
       );
       final userData = response.data['user'] ?? response.data;
       final profile = UserProfile.fromJson(userData);

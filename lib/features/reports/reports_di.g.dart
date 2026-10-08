@@ -11,7 +11,7 @@ part of 'reports_di.dart';
 /// Provides the [ReportsRepository] implementation.
 ///
 /// Returns [ReportsRepositoryImpl] which uses Dio and ErrorMapper
-/// for proper Result<T> error handling.
+/// for proper result error handling.
 
 @ProviderFor(reportsRepositoryDomain)
 final reportsRepositoryDomainProvider = ReportsRepositoryDomainProvider._();
@@ -19,7 +19,7 @@ final reportsRepositoryDomainProvider = ReportsRepositoryDomainProvider._();
 /// Provides the [ReportsRepository] implementation.
 ///
 /// Returns [ReportsRepositoryImpl] which uses Dio and ErrorMapper
-/// for proper Result<T> error handling.
+/// for proper result error handling.
 
 final class ReportsRepositoryDomainProvider
     extends
@@ -32,7 +32,7 @@ final class ReportsRepositoryDomainProvider
   /// Provides the [ReportsRepository] implementation.
   ///
   /// Returns [ReportsRepositoryImpl] which uses Dio and ErrorMapper
-  /// for proper Result<T> error handling.
+  /// for proper result error handling.
   ReportsRepositoryDomainProvider._()
     : super(
         from: null,
@@ -68,7 +68,7 @@ final class ReportsRepositoryDomainProvider
 }
 
 String _$reportsRepositoryDomainHash() =>
-    r'9372046eebd000c3e7ac2ab038710d0c98c67979';
+    r'46a60735c85ef1841fdb223de73a59840fd18fb4';
 
 @ProviderFor(getReportsUseCase)
 final getReportsUseCaseProvider = GetReportsUseCaseProvider._();

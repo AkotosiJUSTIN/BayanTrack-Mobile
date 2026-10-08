@@ -30,6 +30,19 @@ abstract interface class AuthSessionRepository {
     required String refreshToken,
   });
 
+  /// Replace a session only while it still owns the refresh token used by a
+  /// refresh request. Prevents late refresh responses from restoring a logged
+  /// out or switched account.
+  Future<bool> saveTokensIfRefreshTokenMatches({
+    required String expectedRefreshToken,
+    required String accessToken,
+    required String refreshToken,
+  });
+
+  /// Clear only the session that failed refresh. A concurrent login may have
+  /// already installed another account's token.
+  Future<bool> clearSessionIfRefreshTokenMatches(String? expectedRefreshToken);
+
   /// Clear all session data (logout)
   Future<void> clearSession();
 }

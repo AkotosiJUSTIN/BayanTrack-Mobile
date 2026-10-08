@@ -316,6 +316,7 @@ sealed class Report with _$Report {
     // System Fields
     @Default('submitted') String status,
     @JsonKey(name: 'assigned_department') String? assignedDepartment,
+    @JsonKey(name: 'responding_agency') String? respondingAgency,
     @JsonKey(name: 'admin_remarks') String? adminRemarks,
 
     // AI Fields
@@ -329,11 +330,12 @@ sealed class Report with _$Report {
     @JsonKey(name: 'is_multi_issue') @Default(false) bool isMultiIssue,
     @JsonKey(name: 'rules_applied') @Default([]) List<String> rulesApplied,
     String? priority,
-    @JsonKey(name: 'priority_score') @NullableIntConverter() int? priorityScore,
+    @JsonKey(name: 'priority_rank') @NullableIntConverter() int? priorityRank,
     @JsonKey(name: 'priority_level') String? priorityLevel,
-    @JsonKey(name: 'suggested_priority_score') double? suggestedPriorityScore,
+    @JsonKey(name: 'suggested_priority_rank')
+    @NullableIntConverter()
+    int? suggestedPriorityRank,
     @JsonKey(name: 'suggested_priority_level') String? suggestedPriorityLevel,
-    @JsonKey(name: 'queue_priority_score') double? queuePriorityScore,
     @JsonKey(name: 'queue_priority_level') String? queuePriorityLevel,
     @JsonKey(name: 'queue_priority_rank')
     @NullableIntConverter()
@@ -361,17 +363,14 @@ sealed class Report with _$Report {
     @JsonKey(name: 'priority_calibration_version')
     String? priorityCalibrationVersion,
     @JsonKey(name: 'emergency_probability') double? emergencyProbability,
-    @JsonKey(name: 'priority_components')
+    @JsonKey(name: 'priority_factors')
     @Default({})
-    Map<String, double> priorityComponents,
+    Map<String, String> priorityFactors,
     @JsonKey(name: 'priority_policy_version') String? priorityPolicyVersion,
     @JsonKey(name: 'priority_rules_applied')
     @Default([])
     List<String> priorityRulesApplied,
     @JsonKey(name: 'priority_reasons') List<String>? priorityReasons,
-    @JsonKey(name: 'base_score') @NullableIntConverter() int? baseScore,
-    @JsonKey(name: 'hotspot_score') @NullableIntConverter() int? hotspotScore,
-    @JsonKey(name: 'urgency_score') double? urgencyScore,
     @JsonKey(name: 'recommended_department') String? recommendedDepartment,
     @JsonKey(name: 'department_confidence') double? departmentConfidence,
     @JsonKey(name: 'routing_reasons') List<String>? routingReasons,

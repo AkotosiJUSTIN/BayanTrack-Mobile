@@ -24,16 +24,38 @@ class MainActivity : FlutterActivity() {
                 channel.setMethodCallHandler { call, result ->
                     when (call.method) {
                         "getInitialWidgetDestination" -> result.success(takeInitialWidgetDestination())
+                        "acknowledgeWidgetDestination" -> {
+                            val destination = call.arguments as? String
+                            if (destination != null) {
+                                if (pendingWidgetDestination == destination) {
+                                    pendingWidgetDestination = null
+                                }
+                                intent?.takeIf {
+                                    it.getStringExtra(
+                                        BayanTrackWidgetProvider.EXTRA_WIDGET_DESTINATION,
+                                    ) == destination
+                                }?.let { currentIntent ->
+                                    currentIntent.removeExtra(
+                                        BayanTrackWidgetProvider.EXTRA_WIDGET_DESTINATION,
+                                    )
+                                    setIntent(currentIntent)
+                                }
+                            }
+                            result.success(null)
+                        }
                         "updateState" -> {
                             val state = call.arguments as? Map<*, *>
                             val locale = state?.get("locale") as? String
                             val authenticated = state?.get("authenticated") as? Boolean ?: false
                             val unreadCount = (state?.get("unreadCount") as? Number)?.toInt() ?: 0
+                            val quickReportStatus = state?.get("quickReportStatus") as? String
+                                ?: "ready"
                             BayanTrackWidgetProvider.updateState(
                                 context = this,
                                 locale = locale,
                                 authenticated = authenticated,
                                 unreadCount = unreadCount,
+                                quickReportStatus = quickReportStatus,
                             )
                             result.success(null)
                         }

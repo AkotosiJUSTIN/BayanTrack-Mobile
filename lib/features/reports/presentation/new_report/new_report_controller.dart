@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/constants/urdaneta_geo.dart';
 import '../../../auth/data/auth_models.dart';
 import '../../data/report_models.dart';
+import '../../data/report_draft_store.dart';
 import '../../domain/entities/report.dart' as domain;
 import '../../reports_di.dart';
 import 'quick_report_geo.dart';
@@ -43,6 +44,7 @@ class NewReportState {
   final bool isResolvingLandmark;
   final List<String> nearbyLandmarkSuggestions;
   final String? landmarkLookupError;
+  final bool landmarkLookupCompleted;
   final bool landmarkManuallyEdited;
 
   // Section C: Consent & Declaration
@@ -51,7 +53,9 @@ class NewReportState {
 
   // Form state
   final bool isSubmitting;
+  final bool draftCompleted;
   final String? error;
+  final String resumeStep;
 
   const NewReportState({
     this.selectedImages = const [],
@@ -75,11 +79,14 @@ class NewReportState {
     this.isResolvingLandmark = false,
     this.nearbyLandmarkSuggestions = const [],
     this.landmarkLookupError,
+    this.landmarkLookupCompleted = false,
     this.landmarkManuallyEdited = false,
     this.declarationConfirmed = false,
     this.dataProcessingConsent = false,
     this.isSubmitting = false,
+    this.draftCompleted = false,
     this.error,
+    this.resumeStep = 'photos',
   });
 
   NewReportState copyWith({
@@ -104,15 +111,19 @@ class NewReportState {
     bool? isResolvingLandmark,
     List<String>? nearbyLandmarkSuggestions,
     String? landmarkLookupError,
+    bool? landmarkLookupCompleted,
     bool? landmarkManuallyEdited,
     bool? declarationConfirmed,
     bool? dataProcessingConsent,
     bool? isSubmitting,
+    bool? draftCompleted,
     String? error,
+    String? resumeStep,
     bool clearLocation = false,
     bool clearBarangay = false,
     bool clearStreetLandmark = false,
     bool clearLandmarkSuggestions = false,
+    bool clearLandmarkLookupError = false,
   }) {
     return NewReportState(
       selectedImages: selectedImages ?? this.selectedImages,
@@ -139,7 +150,12 @@ class NewReportState {
       nearbyLandmarkSuggestions: clearLocation || clearLandmarkSuggestions
           ? const []
           : nearbyLandmarkSuggestions ?? this.nearbyLandmarkSuggestions,
-      landmarkLookupError: landmarkLookupError,
+      landmarkLookupError: clearLocation || clearLandmarkLookupError
+          ? null
+          : landmarkLookupError ?? this.landmarkLookupError,
+      landmarkLookupCompleted: clearLocation
+          ? false
+          : landmarkLookupCompleted ?? this.landmarkLookupCompleted,
       landmarkManuallyEdited: clearLocation
           ? false
           : landmarkManuallyEdited ?? this.landmarkManuallyEdited,
@@ -147,7 +163,9 @@ class NewReportState {
       dataProcessingConsent:
           dataProcessingConsent ?? this.dataProcessingConsent,
       isSubmitting: isSubmitting ?? this.isSubmitting,
+      draftCompleted: draftCompleted ?? this.draftCompleted,
       error: error,
+      resumeStep: resumeStep ?? this.resumeStep,
     );
   }
 
@@ -160,8 +178,6 @@ class NewReportState {
       dataProcessingConsent;
 
   /// Section validations
-  bool get hasPhotos => selectedImages.isNotEmpty;
-
   bool get hasLocation =>
       (zone != null && zone!.isNotEmpty) ||
       (streetLandmark != null && streetLandmark!.isNotEmpty) ||
@@ -175,32 +191,100 @@ class NewReportState {
 /// Controller for managing new report flow state
 @riverpod
 class NewReportController extends _$NewReportController {
-  static const int maxImages = 5;
-
   @override
   NewReportState build() => const NewReportState();
 
   // ==================== IMAGES ====================
 
   void addImage(File image) {
-    if (state.selectedImages.length >= maxImages) return;
     state = state.copyWith(selectedImages: [...state.selectedImages, image]);
   }
 
   void addImages(List<File> images) {
-    final remaining = maxImages - state.selectedImages.length;
-    final toAdd = images.take(remaining).toList();
-    state = state.copyWith(selectedImages: [...state.selectedImages, ...toAdd]);
+    if (images.isEmpty) return;
+    state = state.copyWith(
+      selectedImages: [...state.selectedImages, ...images],
+    );
   }
 
   void removeImage(int index) {
     if (index < 0 || index >= state.selectedImages.length) return;
-    final updated = List<File>.from(state.selectedImages)..removeAt(index);
+    final updated = List<File>.from(state.selectedImages);
+    updated.removeAt(index);
+    state = state.copyWith(selectedImages: updated);
+  }
+
+  void replaceImage(int index, File image) {
+    if (index < 0 || index >= state.selectedImages.length) return;
+    final updated = List<File>.from(state.selectedImages);
+    updated[index] = image;
     state = state.copyWith(selectedImages: updated);
   }
 
   void clearImages() {
+    if (state.selectedImages.isEmpty) return;
     state = state.copyWith(selectedImages: []);
+  }
+
+  void setResumeStep(String step) {
+    if (!const {'photos', 'location', 'details', 'review'}.contains(step) ||
+        state.resumeStep == step) {
+      return;
+    }
+    state = state.copyWith(resumeStep: step);
+  }
+
+  void markDraftCompleted() {
+    state = state.copyWith(draftCompleted: true);
+  }
+
+  void restoreDraft(ReportDraft draft, {required List<File> attachments}) {
+    if (draft.type != ReportDraftType.full) return;
+    final payload = draft.payload;
+    ReportCategory? category;
+    for (final item in ReportCategory.values) {
+      if (item.value == payload['category']) category = item;
+    }
+    final accuracy = LocationAccuracy.values.where(
+      (item) => item.name == payload['locationAccuracy'],
+    );
+    final streetLandmark = _draftString(payload['streetLandmark']);
+    final step =
+        const {
+          'photos',
+          'location',
+          'details',
+          'review',
+        }.contains(draft.resumeStep)
+        ? draft.resumeStep
+        : 'photos';
+    state = NewReportState(
+      selectedImages: attachments,
+      category: category,
+      title: _draftString(payload['title']),
+      description: _draftString(payload['description']) ?? '',
+      incidentDatetime: DateTime.tryParse(
+        payload['incidentDatetime']?.toString() ?? '',
+      ),
+      isHappeningNow: payload['isHappeningNow'] == true,
+      zone: _draftString(payload['zone']),
+      streetLandmark: streetLandmark,
+      municipalityId: _draftString(payload['municipalityId']) ?? 'urdaneta',
+      barangayId: null,
+      barangay: _draftString(payload['barangay']),
+      cityMunicipality: _draftString(payload['cityMunicipality']),
+      province: _draftString(payload['province']),
+      latitude: _draftDouble(payload['latitude']),
+      longitude: _draftDouble(payload['longitude']),
+      locationAccuracy: accuracy.isEmpty
+          ? LocationAccuracy.approximate
+          : accuracy.first,
+      location: _draftString(payload['location']),
+      landmarkManuallyEdited: streetLandmark != null,
+      declarationConfirmed: false,
+      dataProcessingConsent: false,
+      resumeStep: step,
+    );
   }
 
   // ==================== REPORT DETAILS (Section A) ====================
@@ -239,6 +323,12 @@ class NewReportController extends _$NewReportController {
       latitude: latitude,
       longitude: longitude,
       location: location,
+      clearBarangay: true,
+      clearStreetLandmark: true,
+      clearLandmarkSuggestions: true,
+      clearLandmarkLookupError: true,
+      landmarkLookupCompleted: false,
+      landmarkManuallyEdited: false,
     );
   }
 
@@ -259,12 +349,16 @@ class NewReportController extends _$NewReportController {
     );
   }
 
-  void beginLandmarkLookup() {
+  void beginLandmarkLookup({bool clearManual = false}) {
     state = state.copyWith(
       isResolvingLandmark: true,
-      clearStreetLandmark: !state.landmarkManuallyEdited,
+      clearStreetLandmark: clearManual || !state.landmarkManuallyEdited,
       clearLandmarkSuggestions: true,
-      landmarkLookupError: null,
+      clearLandmarkLookupError: true,
+      landmarkLookupCompleted: false,
+      landmarkManuallyEdited: clearManual
+          ? false
+          : state.landmarkManuallyEdited,
     );
   }
 
@@ -277,7 +371,8 @@ class NewReportController extends _$NewReportController {
           ? state.streetLandmark
           : suggestion.prefill,
       nearbyLandmarkSuggestions: suggestion.choices,
-      landmarkLookupError: null,
+      clearLandmarkLookupError: true,
+      landmarkLookupCompleted: true,
     );
   }
 
@@ -285,7 +380,8 @@ class NewReportController extends _$NewReportController {
     state = state.copyWith(
       isResolvingLandmark: false,
       clearLandmarkSuggestions: true,
-      landmarkLookupError: 'Nearby landmark suggestions unavailable.',
+      landmarkLookupError: landmarkLookupUnavailable,
+      landmarkLookupCompleted: false,
     );
   }
 
@@ -316,7 +412,7 @@ class NewReportController extends _$NewReportController {
     state = state.copyWith(
       streetLandmark: streetLandmark,
       landmarkManuallyEdited: true,
-      landmarkLookupError: null,
+      clearLandmarkLookupError: true,
     );
   }
 
@@ -337,6 +433,10 @@ class NewReportController extends _$NewReportController {
       clearLocation: true,
       clearBarangay: true,
       clearLandmarkSuggestions: true,
+      clearLandmarkLookupError: true,
+      isResolvingBarangay: false,
+      isResolvingLandmark: false,
+      landmarkLookupCompleted: false,
       landmarkManuallyEdited: false,
     );
   }
@@ -351,7 +451,30 @@ class NewReportController extends _$NewReportController {
     state = state.copyWith(dataProcessingConsent: value);
   }
 
-  Future<domain.Report> submit() async {
+  Map<String, Object?> submissionSnapshot() => {
+    'category': state.category?.value,
+    'title': state.title,
+    'description': state.description,
+    'incidentDatetime': state.incidentDatetime?.toIso8601String(),
+    'isHappeningNow': state.isHappeningNow,
+    'zone': state.zone,
+    'streetLandmark': state.streetLandmark,
+    'municipalityId': state.municipalityId,
+    'barangayId': state.barangayId,
+    'cityMunicipality': state.cityMunicipality,
+    'province': state.province,
+    'latitude': _formatCoordinate(state.latitude),
+    'longitude': _formatCoordinate(state.longitude),
+    'locationAccuracy': state.locationAccuracy.name,
+    'location': state.streetLandmark,
+    'barangay': state.barangay ?? state.zone,
+    'declarationConfirmed': state.declarationConfirmed,
+    'dataProcessingConsent': state.dataProcessingConsent,
+    'isQuickReport': false,
+    'isEmergency': false,
+  };
+
+  Future<domain.Report> submit({String? idempotencyKey}) async {
     if (!state.canSubmit) {
       throw const ReportSubmissionFailure(
         'Please complete all required report fields.',
@@ -381,6 +504,7 @@ class NewReportController extends _$NewReportController {
         barangay: state.barangay ?? state.zone,
         declarationConfirmed: state.declarationConfirmed,
         dataProcessingConsent: state.dataProcessingConsent,
+        idempotencyKey: idempotencyKey,
       );
       return result.when(
         success: (report) => report,
@@ -399,11 +523,50 @@ class NewReportController extends _$NewReportController {
     required String municipalityId,
     String? barangayId,
     String? barangay,
+    String? streetLandmark,
     required String cityMunicipality,
     required String province,
     required double latitude,
     required double longitude,
     String? location,
+    String? idempotencyKey,
+  }) async {
+    final useCase = ref.read(createReportUseCaseProvider);
+    final result = await useCase(
+      description: description,
+      isHappeningNow: true,
+      zone: barangay,
+      municipalityId: municipalityId,
+      streetLandmark: streetLandmark,
+      barangayId: barangayId,
+      barangay: barangay,
+      cityMunicipality: cityMunicipality,
+      province: province,
+      latitude: _formatCoordinate(latitude),
+      longitude: _formatCoordinate(longitude),
+      locationAccuracy: LocationAccuracy.exact.name,
+      location: location,
+      declarationConfirmed: true,
+      dataProcessingConsent: true,
+      isQuickReport: true,
+      idempotencyKey: idempotencyKey,
+    );
+    return result.when(
+      success: (report) => report,
+      failure: (failure) => throw ReportSubmissionFailure(failure.message),
+    );
+  }
+
+  Future<domain.Report> submitFastReport({
+    required String description,
+    required String municipalityId,
+    String? barangayId,
+    String? barangay,
+    required String cityMunicipality,
+    required String province,
+    required double latitude,
+    required double longitude,
+    String? idempotencyKey,
   }) async {
     final useCase = ref.read(createReportUseCaseProvider);
     final result = await useCase(
@@ -418,10 +581,11 @@ class NewReportController extends _$NewReportController {
       latitude: _formatCoordinate(latitude),
       longitude: _formatCoordinate(longitude),
       locationAccuracy: LocationAccuracy.exact.name,
-      location: location,
       declarationConfirmed: true,
       dataProcessingConsent: true,
       isQuickReport: true,
+      isEmergency: true,
+      idempotencyKey: idempotencyKey,
     );
     return result.when(
       success: (report) => report,
@@ -475,4 +639,18 @@ class NewReportController extends _$NewReportController {
   void reset() {
     state = const NewReportState();
   }
+
+  void resetAfterEvidenceHandoff() {
+    state = const NewReportState();
+  }
+
+  void resetKeepingDraft() {
+    state = const NewReportState(draftCompleted: true);
+  }
 }
+
+String? _draftString(Object? value) =>
+    value is String && value.isNotEmpty ? value : null;
+
+double? _draftDouble(Object? value) =>
+    value is num ? value.toDouble() : double.tryParse(value?.toString() ?? '');

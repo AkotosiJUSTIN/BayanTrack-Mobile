@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+import 'notification_payload.dart';
 
 class LocalNotificationService {
   LocalNotificationService._();
@@ -7,6 +11,23 @@ class LocalNotificationService {
   static final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
   static bool _initialized = false;
+  static final _taps = StreamController<Map<String, dynamic>>.broadcast();
+  static Map<String, dynamic>? _pendingTap;
+
+  static Stream<Map<String, dynamic>> get taps => _taps.stream;
+
+  static Map<String, dynamic>? takePendingTap() {
+    final data = _pendingTap;
+    _pendingTap = null;
+    return data;
+  }
+
+  static void _handleTap(String? payload) {
+    final data = decodeNotificationPayload(payload);
+    if (data.isEmpty) return;
+    _pendingTap = data;
+    _taps.add(data);
+  }
 
   static Future<void> initialize() async {
     if (_initialized) return;
@@ -16,7 +37,15 @@ class LocalNotificationService {
     );
     const settings = InitializationSettings(android: androidSettings);
 
-    await _plugin.initialize(settings);
+    await _plugin.initialize(
+      settings,
+      onDidReceiveNotificationResponse: (response) =>
+          _handleTap(response.payload),
+    );
+    final launch = await _plugin.getNotificationAppLaunchDetails();
+    if (launch?.didNotificationLaunchApp == true) {
+      _handleTap(launch?.notificationResponse?.payload);
+    }
 
     const androidChannel = AndroidNotificationChannel(
       'bayantrack_general',
@@ -56,7 +85,7 @@ class LocalNotificationService {
       icon: '@mipmap/bayantrack_logo',
     );
 
-    final payload = message.data['report_id']?.toString();
+    final payload = encodeNotificationPayload(message.data);
 
     await _plugin.show(
       message.hashCode,

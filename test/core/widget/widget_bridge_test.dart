@@ -1,26 +1,21 @@
 import 'package:bayantrack_mobile/core/widget/widget_bridge.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('maps supported destinations and rejects malformed values', () {
+    expect(parseWidgetDestination('fast_report'), WidgetDestination.fastReport);
     expect(
-      parseWidgetDestination('quick_report'),
-      WidgetDestination.quickReport,
+      parseWidgetDestination('bayantrack://fast-report'),
+      WidgetDestination.fastReport,
     );
+    expect(parseWidgetDestination('open_app'), WidgetDestination.openApp);
     expect(
-      parseWidgetDestination('quick-report'),
-      WidgetDestination.quickReport,
-    );
-    expect(
-      parseWidgetDestination('notifications'),
-      WidgetDestination.notifications,
-    );
-    expect(
-      parseWidgetDestination('emergency_report'),
-      WidgetDestination.emergencyReport,
+      parseWidgetDestination('bayantrack://home'),
+      WidgetDestination.openApp,
     );
     expect(parseWidgetDestination(''), isNull);
     expect(parseWidgetDestination('profile'), isNull);
@@ -30,17 +25,18 @@ void main() {
   test('cold-start destination waits for restored authentication', () async {
     final bridge = WidgetBridge(
       invokeNative: (method, _) async =>
-          method == 'getInitialWidgetDestination' ? 'quick_report' : null,
+          method == 'getInitialWidgetDestination' ? 'fast_report' : null,
     );
     addTearDown(bridge.dispose);
 
     await bridge.initialize();
-    expect(bridge.pendingDestination, WidgetDestination.quickReport);
+    expect(bridge.pendingDestination, WidgetDestination.fastReport);
     expect(bridge.takePendingDestination(), isNull);
 
     await bridge.syncAuthenticated(true);
-    expect(bridge.takePendingDestination(), WidgetDestination.quickReport);
+    expect(bridge.takePendingDestination(), WidgetDestination.fastReport);
     expect(bridge.takePendingDestination(), isNull);
+    bridge.finishWidgetDestination();
   });
 
   test(
@@ -49,12 +45,13 @@ void main() {
       final bridge = WidgetBridge(invokeNative: (_, _) async => null);
       addTearDown(bridge.dispose);
 
-      bridge.ingestRaw('notifications');
+      bridge.ingestRaw('open_app');
       await bridge.syncAuthenticated(false);
       expect(bridge.takePendingDestination(), isNull);
 
       await bridge.syncAuthenticated(true);
-      expect(bridge.takePendingDestination(), WidgetDestination.notifications);
+      expect(bridge.takePendingDestination(), WidgetDestination.openApp);
+      bridge.finishWidgetDestination();
     },
   );
 
@@ -65,12 +62,14 @@ void main() {
       addTearDown(bridge.dispose);
       await bridge.syncAuthenticated(true);
 
-      bridge.ingestRaw('quick_report');
-      expect(bridge.takePendingDestination(), WidgetDestination.quickReport);
+      bridge.ingestRaw('fast_report');
+      expect(bridge.takePendingDestination(), WidgetDestination.fastReport);
       expect(bridge.takePendingDestination(), isNull);
+      bridge.finishWidgetDestination();
 
-      bridge.ingestRaw('notifications');
-      expect(bridge.takePendingDestination(), WidgetDestination.notifications);
+      bridge.ingestRaw('open_app');
+      expect(bridge.takePendingDestination(), WidgetDestination.openApp);
+      bridge.finishWidgetDestination();
     },
   );
 
@@ -79,25 +78,24 @@ void main() {
     addTearDown(bridge.dispose);
     await bridge.syncAuthenticated(true);
 
-    bridge.ingestRaw('quick_report');
-    bridge.ingestRaw('quick_report');
-    expect(bridge.takePendingDestination(), WidgetDestination.quickReport);
+    bridge.ingestRaw('fast_report');
+    bridge.ingestRaw('fast_report');
+    expect(bridge.takePendingDestination(), WidgetDestination.fastReport);
     expect(bridge.takePendingDestination(), isNull);
+    bridge.finishWidgetDestination();
   });
 
   test(
-    'emergency destination waits for authentication like every widget entry',
+    'Fast Report destination waits for authentication like every widget entry',
     () async {
       final bridge = WidgetBridge(invokeNative: (_, _) async => null);
       addTearDown(bridge.dispose);
 
-      bridge.ingestRaw('emergency_report');
+      bridge.ingestRaw('fast_report');
       expect(bridge.takePendingDestination(), isNull);
       await bridge.syncAuthenticated(true);
-      expect(
-        bridge.takePendingDestination(),
-        WidgetDestination.emergencyReport,
-      );
+      expect(bridge.takePendingDestination(), WidgetDestination.fastReport);
+      bridge.finishWidgetDestination();
     },
   );
 
@@ -126,6 +124,7 @@ void main() {
         'locale': 'en',
         'authenticated': true,
         'unreadCount': 3,
+        'quickReportStatus': 'ready',
       });
 
       await bridge.syncUnreadCount(-1);
@@ -135,7 +134,125 @@ void main() {
         'locale': 'en',
         'authenticated': false,
         'unreadCount': 0,
+        'quickReportStatus': 'ready',
       });
     },
   );
+
+  test('syncs Quick Report states without exposing report data', () async {
+    final states = <Map<String, Object>>[];
+    final bridge = WidgetBridge(
+      invokeNative: (method, arguments) async {
+        if (method == 'updateState') {
+          states.add(Map<String, Object>.from(arguments! as Map));
+        }
+      },
+    );
+    addTearDown(bridge.dispose);
+
+    await bridge.syncAuthenticated(true);
+    for (final status in QuickReportWidgetStatus.values) {
+      await bridge.syncQuickReportStatus(status);
+      expect(states.last['quickReportStatus'], status.name);
+      expect(states.last.keys, isNot(contains('description')));
+      expect(states.last.keys, isNot(contains('token')));
+    }
+
+    await bridge.syncAuthenticated(false);
+    expect(states.last['authenticated'], isFalse);
+    expect(states.last['quickReportStatus'], 'ready');
+  });
+
+  test('ignores repeated destination until the app backgrounds', () async {
+    final bridge = WidgetBridge(invokeNative: (_, _) async => null);
+    addTearDown(bridge.dispose);
+    await bridge.syncAuthenticated(true);
+
+    bridge.ingestRaw('fast_report');
+    expect(bridge.takePendingDestination(), WidgetDestination.fastReport);
+    bridge.ingestRaw('fast_report');
+
+    expect(bridge.pendingDestination, isNull);
+    expect(bridge.takePendingDestination(), isNull);
+    bridge.finishWidgetDestination();
+
+    bridge.ingestRaw('fast_report');
+    expect(bridge.pendingDestination, isNull);
+    expect(bridge.takePendingDestination(), isNull);
+
+    bridge.clearFinishedDestinations();
+    bridge.ingestRaw('fast_report');
+    expect(bridge.takePendingDestination(), WidgetDestination.fastReport);
+  });
+
+  test(
+    'acknowledges an intent delivered while the app is already running',
+    () async {
+      final channel = _RecordingWidgetChannel();
+      final bridge = WidgetBridge(channel: channel);
+      addTearDown(bridge.dispose);
+
+      await bridge.initialize();
+      channel.pendingDestination = 'fast_report';
+      await channel.dispatch(
+        const MethodCall('widgetDestination', 'fast_report'),
+      );
+
+      expect(bridge.pendingDestination, WidgetDestination.fastReport);
+      expect(channel.pendingDestination, isNull);
+      expect(channel.acknowledgedDestinations, ['fast_report']);
+    },
+  );
+
+  test(
+    'queues a different widget destination until the open route closes',
+    () async {
+      final bridge = WidgetBridge(invokeNative: (_, _) async => null);
+      addTearDown(bridge.dispose);
+      await bridge.syncAuthenticated(true);
+
+      bridge.ingestRaw('fast_report');
+      expect(bridge.takePendingDestination(), WidgetDestination.fastReport);
+      bridge.ingestRaw('open_app');
+      expect(bridge.pendingDestination, WidgetDestination.openApp);
+      expect(bridge.takePendingDestination(), isNull);
+
+      bridge.finishWidgetDestination();
+      expect(bridge.takePendingDestination(), WidgetDestination.openApp);
+    },
+  );
+}
+
+class _RecordingWidgetChannel extends MethodChannel {
+  _RecordingWidgetChannel() : super('test/bayantrack/widget');
+
+  Future<dynamic> Function(MethodCall call)? _handler;
+  String? pendingDestination;
+  final List<Object?> acknowledgedDestinations = [];
+
+  Future<void> dispatch(MethodCall call) async {
+    await _handler?.call(call);
+  }
+
+  @override
+  void setMethodCallHandler(
+    Future<dynamic> Function(MethodCall call)? handler,
+  ) {
+    _handler = handler;
+  }
+
+  @override
+  Future<T?> invokeMethod<T>(String method, [dynamic arguments]) async {
+    if (method == 'getInitialWidgetDestination') {
+      final destination = pendingDestination;
+      pendingDestination = null;
+      return destination as T?;
+    }
+    if (method == 'acknowledgeWidgetDestination' &&
+        pendingDestination == arguments) {
+      pendingDestination = null;
+      acknowledgedDestinations.add(arguments);
+    }
+    return null;
+  }
 }

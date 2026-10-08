@@ -10,6 +10,7 @@ import '../../reports/presentation/reports_controller.dart';
 import '../auth_di.dart';
 import 'auth_controller.dart';
 import 'profile_controller.dart';
+import '../../system_governance/system_governance_provider.dart';
 
 final authRealtimeControllerProvider = Provider<AuthRealtimeController>((ref) {
   final controller = AuthRealtimeController(ref);
@@ -48,7 +49,6 @@ class AuthRealtimeController {
         serverUrl: ApiConstants.mediaBaseUrl,
         token: token,
         onEvent: _handleEvent,
-        onConnect: () => _ref.invalidate(profileControllerProvider),
       );
       _connectedUserId = userId;
     } finally {
@@ -65,6 +65,10 @@ class AuthRealtimeController {
 
   void _handleEvent(RealtimeEvent event) {
     final targets = invalidationTargets(event);
+    if (targets.contains(RealtimeTarget.system)) {
+      _ref.invalidate(publishedTermsProvider);
+      _ref.read(systemGovernanceProvider.notifier).refresh();
+    }
     if (targets.contains(RealtimeTarget.reports)) {
       _ref.invalidate(reportsControllerProvider);
       _ref.invalidate(myReportsControllerProvider);

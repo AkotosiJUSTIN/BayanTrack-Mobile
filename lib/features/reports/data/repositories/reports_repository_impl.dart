@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/domain/failures.dart';
 import '../../../../core/domain/result.dart';
 import '../../../../core/network/error_mapper.dart';
 import '../../domain/entities/paginated_reports.dart';
@@ -7,6 +8,7 @@ import '../../domain/entities/report.dart';
 import '../../domain/entities/report_stats.dart';
 import '../../domain/reports_repository.dart';
 import '../mappers/report_mapper.dart';
+import '../report_cache_store.dart';
 import '../report_models.dart' as dto;
 import '../blockchain_models.dart' as blockchain_dto;
 import '../../domain/entities/blockchain_verification.dart';
@@ -16,8 +18,78 @@ import '../../domain/entities/blockchain_verification.dart';
 /// All methods return [Result<T>] and use [ErrorMapper] for error handling.
 class ReportsRepositoryImpl implements ReportsRepository {
   final Dio _dio;
+  final ReportCacheStore? _cache;
+  final String? Function()? _currentOwnerId;
 
-  ReportsRepositoryImpl(this._dio);
+  ReportsRepositoryImpl(
+    this._dio, {
+    ReportCacheStore? cache,
+    String? Function()? currentOwnerId,
+  }) : _cache = cache,
+       _currentOwnerId = currentOwnerId;
+
+  String? _ownerId() {
+    final ownerId = _currentOwnerId?.call()?.trim();
+    return ownerId == null || ownerId.isEmpty ? null : ownerId;
+  }
+
+  bool _canUseCacheFor(String? ownerId) =>
+      ownerId != null && ownerId == _ownerId();
+
+  bool _mayUseStaleCache(Failure failure) =>
+      failure is NetworkFailure || failure is ServerFailure;
+
+  Future<void> _cacheReports(
+    String? ownerId,
+    String scope,
+    Map<String, dynamic> query,
+    dto.PaginatedReports reports,
+  ) async {
+    if (_cache == null || !_canUseCacheFor(ownerId)) return;
+    try {
+      await _cache.writeReports(
+        ownerId: ownerId!,
+        scope: scope,
+        query: query,
+        reports: reports,
+      );
+    } catch (_) {
+      // A cache failure must not turn a successful Backend read into an error.
+    }
+  }
+
+  Future<dto.PaginatedReports?> _readCachedReports(
+    String? ownerId,
+    String scope,
+    Map<String, dynamic> query,
+  ) async {
+    if (_cache == null || !_canUseCacheFor(ownerId)) return null;
+    return _cache.readReports(ownerId: ownerId!, scope: scope, query: query);
+  }
+
+  Future<void> _cacheReport(
+    String? ownerId,
+    String reportId,
+    dto.Report report,
+  ) async {
+    if (_cache == null || !_canUseCacheFor(ownerId)) return;
+    try {
+      await _cache.writeReport(
+        ownerId: ownerId!,
+        reportId: reportId,
+        report: report,
+      );
+    } catch (_) {
+      // A cache failure must not turn a successful Backend read into an error.
+    }
+  }
+
+  Future<dto.Report?> _readCachedReport(String? ownerId, String reportId) {
+    if (_cache == null || !_canUseCacheFor(ownerId)) {
+      return Future.value(null);
+    }
+    return _cache.readReport(ownerId: ownerId!, reportId: reportId);
+  }
 
   String? _legacyStatusFallback(String status) {
     return switch (status) {
@@ -46,26 +118,34 @@ class ReportsRepositoryImpl implements ReportsRepository {
     bool? isEmergency,
     String? sortBy,
   }) async {
+    final ownerId = _ownerId();
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'page_size': pageSize,
+      if (status case final value?) 'status': value,
+      if (zone case final value?) 'zone': value,
+      if (category case final value?) 'category': value,
+      if (severity case final value?) 'severity': value,
+      if (isEmergency case final value?) 'is_emergency': value,
+      if (sortBy case final value?) 'sort_by': value,
+    };
     try {
-      final queryParams = <String, dynamic>{
-        'page': page,
-        'page_size': pageSize,
-      };
-      if (status != null) queryParams['status'] = status;
-      if (zone != null) queryParams['zone'] = zone;
-      if (category != null) queryParams['category'] = category;
-      if (severity != null) queryParams['severity'] = severity;
-      if (isEmergency != null) queryParams['is_emergency'] = isEmergency;
-      if (sortBy != null) queryParams['sort_by'] = sortBy;
-
       final response = await _dio.get(
         ApiConstants.reports,
         queryParameters: queryParams,
       );
       final dtoResult = dto.PaginatedReports.fromJson(response.data);
+      await _cacheReports(ownerId, 'public', queryParams, dtoResult);
       return Success(ReportMapper.paginatedFromDto(dtoResult));
     } catch (e, stack) {
-      return Err(ErrorMapper.mapException(e, stack));
+      final failure = ErrorMapper.mapException(e, stack);
+      if (_mayUseStaleCache(failure)) {
+        final cached = await _readCachedReports(ownerId, 'public', queryParams);
+        if (cached != null) {
+          return Success(ReportMapper.paginatedFromDto(cached, isStale: true));
+        }
+      }
+      return Err(failure);
     }
   }
 
@@ -76,14 +156,14 @@ class ReportsRepositoryImpl implements ReportsRepository {
     String? status,
     String? sortBy,
   }) async {
+    final ownerId = _ownerId();
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'page_size': pageSize,
+      if (status case final value?) 'status': value,
+      if (sortBy case final value?) 'sort_by': value,
+    };
     try {
-      final queryParams = <String, dynamic>{
-        'page': page,
-        'page_size': pageSize,
-      };
-      if (status != null) queryParams['status'] = status;
-      if (sortBy != null) queryParams['sort_by'] = sortBy;
-
       final response = await _dio.get(
         ApiConstants.myReports,
         queryParameters: queryParams,
@@ -116,20 +196,37 @@ class ReportsRepositoryImpl implements ReportsRepository {
         }
       }
 
+      await _cacheReports(ownerId, 'mine', queryParams, dtoResult);
       return Success(ReportMapper.paginatedFromDto(dtoResult));
     } catch (e, stack) {
-      return Err(ErrorMapper.mapException(e, stack));
+      final failure = ErrorMapper.mapException(e, stack);
+      if (_mayUseStaleCache(failure)) {
+        final cached = await _readCachedReports(ownerId, 'mine', queryParams);
+        if (cached != null) {
+          return Success(ReportMapper.paginatedFromDto(cached, isStale: true));
+        }
+      }
+      return Err(failure);
     }
   }
 
   @override
   Future<Result<Report>> getReport(String id) async {
+    final ownerId = _ownerId();
     try {
       final response = await _dio.get(ApiConstants.reportById(id));
       final dtoReport = dto.Report.fromJson(response.data);
+      await _cacheReport(ownerId, id, dtoReport);
       return Success(ReportMapper.fromDto(dtoReport));
     } catch (e, stack) {
-      return Err(ErrorMapper.mapException(e, stack));
+      final failure = ErrorMapper.mapException(e, stack);
+      if (_mayUseStaleCache(failure)) {
+        final cached = await _readCachedReport(ownerId, id);
+        if (cached != null) {
+          return Success(ReportMapper.fromDto(cached, isStale: true));
+        }
+      }
+      return Err(failure);
     }
   }
 
@@ -157,6 +254,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
     bool isQuickReport = false,
     bool isEmergency = false,
     String? idempotencyKey,
+    CancelToken? cancelToken,
   }) async {
     try {
       final request = dto.CreateReportRequest(
@@ -186,13 +284,14 @@ class ReportsRepositoryImpl implements ReportsRepository {
         ...request.toJson(),
         if (isQuickReport) 'is_quick_report': true,
       };
-      final response = idempotencyKey == null
-          ? await _dio.post(ApiConstants.reports, data: requestData)
-          : await _dio.post(
-              ApiConstants.reports,
-              data: requestData,
-              options: Options(headers: {'Idempotency-Key': idempotencyKey}),
-            );
+      final response = await _dio.post(
+        ApiConstants.reports,
+        data: requestData,
+        options: idempotencyKey == null
+            ? null
+            : Options(headers: {'Idempotency-Key': idempotencyKey}),
+        cancelToken: cancelToken,
+      );
 
       // Backend returns {report: {...}, message: "..."}
       final responseData = response.data;

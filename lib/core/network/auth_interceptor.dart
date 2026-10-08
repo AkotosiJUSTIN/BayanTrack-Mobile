@@ -60,18 +60,16 @@ class AuthInterceptor extends Interceptor {
   ) async {
     debugPrint(
       '[AuthInterceptor] Error: status=${err.response?.statusCode} '
-      'type=${err.type} msg=${err.message} '
-      'path=${err.requestOptions.path}',
+      'type=${err.type} path=${err.requestOptions.path}',
     );
     // Only handle 401 Unauthorized
     if (err.response?.statusCode != 401) {
       return handler.next(err);
     }
 
-    // Don't retry refresh endpoint
+    // Refresh calls use raw Dio; do not recurse if the route uses this client.
     if (err.requestOptions.path.contains(ApiConstants.refresh)) {
-      await _clearTokensAndReject(err, handler);
-      return;
+      return handler.next(err);
     }
 
     // Queue requests while refreshing
@@ -81,65 +79,161 @@ class AuthInterceptor extends Interceptor {
     }
 
     _isRefreshing = true;
-
     try {
-      final refreshToken = await _sessionRepository.getRefreshToken();
+      await _refreshAndReplay(err, handler);
+    } finally {
+      _isRefreshing = false;
+    }
+  }
 
+  Future<void> _refreshAndReplay(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    String? refreshToken;
+    String? refreshedToken;
+    String? accessToken;
+    try {
+      refreshToken = await _sessionRepository.getRefreshToken();
       if (refreshToken == null) {
-        await _clearTokensAndReject(err, handler);
+        await _clearMatchingSession(null);
+        handler.reject(err);
+        _rejectPending(err);
         return;
       }
 
-      // Attempt token refresh
       final response = await _dio.post(
         ApiConstants.refresh,
         data: {'refresh_token': refreshToken, 'client_type': 'mobile'},
       );
-
-      final newAccessToken = response.data['access_token'] as String;
-      // Backend may not return a new refresh token - keep the existing one
-      final newRefreshToken =
+      accessToken = response.data['access_token'] as String;
+      refreshedToken =
           response.data['refresh_token'] as String? ?? refreshToken;
 
-      // Save new tokens through the repository
-      await _sessionRepository.saveTokens(
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
+      final saved = await _sessionRepository.saveTokensIfRefreshTokenMatches(
+        expectedRefreshToken: refreshToken,
+        accessToken: accessToken,
+        refreshToken: refreshedToken,
       );
-
-      // Retry original request with new token
-      err.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
-      final retryResponse = await _dio.fetch(err.requestOptions);
-      handler.resolve(retryResponse);
-
-      // Retry all pending requests
-      for (final pending in _pendingRequests) {
-        pending.options.headers['Authorization'] = 'Bearer $newAccessToken';
-        try {
-          final response = await _dio.fetch(pending.options);
-          pending.handler.resolve(response);
-        } catch (e) {
-          pending.handler.reject(
-            DioException(requestOptions: pending.options, error: e),
-          );
-        }
+      if (!saved ||
+          await _sessionRepository.getRefreshToken() != refreshedToken) {
+        handler.reject(err);
+        _rejectPending(err);
+        return;
       }
     } on DioException catch (refreshError) {
-      // Don't clear tokens on refresh failure - just reject this request
-      // User can still try again or manually logout
-      debugPrint('Token refresh failed: ${refreshError.message}');
-      handler.reject(err); // Reject with original error
-    } finally {
-      _isRefreshing = false;
-      _pendingRequests.clear();
+      final terminal = switch (refreshError.response?.statusCode) {
+        400 || 401 => true,
+        _ => false,
+      };
+      if (terminal) await _clearMatchingSession(refreshToken);
+      handler.reject(
+        terminal ? err : _forRequest(refreshError, err.requestOptions),
+      );
+      _rejectPending(terminal ? err : refreshError);
+      return;
+    } catch (error, stackTrace) {
+      final failure = DioException(
+        requestOptions: err.requestOptions,
+        type: DioExceptionType.unknown,
+        error: error,
+        message: 'Session refresh failed',
+        stackTrace: stackTrace,
+      );
+      handler.reject(failure);
+      _rejectPending(failure);
+      return;
+    }
+
+    err.requestOptions.headers['Authorization'] = 'Bearer $accessToken';
+    try {
+      handler.resolve(await _dio.fetch(err.requestOptions));
+    } on DioException catch (retryError) {
+      if (retryError.response?.statusCode == 401) {
+        await _clearMatchingSession(refreshedToken);
+      }
+      handler.reject(retryError);
+      if (retryError.response?.statusCode == 401) {
+        _rejectPending(retryError);
+        return;
+      }
+    } catch (error, stackTrace) {
+      handler.reject(
+        DioException(
+          requestOptions: err.requestOptions,
+          error: error,
+          stackTrace: stackTrace,
+        ),
+      );
+    }
+    await _retryPending(accessToken, refreshedToken);
+  }
+
+  Future<void> _retryPending(String accessToken, String refreshToken) async {
+    final pendingRequests = List.of(_pendingRequests);
+    _pendingRequests.clear();
+    for (var index = 0; index < pendingRequests.length; index++) {
+      final pending = pendingRequests[index];
+      if (await _sessionRepository.getRefreshToken() != refreshToken) {
+        for (final remaining in pendingRequests.skip(index)) {
+          remaining.handler.reject(
+            DioException(
+              requestOptions: remaining.options,
+              type: DioExceptionType.cancel,
+              message: 'Session changed during token refresh',
+            ),
+          );
+        }
+        return;
+      }
+      pending.options.headers['Authorization'] = 'Bearer $accessToken';
+      try {
+        pending.handler.resolve(await _dio.fetch(pending.options));
+      } on DioException catch (error) {
+        if (error.response?.statusCode == 401) {
+          await _clearMatchingSession(refreshToken);
+          pending.handler.reject(error);
+          for (final remaining in pendingRequests.skip(index + 1)) {
+            remaining.handler.reject(_forRequest(error, remaining.options));
+          }
+          return;
+        }
+        pending.handler.reject(error);
+      } catch (error, stackTrace) {
+        pending.handler.reject(
+          DioException(
+            requestOptions: pending.options,
+            error: error,
+            stackTrace: stackTrace,
+          ),
+        );
+      }
     }
   }
 
-  Future<void> _clearTokensAndReject(
-    DioException err,
-    ErrorInterceptorHandler handler,
-  ) async {
-    await _sessionRepository.clearSession();
-    handler.reject(err);
+  void _rejectPending(DioException error) {
+    final pendingRequests = List.of(_pendingRequests);
+    _pendingRequests.clear();
+    for (final pending in pendingRequests) {
+      pending.handler.reject(_forRequest(error, pending.options));
+    }
+  }
+
+  DioException _forRequest(DioException error, RequestOptions options) =>
+      DioException(
+        requestOptions: options,
+        response: error.response,
+        type: error.type,
+        error: error.error,
+        message: error.message,
+        stackTrace: error.stackTrace,
+      );
+
+  Future<void> _clearMatchingSession(String? refreshToken) async {
+    try {
+      await _sessionRepository.clearSessionIfRefreshTokenMatches(refreshToken);
+    } catch (_) {
+      debugPrint('Unable to clear rejected session.');
+    }
   }
 }

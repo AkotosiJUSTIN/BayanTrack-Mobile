@@ -1,116 +1,119 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../l10n/app_localizations.dart';
 
+import '../../../core/presentation/widgets/app_toast.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../data/evidence_upload_queue.dart';
 import '../data/evidence_upload_queue_provider.dart';
 
-class EvidenceUploadStatusBanner extends ConsumerWidget {
-  const EvidenceUploadStatusBanner({super.key});
+/// Watches durable evidence uploads and turns lightweight state changes into
+/// centralized transient feedback. No persistent layout banner is rendered.
+class EvidenceUploadFeedback extends ConsumerStatefulWidget {
+  const EvidenceUploadFeedback({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final auth = ref.watch(authControllerProvider);
-    final userId = auth is AuthSuccess ? auth.user?.id : null;
-    if (userId == null) return const SizedBox.shrink();
-
-    return ref
-        .watch(evidenceUploadQueueProvider)
-        .maybeWhen(
-          data: (queue) => ListenableBuilder(
-            listenable: queue,
-            builder: (context, _) => _Banner(queue: queue, userId: userId),
-          ),
-          orElse: () => const SizedBox.shrink(),
-        );
-  }
+  ConsumerState<EvidenceUploadFeedback> createState() =>
+      _EvidenceUploadFeedbackState();
 }
 
-class _Banner extends StatelessWidget {
-  const _Banner({required this.queue, required this.userId});
+class _EvidenceUploadFeedbackState
+    extends ConsumerState<EvidenceUploadFeedback> {
+  EvidenceUploadQueue? _queue;
+  String? _userId;
+  Map<String, EvidenceUploadState> _previousStates = const {};
 
-  final EvidenceUploadQueue queue;
-  final String userId;
+  @override
+  void dispose() {
+    _queue?.removeListener(_onQueueChanged);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final intents = queue.state
-        .where(
-          (item) =>
-              item.ownerUserId == userId &&
-              item.state != EvidenceUploadState.dismissed,
-        )
-        .toList();
-    final failed = intents
-        .where(
-          (item) =>
-              item.state == EvidenceUploadState.failed ||
-              item.state == EvidenceUploadState.missingLocalFile,
-        )
-        .toList();
-    final pending = intents
-        .where(
-          (item) =>
-              item.state == EvidenceUploadState.pending ||
-              item.state == EvidenceUploadState.uploading ||
-              item.state == EvidenceUploadState.retryWaiting,
-        )
-        .toList();
-    final completed = intents
-        .where((item) => item.state == EvidenceUploadState.completed)
-        .toList();
-    if (failed.isEmpty && pending.isEmpty && completed.isEmpty) {
-      return const SizedBox.shrink();
+    final auth = ref.watch(authControllerProvider);
+    final userId = auth is AuthSuccess ? auth.user?.id : null;
+    final queue = ref.watch(evidenceUploadQueueProvider).asData?.value;
+    _syncQueue(queue, userId);
+    return const SizedBox.shrink();
+  }
+
+  void _syncQueue(EvidenceUploadQueue? queue, String? userId) {
+    if (identical(_queue, queue) && _userId == userId) return;
+
+    _queue?.removeListener(_onQueueChanged);
+    _queue = queue;
+    _userId = userId;
+    _previousStates = queue == null || userId == null
+        ? const {}
+        : _snapshot(queue);
+    if (queue != null && userId != null) {
+      queue.addListener(_onQueueChanged);
+      if (_previousStates.values.any(_isTerminalFailure)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _showFailureToast(
+              queue,
+              missing: _previousStates.values.contains(
+                EvidenceUploadState.missingLocalFile,
+              ),
+            );
+          }
+        });
+      }
     }
+  }
 
-    final scheme = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
-    final hasMissing = failed.any(
-      (item) => item.state == EvidenceUploadState.missingLocalFile,
+  Map<String, EvidenceUploadState> _snapshot(EvidenceUploadQueue queue) => {
+    for (final item in queue.state) item.id: item.state,
+  };
+
+  void _onQueueChanged() {
+    final queue = _queue;
+    if (!mounted || queue == null || _userId == null) return;
+
+    final current = _snapshot(queue);
+    final completed = current.entries.any(
+      (entry) =>
+          entry.value == EvidenceUploadState.completed &&
+          _previousStates[entry.key] != EvidenceUploadState.completed,
     );
-    final (icon, message, color) = failed.isNotEmpty
-        ? (
-            Icons.error_outline,
-            hasMissing
-                ? l10n.evidenceFileMissing
-                : l10n.evidenceUploadFailed,
-            scheme.errorContainer,
-          )
-        : pending.isNotEmpty
-        ? (
-            Icons.cloud_upload_outlined,
-            l10n.evidenceUploadsPending(pending.length),
-            scheme.secondaryContainer,
-          )
-        : (
-            Icons.cloud_done_outlined,
-            l10n.evidenceUploadCompleted,
-            scheme.primaryContainer,
-          );
+    final failed = current.entries.any(
+      (entry) =>
+          _isTerminalFailure(entry.value) &&
+          _previousStates[entry.key] != entry.value,
+    );
+    final missing = current.entries.any(
+      (entry) =>
+          entry.value == EvidenceUploadState.missingLocalFile &&
+          _previousStates[entry.key] != entry.value,
+    );
+    _previousStates = current;
 
-    return Material(
-      color: color,
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            children: [
-              Icon(icon, size: 20),
-              const SizedBox(width: 8),
-              Expanded(child: Text(message)),
-              if (failed.isNotEmpty)
-                TextButton(onPressed: queue.retry, child: Text(l10n.retry)),
-              if (failed.isNotEmpty || completed.isNotEmpty)
-                TextButton(
-                  onPressed: queue.dismissTerminal,
-                  child: Text(l10n.dismiss),
-                ),
-            ],
-          ),
-        ),
-      ),
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      if (failed) {
+        _showFailureToast(queue, missing: missing);
+      } else if (completed) {
+        AppToast.success(context, l10n.evidenceUploadCompleted);
+      }
+    });
+  }
+
+  void _showFailureToast(EvidenceUploadQueue queue, {required bool missing}) {
+    final l10n = AppLocalizations.of(context);
+    AppToast.error(
+      context,
+      missing ? l10n.evidenceFileMissing : l10n.evidenceUploadFailed,
+      actionLabel: l10n.retry,
+      onAction: () => unawaited(queue.retry()),
     );
   }
+
+  bool _isTerminalFailure(EvidenceUploadState state) =>
+      state == EvidenceUploadState.failed ||
+      state == EvidenceUploadState.missingLocalFile;
 }

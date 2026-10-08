@@ -37,6 +37,12 @@ class AuthMapper {
       isActive: profile.isActive,
       createdAt: _parseDateTime(profile.createdAt),
       updatedAt: _parseDateTime(profile.updatedAt),
+      passwordChangedAt: _parseDateTime(profile.passwordChangedAt),
+      passwordExpiresAt: _parseDateTime(profile.passwordExpiresAt),
+      passwordDaysRemaining: profile.passwordDaysRemaining,
+      passwordWarningLevel: profile.passwordWarningLevel,
+      passwordExpired: profile.passwordExpired,
+      passwordChangeRequired: profile.passwordChangeRequired,
     );
   }
 
