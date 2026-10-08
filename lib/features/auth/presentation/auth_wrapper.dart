@@ -13,6 +13,7 @@ import '../../../core/presentation/widgets/app_toast.dart';
 import '../../notifications/push_service.dart';
 import '../../notifications/local_notification_service.dart';
 import '../../notifications/presentation/notifications_controller.dart';
+import '../../notifications/presentation/notification_navigation.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/providers/backend_reachability_provider.dart';
 import '../../../core/providers/connectivity_provider.dart';
@@ -21,7 +22,6 @@ import '../../../core/widget/widget_bridge.dart';
 import '../../images/data/evidence_upload_queue_provider.dart';
 import '../../reports/presentation/reports_controller.dart';
 import '../../reports/reports_di.dart';
-import '../../reports/presentation/report_detail_screen.dart';
 import '../../reports/presentation/new_report/quick_report_screen.dart';
 import 'auth_realtime_controller.dart';
 import 'profile_controller.dart';
@@ -47,11 +47,16 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   bool _widgetNavigationScheduled = false;
   String? _pushUserId;
   String? _governanceOwnerId;
+  late final StreamSubscription<Map<String, dynamic>> _localNotificationTaps;
+  bool _notificationNavigationScheduled = false;
 
   @override
   void initState() {
     super.initState();
     _widgetBridge = ref.read(widgetBridgeProvider);
+    _localNotificationTaps = LocalNotificationService.taps.listen((_) {
+      _maybeOpenLocalNotification();
+    });
     _widgetDestinationSubscription = _widgetBridge.destinations.listen((_) {
       _maybeNavigateToWidgetDestination();
     });
@@ -82,7 +87,10 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
       },
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _maybeNavigateToWidgetDestination();
+      if (mounted) {
+        _maybeNavigateToWidgetDestination();
+        _maybeOpenLocalNotification();
+      }
     });
     debugPrint('[AuthWrapper] Initializing...');
 
@@ -103,6 +111,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   @override
   void dispose() {
     unawaited(_widgetDestinationSubscription.cancel());
+    unawaited(_localNotificationTaps.cancel());
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -120,6 +129,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   void _handleAuthState(AuthState state) {
     _syncWidgetState(state);
     _maybeNavigateToWidgetDestination();
+    _maybeOpenLocalNotification();
 
     final userId = state is AuthSuccess ? state.user?.id : null;
     if (_governanceOwnerId != userId) {
@@ -189,19 +199,25 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     try {
       final pushService = ref.read(pushServiceProvider);
       final dio = ref.read(dioProvider);
-      await pushService.ensureRegistered('android', dio, userId: userId);
-
       if (!mounted) return;
       if (_pushUserId != userId) return;
       pushService.onTokenRefresh((token) async {
+        if (!mounted || _pushUserId != userId) return;
         await pushService.registerToken(token, 'android', dio, userId: userId);
       });
 
       // Foreground message handler: show simple in-app snackbar and persist
       pushService.onMessage((message) async {
+        if (!mounted || _pushUserId != userId) return;
         final notificationContext = context;
-        final title = message.notification?.title ?? 'Notification';
-        final body = message.notification?.body ?? '';
+        final title =
+            message.notification?.title ??
+            message.data['title']?.toString() ??
+            'Notification';
+        final body =
+            message.notification?.body ??
+            message.data['body']?.toString() ??
+            '';
         ref.invalidate(notificationsControllerProvider);
         if (message.data['type'] == 'terms_updated' ||
             message.data['type'] == 'maintenance_changed') {
@@ -215,49 +231,36 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
 
       // When a user taps a notification and the app is opened from background
       pushService.onMessageOpened((message) {
-        if (message.data['type'] == 'terms_updated' ||
-            message.data['type'] == 'maintenance_changed') {
-          ref.invalidate(publishedTermsProvider);
-          unawaited(ref.read(systemGovernanceProvider.notifier).refresh());
-          return;
-        }
-        final reportId = message.data['report_id'] as String?;
-        if (reportId != null && reportId.isNotEmpty) {
-          ref.invalidate(notificationsControllerProvider);
-          if (!context.mounted) return;
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ReportDetailScreen(reportId: reportId),
-            ),
-          );
-        }
+        if (!mounted || _pushUserId != userId) return;
+        openNotificationDestination(context, ref, message.data);
       });
 
       // If launched from terminated state via notification
-      final initialMessageContext = context;
       final initial = await FirebaseMessaging.instance.getInitialMessage();
-      if (initial != null) {
-        if (initial.data['type'] == 'terms_updated' ||
-            initial.data['type'] == 'maintenance_changed') {
-          ref.invalidate(publishedTermsProvider);
-          unawaited(ref.read(systemGovernanceProvider.notifier).refresh());
-          return;
-        }
-        final reportId = initial.data['report_id'] as String?;
-        if (reportId != null &&
-            reportId.isNotEmpty &&
-            initialMessageContext.mounted) {
-          ref.invalidate(notificationsControllerProvider);
-          Navigator.of(initialMessageContext).push(
-            MaterialPageRoute(
-              builder: (_) => ReportDetailScreen(reportId: reportId),
-            ),
-          );
-        }
+      if (initial != null && mounted && _pushUserId == userId) {
+        openNotificationDestination(context, ref, initial.data);
       }
+      if (!mounted || _pushUserId != userId) return;
+      await pushService.ensureRegistered('android', dio, userId: userId);
     } catch (e) {
       debugPrint('Push initialization failed: $e');
     }
+  }
+
+  void _maybeOpenLocalNotification() {
+    if (!mounted || _notificationNavigationScheduled) return;
+    final state = ref.read(authControllerProvider);
+    if (state is! AuthSuccess || !state.mayOpenWidgetDestination) return;
+    _notificationNavigationScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _notificationNavigationScheduled = false;
+      if (!mounted) return;
+      final current = ref.read(authControllerProvider);
+      if (current is! AuthSuccess || !current.mayOpenWidgetDestination) return;
+      final data = LocalNotificationService.takePendingTap();
+      if (data != null) openNotificationDestination(context, ref, data);
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   void _maybeNavigateToWidgetDestination() {

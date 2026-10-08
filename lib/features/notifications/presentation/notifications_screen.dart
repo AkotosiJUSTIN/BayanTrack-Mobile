@@ -8,12 +8,12 @@ import '../../../core/theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/verification_widgets.dart';
-import '../../reports/presentation/report_detail_screen.dart';
 import '../../reports/presentation/report_labels.dart';
 import '../domain/entities/notification.dart';
 import '../domain/entities/notification_type.dart';
 import '../domain/entities/paginated_notifications.dart';
 import 'notifications_controller.dart';
+import 'notification_navigation.dart';
 
 /// Notifications screen showing civic updates with read/unread states.
 class NotificationsScreen extends ConsumerWidget {
@@ -261,13 +261,12 @@ class NotificationsScreen extends ConsumerWidget {
       }
     }
 
-    if (context.mounted && notification.reportId != null) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => ReportDetailScreen(reportId: notification.reportId!),
-        ),
-      );
-    }
+    if (!context.mounted) return;
+    openNotificationDestination(context, ref, {
+      if (notification.type == NotificationType.termsUpdated)
+        'type': 'terms_updated',
+      if (notification.reportId != null) 'report_id': notification.reportId,
+    });
   }
 }
 
@@ -478,6 +477,10 @@ class _NotificationSkeleton extends StatelessWidget {
     NotificationType.kycUpdate => (
       color: theme.colorScheme.secondary,
       icon: Icons.verified_user_outlined,
+    ),
+    NotificationType.termsUpdated => (
+      color: theme.colorScheme.secondary,
+      icon: Icons.policy_outlined,
     ),
     NotificationType.system => (
       color: theme.colorScheme.onSurfaceVariant,

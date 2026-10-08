@@ -34,6 +34,7 @@ class NotificationMapper {
       dto.NotificationType.assignment: NotificationType.assignment,
       dto.NotificationType.reportUpdated: NotificationType.reportUpdated,
       dto.NotificationType.kycUpdate: NotificationType.kycUpdate,
+      dto.NotificationType.termsUpdated: NotificationType.termsUpdated,
       dto.NotificationType.system: NotificationType.system,
     };
 

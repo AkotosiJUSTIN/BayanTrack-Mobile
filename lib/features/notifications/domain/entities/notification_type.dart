@@ -8,6 +8,7 @@ enum NotificationType {
   assignment,
   reportUpdated,
   kycUpdate,
+  termsUpdated,
   system;
 
   String get displayName => switch (this) {
@@ -17,6 +18,7 @@ enum NotificationType {
     assignment => 'Assignment',
     reportUpdated => 'Report Updated',
     kycUpdate => 'Verification Update',
+    termsUpdated => 'Terms & Privacy Updated',
     system => 'System',
   };
 
@@ -28,6 +30,7 @@ enum NotificationType {
       'assignment' => assignment,
       'report_updated' => reportUpdated,
       'kyc_update' => kycUpdate,
+      'terms_updated' => termsUpdated,
       'system' => system,
       _ => system,
     };
