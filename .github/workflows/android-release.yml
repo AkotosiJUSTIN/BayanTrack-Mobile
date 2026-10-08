@@ -1,0 +1,92 @@
+name: Android APK Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    if: github.repository == 'DvineConqueror/BayanTrack-Mobile' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Java
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Flutter
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch 3.38.6 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+
+      - name: Install dependencies
+        run: flutter pub get --enforce-lockfile
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Restore release keystore
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEYSTORE_BASE64" || { echo "Missing ANDROID_KEYSTORE_BASE64 secret."; exit 1; }
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/bayantrack-release.jks"
+          test -s "$RUNNER_TEMP/bayantrack-release.jks"
+
+      - name: Build signed APK
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/bayantrack-release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          # ponytail: preserve this workflow's counter; raise the offset if it is reset.
+          build_number=$((1000 + GITHUB_RUN_NUMBER))
+          flutter build apk --release --build-number="$build_number" \
+            --dart-define=BAYANTRACK_API_BASE_URL=https://api.bayantrack.app/api \
+            --dart-define=BAYANTRACK_MEDIA_BASE_URL=https://api.bayantrack.app
+          mkdir -p release
+          cp build/app/outputs/flutter-apk/app-release.apk release/bayantrack.apk
+          (cd release && sha256sum bayantrack.apk > bayantrack.apk.sha256)
+          echo "BUILD_NUMBER=$build_number" >> "$GITHUB_ENV"
+
+      - name: Publish prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tag="dev-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          gh release create "$tag" release/bayantrack.apk release/bayantrack.apk.sha256 \
+            --target "$GITHUB_SHA" --prerelease \
+            --title "BayanTrack Android build $BUILD_NUMBER" \
+            --notes "Development APK from commit $GITHUB_SHA. Uses the deployed BayanTrack API. Install manually; this is not an automatic phone update."
+
+      - name: Remove signing material
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/bayantrack-release.jks"

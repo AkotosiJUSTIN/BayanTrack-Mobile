@@ -59,7 +59,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       _otpController.clear();
     });
 
-    AppToast.success(context, AppLocalizations.of(context)!.otpSent);
+    AppToast.success(context, AppLocalizations.of(context).otpSent);
   }
 
   Future<void> _handleVerifyOtp() async {
@@ -92,7 +92,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       });
       AppToast.error(
         context,
-        AppLocalizations.of(context)!.sessionExpiredVerifyOtp,
+        AppLocalizations.of(context).sessionExpiredVerifyOtp,
       );
       return;
     }
@@ -107,7 +107,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
     if (!mounted || !success) return;
 
-    AppToast.success(context, AppLocalizations.of(context)!.passwordResetSuccessful);
+    AppToast.success(
+      context,
+      AppLocalizations.of(context).passwordResetSuccessful,
+    );
 
     Navigator.of(
       context,
@@ -121,7 +124,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
 
     if (!mounted || !success) return;
 
-    AppToast.info(context, AppLocalizations.of(context)!.otpResent);
+    AppToast.info(context, AppLocalizations.of(context).otpResent);
   }
 
   void _handleBack() {
@@ -152,7 +155,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   String _title() {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     return switch (_step) {
       _ResetStep.email => l10n.forgotPasswordTitle,
       _ResetStep.otp => l10n.enterOtp,
@@ -161,7 +164,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   String _subtitle() {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     return switch (_step) {
       _ResetStep.email => l10n.forgotPasswordSubtitle,
       _ResetStep.otp => l10n.otpSentTo(_emailController.text.trim()),
@@ -176,7 +179,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final l10n = AppLocalizations.of(context)!;
+        final l10n = AppLocalizations.of(context);
         final compact = constraints.maxHeight < 620;
         final horizontalPadding = constraints.maxWidth < 360 ? 20.0 : 24.0;
         final topPadding = compact ? 4.0 : 8.0;
@@ -261,9 +264,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                     onFieldSubmitted: (_) => _handleSendOtp(),
                                     decoration: InputDecoration(
                                       hintText: l10n.enterYourEmail,
-                                      prefixIcon: const Icon(Icons.email_outlined),
+                                      prefixIcon: const Icon(
+                                        Icons.email_outlined,
+                                      ),
                                     ),
-                                    validator: (value) => Validators.email(value, l10n: l10n),
+                                    validator: (value) =>
+                                        Validators.email(value, l10n: l10n),
                                   ),
                                 ),
                                 const SizedBox(height: 20),
@@ -349,7 +355,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         appBar: AppBar(
           leading: IconButton(
             key: const ValueKey('forgot-password-back-button'),
-            tooltip: AppLocalizations.of(context)!.back,
+            tooltip: AppLocalizations.of(context).back,
             icon: const Icon(Icons.arrow_back),
             onPressed: _handleBack,
           ),
@@ -375,7 +381,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       appBar: AppBar(
         leading: IconButton(
           key: const ValueKey('forgot-password-recovery-back-button'),
-          tooltip: AppLocalizations.of(context)!.back,
+          tooltip: AppLocalizations.of(context).back,
           icon: const Icon(Icons.arrow_back),
           onPressed: _handleBack,
         ),
@@ -383,7 +389,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final l10n = AppLocalizations.of(context)!;
+            final l10n = AppLocalizations.of(context);
             final compact = constraints.maxHeight < 620;
             final horizontalPadding = constraints.maxWidth < 360 ? 20.0 : 24.0;
             final topPadding = compact ? 4.0 : 8.0;
@@ -493,7 +499,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                           onFieldSubmitted: (_) =>
                                               _handleVerifyOtp(),
                                           decoration: InputDecoration(
-                                            hintText: l10n.enterVerificationCode,
+                                            hintText:
+                                                l10n.enterVerificationCode,
                                             prefixIcon: const Icon(
                                               Icons
                                                   .confirmation_number_outlined,
@@ -566,7 +573,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                                   ),
                                                 ),
                                               ),
-                                              validator: (value) => Validators.password(value, l10n: l10n),
+                                              validator: (value) =>
+                                                  Validators.password(
+                                                    value,
+                                                    l10n: l10n,
+                                                  ),
                                             ),
                                           ),
                                           ValueListenableBuilder<
@@ -613,7 +624,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                               onFieldSubmitted: (_) =>
                                                   _handleResetPassword(),
                                               decoration: InputDecoration(
-                                                hintText: l10n.confirmYourPassword,
+                                                hintText:
+                                                    l10n.confirmYourPassword,
                                                 prefixIcon: const Icon(
                                                   Icons.lock_outline,
                                                 ),

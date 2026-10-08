@@ -1,8 +1,12 @@
 import 'package:bayantrack_mobile/features/auth/presentation/auth_wrapper.dart';
+import 'package:bayantrack_mobile/features/auth/presentation/auth_controller.dart';
+import 'package:bayantrack_mobile/core/providers/backend_reachability_provider.dart';
 import 'package:bayantrack_mobile/core/providers/locale_provider.dart';
 import 'package:bayantrack_mobile/core/providers/theme_provider.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:bayantrack_mobile/features/onboarding/presentation/onboarding_screen.dart';
+import 'package:bayantrack_mobile/features/system_governance/system_governance_models.dart';
+import 'package:bayantrack_mobile/features/system_governance/system_governance_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -477,15 +481,24 @@ Future<void> _pumpOnboarding(
 
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
+      overrides: [
+        sharedPrefsProvider.overrideWithValue(prefs),
+        authControllerProvider.overrideWithValue(const AuthIdle()),
+        backendReachabilityProvider.overrideWith(_Reachability.new),
+        systemGovernanceProvider.overrideWithBuild(
+          (_, _) async => const SystemGovernanceState(
+            maintenanceEnabled: false,
+            maintenanceMessage: '',
+            termsAcceptanceRequired: false,
+          ),
+        ),
+      ],
       child: Consumer(
         builder: (context, ref, _) => MaterialApp(
           locale: ref.watch(appLocaleProvider),
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          navigatorObservers: [
-            if (navigatorObserver != null) navigatorObserver,
-          ],
+          navigatorObservers: [?navigatorObserver],
           theme: ThemeData(
             brightness: Brightness.light,
             scaffoldBackgroundColor: _lightBackground,
@@ -536,4 +549,9 @@ class _CountingNavigatorObserver extends NavigatorObserver {
     replacementCount++;
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
   }
+}
+
+class _Reachability extends BackendReachabilityNotifier {
+  @override
+  BackendReachability build() => BackendReachability.reachable;
 }

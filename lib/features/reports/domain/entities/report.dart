@@ -251,11 +251,7 @@ class Report extends Equatable {
 
   /// Human-readable location string
   String get displayLocation {
-    final parts = <String>[
-      if (streetLandmark != null) streetLandmark!,
-      if (zone != null) zone!,
-      if (cityMunicipality != null) cityMunicipality!,
-    ];
+    final parts = <String>[?streetLandmark, ?zone, ?cityMunicipality];
     return parts.isNotEmpty ? parts.join(', ') : location ?? 'Unknown location';
   }
 
@@ -273,7 +269,7 @@ class Report extends Equatable {
 
   Set<String> get _supplementalImageIds => {
     ...resolvedProofImageIds,
-    if (closureSignatureImageId != null) closureSignatureImageId!,
+    ?closureSignatureImageId,
     ...closureSignatureDocumentIds,
   };
 

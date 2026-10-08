@@ -86,7 +86,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final isDark = theme.brightness == Brightness.dark;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final brandBlue = isDark ? AppColors.primaryLight : _deepBlue;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
     Widget content = LayoutBuilder(
       builder: (context, constraints) {

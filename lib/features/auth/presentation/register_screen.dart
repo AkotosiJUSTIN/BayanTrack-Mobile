@@ -54,14 +54,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Future<void> _handleRegister() async {
     if (_checkingTerms) return;
     if (!_agreeToTerms) {
-      AppToast.warning(context, AppLocalizations.of(context)!.termsAndPrivacy);
+      AppToast.warning(context, AppLocalizations.of(context).termsAndPrivacy);
       return;
     }
 
     if (_selectedBarangayId == null) {
       AppToast.warning(
         context,
-        AppLocalizations.of(context)!.pleaseSelectBarangay,
+        AppLocalizations.of(context).pleaseSelectBarangay,
       );
       return;
     }
@@ -113,7 +113,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (success && mounted) {
         AppToast.success(
           context,
-          AppLocalizations.of(context)!.registrationSuccess,
+          AppLocalizations.of(context).registrationSuccess,
         );
         // Pop register screen so AuthWrapper (now showing MainNavigationShell
         // due to AuthSuccess state) becomes visible immediately
@@ -186,7 +186,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final compact = usableHeight < 700;
     final horizontalPadding = screenSize.width < 360 ? 20.0 : 24.0;
     final brandBlue = isDark ? AppColors.primaryLight : _brandBlue;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
     // Show error snackbar when auth fails
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
@@ -708,7 +708,7 @@ class _PolicyDialogState extends State<_PolicyDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final surface = isDark
