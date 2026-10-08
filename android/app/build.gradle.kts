@@ -1,9 +1,20 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
+}
+
+fun signingValue(environmentName: String, propertyName: String): String? =
+    System.getenv(environmentName) ?: keystoreProperties.getProperty(propertyName)
 
 android {
     namespace = "com.example.bayantrack_mobile"
@@ -31,11 +42,37 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = signingValue("ANDROID_KEYSTORE_PATH", "storeFile")?.let { file(it) }
+            storePassword = signingValue("ANDROID_KEYSTORE_PASSWORD", "storePassword")
+            keyAlias = signingValue("ANDROID_KEY_ALIAS", "keyAlias")
+            keyPassword = signingValue("ANDROID_KEY_PASSWORD", "keyPassword")
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+        }
+    }
+}
+
+gradle.taskGraph.whenReady {
+    if (allTasks.any { it.project == project && it.name.endsWith("Release") }) {
+        val signing = android.signingConfigs.getByName("release")
+        check(
+            signing.storeFile?.isFile == true &&
+                !signing.storePassword.isNullOrBlank() &&
+                !signing.keyAlias.isNullOrBlank() &&
+                !signing.keyPassword.isNullOrBlank()
+        ) {
+            "Release signing requires a keystore and all signing credentials. " +
+                "Configure android/key.properties or the ANDROID_KEYSTORE_* environment variables."
         }
     }
 }

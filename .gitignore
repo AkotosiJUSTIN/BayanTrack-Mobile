@@ -54,3 +54,6 @@ AGENTS.md
 /brag-*-output/
 /brag-output-*/
 /brag-references
+
+/graphify-out
+graphify-out/manifest.json

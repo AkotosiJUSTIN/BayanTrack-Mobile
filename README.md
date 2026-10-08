@@ -30,8 +30,8 @@ flutter pub get
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-Run with target-specific API configuration below. Plain `flutter run` keeps
-emulator default `10.0.2.2`; physical phones need LAN URL or USB reverse.
+Run with target-specific API configuration below. Plain `flutter run` uses
+the deployed HTTPS API; local development requires explicit overrides.
 
 ### Docker runner
 
@@ -60,7 +60,7 @@ emulator -list-avds
 emulator -avd <avd-name>
 ```
 
-Then use the existing `10.0.2.2` defaults:
+Then pass the Android emulator host address:
 
 ```powershell
 docker compose exec mobile flutter run -d <emulator-id> `
@@ -82,7 +82,7 @@ runner with `docker compose stop mobile`.
 
 API addressing is supplied at run time with `--dart-define`:
 
-- Android emulator: omit the defines and use the `10.0.2.2` default;
+- Android emulator with a local backend: pass the `10.0.2.2` URLs above;
 - LAN device: pass `BAYANTRACK_API_BASE_URL=http://<host-ip>:8000/api` and
   `BAYANTRACK_MEDIA_BASE_URL=http://<host-ip>:8000`;
 - USB device: use the same defines with `127.0.0.1` after
@@ -101,6 +101,49 @@ flutter analyze
 flutter test
 flutter build apk --debug
 ```
+
+## Automatic Android releases
+
+`.github/workflows/android-release.yml` builds on pushes to `main` and manual
+runs. Publishing is restricted to `DvineConqueror/BayanTrack-Mobile`; incoming
+pull requests cannot access signing secrets or publish releases.
+
+Add these repository secrets under Settings > Secrets and variables > Actions:
+
+- `ANDROID_KEYSTORE_BASE64`: Base64-encoded release keystore.
+- `ANDROID_KEYSTORE_PASSWORD`: keystore password.
+- `ANDROID_KEY_ALIAS`: signing alias (for example, `bayantrack`).
+- `ANDROID_KEY_PASSWORD`: signing key password.
+
+The workflow pins Flutter 3.38.6 and Java 17, installs locked dependencies,
+runs analysis and tests, and builds a signed APK against
+`https://api.bayantrack.app/api`. Failed checks prevent publication.
+Each successful run creates a separate development prerelease with
+`bayantrack.apk` and its SHA-256 checksum.
+
+After committing the workflow and Android configuration to your fork's `main`,
+open Actions > Android APK Release. Use Run workflow for a manual rebuild.
+Download the APK from Releases and install it manually; GitHub does not update
+installed apps automatically.
+
+Build numbers start at 1001 and increase with the workflow run counter.
+Keep this workflow's counter intact. If you recreate the workflow, change the
+offset so new builds remain above every APK already distributed.
+
+For a local signed release, create the ignored `android/key.properties`:
+
+```properties
+storeFile=C:\\Users\\domin\\bayantrack-release.jks
+storePassword=<your keystore password>
+keyAlias=bayantrack
+keyPassword=<your key password>
+```
+
+Never commit this file or the keystore. Back up both signing credentials and
+the keystore securely. Release builds fail without signing credentials rather
+than silently falling back to a debug key. Debug builds need no release key.
+An existing debug-signed installation must be uninstalled before switching to
+the release-signed APK; uninstalling removes local app data.
 
 ## Documentation
 

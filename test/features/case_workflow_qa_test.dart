@@ -190,9 +190,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(l10n.reportsNetworkError), findsOneWidget);
       expect(find.text(l10n.verifyIdentity), findsNothing);
-      await tester.tap(find.widgetWithText(FilledButton, l10n.retry));
+      await tester.tap(find.text(l10n.retry));
       await tester.pumpAndSettle();
       expect(find.text(l10n.reportsNetworkError), findsNothing);
+      verify(repository.getKycStatus).called(3);
       expect(tester.takeException(), isNull);
     },
   );

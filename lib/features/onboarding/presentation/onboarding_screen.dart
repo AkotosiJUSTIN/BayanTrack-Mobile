@@ -122,7 +122,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final contents = _contents(l10n);
     final isLastPage = _currentPage == _pageCount - 1;
 
@@ -201,7 +201,7 @@ class _LanguageSelectionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final brandBlue = _OnboardingColors.brandBlue(context);
     final options = [
@@ -448,7 +448,7 @@ class _OnboardingHeader extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          AppLocalizations.of(context)!.brandTagline,
+          AppLocalizations.of(context).brandTagline,
           key: const ValueKey('onboarding-tagline'),
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(
@@ -567,8 +567,8 @@ class _OnboardingFooter extends StatelessWidget {
       ),
       child: Text(
         currentPage > 0
-            ? AppLocalizations.of(context)!.back
-            : AppLocalizations.of(context)!.skip,
+            ? AppLocalizations.of(context).back
+            : AppLocalizations.of(context).skip,
       ),
     );
     final primaryButton = ElevatedButton(
@@ -606,7 +606,7 @@ class _OnboardingFooter extends StatelessWidget {
                 return Semantics(
                   label: AppLocalizations.of(
                     context,
-                  )!.pageOf(index + 1, pageCount),
+                  ).pageOf(index + 1, pageCount),
                   selected: isActive,
                   child: ExcludeSemantics(
                     child: AnimatedContainer(

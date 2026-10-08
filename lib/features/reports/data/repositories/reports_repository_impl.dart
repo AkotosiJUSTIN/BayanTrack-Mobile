@@ -122,12 +122,12 @@ class ReportsRepositoryImpl implements ReportsRepository {
     final queryParams = <String, dynamic>{
       'page': page,
       'page_size': pageSize,
-      if (status case final value?) 'status': value,
-      if (zone case final value?) 'zone': value,
-      if (category case final value?) 'category': value,
-      if (severity case final value?) 'severity': value,
-      if (isEmergency case final value?) 'is_emergency': value,
-      if (sortBy case final value?) 'sort_by': value,
+      'status': ?status,
+      'zone': ?zone,
+      'category': ?category,
+      'severity': ?severity,
+      'is_emergency': ?isEmergency,
+      'sort_by': ?sortBy,
     };
     try {
       final response = await _dio.get(
@@ -160,8 +160,8 @@ class ReportsRepositoryImpl implements ReportsRepository {
     final queryParams = <String, dynamic>{
       'page': page,
       'page_size': pageSize,
-      if (status case final value?) 'status': value,
-      if (sortBy case final value?) 'sort_by': value,
+      'status': ?status,
+      'sort_by': ?sortBy,
     };
     try {
       final response = await _dio.get(

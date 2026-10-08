@@ -61,20 +61,17 @@ void main() {
     );
     await tester.pump();
 
-    final scrollable = tester.state<ScrollableState>(find.byType(Scrollable));
-    scrollable.position.jumpTo(scrollable.position.maxScrollExtent);
-    await tester.pump();
     final language = find.byKey(
       const ValueKey('profile-language'),
       skipOffstage: false,
     );
-    expect(language, findsOneWidget);
-    scrollable.position.jumpTo(
-      (scrollable.position.maxScrollExtent - 160)
-          .clamp(0.0, scrollable.position.maxScrollExtent)
-          .toDouble(),
+    await tester.scrollUntilVisible(
+      language,
+      200,
+      scrollable: find.byType(Scrollable),
     );
-    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(language, findsOneWidget);
     await tester.tap(language);
     await tester.pumpAndSettle();
     expect(find.text('Filipino'), findsOneWidget);

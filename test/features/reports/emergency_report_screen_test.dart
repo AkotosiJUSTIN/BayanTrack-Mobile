@@ -295,7 +295,7 @@ void main() {
       expect(find.byKey(const Key('emergency-report-notice')), findsOneWidget);
       expect(
         find.text(
-          'For immediate threats. BayanTrack does not replace emergency hotlines.',
+          'For immediate response, call an emergency service using the hotline below. Submitting this report does not dispatch a team.',
         ),
         findsOneWidget,
       );

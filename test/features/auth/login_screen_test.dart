@@ -270,7 +270,7 @@ Future<void> _pumpLogin(
     ProviderScope(
       overrides: [authControllerProvider.overrideWithValue(authState)],
       child: MaterialApp(
-        navigatorObservers: [if (navigatorObserver != null) navigatorObserver],
+        navigatorObservers: [?navigatorObserver],
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         theme: AppTheme.light,
