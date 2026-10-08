@@ -58,6 +58,37 @@ void main() {
     expect(workflow, contains('umask 077'));
   });
 
+  test('cold release builds have bounded time and visible progress', () {
+    expect(workflow, contains('timeout-minutes: 90'));
+    expect(
+      workflow,
+      contains('- name: Build signed APK\n        timeout-minutes: 60'),
+    );
+    expect(workflow, contains('flutter build apk --release --no-pub'));
+    expect(workflow, contains('while sleep 60; do'));
+    expect(workflow, contains('APK build still running:'));
+    expect(
+      workflow,
+      contains('trap \'kill "\$heartbeat_pid" 2>/dev/null || true\' EXIT'),
+    );
+  });
+
+  test('dependency cache excludes signing and project build files', () {
+    final cache = workflow.substring(
+      workflow.indexOf('- name: Cache build dependencies'),
+      workflow.indexOf('- name: Install dependencies'),
+    );
+    expect(cache, contains('~/.pub-cache'));
+    expect(cache, contains('~/.gradle/caches/modules-2'));
+    expect(cache, contains('~/.gradle/wrapper'));
+    expect(cache, contains("hashFiles('pubspec.lock'"));
+    expect(cache, isNot(contains('runner.temp')));
+    expect(cache, isNot(contains('secrets.')));
+    expect(cache, isNot(contains('~/.gradle/caches\n')));
+    expect(cache, isNot(contains('key.properties')));
+    expect(cache, isNot(contains('.jks')));
+  });
+
   test('release signing cannot fall back to debug credentials', () {
     expect(gradle, contains('signingConfigs.getByName("release")'));
     expect(gradle, isNot(contains('signingConfigs.getByName("debug")')));

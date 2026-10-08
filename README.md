@@ -121,6 +121,17 @@ runs analysis and tests, and builds a signed APK against
 Each successful run creates a separate development prerelease with
 `bayantrack.apk` and its SHA-256 checksum.
 
+Cold builds can spend time installing Android tools and compiling dependencies.
+The job allows 90 minutes total, with a 60-minute APK build limit. During the
+build, an elapsed-time message appears every minute. Dependency downloads are
+cached between successful runs; signing credentials and project build outputs
+are not cached. The build reuses the dependencies installed before the checks.
+
+Exit code 143 followed by "The operation was canceled" indicates termination,
+not a specific compiler or signing failure. Check the run's Summary annotations
+for a timeout, or whether the run was canceled manually. Rerunning an old commit
+does not pick up workflow fixes; push the updated workflow and run `main` again.
+
 After committing the workflow and Android configuration to your fork's `main`,
 open Actions > Android APK Release. Use Run workflow for a manual rebuild.
 Download the APK from Releases and install it manually; GitHub does not update
