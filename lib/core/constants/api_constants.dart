@@ -1,13 +1,13 @@
 class ApiConstants {
-  // Pass complete URLs at build/run time. The default targets an Android
-  // emulator; physical devices use a LAN URL or 127.0.0.1 with adb reverse.
+  // Default to the deployed backend. Pass complete URLs at build/run time
+  // to override these defaults for local development.
   static const String baseUrl = String.fromEnvironment(
     'BAYANTRACK_API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000/api',
+    defaultValue: 'https://api.bayantrack.app/api',
   );
   static const String mediaBaseUrl = String.fromEnvironment(
     'BAYANTRACK_MEDIA_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000',
+    defaultValue: 'https://api.bayantrack.app',
   );
   static const String health = '/health/';
 

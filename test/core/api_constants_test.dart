@@ -2,14 +2,14 @@ import 'package:bayantrack_mobile/core/constants/api_constants.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('emulator defaults and explicit build-time overrides', () {
+  test('deployed defaults and explicit build-time overrides', () {
     const expectedApi = String.fromEnvironment(
       'QA_EXPECTED_API',
-      defaultValue: 'http://10.0.2.2:8000/api',
+      defaultValue: 'https://api.bayantrack.app/api',
     );
     const expectedMedia = String.fromEnvironment(
       'QA_EXPECTED_MEDIA',
-      defaultValue: 'http://10.0.2.2:8000',
+      defaultValue: 'https://api.bayantrack.app',
     );
     expect(ApiConstants.baseUrl, expectedApi);
     expect(ApiConstants.mediaBaseUrl, expectedMedia);

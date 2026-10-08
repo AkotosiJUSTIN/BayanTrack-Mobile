@@ -48,6 +48,8 @@ class _Repository extends SystemGovernanceRepository {
   SystemGovernanceState currentStatus = _pending;
   PublishedTerms document = _terms('version-2');
   Future<SystemGovernanceState>? nextStatus;
+  bool termsUnavailable = false;
+  int termsReads = 0;
   bool staleAcceptance = false;
   final consentCalls = <Map<String, String>>[];
 
@@ -56,7 +58,11 @@ class _Repository extends SystemGovernanceRepository {
       nextStatus ?? Future.value(currentStatus);
 
   @override
-  Future<PublishedTerms> currentTerms() async => document;
+  Future<PublishedTerms> currentTerms() async {
+    termsReads++;
+    if (termsUnavailable) throw StateError('Terms unavailable');
+    return document;
+  }
 
   @override
   Future<void> accept(PublishedTerms terms, String language) async {
@@ -118,6 +124,107 @@ Future<ProviderContainer> _pump(
 }
 
 void main() {
+  testWidgets('account check never renders cached pending consent', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    final container = ProviderContainer(
+      retry: (_, _) => null,
+      overrides: [
+        systemGovernanceRepositoryProvider.overrideWithValue(repository),
+      ],
+    );
+    addTearDown(container.dispose);
+    await container.read(systemGovernanceProvider.future);
+    final accountStatus = Completer<SystemGovernanceState>();
+    repository.nextStatus = accountStatus.future;
+    container.invalidate(systemGovernanceProvider);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const SystemGovernanceGate(
+            child: Scaffold(body: Text('Ordinary workspace')),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.byType(CurrentTermsScreen), findsNothing);
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    expect(find.text('Ordinary workspace'), findsNothing);
+    expect(
+      find.byKey(const Key('governance-emergency-button')),
+      findsOneWidget,
+    );
+    accountStatus.complete(_unrestricted);
+    await tester.pumpAndSettle();
+    expect(find.text('Ordinary workspace'), findsOneWidget);
+    expect(repository.consentCalls, isEmpty);
+  });
+
+  testWidgets('current terms can be read without recording consent', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          systemGovernanceRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: CurrentTermsScreen(readOnly: true),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text(repository.document.translation('en').title),
+      findsOneWidget,
+    );
+    expect(
+      find.text(repository.document.translation('en').content),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('governance-consent-checkbox')), findsNothing);
+    expect(find.byKey(const Key('governance-accept-button')), findsNothing);
+    expect(repository.consentCalls, isEmpty);
+  });
+
+  testWidgets('read-only terms expose retry when the server is unavailable', (
+    tester,
+  ) async {
+    final repository = _Repository()..termsUnavailable = true;
+    await tester.pumpWidget(
+      ProviderScope(
+        retry: (_, _) => null,
+        overrides: [
+          systemGovernanceRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: CurrentTermsScreen(readOnly: true),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(SelectableText), findsNothing);
+    repository.termsUnavailable = false;
+    await tester.tap(find.widgetWithIcon(OutlinedButton, Icons.refresh));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(repository.document.translation('en').content),
+      findsOneWidget,
+    );
+    expect(repository.termsReads, 2);
+    expect(repository.consentCalls, isEmpty);
+  });
+
   for (final language in ['en', 'fil']) {
     for (final scale in [1.0, 2.0]) {
       testWidgets(

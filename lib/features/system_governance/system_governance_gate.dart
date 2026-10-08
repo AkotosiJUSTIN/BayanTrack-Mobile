@@ -16,6 +16,8 @@ class SystemGovernanceGate extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final status = ref.watch(systemGovernanceProvider);
     return status.when(
+      // Account changes must not render the previous account's consent state.
+      skipLoadingOnRefresh: false,
       loading: () => _UnavailableGovernance(
         loading: true,
         onRetry: () => ref.read(systemGovernanceProvider.notifier).refresh(),
@@ -122,7 +124,8 @@ class _EmergencyButton extends StatelessWidget {
 }
 
 class CurrentTermsScreen extends ConsumerStatefulWidget {
-  const CurrentTermsScreen({super.key});
+  const CurrentTermsScreen({super.key, this.readOnly = false});
+  final bool readOnly;
 
   @override
   ConsumerState<CurrentTermsScreen> createState() => _CurrentTermsScreenState();
@@ -187,6 +190,7 @@ class _CurrentTermsScreenState extends ConsumerState<CurrentTermsScreen> {
           children: [
             Expanded(
               child: terms.when(
+                skipLoadingOnRefresh: false,
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (_, _) => Center(
                   child: Padding(
@@ -231,44 +235,49 @@ class _CurrentTermsScreenState extends ConsumerState<CurrentTermsScreen> {
                           translation.content,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
-                        const SizedBox(height: 24),
-                        CheckboxListTile(
-                          key: const Key('governance-consent-checkbox'),
-                          value: _agreed,
-                          onChanged: _saving
-                              ? null
-                              : (value) =>
-                                    setState(() => _agreed = value == true),
-                          title: Text(
-                            AppLocalizations.of(context).governanceConsentLabel,
-                          ),
-                          controlAffinity: ListTileControlAffinity.leading,
-                        ),
-                        if (_error != null)
-                          Text(
-                            _error!,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
+                        if (!widget.readOnly) ...[
+                          const SizedBox(height: 24),
+                          CheckboxListTile(
+                            key: const Key('governance-consent-checkbox'),
+                            value: _agreed,
+                            onChanged: _saving
+                                ? null
+                                : (value) =>
+                                      setState(() => _agreed = value == true),
+                            title: Text(
+                              AppLocalizations.of(
+                                context,
+                              ).governanceConsentLabel,
                             ),
+                            controlAffinity: ListTileControlAffinity.leading,
                           ),
-                        FilledButton.icon(
-                          key: const Key('governance-accept-button'),
-                          onPressed: _agreed && !_saving
-                              ? () => _accept(document, language)
-                              : null,
-                          icon: const Icon(Icons.check),
-                          label: Text(AppLocalizations.of(context).accept),
-                        ),
+                          if (_error != null)
+                            Text(
+                              _error!,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                          FilledButton.icon(
+                            key: const Key('governance-accept-button'),
+                            onPressed: _agreed && !_saving
+                                ? () => _accept(document, language)
+                                : null,
+                            icon: const Icon(Icons.check),
+                            label: Text(AppLocalizations.of(context).accept),
+                          ),
+                        ],
                       ],
                     ),
                   );
                 },
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 8, 20, 16),
-              child: _EmergencyButton(),
-            ),
+            if (!widget.readOnly)
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: _EmergencyButton(),
+              ),
           ],
         ),
       ),

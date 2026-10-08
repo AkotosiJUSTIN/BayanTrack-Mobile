@@ -14,6 +14,8 @@ import '../../kyc/presentation/kyc_form_screen.dart';
 import '../../kyc/presentation/kyc_status_screen.dart';
 import '../../notifications/presentation/notification_settings_screen.dart';
 import '../../help/presentation/help_screens.dart';
+import '../../system_governance/system_governance_gate.dart';
+import '../../system_governance/system_governance_provider.dart';
 import '../../kyc/domain/entities/kyc_status.dart';
 import '../data/auth_models.dart';
 import '../data/user_permissions.dart';
@@ -100,6 +102,26 @@ class ProfileScreen extends ConsumerWidget {
                   _buildPreferencesMenu(context),
                   const SizedBox(height: 24),
                   const HelpSafetySection(),
+                  const SizedBox(height: 16),
+                  CivicSettingsGroup(
+                    children: [
+                      CivicSettingsRow(
+                        key: const ValueKey('profile-terms-and-privacy'),
+                        icon: Icons.description_outlined,
+                        title: l10n.termsAndPrivacy,
+                        showDivider: false,
+                        onTap: () {
+                          ref.invalidate(publishedTermsProvider);
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  const CurrentTermsScreen(readOnly: true),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 24),
                   _buildLogoutTile(context, ref),
                   const SizedBox(height: 16),
