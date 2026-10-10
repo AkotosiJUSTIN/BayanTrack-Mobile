@@ -65,6 +65,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isMapView = true;
+  bool _isMapLegendExpanded = false;
   bool _isNavigatingToReportDetail = false;
   bool _isInitialLoading = true;
   bool _isStale = false;
@@ -608,7 +609,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        VerificationBanner(permissions: permissions),
+        VerificationBanner(permissions: permissions, compact: true),
         if (_fastReportFollowUp != null)
           _buildFastReportFollowUpCard(theme, l10n),
         Padding(
@@ -911,7 +912,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     bottom: 16,
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
-                        maxWidth: MediaQuery.sizeOf(context).width - 32,
+                        maxWidth: constraints.maxWidth - 32,
                       ),
                       child: Material(
                         color: theme.colorScheme.surface.withValues(
@@ -929,13 +930,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             horizontal: 8,
                             vertical: 6,
                           ),
-                          child: Wrap(
-                            spacing: 8,
-                            runSpacing: 4,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              for (final status
-                                  in _statusFilters.whereType<ReportStatus>())
-                                _buildLegendItem(status, l10n),
+                              Semantics(
+                                expanded: _isMapLegendExpanded,
+                                child: TextButton.icon(
+                                  key: const Key('home-map-legend-toggle'),
+                                  onPressed: () => setState(() {
+                                    _isMapLegendExpanded =
+                                        !_isMapLegendExpanded;
+                                  }),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor:
+                                        theme.colorScheme.onSurface,
+                                    minimumSize: const Size(0, 48),
+                                  ),
+                                  icon: Icon(
+                                    _isMapLegendExpanded
+                                        ? Icons.expand_more
+                                        : Icons.info_outline,
+                                    size: 20,
+                                  ),
+                                  label: Text(l10n.pinColors),
+                                ),
+                              ),
+                              if (_isMapLegendExpanded)
+                                ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxHeight: viewportHeight * 0.4,
+                                  ),
+                                  child: SingleChildScrollView(
+                                    child: Wrap(
+                                      spacing: 8,
+                                      runSpacing: 4,
+                                      children: [
+                                        for (final status
+                                            in _statusFilters
+                                                .whereType<ReportStatus>())
+                                          _buildLegendItem(status, l10n),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),

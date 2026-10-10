@@ -710,6 +710,12 @@ abstract class AppLocalizations {
   /// **'Emergency Report'**
   String get emergencyReport;
 
+  /// No description provided for @pinColors.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin colors'**
+  String get pinColors;
+
   /// No description provided for @addDetails.
   ///
   /// In en, this message translates to:

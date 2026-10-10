@@ -330,6 +330,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emergencyReport => 'Emergency Report';
 
   @override
+  String get pinColors => 'Pin colors';
+
+  @override
   String get addDetails => 'Add details';
 
   @override

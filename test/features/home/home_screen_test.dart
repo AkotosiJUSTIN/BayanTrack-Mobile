@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
 import 'package:bayantrack_mobile/core/domain/failures.dart';
 import 'package:bayantrack_mobile/core/domain/result.dart';
 import 'package:bayantrack_mobile/core/presentation/widgets/offline_stale_banner.dart';
@@ -7,6 +10,7 @@ import 'package:bayantrack_mobile/core/theme/app_theme.dart';
 import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
 import 'package:bayantrack_mobile/features/auth/domain/entities/user.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/auth_controller.dart';
+import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
 import 'package:bayantrack_mobile/features/home/presentation/home_screen.dart';
 import 'package:bayantrack_mobile/features/navigation/main_navigation_shell.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/paginated_reports.dart';
@@ -21,6 +25,8 @@ import 'package:bayantrack_mobile/features/reports/presentation/reports_controll
 import 'package:bayantrack_mobile/features/reports/reports_di.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
@@ -28,6 +34,11 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _ReportsRepositoryMock extends Mock implements ReportsRepository {}
+
+class _TestMunicipalities extends Municipalities {
+  @override
+  build() => const [bundledUrdanetaMunicipality];
+}
 
 class _TestReachability extends BackendReachabilityNotifier {
   @override
@@ -94,6 +105,9 @@ Widget _app(
   AuthState authState = const AuthInitial(),
   HomeScreen home = const HomeScreen(),
   BackendReachabilityNotifier Function()? reachabilityBuilder,
+  ThemeData? theme,
+  Locale? locale,
+  double textScale = 1,
 }) {
   return ProviderScope(
     retry: (_, _) => null,
@@ -112,8 +126,18 @@ Widget _app(
         reachabilityBuilder ?? _TestReachability.new,
       ),
       userPermissionsProvider.overrideWithValue(UserPermissions(null)),
+      municipalitiesProvider.overrideWith(_TestMunicipalities.new),
     ],
     child: MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: theme,
+      locale: locale,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        child: child!,
+      ),
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       home: withNavigation ? MainNavigationShell(screens: [home]) : home,
@@ -152,6 +176,14 @@ void _stubReports(
 }
 
 void main() {
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('plugins.flutter.io/path_provider'),
+          (_) async => Directory.systemTemp.path,
+        );
+  });
+
   test('resolved and closed share final green status colors', () {
     expect(reportMapStatusColor(ReportStatus.resolved), AppColors.success);
     expect(reportMapStatusColor(ReportStatus.closed), AppColors.success);
@@ -251,9 +283,112 @@ void main() {
     await tester.pumpWidget(_app(repository, withNavigation: true));
     await tester.pumpAndSettle();
 
-    expect(find.text('User Verification'), findsOneWidget);
+    expect(find.text('Verify Identity'), findsOneWidget);
     expect(find.text('No reports found'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Retry'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Home verification starts compact and details toggle', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repository = _ReportsRepositoryMock();
+    _stubReports(repository, () async => const Success(PaginatedReports.empty));
+
+    await tester.pumpWidget(_app(repository, withNavigation: true));
+    await tester.pumpAndSettle();
+    final banner = find.byKey(const Key('home-verification-banner'));
+    final compactHeight = tester.getSize(banner).height;
+    expect(compactHeight, lessThanOrEqualTo(56));
+    expect(find.text('Verify Identity'), findsOneWidget);
+    expect(find.text('User Verification'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('home-verification-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.text('User Verification'), findsOneWidget);
+    expect(
+      find.text('Complete identity verification to unlock all features.'),
+      findsOneWidget,
+    );
+    expect(tester.getSize(banner).height, greaterThan(compactHeight));
+
+    await tester.tap(find.byKey(const Key('home-verification-toggle')));
+    await tester.pumpAndSettle();
+    expect(tester.getSize(banner).height, compactHeight);
+    expect(find.text('User Verification'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Home legend starts compact and retains filters when collapsed', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repository = _ReportsRepositoryMock();
+    _stubReports(
+      repository,
+      () async => const Success(
+        PaginatedReports(results: [_submittedReport, _resolvedReport]),
+      ),
+    );
+    await tester.pumpWidget(_app(repository, withNavigation: true));
+    await tester.pumpAndSettle();
+    final toggle = find.byKey(const Key('home-map-legend-toggle'));
+    final resolved = find.byKey(const Key('home-map-status-resolved'));
+    expect(toggle, findsOneWidget);
+    expect(resolved, findsNothing);
+    expect(find.byIcon(Icons.location_on), findsNWidgets(2));
+
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    expect(resolved, findsOneWidget);
+    await tester.ensureVisible(resolved);
+    await tester.tap(resolved);
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.location_on), findsOneWidget);
+
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    expect(resolved, findsNothing);
+    expect(find.byIcon(Icons.location_on), findsOneWidget);
+
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    expect(tester.widget<FilterChip>(resolved).selected, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Home compact controls fit Filipino and enlarged phone text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 740);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final repository = _ReportsRepositoryMock();
+    _stubReports(
+      repository,
+      () async => const Success(
+        PaginatedReports(results: [_submittedReport, _resolvedReport]),
+      ),
+    );
+    await tester.pumpWidget(
+      _app(
+        repository,
+        withNavigation: true,
+        locale: const Locale('fil'),
+        textScale: 1.5,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('home-verification-toggle')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('home-map-legend-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.text('Mga kulay ng pin'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -309,6 +444,9 @@ void main() {
     expect(find.byIcon(Icons.location_on), findsNWidgets(3));
     expect(calls, 1);
 
+    await tester.tap(find.byKey(const Key('home-map-legend-toggle')));
+    await tester.pumpAndSettle();
+
     await tester.tap(find.byKey(const Key('home-map-status-resolved')));
     await tester.pumpAndSettle();
     expect(find.byIcon(Icons.location_on), findsOneWidget);
@@ -348,6 +486,8 @@ void main() {
     });
 
     await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('home-map-legend-toggle')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('home-map-status-resolved')));
     await tester.pumpAndSettle();
@@ -541,4 +681,103 @@ void main() {
     expect(calls, 2);
     expect(find.byType(OfflineStaleBanner), findsNothing);
   });
+
+  const previewDirectory = String.fromEnvironment('HOME_UI_PREVIEW_DIR');
+  if (previewDirectory.isNotEmpty) {
+    testWidgets('renders mobile home previews', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.runAsync(() async {
+        for (final family in ['Roboto', 'HomePreview']) {
+          final font = FontLoader(family)
+            ..addFont(
+              File(
+                'C:/Windows/Fonts/segoeui.ttf',
+              ).readAsBytes().then((bytes) => ByteData.sublistView(bytes)),
+            );
+          await font.load();
+        }
+        final icons = FontLoader('MaterialIcons')
+          ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
+        await icons.load();
+      });
+      final repository = _ReportsRepositoryMock();
+      _stubReports(
+        repository,
+        () async => const Success(
+          PaginatedReports(
+            results: [_submittedReport, _inProgressReport, _resolvedReport],
+            isStale: true,
+          ),
+        ),
+      );
+      const previewKey = Key('home-ui-preview');
+      final baseTheme = AppTheme.dark;
+      final previewTheme = baseTheme.copyWith(
+        textTheme: baseTheme.textTheme.apply(fontFamily: 'HomePreview'),
+        primaryTextTheme: baseTheme.primaryTextTheme.apply(
+          fontFamily: 'HomePreview',
+        ),
+        appBarTheme: baseTheme.appBarTheme.copyWith(
+          titleTextStyle: baseTheme.appBarTheme.titleTextStyle?.copyWith(
+            fontFamily: 'HomePreview',
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: baseTheme.textButtonTheme.style?.copyWith(
+            textStyle: WidgetStatePropertyAll(
+              baseTheme.textButtonTheme.style?.textStyle
+                  ?.resolve({})
+                  ?.copyWith(fontFamily: 'HomePreview'),
+            ),
+          ),
+        ),
+        segmentedButtonTheme: SegmentedButtonThemeData(
+          style: baseTheme.segmentedButtonTheme.style?.copyWith(
+            textStyle: WidgetStatePropertyAll(
+              baseTheme.segmentedButtonTheme.style?.textStyle
+                  ?.resolve({})
+                  ?.copyWith(fontFamily: 'HomePreview'),
+            ),
+          ),
+        ),
+        chipTheme: baseTheme.chipTheme.copyWith(
+          labelStyle: baseTheme.chipTheme.labelStyle?.copyWith(
+            fontFamily: 'HomePreview',
+          ),
+          secondaryLabelStyle: baseTheme.chipTheme.secondaryLabelStyle
+              ?.copyWith(fontFamily: 'HomePreview'),
+        ),
+      );
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: previewKey,
+          child: _app(repository, withNavigation: true, theme: previewTheme),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      Future<void> capture(String name) async {
+        final boundary = tester.renderObject<RenderRepaintBoundary>(
+          find.byKey(previewKey),
+        );
+        await tester.runAsync(() async {
+          final image = await boundary.toImage(pixelRatio: 2);
+          final data = await image.toByteData(format: ui.ImageByteFormat.png);
+          final file = File('$previewDirectory/$name.png');
+          await file.parent.create(recursive: true);
+          await file.writeAsBytes(data!.buffer.asUint8List());
+          image.dispose();
+        });
+      }
+
+      await capture('home-compact');
+      await tester.tap(find.byKey(const Key('home-verification-toggle')));
+      await tester.tap(find.byKey(const Key('home-map-legend-toggle')));
+      await tester.pumpAndSettle();
+      await capture('home-expanded');
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
