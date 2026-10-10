@@ -6,6 +6,7 @@ import '../../../../core/domain/failures.dart';
 import '../../../../core/domain/result.dart';
 import '../../../../core/network/error_mapper.dart';
 import '../../domain/auth_repository.dart';
+import '../../domain/auth_session_repository.dart';
 import '../../domain/entities/auth_tokens.dart';
 import '../../domain/entities/user.dart';
 import '../auth_models.dart';
@@ -16,8 +17,10 @@ import '../mappers/auth_mapper.dart';
 /// All methods return [Result<T>] and use [ErrorMapper] for error handling.
 class AuthRepositoryImpl implements AuthRepository {
   final Dio _dio;
+  final AuthSessionRepository? _sessionRepository;
 
-  AuthRepositoryImpl(this._dio);
+  AuthRepositoryImpl(this._dio, {AuthSessionRepository? sessionRepository})
+    : _sessionRepository = sessionRepository;
 
   @override
   Future<Result<AuthTokens>> login({
@@ -116,10 +119,27 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Result<User>> getProfile() async {
     try {
+      final accessToken = await _sessionRepository?.getAccessToken();
       final response = await _dio.get(ApiConstants.profile);
       final userData = response.data['user'] ?? response.data;
       final profile = UserProfile.fromJson(userData);
-      return Success(AuthMapper.userFromProfile(profile));
+      final user = AuthMapper.userFromProfile(profile);
+      final authorization = response.requestOptions.headers['Authorization'];
+      final verifiedToken =
+          authorization is String && authorization.startsWith('Bearer ')
+          ? authorization.substring(7)
+          : accessToken;
+      if (verifiedToken != null) {
+        try {
+          await _sessionRepository?.cacheUser(
+            user,
+            expectedAccessToken: verifiedToken,
+          );
+        } catch (_) {
+          // A cache write failure must not turn a verified login into a failure.
+        }
+      }
+      return Success(user);
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));
     }

@@ -2,6 +2,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show Provider;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../core/network/dio_provider.dart';
+import '../../core/providers/connectivity_provider.dart';
 import 'data/repositories/auth_repository_impl.dart';
 import 'data/repositories/auth_session_repository_impl.dart';
 import 'domain/auth_repository.dart';
@@ -34,7 +35,10 @@ AuthSessionRepository authSessionRepository(Ref ref) {
 @riverpod
 AuthRepository authRepository(Ref ref) {
   final dio = ref.watch(dioProvider);
-  return AuthRepositoryImpl(dio);
+  return AuthRepositoryImpl(
+    dio,
+    sessionRepository: ref.watch(authSessionRepositoryProvider),
+  );
 }
 
 // ==================== USE CASES ====================
@@ -72,9 +76,11 @@ GetCurrentUserUseCase getCurrentUserUseCase(Ref ref) {
 
 @riverpod
 LoadSessionUseCase loadSessionUseCase(Ref ref) {
+  final isOnline = ref.watch(isOnlineProvider);
   return LoadSessionUseCase(
     sessionRepository: ref.watch(authSessionRepositoryProvider),
     authRepository: ref.watch(authRepositoryProvider),
+    isOnline: () => isOnline,
   );
 }
 

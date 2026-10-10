@@ -382,7 +382,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
     'barangay': _resolvedBarangay?.name,
     'declarationConfirmed': true,
     'dataProcessingConsent': true,
-    'isQuickReport': true,
+    'isQuickReport': !widget.emergencyMode,
     'isEmergency': emergency,
   };
 

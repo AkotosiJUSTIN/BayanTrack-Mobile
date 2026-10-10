@@ -50,4 +50,26 @@ class AuthMapper {
     if (value == null || value.isEmpty) return null;
     return DateTime.tryParse(value);
   }
+
+  static UserProfile profileFromUser(User user) => UserProfile(
+    id: user.id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    phone: user.phone,
+    avatarUrl: user.avatarUrl,
+    avatarRevision: user.avatarRevision,
+    avatarStorageStatus: user.avatarStorageStatus,
+    profileRevision: user.profileRevision,
+    role: user.role.toApiString(),
+    isActive: user.isActive,
+    createdAt: user.createdAt?.toUtc().toIso8601String(),
+    updatedAt: user.updatedAt?.toUtc().toIso8601String(),
+    passwordChangedAt: user.passwordChangedAt?.toUtc().toIso8601String(),
+    passwordExpiresAt: user.passwordExpiresAt?.toUtc().toIso8601String(),
+    passwordDaysRemaining: user.passwordDaysRemaining,
+    passwordWarningLevel: user.passwordWarningLevel,
+    passwordExpired: user.passwordExpired,
+    passwordChangeRequired: user.passwordChangeRequired,
+  );
 }
