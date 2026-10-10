@@ -333,6 +333,9 @@ class AppLocalizationsFil extends AppLocalizations {
   String get emergencyReport => 'Emergency Report';
 
   @override
+  String get pinColors => 'Mga kulay ng pin';
+
+  @override
   String get addDetails => 'Magdagdag ng detalye';
 
   @override

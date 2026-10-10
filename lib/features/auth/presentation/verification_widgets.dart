@@ -165,13 +165,27 @@ class VerificationRequiredDialog extends ConsumerWidget {
 }
 
 /// Banner widget to show at top of screens for unverified users
-class VerificationBanner extends ConsumerWidget {
+class VerificationBanner extends ConsumerStatefulWidget {
   final UserPermissions permissions;
+  final bool compact;
 
-  const VerificationBanner({super.key, required this.permissions});
+  const VerificationBanner({
+    super.key,
+    required this.permissions,
+    this.compact = false,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<VerificationBanner> createState() => _VerificationBannerState();
+}
+
+class _VerificationBannerState extends ConsumerState<VerificationBanner> {
+  bool _isExpanded = false;
+
+  UserPermissions get permissions => widget.permissions;
+
+  @override
+  Widget build(BuildContext context) {
     // Don't show banner if verified
     if (permissions.isVerified) {
       return const SizedBox.shrink();
@@ -184,6 +198,88 @@ class VerificationBanner extends ConsumerWidget {
     final actionLabel = localizedVerificationActionLabel(permissions, l10n);
 
     final statusMessage = localizedVerificationStatusMessage(permissions, l10n);
+    if (widget.compact) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+        child: Material(
+          key: const Key('home-verification-banner'),
+          color: Color.alphaBlend(
+            statusColor.withValues(alpha: 0.08),
+            theme.colorScheme.surface,
+          ),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton.icon(
+                        key: const Key('home-verification-action'),
+                        onPressed: () =>
+                            _navigateToKyc(context, permissions, ref),
+                        style: TextButton.styleFrom(
+                          alignment: Alignment.centerLeft,
+                          minimumSize: const Size(0, 48),
+                        ),
+                        icon: Icon(
+                          _getStatusIcon(permissions.currentStatus),
+                          color: statusColor,
+                          size: 20,
+                        ),
+                        label: Text(actionLabel),
+                      ),
+                    ),
+                    Semantics(
+                      expanded: _isExpanded,
+                      child: IconButton(
+                        key: const Key('home-verification-toggle'),
+                        tooltip: _isExpanded
+                            ? MaterialLocalizations.of(
+                                context,
+                              ).expandedIconTapHint
+                            : MaterialLocalizations.of(
+                                context,
+                              ).collapsedIconTapHint,
+                        onPressed: () =>
+                            setState(() => _isExpanded = !_isExpanded),
+                        icon: Icon(
+                          _isExpanded ? Icons.expand_less : Icons.expand_more,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_isExpanded)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.userVerification,
+                          style: theme.textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          statusMessage,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final action = TextButton.icon(
       onPressed: () => _navigateToKyc(context, permissions, ref),
       style: TextButton.styleFrom(
