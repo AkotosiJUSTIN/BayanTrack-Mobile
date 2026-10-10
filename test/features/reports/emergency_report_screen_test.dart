@@ -14,6 +14,7 @@ import 'package:bayantrack_mobile/features/auth/presentation/auth_controller.dar
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
 import 'package:bayantrack_mobile/features/help/data/help_content.dart';
 import 'package:bayantrack_mobile/features/reports/data/report_draft_store.dart';
+import 'package:bayantrack_mobile/features/reports/data/report_create_outbox.dart';
 import 'package:bayantrack_mobile/features/reports/data/reports_repository.dart'
     as data;
 import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart'
@@ -23,6 +24,8 @@ import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dar
 import 'package:bayantrack_mobile/features/reports/domain/usecases/create_report_usecase.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/new_report/quick_report_screen.dart';
 import 'package:bayantrack_mobile/features/reports/reports_di.dart';
+import 'package:bayantrack_mobile/features/system_governance/system_governance_models.dart';
+import 'package:bayantrack_mobile/features/system_governance/system_governance_provider.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -46,6 +49,15 @@ class _TestMunicipalityBarangays extends MunicipalityBarangays {
 }
 
 class _ReportsRepositoryMock extends Mock implements data.ReportsRepository {}
+
+class _TestGovernance extends SystemGovernanceController {
+  @override
+  Future<SystemGovernanceState> build() async => const SystemGovernanceState(
+    maintenanceEnabled: false,
+    maintenanceMessage: '',
+    termsAcceptanceRequired: false,
+  );
+}
 
 class _UnusedDomainReportsRepository extends Mock
     implements domain_repository.ReportsRepository {}
@@ -74,6 +86,7 @@ class _TestCreateReportUseCase extends CreateReportUseCase {
   String? category;
   String? description;
   bool? isEmergency;
+  bool? isQuickReport;
   String? idempotencyKey;
 
   @override
@@ -106,6 +119,7 @@ class _TestCreateReportUseCase extends CreateReportUseCase {
     this.category = category;
     this.description = description;
     this.isEmergency = isEmergency;
+    this.isQuickReport = isQuickReport;
     this.idempotencyKey = idempotencyKey;
     return Success(
       domain.Report(id: 'emergency-1', description: '', isEmergency: true),
@@ -202,6 +216,7 @@ void main() {
             ),
             data.reportsRepositoryProvider.overrideWithValue(reportsRepository),
             createReportUseCaseProvider.overrideWithValue(createUseCase),
+            systemGovernanceProvider.overrideWith(_TestGovernance.new),
           ],
           child: MaterialApp(
             supportedLocales: AppLocalizations.supportedLocales,
@@ -272,6 +287,7 @@ void main() {
             ),
             data.reportsRepositoryProvider.overrideWithValue(reportsRepository),
             createReportUseCaseProvider.overrideWithValue(createUseCase),
+            systemGovernanceProvider.overrideWith(_TestGovernance.new),
           ],
           child: MaterialApp(
             supportedLocales: AppLocalizations.supportedLocales,
@@ -337,6 +353,7 @@ void main() {
       expect(createUseCase.category, 'flood_disaster');
       expect(createUseCase.description, isEmpty);
       expect(createUseCase.isEmergency, isTrue);
+      expect(createUseCase.isQuickReport, isFalse);
       expect(createUseCase.idempotencyKey, startsWith('report-key_'));
       expect(find.text('Add details'), findsOneWidget);
       expect(find.text('Add Photos'), findsOneWidget);
@@ -375,6 +392,7 @@ void main() {
             ),
             data.reportsRepositoryProvider.overrideWithValue(reportsRepository),
             createReportUseCaseProvider.overrideWithValue(createUseCase),
+            systemGovernanceProvider.overrideWith(_TestGovernance.new),
           ],
           child: MaterialApp(
             supportedLocales: AppLocalizations.supportedLocales,
@@ -394,6 +412,9 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('NOT YET TRANSMITTED'), findsOneWidget);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(QuickReportScreen)),
+      );
       await tester.ensureVisible(
         find.byKey(const Key('emergency-report-category')),
       );
@@ -436,6 +457,30 @@ void main() {
       expect(launched, [hotlineCallUri(emergencyHotlines.first.number)]);
       expect(createUseCase.callCount, 0);
       expect(tester.takeException(), isNull);
+      final queued = await container
+          .read(reportCreateOutboxStoreProvider)
+          .readAll('user-A');
+      expect(queued, hasLength(1));
+      expect(queued.single.status, ReportCreateOutboxStatus.pending);
+      expect(queued.single.payload['isEmergency'], isTrue);
+      expect(queued.single.payload['isQuickReport'], isFalse);
+      expect(queued.single.payload['description'], '');
+
+      container.read(isOnlineProvider.notifier).setOnline(true);
+      expect(
+        await container.read(reportCreateOutboxProvider).resume('user-A'),
+        1,
+      );
+      expect(createUseCase.callCount, 1);
+      expect(createUseCase.isQuickReport, isFalse);
+      expect(
+        await container
+            .read(reportCreateOutboxStoreProvider)
+            .readServerReportId('user-A', queued.single.localReportId),
+        'emergency-1',
+      );
+      await container.read(reportCreateOutboxProvider).resume('user-A');
+      expect(createUseCase.callCount, 1);
     },
   );
 }

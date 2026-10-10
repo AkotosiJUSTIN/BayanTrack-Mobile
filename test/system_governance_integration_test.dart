@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:bayantrack_mobile/core/realtime/realtime_contract.dart';
+import 'package:bayantrack_mobile/core/providers/connectivity_provider.dart';
+import 'package:bayantrack_mobile/core/providers/backend_reachability_provider.dart';
 import 'package:bayantrack_mobile/features/system_governance/system_governance_gate.dart';
 import 'package:bayantrack_mobile/features/system_governance/system_governance_models.dart';
 import 'package:bayantrack_mobile/features/system_governance/system_governance_provider.dart';
@@ -48,14 +50,17 @@ class _Repository extends SystemGovernanceRepository {
   SystemGovernanceState currentStatus = _pending;
   PublishedTerms document = _terms('version-2');
   Future<SystemGovernanceState>? nextStatus;
+  bool statusUnavailable = false;
   bool termsUnavailable = false;
   int termsReads = 0;
   bool staleAcceptance = false;
   final consentCalls = <Map<String, String>>[];
 
   @override
-  Future<SystemGovernanceState> status() =>
-      nextStatus ?? Future.value(currentStatus);
+  Future<SystemGovernanceState> status() async {
+    if (statusUnavailable) throw StateError('Offline');
+    return nextStatus ?? Future.value(currentStatus);
+  }
 
   @override
   Future<PublishedTerms> currentTerms() async {
@@ -84,11 +89,27 @@ class _Repository extends SystemGovernanceRepository {
   }
 }
 
+class _Connectivity extends ConnectivityNotifier {
+  _Connectivity(this.online);
+  final bool online;
+  @override
+  bool build() => online;
+}
+
+class _Reachability extends BackendReachabilityNotifier {
+  _Reachability(this.reachability);
+  final BackendReachability reachability;
+  @override
+  BackendReachability build() => reachability;
+}
+
 Future<ProviderContainer> _pump(
   WidgetTester tester,
   _Repository repository, {
   String language = 'en',
   double textScale = 1,
+  bool online = true,
+  BackendReachability reachability = BackendReachability.reachable,
 }) async {
   tester.view.physicalSize = const Size(320, 568);
   tester.view.devicePixelRatio = 1;
@@ -97,6 +118,10 @@ Future<ProviderContainer> _pump(
     retry: (_, _) => null,
     overrides: [
       systemGovernanceRepositoryProvider.overrideWithValue(repository),
+      isOnlineProvider.overrideWith(() => _Connectivity(online)),
+      backendReachabilityProvider.overrideWith(
+        () => _Reachability(reachability),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -132,6 +157,10 @@ void main() {
       retry: (_, _) => null,
       overrides: [
         systemGovernanceRepositoryProvider.overrideWithValue(repository),
+        isOnlineProvider.overrideWith(() => _Connectivity(true)),
+        backendReachabilityProvider.overrideWith(
+          () => _Reachability(BackendReachability.reachable),
+        ),
       ],
     );
     addTearDown(container.dispose);
@@ -193,6 +222,49 @@ void main() {
     expect(find.byKey(const Key('governance-consent-checkbox')), findsNothing);
     expect(find.byKey(const Key('governance-accept-button')), findsNothing);
     expect(repository.consentCalls, isEmpty);
+  });
+
+  testWidgets('offline status failure leaves local workspace available', (
+    tester,
+  ) async {
+    final repository = _Repository()..statusUnavailable = true;
+    final container = await _pump(tester, repository, online: false);
+    expect(find.text('Ordinary workspace'), findsOneWidget);
+    expect(
+      permitsReportSnapshot(container.read(systemGovernanceProvider), {
+        'isEmergency': false,
+      }),
+      isFalse,
+    );
+    expect(repository.consentCalls, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('offline access does not bypass known pending terms', (
+    tester,
+  ) async {
+    await _pump(tester, _Repository(), online: false);
+    expect(find.byType(CurrentTermsScreen), findsOneWidget);
+    expect(find.text('Ordinary workspace'), findsNothing);
+  });
+
+  testWidgets('connected Wi-Fi without backend still permits local work', (
+    tester,
+  ) async {
+    final repository = _Repository()..statusUnavailable = true;
+    final container = await _pump(
+      tester,
+      repository,
+      reachability: BackendReachability.unreachable,
+    );
+    expect(find.text('Ordinary workspace'), findsOneWidget);
+    expect(container.read(isOnlineProvider), isTrue);
+    expect(
+      permitsReportSnapshot(container.read(systemGovernanceProvider), {
+        'isEmergency': false,
+      }),
+      isFalse,
+    );
   });
 
   testWidgets('read-only terms expose retry when the server is unavailable', (

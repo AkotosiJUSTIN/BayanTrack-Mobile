@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../core/providers/connectivity_provider.dart';
+import '../../core/providers/backend_reachability_provider.dart';
 import '../reports/presentation/new_report/quick_report_screen.dart';
 import 'system_governance_models.dart';
 import 'system_governance_provider.dart';
@@ -15,6 +17,14 @@ class SystemGovernanceGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final status = ref.watch(systemGovernanceProvider);
+    if (status.asData == null &&
+        (!ref.watch(isOnlineProvider) ||
+            ref.watch(backendReachabilityProvider) ==
+                BackendReachability.unreachable) &&
+        status.value?.termsAcceptanceRequired != true) {
+      // Local work stays available; outbox uploads still require live policy.
+      return child;
+    }
     return status.when(
       // Account changes must not render the previous account's consent state.
       skipLoadingOnRefresh: false,

@@ -1,4 +1,5 @@
 import 'entities/auth_tokens.dart';
+import 'entities/user.dart';
 
 /// Repository interface for session/token management.
 ///
@@ -23,6 +24,12 @@ abstract interface class AuthSessionRepository {
 
   /// Get refresh token only
   Future<String?> getRefreshToken();
+
+  /// Last server-verified identity for local work while the server is unavailable.
+  Future<User?> getCachedUser();
+
+  /// Do not attach a late profile response to a logged-out or switched session.
+  Future<bool> cacheUser(User user, {required String expectedAccessToken});
 
   /// Save tokens to secure storage
   Future<void> saveTokens({

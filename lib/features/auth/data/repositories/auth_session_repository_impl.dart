@@ -1,12 +1,17 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/constants/api_constants.dart';
 import '../../domain/auth_session_repository.dart';
 import '../../domain/entities/auth_tokens.dart';
+import '../../domain/entities/user.dart';
+import '../auth_models.dart';
+import '../mappers/auth_mapper.dart';
 
 /// Implementation of [AuthSessionRepository] using FlutterSecureStorage.
 class AuthSessionRepositoryImpl implements AuthSessionRepository {
+  static const _cachedUserKey = 'bayantrack_verified_session_user_v1';
   final FlutterSecureStorage _storage;
   final StreamController<bool> _authStateController =
       StreamController<bool>.broadcast();
@@ -44,10 +49,50 @@ class AuthSessionRepositoryImpl implements AuthSessionRepository {
   }
 
   @override
+  Future<User?> getCachedUser() => _serialize(() async {
+    final accessToken = await getAccessToken();
+    final refreshToken = await getRefreshToken();
+    if (accessToken == null ||
+        accessToken.isEmpty ||
+        refreshToken == null ||
+        refreshToken.isEmpty) {
+      return null;
+    }
+    final value = await _storage.read(key: _cachedUserKey);
+    if (value == null) return null;
+    try {
+      final json = Map<String, dynamic>.from(jsonDecode(value) as Map);
+      final user = AuthMapper.userFromProfile(UserProfile.fromJson(json));
+      return user.id.isNotEmpty && user.isActive ? user : null;
+    } on Object {
+      return null;
+    }
+  });
+
+  @override
+  Future<bool> cacheUser(User user, {required String expectedAccessToken}) =>
+      _serialize(() async {
+        if (expectedAccessToken.isEmpty ||
+            await getAccessToken() != expectedAccessToken ||
+            user.id.isEmpty) {
+          return false;
+        }
+        await _storage.write(
+          key: _cachedUserKey,
+          value: jsonEncode(AuthMapper.profileFromUser(user).toJson()),
+        );
+        return true;
+      });
+
+  @override
   Future<void> saveTokens({
     required String accessToken,
     required String refreshToken,
-  }) => _serialize(() => _writeTokens(accessToken, refreshToken));
+  }) => _serialize(() async {
+    // A fresh login must never inherit the previous account's offline identity.
+    await _storage.delete(key: _cachedUserKey);
+    await _writeTokens(accessToken, refreshToken);
+  });
 
   @override
   Future<bool> saveTokensIfRefreshTokenMatches({
@@ -84,6 +129,7 @@ class AuthSessionRepositoryImpl implements AuthSessionRepository {
   }
 
   Future<void> _clearSession() async {
+    await _storage.delete(key: _cachedUserKey);
     await _storage.delete(key: ApiConstants.accessTokenKey);
     await _storage.delete(key: ApiConstants.refreshTokenKey);
     _authStateController.add(false);
