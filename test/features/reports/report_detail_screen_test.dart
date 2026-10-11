@@ -3,17 +3,25 @@ import 'dart:async';
 import 'package:bayantrack_mobile/core/presentation/widgets/offline_stale_banner.dart';
 import 'package:bayantrack_mobile/core/providers/backend_reachability_provider.dart';
 import 'package:bayantrack_mobile/core/theme/app_theme.dart';
+import 'package:bayantrack_mobile/core/domain/failures.dart';
+import 'package:bayantrack_mobile/core/domain/result.dart';
 import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report_enums.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report_image.dart';
+import 'package:bayantrack_mobile/features/reports/domain/entities/blockchain_verification.dart';
+import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dart';
+import 'package:bayantrack_mobile/features/reports/reports_di.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/report_detail_controller.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/report_detail_screen.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+
+class _ReportsMock extends Mock implements ReportsRepository {}
 
 class _TestMunicipalities extends Municipalities {
   @override
@@ -56,7 +64,15 @@ Future<void> _pumpDetail(
   WidgetTester tester, {
   ThemeData? theme,
   Report? report,
+  ReportsRepository? repository,
 }) async {
+  if (repository == null) {
+    final mock = _ReportsMock();
+    when(
+      () => mock.verifyReport('RPT-DETAIL-UI-1', cachedOnly: true),
+    ).thenAnswer((_) async => const Err(ServerFailure('No saved proof')));
+    repository = mock;
+  }
   tester.view.physicalSize = const Size(360, 800);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -64,6 +80,7 @@ Future<void> _pumpDetail(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        reportsRepositoryDomainProvider.overrideWithValue(repository),
         municipalitiesProvider.overrideWith(_TestMunicipalities.new),
         backendReachabilityProvider.overrideWith(_TestReachability.new),
         reportDetailControllerProvider.overrideWithBuild(
@@ -82,6 +99,145 @@ Future<void> _pumpDetail(
 }
 
 void main() {
+  testWidgets('late saved proof cannot replace a newer manual result', (
+    tester,
+  ) async {
+    final repository = _ReportsMock();
+    final saved = Completer<Result<BlockchainVerificationResult>>();
+    when(
+      () => repository.verifyReport('RPT-DETAIL-UI-1', cachedOnly: true),
+    ).thenAnswer((_) => saved.future);
+    when(() => repository.verifyReport('RPT-DETAIL-UI-1')).thenAnswer(
+      (_) async => const Success(
+        BlockchainVerificationResult(
+          reportId: 'RPT-DETAIL-UI-1',
+          verified: true,
+          blockchainData: {},
+          auditHistory: [],
+          message: 'New verification result',
+        ),
+      ),
+    );
+    await _pumpDetail(tester, repository: repository);
+    await tester.scrollUntilVisible(find.text('Verify Now'), 400);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Verify Now'));
+    await tester.pumpAndSettle();
+    saved.complete(
+      const Success(
+        BlockchainVerificationResult(
+          reportId: 'RPT-DETAIL-UI-1',
+          verified: true,
+          blockchainData: {},
+          auditHistory: [],
+          message: 'Old saved result',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('New verification result'), findsOneWidget);
+    expect(find.text('Old saved result'), findsNothing);
+  });
+
+  testWidgets(
+    'report refresh cancels pending verification without a stuck spinner',
+    (tester) async {
+      final repository = _ReportsMock();
+      final pending = Completer<Result<BlockchainVerificationResult>>();
+      when(
+        () => repository.verifyReport('RPT-DETAIL-UI-1', cachedOnly: true),
+      ).thenAnswer((_) async => const Err(ServerFailure('No saved proof')));
+      when(
+        () => repository.verifyReport('RPT-DETAIL-UI-1'),
+      ).thenAnswer((_) => pending.future);
+      when(() => repository.getReport('RPT-DETAIL-UI-1')).thenAnswer(
+        (_) async => Success(_report(status: ReportStatus.resolved)),
+      );
+      await _pumpDetail(tester, repository: repository);
+      await tester.scrollUntilVisible(find.text('Verify Now'), 400);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Verify Now'));
+      await tester.pump();
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(ReportDetailScreen)),
+      );
+      await container
+          .read(reportDetailControllerProvider('RPT-DETAIL-UI-1').notifier)
+          .refresh();
+      await tester.pumpAndSettle();
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      pending.complete(
+        const Success(
+          BlockchainVerificationResult(
+            reportId: 'RPT-DETAIL-UI-1',
+            verified: true,
+            blockchainData: {},
+            auditHistory: [],
+            message: 'Obsolete pending result',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Obsolete pending result'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'loads shared verified and anchored proof without tapping verify',
+    (tester) async {
+      final repository = _ReportsMock();
+      when(
+        () => repository.verifyReport('RPT-DETAIL-UI-1', cachedOnly: true),
+      ).thenAnswer(
+        (_) async => const Success(
+          BlockchainVerificationResult(
+            reportId: 'RPT-DETAIL-UI-1',
+            verified: true,
+            isAnchored: true,
+            blockchainData: {},
+            auditHistory: [],
+            message: 'Previously verified and anchored',
+          ),
+        ),
+      );
+      await _pumpDetail(tester, repository: repository);
+      await tester.scrollUntilVisible(find.text('Integrity Verified'), 400);
+      expect(find.text('Previously verified and anchored'), findsOneWidget);
+      verify(
+        () => repository.verifyReport('RPT-DETAIL-UI-1', cachedOnly: true),
+      ).called(1);
+      verifyNever(() => repository.verifyReport('RPT-DETAIL-UI-1'));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'unexpected verification exception clears spinner and permits retry',
+    (tester) async {
+      final repository = _ReportsMock();
+      when(
+        () => repository.verifyReport('RPT-DETAIL-UI-1', cachedOnly: true),
+      ).thenAnswer((_) async => const Err(ServerFailure('No saved proof')));
+      when(
+        () => repository.verifyReport('RPT-DETAIL-UI-1'),
+      ).thenThrow(StateError('Unexpected failure'));
+      await _pumpDetail(tester, repository: repository);
+      await tester.scrollUntilVisible(find.text('Verify Now'), 400);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Verify Now'));
+      await tester.pumpAndSettle();
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      await tester.ensureVisible(find.text('Verify Now'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Verify Now'));
+      await tester.pumpAndSettle();
+      verify(() => repository.verifyReport('RPT-DETAIL-UI-1')).called(2);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('marks cached report details as stale', (tester) async {
     await _pumpDetail(tester, report: _report(isStale: true));
 

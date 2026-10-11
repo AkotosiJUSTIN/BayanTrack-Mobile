@@ -13,6 +13,48 @@ class _OptionsFake extends Fake implements Options {}
 void main() {
   setUpAll(() => registerFallbackValue(_OptionsFake()));
 
+  test('saved verification lookup uses cache-only backend query', () async {
+    final dio = _DioMock();
+    when(
+      () => dio.get(
+        ApiConstants.reportVerify('report-proof'),
+        queryParameters: {'cached_only': 'true'},
+      ),
+    ).thenAnswer(
+      (_) async => Response(
+        data: {
+          'report_id': 'report-proof',
+          'verified': true,
+          'is_anchored': true,
+          'cached': true,
+          'blockchain_data': <String, dynamic>{},
+          'audit_history': [],
+          'message': 'Previously verified and anchored',
+        },
+        requestOptions: RequestOptions(
+          path: ApiConstants.reportVerify('report-proof'),
+        ),
+      ),
+    );
+    final result = await ReportsRepositoryImpl(
+      dio,
+    ).verifyReport('report-proof', cachedOnly: true);
+    expect(result.isSuccess, isTrue);
+    result.when(
+      success: (proof) {
+        expect(proof.verified, isTrue);
+        expect(proof.isAnchored, isTrue);
+      },
+      failure: (failure) => fail(failure.message),
+    );
+    verify(
+      () => dio.get(
+        ApiConstants.reportVerify('report-proof'),
+        queryParameters: {'cached_only': 'true'},
+      ),
+    ).called(1);
+  });
+
   test('getReports emits the public reports GET path', () async {
     final dio = _DioMock();
     when(

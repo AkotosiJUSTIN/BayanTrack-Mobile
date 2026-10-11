@@ -402,9 +402,15 @@ class ReportsRepositoryImpl implements ReportsRepository {
   }
 
   @override
-  Future<Result<BlockchainVerificationResult>> verifyReport(String id) async {
+  Future<Result<BlockchainVerificationResult>> verifyReport(
+    String id, {
+    bool cachedOnly = false,
+  }) async {
     try {
-      final response = await _dio.get(ApiConstants.reportVerify(id));
+      final response = await _dio.get(
+        ApiConstants.reportVerify(id),
+        queryParameters: cachedOnly ? {'cached_only': 'true'} : null,
+      );
       final dtoResult = blockchain_dto.BlockchainVerificationResultDto.fromJson(
         response.data,
       );

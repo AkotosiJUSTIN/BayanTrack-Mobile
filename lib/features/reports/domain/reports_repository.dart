@@ -89,7 +89,10 @@ abstract interface class ReportsRepository {
   Future<Result<ReportStats>> getStats();
 
   /// Verify report on blockchain
-  Future<Result<BlockchainVerificationResult>> verifyReport(String id);
+  Future<Result<BlockchainVerificationResult>> verifyReport(
+    String id, {
+    bool cachedOnly = false,
+  });
 
   /// Submit citizen closure review for a resolved report.
   ///
