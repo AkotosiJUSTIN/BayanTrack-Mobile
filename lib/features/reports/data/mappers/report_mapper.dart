@@ -1,4 +1,5 @@
 import '../blockchain_models.dart' as blockchain_dto;
+import '../../../../core/utils/api_datetime.dart';
 import '../../domain/entities/blockchain_verification.dart';
 import '../../domain/entities/paginated_reports.dart';
 import '../../domain/entities/report.dart';
@@ -25,9 +26,7 @@ class ReportMapper {
       incidentType: dtoReport.incidentType,
       title: dtoReport.title,
       description: dtoReport.description,
-      incidentDatetime: dtoReport.incidentDatetime != null
-          ? DateTime.tryParse(dtoReport.incidentDatetime!)
-          : null,
+      incidentDatetime: parseApiDateTime(dtoReport.incidentDatetime),
       isHappeningNow: dtoReport.isHappeningNow,
       zone: dtoReport.zone,
       streetLandmark: dtoReport.streetLandmark,
@@ -124,24 +123,12 @@ class ReportMapper {
       resolvedProofImageIds: dtoReport.resolvedProofImageIds,
       closureSignatureImageId: dtoReport.closureSignatureImageId,
       closureSignatureDocumentIds: dtoReport.closureSignatureDocumentIds,
-      createdAt: dtoReport.createdAt != null
-          ? DateTime.tryParse(dtoReport.createdAt!)
-          : null,
-      updatedAt: dtoReport.updatedAt != null
-          ? DateTime.tryParse(dtoReport.updatedAt!)
-          : null,
-      submittedAt: dtoReport.submittedAt != null
-          ? DateTime.tryParse(dtoReport.submittedAt!)
-          : null,
-      verifiedAt: dtoReport.verifiedAt != null
-          ? DateTime.tryParse(dtoReport.verifiedAt!)
-          : null,
-      resolvedAt: dtoReport.resolvedAt != null
-          ? DateTime.tryParse(dtoReport.resolvedAt!)
-          : null,
-      citizenVerifiedAt: dtoReport.citizenVerifiedAt != null
-          ? DateTime.tryParse(dtoReport.citizenVerifiedAt!)
-          : null,
+      createdAt: parseApiDateTime(dtoReport.createdAt),
+      updatedAt: parseApiDateTime(dtoReport.updatedAt),
+      submittedAt: parseApiDateTime(dtoReport.submittedAt),
+      verifiedAt: parseApiDateTime(dtoReport.verifiedAt),
+      resolvedAt: parseApiDateTime(dtoReport.resolvedAt),
+      citizenVerifiedAt: parseApiDateTime(dtoReport.citizenVerifiedAt),
       citizenSatisfaction: dtoReport.citizenSatisfaction,
       citizenClosureNote: dtoReport.citizenClosureNote,
       onChainId: dtoReport.onChainId,
@@ -162,9 +149,7 @@ class ReportMapper {
       purpose: dtoImage.purpose,
       width: dtoImage.width,
       height: dtoImage.height,
-      createdAt: dtoImage.createdAt != null
-          ? DateTime.tryParse(dtoImage.createdAt!)
-          : null,
+      createdAt: parseApiDateTime(dtoImage.createdAt),
     );
   }
 
