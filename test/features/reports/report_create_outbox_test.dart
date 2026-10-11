@@ -95,6 +95,312 @@ void main() {
   );
 
   test(
+    'discard removes a rejected submission and its unchanged draft',
+    () async {
+      reachable = true;
+      final subject = createOutbox(
+        ({
+          required payload,
+          required idempotencyKey,
+          required cancelToken,
+        }) async => const Err(ValidationFailure('Description cannot be empty')),
+      );
+      final draft = _draft('user-a');
+      await drafts.write(draft);
+      final rejected = await subject.submit(
+        ownerId: 'user-a',
+        type: ReportDraftType.full,
+        payload: const {'description': ''},
+        sourceDraftId: draft.draftId,
+        sourceDraftUpdatedAt: draft.updatedAt,
+      );
+      await subject.discard('user-a', rejected.localReportId);
+      expect(await ReportCreateOutboxStore(storage).readAll('user-a'), isEmpty);
+      expect(await drafts.read('user-a', ReportDraftType.full), isNull);
+      subject.dispose();
+    },
+  );
+
+  test(
+    'discard draft clears linked rejected records, not another owner',
+    () async {
+      final subject = createOutbox(_successfulRequest('unused'));
+      final draft = _draft('user-a');
+      await drafts.write(draft);
+      await subject.submit(
+        ownerId: 'user-a',
+        type: ReportDraftType.full,
+        payload: const {'description': 'Offline'},
+        sourceDraftId: draft.draftId,
+        sourceDraftUpdatedAt: draft.updatedAt,
+      );
+      signedInOwner = 'user-b';
+      await expectLater(subject.discardDraft(draft), throwsStateError);
+      expect(
+        await ReportCreateOutboxStore(storage).readAll('user-a'),
+        hasLength(1),
+      );
+      signedInOwner = 'user-a';
+      await subject.discardDraft(draft);
+      expect(await ReportCreateOutboxStore(storage).readAll('user-a'), isEmpty);
+      expect(await drafts.read('user-a', ReportDraftType.full), isNull);
+      subject.dispose();
+    },
+  );
+
+  test('uncertain and in-flight submissions cannot be discarded', () async {
+    reachable = true;
+    final started = Completer<void>();
+    final response = Completer<Result<Report>>();
+    final subject = createOutbox(({
+      required payload,
+      required idempotencyKey,
+      required cancelToken,
+    }) {
+      started.complete();
+      return response.future;
+    });
+    final submission = subject.submit(
+      ownerId: 'user-a',
+      type: ReportDraftType.quick,
+      payload: const {'description': 'Preserve uncertain response'},
+    );
+    await started.future;
+    final sending = (await ReportCreateOutboxStore(
+      storage,
+    ).readAll('user-a')).single;
+    await expectLater(
+      subject.discard('user-a', sending.localReportId),
+      throwsStateError,
+    );
+    response.complete(const Err(NetworkFailure('Lost response')));
+    final uncertain = await submission;
+    await expectLater(
+      subject.discard('user-a', uncertain.localReportId),
+      throwsStateError,
+    );
+    expect(
+      await ReportCreateOutboxStore(storage).readAll('user-a'),
+      hasLength(1),
+    );
+    subject.dispose();
+  });
+
+  test(
+    'unreadable acknowledgements retain the original retry operation',
+    () async {
+      reachable = true;
+      final subject = createOutbox(
+        ({
+          required payload,
+          required idempotencyKey,
+          required cancelToken,
+        }) async => const Err(UnknownFailure('Unreadable response')),
+      );
+      final item = await subject.submit(
+        ownerId: 'user-a',
+        type: ReportDraftType.quick,
+        payload: const {'description': 'Preserve acknowledgement uncertainty'},
+      );
+      expect(item.status, ReportCreateOutboxStatus.retryWaiting);
+      expect(item.canDiscard, isFalse);
+      await expectLater(
+        subject.discard('user-a', item.localReportId),
+        throwsStateError,
+      );
+      subject.dispose();
+    },
+  );
+
+  test(
+    'maintenance-paused never-attempted submissions are discardable',
+    () async {
+      final subject = createOutbox(
+        _successfulRequest('unused'),
+        canSubmit: (_) => false,
+      );
+      final queued = await subject.submit(
+        ownerId: 'user-a',
+        type: ReportDraftType.full,
+        payload: const {'description': 'Paused before sending'},
+      );
+      reachable = true;
+      await subject.resume('user-a');
+      final paused = await ReportCreateOutboxStore(
+        storage,
+      ).read('user-a', queued.localReportId);
+      expect(paused!.status, ReportCreateOutboxStatus.paused);
+      expect(paused.attemptCount, 0);
+      expect(paused.canDiscard, isTrue);
+      await subject.discard('user-a', paused.localReportId);
+      expect(await ReportCreateOutboxStore(storage).readAll('user-a'), isEmpty);
+      subject.dispose();
+    },
+  );
+
+  test(
+    'selected rejected emergency restores its category and coordinates',
+    () async {
+      reachable = true;
+      final subject = createOutbox(
+        ({
+          required payload,
+          required idempotencyKey,
+          required cancelToken,
+        }) async => const Err(ValidationFailure('Rejected')),
+      );
+      final rejected = await subject.submit(
+        ownerId: 'user-a',
+        type: ReportDraftType.emergency,
+        payload: const {
+          'category': 'fire_incident',
+          'latitude': '15.979204',
+          'longitude': '120.622210',
+          'description': '',
+          'isQuickReport': false,
+          'isEmergency': true,
+        },
+      );
+      await subject.restoreRejectedDraft('user-a', rejected.localReportId);
+      final restored = await drafts.read('user-a', ReportDraftType.emergency);
+      expect(restored!.draftId, rejected.localReportId);
+      expect(restored.payload['categoryKey'], 'fire_incident');
+      expect(restored.payload['latitude'], 15.979204);
+      expect(restored.payload['longitude'], 120.622210);
+      expect(restored.payload['isQuickReport'], false);
+      subject.dispose();
+    },
+  );
+
+  test('editing never overwrites an unrelated saved draft', () async {
+    reachable = true;
+    final subject = createOutbox(
+      ({
+        required payload,
+        required idempotencyKey,
+        required cancelToken,
+      }) async => const Err(ValidationFailure('Rejected')),
+    );
+    final rejected = await subject.submit(
+      ownerId: 'user-a',
+      type: ReportDraftType.full,
+      payload: const {'description': 'Rejected snapshot'},
+    );
+    final unrelated = _draft('user-a');
+    await drafts.write(unrelated);
+    await expectLater(
+      subject.restoreRejectedDraft('user-a', rejected.localReportId),
+      throwsStateError,
+    );
+    expect(
+      (await drafts.read('user-a', ReportDraftType.full))!.draftId,
+      unrelated.draftId,
+    );
+    subject.dispose();
+  });
+
+  test(
+    'confirmed resubmission of unchanged validation rejection can recover',
+    () async {
+      reachable = true;
+      var calls = 0;
+      final subject = createOutbox(({
+        required payload,
+        required idempotencyKey,
+        required cancelToken,
+      }) async {
+        calls++;
+        return calls == 1
+            ? const Err(ValidationFailure('Description cannot be empty'))
+            : Success(_report('recovered-emergency'));
+      });
+      final rejected = await subject.submit(
+        ownerId: 'user-a',
+        type: ReportDraftType.emergency,
+        payload: const {
+          'category': 'fire_incident',
+          'description': '',
+          'isEmergency': true,
+        },
+        sourceDraftId: 'emergency-draft',
+      );
+      final recovered = await subject.submit(
+        ownerId: 'user-a',
+        type: ReportDraftType.emergency,
+        payload: rejected.payload,
+        sourceDraftId: 'emergency-draft',
+      );
+      expect(recovered.status, ReportCreateOutboxStatus.synced);
+      expect(recovered.idempotencyKey, isNot(rejected.idempotencyKey));
+      expect(await ReportCreateOutboxStore(storage).readAll('user-a'), isEmpty);
+      subject.dispose();
+    },
+  );
+
+  test(
+    'maintenance does not turn rejected records into automatic retries',
+    () async {
+      reachable = true;
+      var allowed = true;
+      var calls = 0;
+      final subject = createOutbox(({
+        required payload,
+        required idempotencyKey,
+        required cancelToken,
+      }) async {
+        calls++;
+        return const Err(ValidationFailure('Rejected'));
+      }, canSubmit: (_) => allowed);
+      final rejected = await subject.submit(
+        ownerId: 'user-a',
+        type: ReportDraftType.quick,
+        payload: const {'description': 'Keep rejected'},
+      );
+      allowed = false;
+      await subject.resume('user-a');
+      allowed = true;
+      await subject.resume('user-a');
+      expect(calls, 1);
+      expect(
+        (await ReportCreateOutboxStore(
+          storage,
+        ).read('user-a', rejected.localReportId))!.status,
+        ReportCreateOutboxStatus.rejected,
+      );
+      subject.dispose();
+    },
+  );
+
+  test('reconnect does not restart exhausted automatic retries', () async {
+    reachable = true;
+    var calls = 0;
+    final subject = createOutbox(({
+      required payload,
+      required idempotencyKey,
+      required cancelToken,
+    }) async {
+      calls++;
+      return const Err(ServerFailure('Unavailable'));
+    });
+    final queued = await subject.submit(
+      ownerId: 'user-a',
+      type: ReportDraftType.quick,
+      payload: const {'description': 'Retry budget'},
+    );
+    for (var attempt = 1; attempt < 5; attempt++) {
+      now = now.add(const Duration(minutes: 1));
+      await subject.resume('user-a');
+    }
+    expect(calls, 5);
+    now = now.add(const Duration(minutes: 1));
+    await subject.resume('user-a');
+    expect(calls, 5);
+    await subject.retry('user-a', queued.localReportId);
+    expect(calls, 6);
+    subject.dispose();
+  });
+
+  test(
     'ordinary restriction keeps draft and continues emergency outbox',
     () async {
       final sent = <String>[];
@@ -294,10 +600,7 @@ void main() {
     expect(corrected.status, ReportCreateOutboxStatus.synced);
     expect(corrected.idempotencyKey, isNot(rejected.idempotencyKey));
     expect(keys, [rejected.idempotencyKey, corrected.idempotencyKey]);
-    expect(
-      await ReportCreateOutboxStore(storage).readAll('user-a'),
-      hasLength(1),
-    );
+    expect(await ReportCreateOutboxStore(storage).readAll('user-a'), isEmpty);
     expect(
       await ReportCreateOutboxStore(
         storage,

@@ -174,7 +174,7 @@ void main() {
       latitude: '15.9792040000',
       longitude: '120.6222100000',
       locationAccuracy: 'exact',
-      isQuickReport: true,
+      isQuickReport: false,
       isEmergency: true,
       idempotencyKey: 'retry-1',
     );
@@ -183,7 +183,7 @@ void main() {
     expect(sent?['category'], 'flood_disaster');
     expect(sent?['description'], isEmpty);
     expect(sent?['is_emergency'], isTrue);
-    expect(sent?['is_quick_report'], isTrue);
+    expect(sent?['is_quick_report'], isFalse);
     expect(sentOptions?.headers?['Idempotency-Key'], 'retry-1');
   });
 

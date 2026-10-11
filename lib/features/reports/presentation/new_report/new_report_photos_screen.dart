@@ -14,6 +14,8 @@ import '../../../images/data/evidence_file_stager.dart';
 import '../../../images/data/evidence_upload_queue_provider.dart';
 import '../../../images/presentation/evidence_photo_review.dart';
 import '../../data/report_draft_store.dart';
+import '../../data/report_create_outbox.dart';
+import '../../reports_di.dart';
 import 'new_report_details_screen.dart';
 import 'new_report_controller.dart';
 import 'new_report_location_screen.dart';
@@ -160,7 +162,19 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen>
 
     if (action == ReportDraftAction.discard ||
         action == ReportDraftAction.startNew) {
-      await _discardSavedDraft(draft);
+      try {
+        await _discardSavedDraft(draft);
+      } catch (_) {
+        if (mounted) {
+          AppToast.warning(
+            context,
+            AppLocalizations.of(context).reportOutboxRetrying,
+          );
+          _persistDraft = false;
+          Navigator.of(context).pop();
+        }
+        return;
+      }
       if (!mounted) return;
       if (!_canPersistDraft || _currentOwnerId() != ownerId) return;
       _draftRecord = null;
@@ -295,7 +309,7 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen>
   }
 
   Future<void> _discardSavedDraft(ReportDraft draft) async {
-    await _draftStore.delete(draft.ownerId, draft.type);
+    await ref.read(reportCreateOutboxProvider).discardDraft(draft);
     await _discardUnreferenced(draft.attachmentRefs);
   }
 
@@ -308,6 +322,12 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen>
       final queue = await ref.read(evidenceUploadQueueProvider.future);
       if (!mounted) return;
       retained.addAll(queue.referencedFilePaths);
+      retained.addAll(
+        (await ref
+                .read(reportCreateOutboxStoreProvider)
+                .readAllAttachmentReferences())
+            .map((path) => File(path).absolute.path),
+      );
       for (final path in paths) {
         final file = File(path).absolute;
         if (!retained.contains(file.path)) await discardEvidenceDraft(file);

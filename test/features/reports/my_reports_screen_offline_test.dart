@@ -24,6 +24,8 @@ import 'package:mocktail/mocktail.dart';
 
 class _ReportsRepositoryMock extends Mock implements ReportsRepository {}
 
+class _OutboxMock extends Mock implements ReportCreateOutbox {}
+
 class _TestReachability extends BackendReachabilityNotifier {
   @override
   BackendReachability build() => BackendReachability.reachable;
@@ -52,38 +54,87 @@ Widget _app(ReportsRepository repository) => ProviderScope(
   ),
 );
 
-Widget _handoffApp(ReportsRepository repository, ReportCreateOutboxItem item) =>
-    ProviderScope(
-      overrides: [
-        getMyReportsUseCaseProvider.overrideWithValue(
-          GetMyReportsUseCase(repository: repository),
+Widget _handoffApp(
+  ReportsRepository repository,
+  ReportCreateOutboxItem item, {
+  ReportCreateOutbox? outbox,
+}) => ProviderScope(
+  overrides: [
+    getMyReportsUseCaseProvider.overrideWithValue(
+      GetMyReportsUseCase(repository: repository),
+    ),
+    userPermissionsProvider.overrideWithValue(UserPermissions(null)),
+    backendReachabilityProvider.overrideWith(_TestReachability.new),
+    authControllerProvider.overrideWithValue(
+      const AuthSuccess(
+        'test',
+        User(
+          id: 'user-a',
+          email: 'citizen@example.test',
+          firstName: 'Test',
+          lastName: 'Citizen',
+          role: UserRole.citizen,
         ),
-        userPermissionsProvider.overrideWithValue(UserPermissions(null)),
-        backendReachabilityProvider.overrideWith(_TestReachability.new),
-        authControllerProvider.overrideWithValue(
-          const AuthSuccess(
-            'test',
-            User(
-              id: 'user-a',
-              email: 'citizen@example.test',
-              firstName: 'Test',
-              lastName: 'Citizen',
-              role: UserRole.citizen,
-            ),
-          ),
-        ),
-        reportCreateOutboxItemsProvider.overrideWith(
-          (ref, ownerId) async => ownerId == 'user-a' ? [item] : [],
-        ),
-      ],
-      child: MaterialApp(
-        supportedLocales: AppLocalizations.supportedLocales,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        home: const MyReportsScreen(),
       ),
-    );
+    ),
+    reportCreateOutboxItemsProvider.overrideWith(
+      (ref, ownerId) async => ownerId == 'user-a' ? [item] : [],
+    ),
+    if (outbox != null) reportCreateOutboxProvider.overrideWithValue(outbox),
+  ],
+  child: MaterialApp(
+    supportedLocales: AppLocalizations.supportedLocales,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    home: const MyReportsScreen(),
+  ),
+);
 
 void main() {
+  testWidgets('rejected pending report discard requires confirmation', (
+    tester,
+  ) async {
+    final repository = _ReportsRepositoryMock();
+    when(
+      () => repository.getMyReports(
+        page: 1,
+        pageSize: 20,
+        status: null,
+        sortBy: 'date',
+      ),
+    ).thenAnswer(
+      (_) async => const Success(PaginatedReports(results: [], total: 0)),
+    );
+    final outbox = _OutboxMock();
+    when(() => outbox.discard('user-a', 'rejected-1')).thenAnswer((_) async {});
+    final now = DateTime.utc(2026, 10, 12);
+    final item = ReportCreateOutboxItem(
+      schemaVersion: ReportCreateOutboxItem.currentSchemaVersion,
+      localReportId: 'rejected-1',
+      ownerId: 'user-a',
+      type: ReportDraftType.emergency,
+      createdAt: now,
+      updatedAt: now,
+      idempotencyKey: 'rejected-key',
+      payload: const {'isEmergency': true},
+      attachmentRefs: const [],
+      status: ReportCreateOutboxStatus.rejected,
+      errorKind: ReportCreateOutboxErrorKind.validation,
+      safeError: 'Description cannot be empty',
+    );
+    await tester.pumpWidget(_handoffApp(repository, item, outbox: outbox));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Discard Draft'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Keep Draft'));
+    await tester.pumpAndSettle();
+    verifyNever(() => outbox.discard('user-a', 'rejected-1'));
+    await tester.tap(find.text('Discard Draft'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Discard Draft').last);
+    await tester.pumpAndSettle();
+    verify(() => outbox.discard('user-a', 'rejected-1')).called(1);
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('My Reports shows stale state with cached rows', (tester) async {
     final repository = _ReportsRepositoryMock();
     when(
@@ -226,5 +277,6 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('BayanTrack has not received'), findsNothing);
+    expect(find.text('Discard Draft'), findsNothing);
   });
 }

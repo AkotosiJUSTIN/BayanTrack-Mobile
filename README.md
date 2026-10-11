@@ -189,6 +189,32 @@ the release-signed APK; uninstalling removes local app data.
 
 ## Documentation
 
+### Offline Reports And Pending Sync
+
+An editable draft and a queued submission are separate records in secure local
+storage, scoped to the signed-in account. Submission saves an immutable snapshot
+and idempotency key before contacting the backend. Reconnection, app resume, and
+session recovery drain the queue; retries reuse that key so a lost response does
+not create another report. Evidence is handed to its upload queue only after a
+server report ID is acknowledged.
+
+Validation failures require **Edit and resubmit** in My Reports. This restores
+the selected submission's content, location, category, and evidence into its
+draft without replacing an unrelated saved draft. Corrected submissions receive
+a new key and replace older rejected snapshots from the same draft. Emergency
+reports require fresh confirmation when restored.
+
+**Discard Draft** removes rejected or never-attempted submissions after
+confirmation, including linked draft records when safe. Discarding/replacing an
+editable draft also clears its safely removable queued submissions. Sending or
+uncertain submissions are retained because the server may already have received
+them. Automatic network/server retries stop after five attempts; **Retry now**
+starts a new retry budget with the same idempotency key.
+
+Pending sync is not proof of delivery, especially for emergencies. These queues
+run while the app is active or resumes; they are not an OS background delivery
+guarantee. Updating an APK in place preserves the queue; uninstalling clears it.
+
 - [`../SYSTEM_REFERENCE.md`](../SYSTEM_REFERENCE.md)
 - [`../docs/ai-explanations.md`](../docs/ai-explanations.md)
 - [`MOBILE_PRIORITIZATION_INTEGRATION.md`](MOBILE_PRIORITIZATION_INTEGRATION.md)

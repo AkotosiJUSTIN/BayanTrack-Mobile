@@ -80,28 +80,40 @@ Future<ReportDraftAction?> showReportDraftPrompt(
   if (action == null || action == ReportDraftAction.resume) return action;
   if (!context.mounted) return null;
 
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(l10n.discardDraftConfirmationTitle),
-      content: Text(
-        action == ReportDraftAction.startNew
-            ? l10n.replaceDraftConfirmationMessage
-            : l10n.discardDraftConfirmationMessage,
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext, false),
-          child: Text(l10n.keepDraft),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext, true),
-          child: Text(l10n.discardDraft),
-        ),
-      ],
-    ),
+  final confirmed = await confirmReportDraftDiscard(
+    context,
+    replacing: action == ReportDraftAction.startNew,
   );
-  return confirmed == true ? action : null;
+  return confirmed ? action : null;
+}
+
+Future<bool> confirmReportDraftDiscard(
+  BuildContext context, {
+  bool replacing = false,
+}) async {
+  final l10n = AppLocalizations.of(context);
+  return await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(l10n.discardDraftConfirmationTitle),
+          content: Text(
+            replacing
+                ? l10n.replaceDraftConfirmationMessage
+                : l10n.discardDraftConfirmationMessage,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(l10n.keepDraft),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(l10n.discardDraft),
+            ),
+          ],
+        ),
+      ) ==
+      true;
 }
 
 String _typeName(AppLocalizations l10n, ReportDraftType type) => switch (type) {

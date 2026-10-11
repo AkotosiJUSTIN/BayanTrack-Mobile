@@ -1459,7 +1459,8 @@ void main() {
   ) async {
     final reports = _ReportsRepositoryMock();
     final createReport = _TestCreateReportUseCase(
-      (_) async => const Err(UnknownFailure('Submission failed')),
+      (_) async =>
+          const Err(UnknownFailure.withStatus('Submission failed', 422)),
     );
     final states = <Map<String, Object>>[];
     when(
