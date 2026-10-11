@@ -28,12 +28,9 @@ class SystemGovernanceGate extends ConsumerWidget {
     return status.when(
       // Account changes must not render the previous account's consent state.
       skipLoadingOnRefresh: false,
-      loading: () => _UnavailableGovernance(
-        loading: true,
-        onRetry: () => ref.read(systemGovernanceProvider.notifier).refresh(),
-      ),
+      // Opening the workspace does not authorize uploads; queues require policy.
+      loading: () => child,
       error: (_, _) => _UnavailableGovernance(
-        loading: false,
         onRetry: () => ref.read(systemGovernanceProvider.notifier).refresh(),
       ),
       data: (state) {
@@ -82,8 +79,7 @@ class SystemGovernanceGate extends ConsumerWidget {
 }
 
 class _UnavailableGovernance extends StatelessWidget {
-  const _UnavailableGovernance({required this.loading, required this.onRetry});
-  final bool loading;
+  const _UnavailableGovernance({required this.onRetry});
   final VoidCallback onRetry;
 
   @override
@@ -95,20 +91,14 @@ class _UnavailableGovernance extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (loading) const LinearProgressIndicator(),
             const SizedBox(height: 16),
-            Text(
-              loading
-                  ? AppLocalizations.of(context).governanceCheckingStatus
-                  : AppLocalizations.of(context).governanceStatusUnavailable,
+            Text(AppLocalizations.of(context).governanceStatusUnavailable),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: Text(AppLocalizations.of(context).retry),
             ),
-            const SizedBox(height: 16),
-            if (!loading)
-              OutlinedButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
-                label: Text(AppLocalizations.of(context).retry),
-              ),
             const _EmergencyButton(),
           ],
         ),

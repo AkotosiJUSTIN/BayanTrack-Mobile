@@ -149,6 +149,94 @@ Future<ProviderContainer> _pump(
 }
 
 void main() {
+  for (final outcome in ['normal', 'maintenance', 'pending terms']) {
+    testWidgets('startup checks $outcome in the background', (tester) async {
+      final status = Completer<SystemGovernanceState>();
+      final repository = _Repository()..nextStatus = status.future;
+      final container = await _pump(tester, repository);
+
+      expect(find.text('Ordinary workspace'), findsOneWidget);
+      expect(find.text('Checking system status...'), findsNothing);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(
+        permitsReportSnapshot(container.read(systemGovernanceProvider), {
+          'isEmergency': false,
+        }),
+        isFalse,
+      );
+      expect(
+        permitsReportSnapshot(container.read(systemGovernanceProvider), {
+          'isEmergency': true,
+        }),
+        isTrue,
+      );
+
+      status.complete(
+        outcome == 'pending terms'
+            ? _pending
+            : outcome == 'maintenance'
+            ? const SystemGovernanceState(
+                maintenanceEnabled: true,
+                maintenanceMessage: 'Scheduled server maintenance',
+                termsAcceptanceRequired: false,
+              )
+            : _unrestricted,
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byType(CurrentTermsScreen),
+        outcome == 'pending terms' ? findsOneWidget : findsNothing,
+      );
+      expect(
+        find.text('Ordinary workspace'),
+        outcome == 'pending terms' ? findsNothing : findsOneWidget,
+      );
+      expect(
+        find.text('Scheduled server maintenance'),
+        outcome == 'maintenance' ? findsOneWidget : findsNothing,
+      );
+      expect(
+        permitsReportSnapshot(container.read(systemGovernanceProvider), {
+          'isEmergency': false,
+        }),
+        outcome == 'normal',
+      );
+      expect(repository.consentCalls, isEmpty);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('failed background check keeps emergency access and retry', (
+    tester,
+  ) async {
+    final status = Completer<SystemGovernanceState>();
+    final repository = _Repository()..nextStatus = status.future;
+    final container = await _pump(tester, repository);
+    status.completeError(StateError('Status unavailable'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ordinary workspace'), findsNothing);
+    expect(
+      find.byKey(const Key('governance-emergency-button')),
+      findsOneWidget,
+    );
+    expect(
+      permitsReportSnapshot(container.read(systemGovernanceProvider), {
+        'isEmergency': false,
+      }),
+      isFalse,
+    );
+
+    repository
+      ..nextStatus = null
+      ..currentStatus = _unrestricted;
+    await tester.tap(find.widgetWithIcon(OutlinedButton, Icons.refresh));
+    await tester.pumpAndSettle();
+    expect(find.text('Ordinary workspace'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('account check never renders cached pending consent', (
     tester,
   ) async {
@@ -182,11 +270,13 @@ void main() {
     );
     await tester.pump();
     expect(find.byType(CurrentTermsScreen), findsNothing);
-    expect(find.byType(LinearProgressIndicator), findsOneWidget);
-    expect(find.text('Ordinary workspace'), findsNothing);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.text('Ordinary workspace'), findsOneWidget);
     expect(
-      find.byKey(const Key('governance-emergency-button')),
-      findsOneWidget,
+      permitsReportSnapshot(container.read(systemGovernanceProvider), {
+        'isEmergency': false,
+      }),
+      isFalse,
     );
     accountStatus.complete(_unrestricted);
     await tester.pumpAndSettle();

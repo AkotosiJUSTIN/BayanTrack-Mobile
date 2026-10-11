@@ -36,13 +36,17 @@ class ReportDetailController extends _$ReportDetailController {
   }
 
   /// Verify the report against blockchain
-  Future<BlockchainVerificationResult?> verifyReport() async {
+  Future<BlockchainVerificationResult?> verifyReport({
+    bool cachedOnly = false,
+  }) async {
     final id = reportId;
-    final verifyUseCase = ref.read(verifyReportUseCaseProvider);
-
-    final result = await verifyUseCase(id);
-
-    return result.when(success: (data) => data, failure: (failure) => null);
+    try {
+      final verifyUseCase = ref.read(verifyReportUseCaseProvider);
+      final result = await verifyUseCase(id, cachedOnly: cachedOnly);
+      return result.when(success: (data) => data, failure: (failure) => null);
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Submit citizen closure / review for a resolved report.

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,6 +43,34 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   int _currentImageIndex = 0;
   BlockchainVerificationResult? _verificationResult;
   bool _isVerifying = false;
+  int _verificationRequest = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadSavedVerification());
+  }
+
+  @override
+  void didUpdateWidget(covariant ReportDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.reportId != widget.reportId) {
+      _verificationResult = null;
+      _isVerifying = false;
+      unawaited(_loadSavedVerification());
+    }
+  }
+
+  Future<void> _loadSavedVerification() async {
+    final request = ++_verificationRequest;
+    final result = await ref
+        .read(reportDetailControllerProvider(widget.reportId).notifier)
+        .verifyReport(cachedOnly: true);
+    if (!mounted || request != _verificationRequest) return;
+    if (result?.verified == true) {
+      setState(() => _verificationResult = result);
+    }
+  }
 
   @override
   void dispose() {
@@ -61,6 +91,18 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     final reportAsync = ref.watch(
       reportDetailControllerProvider(widget.reportId),
     );
+    ref.listen(reportDetailControllerProvider(widget.reportId), (
+      previous,
+      next,
+    ) {
+      if (previous?.hasValue == true &&
+          next.hasValue &&
+          previous?.value != next.value) {
+        _verificationResult = null;
+        _isVerifying = false;
+        unawaited(_loadSavedVerification());
+      }
+    });
     ref.listen<BackendReachability>(backendReachabilityProvider, (
       previous,
       next,
@@ -1198,6 +1240,8 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
 
   Future<void> _handleVerification(String reportId) async {
     final l10n = AppLocalizations.of(context);
+    if (_isVerifying) return;
+    final request = ++_verificationRequest;
     setState(() => _isVerifying = true);
 
     final controller = ref.read(
@@ -1205,7 +1249,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     );
     final result = await controller.verifyReport();
 
-    if (mounted) {
+    if (mounted && request == _verificationRequest) {
       setState(() {
         _verificationResult = result;
         _isVerifying = false;

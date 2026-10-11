@@ -7,7 +7,10 @@ class VerifyReportUseCase {
 
   VerifyReportUseCase({required this.repository});
 
-  Future<Result<BlockchainVerificationResult>> call(String reportId) async {
-    return repository.verifyReport(reportId);
+  Future<Result<BlockchainVerificationResult>> call(
+    String reportId, {
+    bool cachedOnly = false,
+  }) async {
+    return repository.verifyReport(reportId, cachedOnly: cachedOnly);
   }
 }
