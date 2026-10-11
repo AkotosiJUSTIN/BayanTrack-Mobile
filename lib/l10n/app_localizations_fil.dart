@@ -2187,4 +2187,41 @@ class AppLocalizationsFil extends AppLocalizations {
   @override
   String get governanceSyncPaused =>
       'Naghihintay ng pagtanggap sa mga tuntunin o pagtatapos ng maintenance.';
+
+  @override
+  String get appCheckVersion => 'Suriin ang bersyon ng app';
+
+  @override
+  String get appCheckingVersion => 'Sinusuri kung may update...';
+
+  @override
+  String get appVersionCurrent => 'Pinakabago ang iyong app.';
+
+  @override
+  String get appVersionUnavailable =>
+      'Hindi masuri ang mga update. Suriin ang koneksyon at subukang muli.';
+
+  @override
+  String get appUpdateRequired => 'Kailangan ng update';
+
+  @override
+  String get appUpdateRequiredMessage =>
+      'May mas bagong release ng BayanTrack. I-install ang pinakabagong APK upang magpatuloy. Mananatili sa device na ito ang iyong mga naka-save na ulat.';
+
+  @override
+  String get appGetUpdate => 'Kunin ang update';
+
+  @override
+  String get appReleaseOpenFailed =>
+      'Hindi mabuksan ang pahina ng mga release. Pakisubukang muli.';
+
+  @override
+  String appInstalledVersion(String version) {
+    return 'Naka-install: $version';
+  }
+
+  @override
+  String appLatestVersion(String version) {
+    return 'Pinakabagong release: $version';
+  }
 }

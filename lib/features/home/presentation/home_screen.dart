@@ -15,6 +15,7 @@ import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/barangays_provider.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/verification_widgets.dart';
+import '../../app_updates/presentation/app_update_gate.dart';
 import '../../images/data/evidence_file_stager.dart';
 import '../../images/presentation/evidence_photo_review.dart';
 import '../../images/data/evidence_upload_queue.dart';
@@ -558,6 +559,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: Text(l10n.home),
         actions: [
+          const AppVersionCheckButton(),
           IconButton(
             tooltip: l10n.retry,
             onPressed: _onRefresh,

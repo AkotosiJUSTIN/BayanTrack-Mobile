@@ -38,7 +38,12 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
+        // Default local builds get an identity; CI passes the same epoch-based code.
+        versionCode = if (flutter.versionCode == 1) {
+            (System.currentTimeMillis() / 1000 - 1577836800).toInt()
+        } else {
+            flutter.versionCode
+        }
         versionName = flutter.versionName
     }
 
