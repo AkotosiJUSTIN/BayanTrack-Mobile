@@ -20,6 +20,16 @@ const _barangays = [
 ];
 
 void main() {
+  test('queued report incident timestamp carries explicit UTC timezone', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    final controller = container.read(newReportControllerProvider.notifier);
+    controller.setIncidentDatetime(DateTime(2026, 10, 11, 12, 18));
+    final value = controller.submissionSnapshot()['incidentDatetime'] as String;
+    expect(value.endsWith('Z'), isTrue);
+    expect(DateTime.parse(value), DateTime(2026, 10, 11, 12, 18).toUtc());
+  });
+
   group('coordinate barangay resolution', () {
     test('selects the nearest center and rejects distant matches', () {
       expect(

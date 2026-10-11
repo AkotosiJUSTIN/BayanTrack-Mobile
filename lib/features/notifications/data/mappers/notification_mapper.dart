@@ -1,4 +1,5 @@
 import '../../domain/entities/notification.dart';
+import '../../../../core/utils/api_datetime.dart';
 import '../../domain/entities/notification_preferences.dart'
     as domain_preferences;
 import '../../domain/entities/notification_type.dart';
@@ -20,9 +21,7 @@ class NotificationMapper {
       type: _mapNotificationType(dtoObj.type),
       isRead: dtoObj.isRead,
       reportId: dtoObj.reportId,
-      createdAt: dtoObj.createdAt != null
-          ? DateTime.tryParse(dtoObj.createdAt!)
-          : null,
+      createdAt: parseApiDateTime(dtoObj.createdAt),
     );
   }
 
