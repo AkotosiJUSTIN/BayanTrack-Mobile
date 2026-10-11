@@ -54,6 +54,9 @@ jobs:
       - name: Test
         run: flutter test
 
+      - name: Assign canonical release version
+        run: dart tool/release_version.dart >> "$GITHUB_ENV"
+
       - name: Restore release keystore
         shell: bash
         env:
@@ -75,8 +78,6 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          # ponytail: preserve this workflow's counter; raise the offset if it is reset.
-          build_number=$((1000 + GITHUB_RUN_NUMBER))
           build_started=$SECONDS
           (
             while sleep 60; do
@@ -85,13 +86,12 @@ jobs:
           ) &
           heartbeat_pid=$!
           trap 'kill "$heartbeat_pid" 2>/dev/null || true' EXIT
-          flutter build apk --release --no-pub --build-number="$build_number" \
+          flutter build apk --release --no-pub --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER" \
             --dart-define=BAYANTRACK_API_BASE_URL=https://api.bayantrack.app/api \
             --dart-define=BAYANTRACK_MEDIA_BASE_URL=https://api.bayantrack.app
           mkdir -p release
           cp build/app/outputs/flutter-apk/app-release.apk release/bayantrack.apk
           (cd release && sha256sum bayantrack.apk > bayantrack.apk.sha256)
-          echo "BUILD_NUMBER=$build_number" >> "$GITHUB_ENV"
 
       - name: Publish prerelease
         shell: bash
@@ -100,11 +100,10 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          tag="dev-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          gh release create "$tag" release/bayantrack.apk release/bayantrack.apk.sha256 \
+          gh release create "$RELEASE_TAG" release/bayantrack.apk release/bayantrack.apk.sha256 \
             --target "$GITHUB_SHA" --prerelease \
-            --title "BayanTrack Android build $BUILD_NUMBER" \
-            --notes "Development APK from commit $GITHUB_SHA. Uses the deployed BayanTrack API. Install manually; this is not an automatic phone update."
+            --title "BayanTrack $BUILD_NAME+$BUILD_NUMBER" \
+            --notes "Android APK $BUILD_NAME+$BUILD_NUMBER from commit $GITHUB_SHA. Uses the deployed BayanTrack API. This release is required by the in-app version check. Install the APK over the existing app to preserve local reports; do not uninstall."
 
       - name: Remove signing material
         if: always()

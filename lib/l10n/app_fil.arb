@@ -694,5 +694,17 @@
   "governanceAcceptanceFailed": "Hindi naitala ang pagtanggap. Pakisubukang muli.",
   "governanceTermsUnavailable": "Hindi makuha ang kasalukuyang mga tuntunin.",
   "governanceConsentLabel": "Nabasa ko at sumasang-ayon ako sa mga tuntunin at patakaran sa pribasiya.",
-  "governanceSyncPaused": "Naghihintay ng pagtanggap sa mga tuntunin o pagtatapos ng maintenance."
+  "governanceSyncPaused": "Naghihintay ng pagtanggap sa mga tuntunin o pagtatapos ng maintenance.",
+  "appCheckVersion": "Suriin ang bersyon ng app",
+  "appCheckingVersion": "Sinusuri kung may update...",
+  "appVersionCurrent": "Pinakabago ang iyong app.",
+  "appVersionUnavailable": "Hindi masuri ang mga update. Suriin ang koneksyon at subukang muli.",
+  "appUpdateRequired": "Kailangan ng update",
+  "appUpdateRequiredMessage": "May mas bagong release ng BayanTrack. I-install ang pinakabagong APK upang magpatuloy. Mananatili sa device na ito ang iyong mga naka-save na ulat.",
+  "appGetUpdate": "Kunin ang update",
+  "appReleaseOpenFailed": "Hindi mabuksan ang pahina ng mga release. Pakisubukang muli.",
+  "appInstalledVersion": "Naka-install: {version}",
+  "@appInstalledVersion": {"placeholders": {"version": {"type": "String"}}},
+  "appLatestVersion": "Pinakabagong release: {version}",
+  "@appLatestVersion": {"placeholders": {"version": {"type": "String"}}}
 }

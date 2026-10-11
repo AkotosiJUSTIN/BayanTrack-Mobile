@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:bayantrack_mobile/features/app_updates/domain/app_version.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -40,9 +41,56 @@ void main() {
     );
     expect(workflow, contains('sha256sum bayantrack.apk'));
     expect(workflow, contains('--target "\$GITHUB_SHA" --prerelease'));
-    expect(workflow, contains('1000 + GITHUB_RUN_NUMBER'));
+    expect(workflow, contains('dart tool/release_version.dart'));
+    expect(workflow, contains('--build-name="\$BUILD_NAME"'));
+    expect(workflow, contains('--build-number="\$BUILD_NUMBER"'));
+    expect(workflow, contains('gh release create "\$RELEASE_TAG"'));
+    expect(gradle, contains('flutter.versionCode == 1'));
+    expect(gradle, contains('System.currentTimeMillis() / 1000 - 1577836800'));
   });
 
+  test(
+    'release metadata uses the canonical pubspec name and current build epoch',
+    () {
+      final started = DateTime.now().toUtc();
+      final cache = File(
+        Platform.resolvedExecutable,
+      ).parent.parent.parent.parent;
+      final dart =
+          '${cache.path}/dart-sdk/bin/dart${Platform.isWindows ? '.exe' : ''}';
+      final result = Process.runSync(dart, ['tool/release_version.dart']);
+      expect(result.exitCode, 0, reason: result.stderr.toString());
+      final values = {
+        for (final line in result.stdout.toString().trim().split('\n'))
+          line.trim().split('=')[0]: line.trim().split('=')[1],
+      };
+      final identity = AppVersion.parse(
+        '${values['BUILD_NAME']}+${values['BUILD_NUMBER']}',
+      );
+      expect(
+        File('pubspec.yaml').readAsStringSync(),
+        contains('version: ${identity.name}+'),
+      );
+      expect(values['RELEASE_TAG'], 'v$identity');
+      final epoch = DateTime.utc(2020);
+      expect(
+        identity.build,
+        inInclusiveRange(
+          started.difference(epoch).inSeconds,
+          DateTime.now().toUtc().difference(epoch).inSeconds,
+        ),
+      );
+      expect(identity.build, greaterThan(1004));
+      sleep(const Duration(seconds: 1));
+      final retry = Process.runSync(dart, ['tool/release_version.dart']);
+      expect(retry.exitCode, 0, reason: retry.stderr.toString());
+      final retryTag = retry.stdout.toString().trim().split('\n').last;
+      final retryVersion = AppVersion.parse(
+        retryTag.substring('RELEASE_TAG=v'.length),
+      );
+      expect(retryVersion.build, greaterThan(identity.build));
+    },
+  );
   test('CI signing secrets match Gradle inputs and have cleanup', () {
     for (final name in [
       'ANDROID_KEYSTORE_PASSWORD',

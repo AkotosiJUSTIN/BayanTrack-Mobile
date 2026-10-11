@@ -12,6 +12,8 @@ import 'package:bayantrack_mobile/features/auth/domain/entities/user.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/auth_controller.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
 import 'package:bayantrack_mobile/features/home/presentation/home_screen.dart';
+import 'package:bayantrack_mobile/core/providers/theme_provider.dart';
+import 'package:bayantrack_mobile/features/app_updates/presentation/app_update_controller.dart';
 import 'package:bayantrack_mobile/features/navigation/main_navigation_shell.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/paginated_reports.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart';
@@ -32,6 +34,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../app_updates/app_update_fakes.dart';
 
 class _ReportsRepositoryMock extends Mock implements ReportsRepository {}
 
@@ -176,6 +179,32 @@ void _stubReports(
 }
 
 void main() {
+  testWidgets('Home header checks versions and reports current installation', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    final repository = _ReportsRepositoryMock();
+    _stubReports(repository, () async => const Success(PaginatedReports.empty));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPrefsProvider.overrideWithValue(preferences),
+          appUpdateRepositoryProvider.overrideWithValue(
+            FakeAppUpdateRepository(),
+          ),
+        ],
+        child: _app(repository),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Check app version'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('app-version-check')));
+    await tester.pumpAndSettle();
+    expect(find.text('Your app is up to date.'), findsOneWidget);
+    expect(find.text('Installed: 1.0.0+1004'), findsOneWidget);
+  });
+
   setUp(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(

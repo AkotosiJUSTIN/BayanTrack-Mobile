@@ -2176,4 +2176,41 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get governanceSyncPaused =>
       'Waiting for current terms acceptance or maintenance to end.';
+
+  @override
+  String get appCheckVersion => 'Check app version';
+
+  @override
+  String get appCheckingVersion => 'Checking for updates...';
+
+  @override
+  String get appVersionCurrent => 'Your app is up to date.';
+
+  @override
+  String get appVersionUnavailable =>
+      'Updates could not be checked. Check your connection and try again.';
+
+  @override
+  String get appUpdateRequired => 'Update required';
+
+  @override
+  String get appUpdateRequiredMessage =>
+      'A newer BayanTrack release is available. Install the latest APK to continue. Your saved reports will stay on this device.';
+
+  @override
+  String get appGetUpdate => 'Get update';
+
+  @override
+  String get appReleaseOpenFailed =>
+      'The releases page could not be opened. Please try again.';
+
+  @override
+  String appInstalledVersion(String version) {
+    return 'Installed: $version';
+  }
+
+  @override
+  String appLatestVersion(String version) {
+    return 'Latest release: $version';
+  }
 }

@@ -3991,6 +3991,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Waiting for current terms acceptance or maintenance to end.'**
   String get governanceSyncPaused;
+
+  /// No description provided for @appCheckVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Check app version'**
+  String get appCheckVersion;
+
+  /// No description provided for @appCheckingVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for updates...'**
+  String get appCheckingVersion;
+
+  /// No description provided for @appVersionCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Your app is up to date.'**
+  String get appVersionCurrent;
+
+  /// No description provided for @appVersionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Updates could not be checked. Check your connection and try again.'**
+  String get appVersionUnavailable;
+
+  /// No description provided for @appUpdateRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Update required'**
+  String get appUpdateRequired;
+
+  /// No description provided for @appUpdateRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'A newer BayanTrack release is available. Install the latest APK to continue. Your saved reports will stay on this device.'**
+  String get appUpdateRequiredMessage;
+
+  /// No description provided for @appGetUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Get update'**
+  String get appGetUpdate;
+
+  /// No description provided for @appReleaseOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The releases page could not be opened. Please try again.'**
+  String get appReleaseOpenFailed;
+
+  /// No description provided for @appInstalledVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed: {version}'**
+  String appInstalledVersion(String version);
+
+  /// No description provided for @appLatestVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest release: {version}'**
+  String appLatestVersion(String version);
 }
 
 class _AppLocalizationsDelegate

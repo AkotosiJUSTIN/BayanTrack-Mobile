@@ -694,5 +694,17 @@
   "governanceAcceptanceFailed": "Acceptance was not saved. Please try again.",
   "governanceTermsUnavailable": "Current terms could not be loaded.",
   "governanceConsentLabel": "I have read and agree to these terms and privacy policy.",
-  "governanceSyncPaused": "Waiting for current terms acceptance or maintenance to end."
+  "governanceSyncPaused": "Waiting for current terms acceptance or maintenance to end.",
+  "appCheckVersion": "Check app version",
+  "appCheckingVersion": "Checking for updates...",
+  "appVersionCurrent": "Your app is up to date.",
+  "appVersionUnavailable": "Updates could not be checked. Check your connection and try again.",
+  "appUpdateRequired": "Update required",
+  "appUpdateRequiredMessage": "A newer BayanTrack release is available. Install the latest APK to continue. Your saved reports will stay on this device.",
+  "appGetUpdate": "Get update",
+  "appReleaseOpenFailed": "The releases page could not be opened. Please try again.",
+  "appInstalledVersion": "Installed: {version}",
+  "@appInstalledVersion": {"placeholders": {"version": {"type": "String"}}},
+  "appLatestVersion": "Latest release: {version}",
+  "@appLatestVersion": {"placeholders": {"version": {"type": "String"}}}
 }

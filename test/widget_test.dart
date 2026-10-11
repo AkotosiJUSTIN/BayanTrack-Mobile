@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:bayantrack_mobile/core/providers/theme_provider.dart';
 import 'package:bayantrack_mobile/features/splash/presentation/splash_screen.dart';
 import 'package:bayantrack_mobile/main.dart';
+import 'package:bayantrack_mobile/features/app_updates/presentation/app_update_controller.dart';
+import 'features/app_updates/app_update_fakes.dart';
 
 void main() {
   testWidgets('App starts without crashing', (WidgetTester tester) async {
@@ -19,7 +21,12 @@ void main() {
     // Build our app wrapped with ProviderScope and trigger a frame.
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
+        overrides: [
+          sharedPrefsProvider.overrideWithValue(prefs),
+          appUpdateRepositoryProvider.overrideWithValue(
+            FakeAppUpdateRepository(),
+          ),
+        ],
         child: const MyApp(),
       ),
     );

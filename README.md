@@ -118,7 +118,7 @@ Add these repository secrets under Settings > Secrets and variables > Actions:
 The workflow pins Flutter 3.38.6 and Java 17, installs locked dependencies,
 runs analysis and tests, and builds a signed APK against
 `https://api.bayantrack.app/api`. Failed checks prevent publication.
-Each successful run creates a separate development prerelease with
+Each successful run creates a separate prerelease with
 `bayantrack.apk` and its SHA-256 checksum.
 
 Cold builds can spend time installing Android tools and compiling dependencies.
@@ -137,9 +137,40 @@ open Actions > Android APK Release. Use Run workflow for a manual rebuild.
 Download the APK from Releases and install it manually; GitHub does not update
 installed apps automatically.
 
-Build numbers start at 1001 and increase with the workflow run counter.
-Keep this workflow's counter intact. If you recreate the workflow, change the
-offset so new builds remain above every APK already distributed.
+The canonical identity is `MAJOR.MINOR.PATCH+BUILD`, for example
+`1.0.0+213456789`. Maintain the semantic version in `pubspec.yaml`.
+`tool/release_version.dart` assigns the build number from UTC seconds since
+January 1, 2020. CI passes both values to Flutter and publishes the matching
+`vMAJOR.MINOR.PATCH+BUILD` GitHub tag. Reruns receive a new identity without
+depending on a workflow counter. Default local Android builds also use this
+epoch-based build number; explicit `--build-number` overrides remain supported.
+Use a correctly synchronized clock and never reuse or lower a published build
+number. Second-level identities assume builds start at least one second apart;
+GitHub rejects duplicate tags rather than overwriting an existing release.
+
+### Required app updates
+
+The app checks the public releases API on startup, resume, reconnect, and from
+the Home header's **Check app version** button. Published prereleases are included
+because they are the current distribution channel. Only releases with an
+uploaded `bayantrack.apk` qualify; draft, incomplete, and malformed releases do
+not establish that an installation is current. The existing `dev-*` releases
+with numbered Android build titles remain compatible.
+
+A confirmed newer version displays a non-dismissible prompt above all routes.
+**Get update** opens
+`https://github.com/DvineConqueror/BayanTrack-Mobile/releases` in the browser.
+The latest confirmed release is cached across restarts, so offline access or a
+failed check cannot bypass an already known required update. An unknown version
+during a failed first check does not block offline work or claim the app is
+current. The manual check reports the connection error and offers retry.
+
+This is client-side UI enforcement, not backend version authorization. APKs
+released before this gate was added cannot retroactively enforce it. Release
+publication makes that APK mandatory for gate-enabled installations, so publish
+only tested APKs signed with the same key. Installing over the existing app
+preserves local drafts and queues; uninstalling removes that data. Do not change
+the application ID or signing key between updates.
 
 For a local signed release, create the ignored `android/key.properties`:
 

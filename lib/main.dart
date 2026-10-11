@@ -11,6 +11,7 @@ import 'core/providers/locale_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widget/widget_bridge.dart';
 import 'features/splash/presentation/splash_screen.dart';
+import 'features/app_updates/presentation/app_update_gate.dart';
 import 'l10n/app_localizations.dart';
 
 void main() async {
@@ -74,6 +75,7 @@ class MyApp extends ConsumerWidget {
       locale: locale,
       supportedLocales: appSupportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
+      builder: (context, child) => AppUpdateGate(child: child!),
       home: const SplashScreen(),
     );
   }
