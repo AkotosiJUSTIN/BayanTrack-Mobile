@@ -361,7 +361,10 @@ void main() {
         };
 
         when(
-          () => mockDio.post(ApiConstants.reports, data: request.toJson()),
+          () => mockDio.post(
+            ApiConstants.reports,
+            data: {...request.toJson(), 'is_quick_report': false},
+          ),
         ).thenAnswer(
           (_) async => Response(
             data: responseData,
@@ -380,7 +383,10 @@ void main() {
         expect(request.toJson()['municipality_id'], 'urdaneta');
         expect(request.toJson()['barangay_id'], 'zone_5');
         verify(
-          () => mockDio.post(ApiConstants.reports, data: request.toJson()),
+          () => mockDio.post(
+            ApiConstants.reports,
+            data: {...request.toJson(), 'is_quick_report': false},
+          ),
         ).called(1);
       });
     });

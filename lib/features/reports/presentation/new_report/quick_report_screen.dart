@@ -209,13 +209,13 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
         _draftReady = true;
         await _enqueueDraftSave(_captureDraftPayload());
       } else if (action == ReportDraftAction.startNew) {
-        await _draftStore.delete(ownerId!, _draftType);
+        if (!await _discardSavedDraft(draft)) return;
         if (!mounted) return;
         if (!_canPersistDraft || _currentOwnerId() != ownerId) return;
         _draftRecord = null;
         _draftReady = true;
       } else if (action == ReportDraftAction.discard) {
-        await _draftStore.delete(ownerId!, _draftType);
+        if (!await _discardSavedDraft(draft)) return;
         if (!mounted) return;
         if (!_canPersistDraft || _currentOwnerId() != ownerId) return;
         _persistDraft = false;
@@ -260,6 +260,23 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
     final categoryKey = draft.payload['categoryKey'];
     _restoredEmergencyCategoryKey = categoryKey is String ? categoryKey : null;
     _emergencyConfirmed = false;
+  }
+
+  Future<bool> _discardSavedDraft(ReportDraft draft) async {
+    try {
+      await ref.read(reportCreateOutboxProvider).discardDraft(draft);
+      return true;
+    } catch (_) {
+      if (mounted) {
+        AppToast.warning(
+          context,
+          AppLocalizations.of(context).reportOutboxRetrying,
+        );
+        _persistDraft = false;
+        Navigator.of(context).pop();
+      }
+      return false;
+    }
   }
 
   Map<String, Object?> _captureDraftPayload() => {

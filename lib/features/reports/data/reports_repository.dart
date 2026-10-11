@@ -99,10 +99,7 @@ class ReportsRepository {
     bool isQuickReport = false,
     String? idempotencyKey,
   }) async {
-    final jsonData = {
-      ...request.toJson(),
-      if (isQuickReport) 'is_quick_report': true,
-    };
+    final jsonData = {...request.toJson(), 'is_quick_report': isQuickReport};
     final response = idempotencyKey == null
         ? await _dio.post(ApiConstants.reports, data: jsonData)
         : await _dio.post(

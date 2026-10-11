@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/presentation/widgets/civic_components.dart';
+import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/presentation/widgets/empty_content_placeholder.dart';
 import '../../../core/presentation/widgets/offline_stale_banner.dart';
 import '../../../core/providers/backend_reachability_provider.dart';
@@ -18,6 +19,7 @@ import '../presentation/report_detail_screen.dart';
 import '../presentation/report_labels.dart';
 import 'new_report/new_report_photos_screen.dart';
 import 'new_report/quick_report_screen.dart';
+import 'new_report/report_draft_prompt.dart';
 import '../presentation/reports_controller.dart';
 import '../reports_di.dart';
 
@@ -36,6 +38,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
   bool _isStale = false;
   bool _isLoadingMore = false;
   bool _isNavigatingToReportDetail = false;
+  bool _isHandlingOutbox = false;
   String? _loadError;
 
   int _currentPage = 0;
@@ -427,7 +430,9 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
-                  onPressed: () => _retryOutbox(item),
+                  onPressed: _isHandlingOutbox
+                      ? null
+                      : () => _handleOutboxAction(() => _retryOutbox(item)),
                   icon: const Icon(Icons.refresh),
                   label: Text(l10n.reportOutboxRetryNow),
                 ),
@@ -436,9 +441,22 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
-                  onPressed: () => _editOutbox(item),
+                  onPressed: _isHandlingOutbox
+                      ? null
+                      : () => _handleOutboxAction(() => _editOutbox(item)),
                   icon: const Icon(Icons.edit_outlined),
                   label: Text(l10n.reportOutboxEdit),
+                ),
+              ),
+            if (item.canDiscard)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: _isHandlingOutbox
+                      ? null
+                      : () => _handleOutboxAction(() => _discardOutbox(item)),
+                  icon: const Icon(Icons.delete_outline),
+                  label: Text(l10n.discardDraft),
                 ),
               ),
           ],
@@ -447,13 +465,49 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     );
   }
 
+  Future<void> _handleOutboxAction(Future<void> Function() action) async {
+    if (_isHandlingOutbox) return;
+    setState(() => _isHandlingOutbox = true);
+    try {
+      await action();
+    } finally {
+      if (mounted) setState(() => _isHandlingOutbox = false);
+    }
+  }
+
   Future<void> _retryOutbox(ReportCreateOutboxItem item) async {
-    await ref
-        .read(reportCreateOutboxProvider)
-        .retry(item.ownerId, item.localReportId);
+    try {
+      await ref
+          .read(reportCreateOutboxProvider)
+          .retry(item.ownerId, item.localReportId);
+    } catch (_) {
+      if (mounted) {
+        AppToast.error(
+          context,
+          AppLocalizations.of(context).unableSubmitReport,
+        );
+      }
+    }
   }
 
   Future<void> _editOutbox(ReportCreateOutboxItem item) async {
+    try {
+      await ref
+          .read(reportCreateOutboxProvider)
+          .restoreRejectedDraft(item.ownerId, item.localReportId);
+    } on StateError catch (error) {
+      if (mounted) AppToast.error(context, error.message.toString());
+      return;
+    } catch (_) {
+      if (mounted) {
+        AppToast.error(
+          context,
+          AppLocalizations.of(context).unableSubmitReport,
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
     final screen = item.type == ReportDraftType.full
         ? const NewReportPhotosScreen()
         : QuickReportScreen(
@@ -465,6 +519,22 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     await Navigator.of(
       context,
     ).push(MaterialPageRoute<void>(builder: (_) => screen));
+  }
+
+  Future<void> _discardOutbox(ReportCreateOutboxItem item) async {
+    if (!await confirmReportDraftDiscard(context) || !mounted) return;
+    try {
+      await ref
+          .read(reportCreateOutboxProvider)
+          .discard(item.ownerId, item.localReportId);
+    } catch (_) {
+      if (mounted) {
+        AppToast.error(
+          context,
+          AppLocalizations.of(context).unableSubmitReport,
+        );
+      }
+    }
   }
 
   Widget _buildOverview(ThemeData theme, AppLocalizations l10n) {

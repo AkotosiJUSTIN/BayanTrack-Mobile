@@ -282,7 +282,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
 
       final requestData = {
         ...request.toJson(),
-        if (isQuickReport) 'is_quick_report': true,
+        'is_quick_report': isQuickReport,
       };
       final response = await _dio.post(
         ApiConstants.reports,

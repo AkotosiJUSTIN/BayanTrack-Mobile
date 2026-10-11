@@ -81,6 +81,12 @@ class ReportCreateOutboxItem {
 
   bool get isPending => status != ReportCreateOutboxStatus.synced;
 
+  bool get canDiscard =>
+      serverReportId == null &&
+      (status == ReportCreateOutboxStatus.rejected &&
+              errorKind != ReportCreateOutboxErrorKind.conflict ||
+          status != ReportCreateOutboxStatus.synced && attemptCount == 0);
+
   Map<String, Object?> toJson() => {
     'schemaVersion': schemaVersion,
     'localReportId': localReportId,
@@ -315,6 +321,16 @@ class ReportCreateOutboxStore {
     await _storage.write(key: key, value: jsonEncode(item.toJson()));
   });
 
+  Future<void> discard(String ownerId, String localReportId) =>
+      _serialize(() async {
+        final item = await _read(ownerId, localReportId);
+        if (item == null) return;
+        if (!item.canDiscard) {
+          throw StateError('This report may already have reached the server.');
+        }
+        await _storage.delete(key: _key(ownerId, localReportId));
+      });
+
   Future<Set<String>> readAllAttachmentReferences() => _serialize(() async {
     final items = await _readAllStored();
     return items
@@ -509,7 +525,11 @@ class ReportCreateOutbox {
     final previousForDraft = sourceDraftId == null
         ? null
         : existingItems
-              .where((item) => item.sourceDraftId == sourceDraftId)
+              .where(
+                (item) =>
+                    item.sourceDraftId == sourceDraftId ||
+                    item.localReportId == sourceDraftId,
+              )
               .fold<ReportCreateOutboxItem?>(
                 null,
                 (latest, item) =>
@@ -524,12 +544,17 @@ class ReportCreateOutbox {
         _canonicalJson(previousForDraft.payload) ==
             _canonicalJson(frozenPayload) &&
         _sameStrings(previousForDraft.attachmentRefs, refs);
+    if (previousForDraft != null &&
+        previousForDraft.errorKind == ReportCreateOutboxErrorKind.conflict) {
+      return previousForDraft;
+    }
     if (identical &&
         previousForDraft.status == ReportCreateOutboxStatus.synced) {
       return previousForDraft;
     }
     if (identical &&
-        previousForDraft.status == ReportCreateOutboxStatus.rejected) {
+        previousForDraft.status == ReportCreateOutboxStatus.rejected &&
+        previousForDraft.errorKind != ReportCreateOutboxErrorKind.validation) {
       return previousForDraft;
     }
     if (previousForDraft != null &&
@@ -540,7 +565,10 @@ class ReportCreateOutbox {
     }
 
     final now = _now().toUtc();
-    final item = identical
+    final reuseSnapshot =
+        identical &&
+        previousForDraft.status != ReportCreateOutboxStatus.rejected;
+    final item = reuseSnapshot
         ? previousForDraft
         : ReportCreateOutboxItem(
             schemaVersion: ReportCreateOutboxItem.currentSchemaVersion,
@@ -556,13 +584,25 @@ class ReportCreateOutbox {
             attachmentRefs: refs,
             status: ReportCreateOutboxStatus.pending,
           );
-    if (!identical) await _store.write(item);
+    if (!reuseSnapshot) {
+      await _store.write(item);
+      // Persist the replacement before removing definitively rejected snapshots.
+      for (final previous in existingItems) {
+        if (sourceDraftId != null &&
+            (previous.sourceDraftId == sourceDraftId ||
+                previous.localReportId == sourceDraftId) &&
+            previous.status == ReportCreateOutboxStatus.rejected) {
+          await _store.discard(ownerId, previous.localReportId);
+        }
+      }
+    }
     _notifyChanged(ownerId);
 
     if (item.status == ReportCreateOutboxStatus.synced ||
         item.status == ReportCreateOutboxStatus.rejected ||
         (item.status == ReportCreateOutboxStatus.retryWaiting &&
-            item.nextAttemptAt?.isAfter(_now()) == true) ||
+            (item.attemptCount >= maxAttempts ||
+                item.nextAttemptAt?.isAfter(_now()) == true)) ||
         !_canReachBackend()) {
       return item;
     }
@@ -600,6 +640,9 @@ class ReportCreateOutbox {
   }
 
   Future<void> retry(String ownerId, String localReportId) async {
+    if (!await _isCurrentOwner(ownerId)) {
+      throw StateError('Sign in with the original account.');
+    }
     final item = await _store.read(ownerId, localReportId);
     if (item == null ||
         (item.status != ReportCreateOutboxStatus.retryWaiting &&
@@ -616,6 +659,90 @@ class ReportCreateOutbox {
     await _store.write(pending);
     _notifyChanged(ownerId);
     await resume(ownerId);
+  }
+
+  Future<void> discard(String ownerId, String localReportId) async {
+    if (!await _isCurrentOwner(ownerId) ||
+        _attempts.containsKey(localReportId)) {
+      throw StateError('This report cannot be discarded while sending.');
+    }
+    final item = await _store.read(ownerId, localReportId);
+    if (item == null) return;
+    await _store.discard(ownerId, localReportId);
+    final remaining = await _store.readAll(ownerId);
+    if (!remaining.any((other) => other.sourceDraftId == item.sourceDraftId)) {
+      await _deleteSourceDraftIfUnchanged(item);
+    }
+    _notifyChanged(ownerId);
+  }
+
+  Future<void> discardDraft(ReportDraft draft) async {
+    if (!await _isCurrentOwner(draft.ownerId)) {
+      throw StateError('Sign in with the original account.');
+    }
+    final items = (await _store.readAll(draft.ownerId))
+        .where(
+          (item) =>
+              item.sourceDraftId == draft.draftId ||
+              item.localReportId == draft.draftId,
+        )
+        .toList();
+    if (items.any(
+      (item) => !item.canDiscard || _attempts.containsKey(item.localReportId),
+    )) {
+      throw StateError('This report may already have reached the server.');
+    }
+    for (final item in items) {
+      await _store.discard(draft.ownerId, item.localReportId);
+    }
+    final current = await _drafts.read(draft.ownerId, draft.type);
+    if (current?.draftId == draft.draftId) {
+      await _drafts.delete(draft.ownerId, draft.type);
+    }
+    _notifyChanged(draft.ownerId);
+  }
+
+  Future<void> restoreRejectedDraft(
+    String ownerId,
+    String localReportId,
+  ) async {
+    if (!await _isCurrentOwner(ownerId)) {
+      throw StateError('Sign in with the original account.');
+    }
+    final item = await _store.read(ownerId, localReportId);
+    if (item == null ||
+        item.status != ReportCreateOutboxStatus.rejected ||
+        !item.canDiscard) {
+      throw StateError(
+        'Submission could not be confirmed. Retry with the original operation.',
+      );
+    }
+    final draftId = item.sourceDraftId ?? item.localReportId;
+    final current = await _drafts.read(ownerId, item.type);
+    if (current != null && current.draftId != draftId) {
+      throw StateError('Finish or discard your other saved draft first.');
+    }
+    final payload = Map<String, Object?>.from(item.payload);
+    for (final key in ['latitude', 'longitude']) {
+      final value = payload[key];
+      if (value is String) payload[key] = double.tryParse(value);
+    }
+    if (item.type == ReportDraftType.emergency) {
+      payload['categoryKey'] = payload['category'];
+    }
+    await _drafts.write(
+      ReportDraft(
+        schemaVersion: ReportDraft.currentSchemaVersion,
+        draftId: draftId,
+        ownerId: ownerId,
+        type: item.type,
+        createdAt: item.createdAt,
+        updatedAt: _now().toUtc(),
+        resumeStep: item.type == ReportDraftType.full ? 'review' : 'form',
+        payload: payload,
+        attachmentRefs: item.attachmentRefs,
+      ),
+    );
   }
 
   Future<int> _drain(String ownerId) {
@@ -639,6 +766,7 @@ class ReportCreateOutbox {
             await _finishAcknowledged(item);
             continue;
           }
+          if (item.status == ReportCreateOutboxStatus.rejected) continue;
           if (!_canSubmit(item.payload)) {
             await _saveSystemPaused(item);
             continue;
@@ -659,6 +787,10 @@ class ReportCreateOutbox {
           }
           if (item.status != ReportCreateOutboxStatus.pending &&
               item.status != ReportCreateOutboxStatus.retryWaiting) {
+            continue;
+          }
+          if (item.status == ReportCreateOutboxStatus.retryWaiting &&
+              item.attemptCount >= maxAttempts) {
             continue;
           }
           if (item.nextAttemptAt != null &&
@@ -706,6 +838,13 @@ class ReportCreateOutbox {
       return item;
     }
     if (!_canSubmit(item.payload)) return _saveSystemPaused(item);
+    // A drain may hold a snapshot discarded while it awaited ownership checks.
+    final current = await _store.read(item.ownerId, item.localReportId);
+    if (current == null ||
+        current.status == ReportCreateOutboxStatus.rejected ||
+        current.status == ReportCreateOutboxStatus.synced) {
+      return current ?? item;
+    }
     final started = item.copyWith(
       status: ReportCreateOutboxStatus.pending,
       updatedAt: _now().toUtc(),
@@ -824,7 +963,9 @@ class ReportCreateOutbox {
         failure is NetworkFailure ||
         failure is ServerFailure ||
         failure is UnknownFailure &&
-            (failure.statusCode == 408 || failure.statusCode == 429);
+            (failure.statusCode == null ||
+                failure.statusCode == 408 ||
+                failure.statusCode == 429);
     if (retryable) {
       final exhausted = attempts >= maxAttempts;
       final next = exhausted ? null : _now().toUtc().add(_backoff(attempts));
