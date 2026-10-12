@@ -93,17 +93,34 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk release/bayantrack.apk
           (cd release && sha256sum bayantrack.apk > bayantrack.apk.sha256)
 
-      - name: Publish prerelease
+      - name: Publish release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
+
+          cat > release/release-notes.md <<EOF
+          ## BayanTrack Android
+
+          Android $BUILD_NAME+$BUILD_NUMBER, built from [commit \`${GITHUB_SHA:0:7}\`]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$GITHUB_SHA). Connects to the deployed BayanTrack API.
+
+          ## Download & Install
+
+          1. Expand **Assets** and download \`bayantrack.apk\`.
+          2. Open the APK on your Android phone and allow installation if prompted.
+          3. Install it over the existing app to preserve local reports. Do not uninstall first.
+
+          ## What's Included
+
+          The categorized changes below are generated from merged pull requests since the previous release.
+          EOF
+
           gh release create "$RELEASE_TAG" release/bayantrack.apk release/bayantrack.apk.sha256 \
-            --target "$GITHUB_SHA" --prerelease \
+            --target "$GITHUB_SHA" --latest \
             --title "BayanTrack $BUILD_NAME+$BUILD_NUMBER" \
-            --notes "Android APK $BUILD_NAME+$BUILD_NUMBER from commit $GITHUB_SHA. Uses the deployed BayanTrack API. This release is required by the in-app version check. Install the APK over the existing app to preserve local reports; do not uninstall."
+            --generate-notes --notes-file release/release-notes.md
 
       - name: Remove signing material
         if: always()
