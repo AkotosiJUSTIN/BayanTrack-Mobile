@@ -40,7 +40,16 @@ void main() {
       contains('BAYANTRACK_MEDIA_BASE_URL=https://api.bayantrack.app'),
     );
     expect(workflow, contains('sha256sum bayantrack.apk'));
-    expect(workflow, contains('--target "\$GITHUB_SHA" --prerelease'));
+    expect(workflow, contains('--target "\$GITHUB_SHA" --latest'));
+    expect(workflow, isNot(contains('--prerelease')));
+    expect(
+      workflow,
+      contains('--generate-notes --notes-file release/release-notes.md'),
+    );
+    expect(workflow, contains('Install it over the existing app'));
+    final releaseNotesConfig = File('.github/release.yml').readAsStringSync();
+    expect(releaseNotesConfig, contains('Features & Improvements'));
+    expect(releaseNotesConfig, contains('Bug Fixes'));
     expect(workflow, contains('dart tool/release_version.dart'));
     expect(workflow, contains('--build-name="\$BUILD_NAME"'));
     expect(workflow, contains('--build-number="\$BUILD_NUMBER"'));
