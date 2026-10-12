@@ -12,6 +12,7 @@ import '../../features/auth/domain/auth_session_repository.dart';
 /// Uses AuthSessionRepository interface for token management,
 /// following Clean Architecture principles.
 class AuthInterceptor extends Interceptor {
+  static const _requestSessionKey = 'authInterceptor.requestSession';
   final Dio _dio;
   final AuthSessionRepository _sessionRepository;
   bool _isRefreshing = false;
@@ -40,8 +41,13 @@ class AuthInterceptor extends Interceptor {
       return handler.next(options);
     }
 
-    // Inject access token
+    // Bind replay to dispatch, not to whichever account handles a late 401.
+    final refreshToken = await _sessionRepository.getRefreshToken();
     final accessToken = await _sessionRepository.getAccessToken();
+    if (await _sessionRepository.getRefreshToken() != refreshToken) {
+      return handler.reject(_sessionChanged(options));
+    }
+    options.extra[_requestSessionKey] = refreshToken;
 
     if (accessToken != null) {
       debugPrint('[AuthInterceptor] Injecting access token');
@@ -72,6 +78,11 @@ class AuthInterceptor extends Interceptor {
       return handler.next(err);
     }
 
+    // Public requests have no originating session to refresh.
+    if (!err.requestOptions.extra.containsKey(_requestSessionKey)) {
+      return handler.next(err);
+    }
+
     // Queue requests while refreshing
     if (_isRefreshing) {
       _pendingRequests.add((options: err.requestOptions, handler: handler));
@@ -95,6 +106,12 @@ class AuthInterceptor extends Interceptor {
     String? accessToken;
     try {
       refreshToken = await _sessionRepository.getRefreshToken();
+      if (err.requestOptions.extra[_requestSessionKey] != refreshToken) {
+        final failure = _sessionChanged(err.requestOptions);
+        handler.reject(failure);
+        _rejectPending(failure);
+        return;
+      }
       if (refreshToken == null) {
         await _clearMatchingSession(null);
         handler.reject(err);
@@ -166,14 +183,24 @@ class AuthInterceptor extends Interceptor {
         ),
       );
     }
-    await _retryPending(accessToken, refreshedToken);
+    await _retryPending(accessToken, refreshedToken, refreshToken);
   }
 
-  Future<void> _retryPending(String accessToken, String refreshToken) async {
+  Future<void> _retryPending(
+    String accessToken,
+    String refreshToken,
+    String originatingRefreshToken,
+  ) async {
     final pendingRequests = List.of(_pendingRequests);
     _pendingRequests.clear();
     for (var index = 0; index < pendingRequests.length; index++) {
       final pending = pendingRequests[index];
+      if (!pending.options.extra.containsKey(_requestSessionKey) ||
+          pending.options.extra[_requestSessionKey] !=
+              originatingRefreshToken) {
+        pending.handler.reject(_sessionChanged(pending.options));
+        continue;
+      }
       if (await _sessionRepository.getRefreshToken() != refreshToken) {
         for (final remaining in pendingRequests.skip(index)) {
           remaining.handler.reject(
@@ -228,6 +255,12 @@ class AuthInterceptor extends Interceptor {
         message: error.message,
         stackTrace: error.stackTrace,
       );
+
+  DioException _sessionChanged(RequestOptions options) => DioException(
+    requestOptions: options,
+    type: DioExceptionType.cancel,
+    message: 'Session changed before request replay',
+  );
 
   Future<void> _clearMatchingSession(String? refreshToken) async {
     try {
