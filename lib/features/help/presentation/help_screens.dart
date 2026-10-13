@@ -24,12 +24,6 @@ class HelpSafetySection extends StatelessWidget {
         CivicSettingsGroup(
           children: [
             CivicSettingsRow(
-              key: const ValueKey('profile-help-hotlines'),
-              icon: Icons.call_outlined,
-              title: 'Emergency Hotlines',
-              onTap: () => _openEmergencyHotlines(context),
-            ),
-            CivicSettingsRow(
               key: const ValueKey('profile-help-faq'),
               icon: Icons.help_outline_rounded,
               title: 'Help & FAQs',
@@ -71,9 +65,7 @@ class EmergencyHotlinesScreen extends StatelessWidget {
 }
 
 class HelpFaqScreen extends StatefulWidget {
-  const HelpFaqScreen({super.key, this.launchCall});
-
-  final Future<bool> Function(Uri uri)? launchCall;
+  const HelpFaqScreen({super.key});
 
   @override
   State<HelpFaqScreen> createState() => _HelpFaqScreenState();
@@ -102,8 +94,6 @@ class _HelpFaqScreenState extends State<HelpFaqScreen> {
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
-          EmergencyHotlineSection(launchCall: widget.launchCall),
-          const SizedBox(height: 24),
           Text('Frequently Asked Questions', style: theme.textTheme.titleLarge),
           const SizedBox(height: 12),
           TextField(

@@ -4,6 +4,7 @@ import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/profile_controller.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/profile_screen.dart';
+import 'package:bayantrack_mobile/features/help/presentation/help_screens.dart';
 import 'package:bayantrack_mobile/features/kyc/presentation/kyc_controller.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets(
-    'Profile opens FAQ and hotline pages; no support channel is shown',
+    'Profile has one emergency entry and opens separate FAQ and hotline pages',
     (tester) async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
@@ -51,13 +52,21 @@ void main() {
       final faqEntry = find.byKey(const ValueKey('profile-help-faq'));
       expect(find.text('Help & Safety'), findsOneWidget);
       expect(find.text('Contact Support'), findsNothing);
+      expect(find.text('View Emergency Hotlines'), findsOneWidget);
+      expect(find.text('Emergency Hotlines'), findsNothing);
+      expect(find.byKey(const ValueKey('profile-help-hotlines')), findsNothing);
       await tester.tap(faqEntry);
       await tester.pumpAndSettle();
       expect(find.text('Help & FAQs'), findsOneWidget);
+      expect(find.byType(EmergencyHotlineSection), findsNothing);
+      expect(
+        find.byKey(const ValueKey('help-faq-search')).hitTestable(),
+        findsOneWidget,
+      );
 
       await tester.pageBack();
       await tester.pumpAndSettle();
-      final hotlineEntry = find.byKey(const ValueKey('profile-help-hotlines'));
+      final hotlineEntry = find.text('View Emergency Hotlines');
       await tester.ensureVisible(hotlineEntry);
       await tester.pumpAndSettle();
       await tester.tap(hotlineEntry);
