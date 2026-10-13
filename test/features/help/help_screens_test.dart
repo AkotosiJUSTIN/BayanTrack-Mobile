@@ -4,11 +4,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('FAQ opens with visible search and no emergency directory', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(const MaterialApp(home: HelpFaqScreen()));
+
+    expect(
+      find.byKey(const ValueKey('help-faq-search')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(find.text('Getting Started').hitTestable(), findsOneWidget);
+    expect(find.byType(EmergencyHotlineSection), findsNothing);
+    expect(find.text(emergencyServicesGuidance), findsNothing);
+  });
+
   testWidgets('FAQ remains available offline and expands answers', (
     tester,
   ) async {
     await tester.pumpWidget(const MaterialApp(home: HelpFaqScreen()));
-    await tester.scrollUntilVisible(find.text('Getting Started'), 250);
     await tester.ensureVisible(find.text('Getting Started'));
     await tester.pumpAndSettle();
 
@@ -28,10 +44,6 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const MaterialApp(home: HelpFaqScreen()));
-    await tester.scrollUntilVisible(
-      find.byKey(const ValueKey('help-faq-search')),
-      250,
-    );
     await tester.ensureVisible(find.byKey(const ValueKey('help-faq-search')));
 
     await tester.enterText(
@@ -149,40 +161,41 @@ void main() {
     });
   }
 
-  testWidgets('FAQ renders every shared contact and only launches after tap', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(390, 1600);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    final launched = <Uri>[];
-    await tester.pumpWidget(
-      MaterialApp(
-        home: HelpFaqScreen(
-          launchCall: (uri) async {
-            launched.add(uri);
-            return true;
-          },
+  testWidgets(
+    'emergency page renders every contact and only launches after tap',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final launched = <Uri>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: EmergencyHotlinesScreen(
+            launchCall: (uri) async {
+              launched.add(uri);
+              return true;
+            },
+          ),
         ),
-      ),
-    );
-    expect(launched, isEmpty);
-    for (final hotline in emergencyHotlines) {
-      final tile = find.byKey(ValueKey('hotline-call-${hotline.number}'));
-      await tester.ensureVisible(tile);
-      expect(
-        find.descendant(of: tile, matching: find.text(hotline.name)),
-        findsOneWidget,
       );
-      expect(
-        find.descendant(of: tile, matching: find.text(hotline.number)),
-        findsOneWidget,
-      );
-      await tester.tap(tile);
-      await tester.pumpAndSettle();
-    }
-    expect(launched, emergencyHotlines.map((h) => hotlineCallUri(h.number)));
-  });
+      expect(launched, isEmpty);
+      for (final hotline in emergencyHotlines) {
+        final tile = find.byKey(ValueKey('hotline-call-${hotline.number}'));
+        await tester.ensureVisible(tile);
+        expect(
+          find.descendant(of: tile, matching: find.text(hotline.name)),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: tile, matching: find.text(hotline.number)),
+          findsOneWidget,
+        );
+        await tester.tap(tile);
+        await tester.pumpAndSettle();
+      }
+      expect(launched, emergencyHotlines.map((h) => hotlineCallUri(h.number)));
+    },
+  );
 
   testWidgets('large text fits hotline rows on narrow screen', (tester) async {
     tester.view.physicalSize = const Size(320, 900);
