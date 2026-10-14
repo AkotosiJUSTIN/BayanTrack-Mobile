@@ -129,6 +129,7 @@ class ReportMapper {
       verifiedAt: parseApiDateTime(dtoReport.verifiedAt),
       resolvedAt: parseApiDateTime(dtoReport.resolvedAt),
       citizenVerifiedAt: parseApiDateTime(dtoReport.citizenVerifiedAt),
+      citizenConfirmedResolved: dtoReport.citizenConfirmedResolved,
       citizenSatisfaction: dtoReport.citizenSatisfaction,
       citizenClosureNote: dtoReport.citizenClosureNote,
       onChainId: dtoReport.onChainId,

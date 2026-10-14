@@ -211,6 +211,7 @@ _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
   verifiedAt: json['verified_at'] as String?,
   resolvedAt: json['resolved_at'] as String?,
   citizenVerifiedAt: json['citizen_verified_at'] as String?,
+  citizenConfirmedResolved: json['citizen_confirmed_resolved'] as bool?,
   citizenSatisfaction: const NullableIntConverter().fromJson(
     json['citizen_satisfaction'],
   ),
@@ -324,6 +325,7 @@ Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
   'verified_at': instance.verifiedAt,
   'resolved_at': instance.resolvedAt,
   'citizen_verified_at': instance.citizenVerifiedAt,
+  'citizen_confirmed_resolved': instance.citizenConfirmedResolved,
   'citizen_satisfaction': const NullableIntConverter().toJson(
     instance.citizenSatisfaction,
   ),

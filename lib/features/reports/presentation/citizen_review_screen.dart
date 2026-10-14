@@ -192,7 +192,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
     final successColor = _successColor(theme);
 
     // Guard: already reviewed — show read-only confirmation, no form
-    if (widget.report.citizenVerifiedAt != null) {
+    if (widget.report.hasCitizenConfirmedResolution) {
       return Scaffold(
         appBar: AppBar(title: Text(l10n.reviewResolution), centerTitle: true),
         body: Center(
@@ -737,132 +737,14 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
   }
 
   Future<void> _showDisputeSheet() async {
-    final l10n = AppLocalizations.of(context);
-    final reasonController = TextEditingController();
-    final reasonFocusNode = FocusNode();
-    var focusRequested = false;
     final submitted = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (sheetContext) {
-        String? errorText;
-        var isSubmitting = false;
-
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            if (!focusRequested) {
-              focusRequested = true;
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (sheetContext.mounted) reasonFocusNode.requestFocus();
-              });
-            }
-
-            return SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: EdgeInsets.fromLTRB(
-                20,
-                16,
-                20,
-                20 + MediaQuery.viewInsetsOf(context).bottom,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Semantics(
-                    header: true,
-                    child: Text(
-                      l10n.disputeResolution,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.disputeConfirmation,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    key: const ValueKey('citizen-review-dispute-reason'),
-                    controller: reasonController,
-                    focusNode: reasonFocusNode,
-                    autofocus: true,
-                    minLines: 4,
-                    maxLines: 7,
-                    maxLength: 1000,
-                    textInputAction: TextInputAction.newline,
-                    onChanged: (_) {
-                      if (errorText != null) {
-                        setSheetState(() => errorText = null);
-                      }
-                    },
-                    decoration: InputDecoration(
-                      labelText: l10n.disputeReasonLabel,
-                      hintText: l10n.disputeReasonHint,
-                      errorText: errorText,
-                      alignLabelWithHint: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      key: const ValueKey('citizen-review-dispute-submit'),
-                      onPressed: isSubmitting
-                          ? null
-                          : () async {
-                              final reason = reasonController.text.trim();
-                              if (reason.isEmpty) {
-                                setSheetState(
-                                  () => errorText = l10n.disputeReasonRequired,
-                                );
-                                reasonFocusNode.requestFocus();
-                                return;
-                              }
-                              setSheetState(() {
-                                isSubmitting = true;
-                                errorText = null;
-                              });
-                              final error = await _submit(
-                                satisfied: false,
-                                disputeReason: reason,
-                              );
-                              if (!sheetContext.mounted) return;
-                              if (error != null) {
-                                setSheetState(() {
-                                  isSubmitting = false;
-                                  errorText = error;
-                                });
-                                reasonFocusNode.requestFocus();
-                              } else {
-                                Navigator.of(sheetContext).pop(true);
-                              }
-                            },
-                      icon: isSubmitting
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.send_outlined),
-                      label: Text(l10n.yesDispute),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
+      builder: (_) => _DisputeResolutionSheet(
+        onSubmit: (reason) => _submit(satisfied: false, disputeReason: reason),
+      ),
     );
-    reasonController.dispose();
-    reasonFocusNode.dispose();
 
     if (submitted == true && mounted) Navigator.of(context).pop(true);
   }
@@ -874,4 +756,128 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
   Color _errorColor(ThemeData theme) => theme.brightness == Brightness.dark
       ? AppColors.rejectedTextDark
       : AppColors.rejectedText;
+}
+
+class _DisputeResolutionSheet extends StatefulWidget {
+  final Future<String?> Function(String reason) onSubmit;
+
+  const _DisputeResolutionSheet({required this.onSubmit});
+
+  @override
+  State<_DisputeResolutionSheet> createState() =>
+      _DisputeResolutionSheetState();
+}
+
+class _DisputeResolutionSheetState extends State<_DisputeResolutionSheet> {
+  final _reasonController = TextEditingController();
+  final _reasonFocusNode = FocusNode();
+  String? _errorText;
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _reasonController.dispose();
+    _reasonFocusNode.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_isSubmitting) return;
+    final reason = _reasonController.text.trim();
+    if (reason.isEmpty) {
+      setState(
+        () => _errorText = AppLocalizations.of(context).disputeReasonRequired,
+      );
+      _reasonFocusNode.requestFocus();
+      return;
+    }
+    setState(() {
+      _isSubmitting = true;
+      _errorText = null;
+    });
+    final error = await widget.onSubmit(reason);
+    if (!mounted) return;
+    if (error != null) {
+      setState(() {
+        _isSubmitting = false;
+        _errorText = error;
+      });
+      _reasonFocusNode.requestFocus();
+    } else {
+      Navigator.of(context).pop(true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        20 + MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Semantics(
+            header: true,
+            child: Text(
+              l10n.disputeResolution,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.disputeConfirmation,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            key: const ValueKey('citizen-review-dispute-reason'),
+            controller: _reasonController,
+            focusNode: _reasonFocusNode,
+            autofocus: true,
+            minLines: 4,
+            maxLines: 7,
+            maxLength: 1000,
+            textInputAction: TextInputAction.newline,
+            onChanged: (_) {
+              if (_errorText != null) setState(() => _errorText = null);
+            },
+            decoration: InputDecoration(
+              labelText: l10n.disputeReasonLabel,
+              hintText: l10n.disputeReasonHint,
+              errorText: _errorText,
+              alignLabelWithHint: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              key: const ValueKey('citizen-review-dispute-submit'),
+              onPressed: _isSubmitting ? null : _submit,
+              icon: _isSubmitting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.send_outlined),
+              label: Text(l10n.yesDispute),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

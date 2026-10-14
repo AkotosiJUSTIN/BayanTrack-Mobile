@@ -135,6 +135,7 @@ class Report extends Equatable {
 
   // Citizen Closure
   final DateTime? citizenVerifiedAt;
+  final bool? citizenConfirmedResolved;
   final int? citizenSatisfaction;
   final String? citizenClosureNote;
 
@@ -241,6 +242,7 @@ class Report extends Equatable {
     this.verifiedAt,
     this.resolvedAt,
     this.citizenVerifiedAt,
+    this.citizenConfirmedResolved,
     this.citizenSatisfaction,
     this.citizenClosureNote,
     this.onChainId,
@@ -257,6 +259,13 @@ class Report extends Equatable {
 
   /// Check if report has GPS coordinates
   bool get hasCoordinates => latitude != null && longitude != null;
+
+  // Legacy responses use only the timestamp; an explicit rejection allows review again.
+  bool get hasCitizenConfirmedResolution =>
+      citizenVerifiedAt != null && citizenConfirmedResolved != false;
+
+  bool get needsCitizenReview =>
+      status == ReportStatus.resolved && !hasCitizenConfirmedResolution;
 
   PriorityLevel? get displayPriorityLevel =>
       queuePriorityLevel ?? suggestedPriorityLevel ?? priorityLevel;
@@ -316,6 +325,7 @@ class Report extends Equatable {
     isEmergency,
     createdAt,
     citizenVerifiedAt,
+    citizenConfirmedResolved,
     onChainId,
     onChainHash,
     blockchainSynced,
