@@ -46,6 +46,28 @@ void main() {
 
   const query = {'page': 1, 'page_size': 20, 'sort_by': 'date'};
 
+  test('cached dispute remains reviewable after a new resolution', () async {
+    await cache.writeReport(
+      ownerId: 'user-A',
+      reportId: 'RPT-DISPUTE-1',
+      report: dto.Report(
+        id: 'RPT-DISPUTE-1',
+        status: 'resolved',
+        citizenVerifiedAt: '2026-10-12T08:00:00Z',
+        citizenConfirmedResolved: false,
+      ),
+    );
+
+    final afterRestart = ReportCacheStore(storage);
+    final restored = await afterRestart.readReport(
+      ownerId: 'user-A',
+      reportId: 'RPT-DISPUTE-1',
+    );
+
+    expect(restored?.citizenConfirmedResolved, isFalse);
+    expect(restored?.citizenVerifiedAt, isNotNull);
+  });
+
   test('secure cache survives store recreation and isolates owners', () async {
     final stored = dto.PaginatedReports(
       results: [dto.Report(id: 'A-report', description: 'Private report A')],

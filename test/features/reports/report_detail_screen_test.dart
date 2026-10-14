@@ -39,6 +39,8 @@ Report _report({
   ReportStatus status = ReportStatus.inProgress,
   bool withProof = false,
   bool isStale = false,
+  DateTime? citizenVerifiedAt,
+  bool? citizenConfirmedResolved,
 }) => Report(
   id: 'RPT-DETAIL-UI-1',
   isStale: isStale,
@@ -58,6 +60,8 @@ Report _report({
   resolvedProofImageIds: withProof ? const ['proof-1'] : const [],
   createdAt: DateTime(2026, 8, 27, 9, 30),
   verifiedAt: DateTime(2026, 8, 27, 11),
+  citizenVerifiedAt: citizenVerifiedAt,
+  citizenConfirmedResolved: citizenConfirmedResolved,
 );
 
 Future<void> _pumpDetail(
@@ -271,6 +275,42 @@ void main() {
 
     expect(find.text('Review & Sign Off'), findsOneWidget);
   });
+
+  testWidgets(
+    'restores review action after a disputed report is resolved again',
+    (tester) async {
+      await _pumpDetail(
+        tester,
+        report: _report(
+          status: ReportStatus.resolved,
+          citizenVerifiedAt: DateTime(2026, 10, 12),
+          citizenConfirmedResolved: false,
+        ),
+      );
+
+      expect(find.text('Review & Sign Off'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final confirmed in [true, null]) {
+    testWidgets(
+      'confirmed or legacy reviewed report hides review action ($confirmed)',
+      (tester) async {
+        await _pumpDetail(
+          tester,
+          report: _report(
+            status: ReportStatus.resolved,
+            citizenVerifiedAt: DateTime(2026, 10, 12),
+            citizenConfirmedResolved: confirmed,
+          ),
+        );
+
+        expect(find.text('Review & Sign Off'), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets('opens resolved response evidence in a zoomable gallery', (
     tester,

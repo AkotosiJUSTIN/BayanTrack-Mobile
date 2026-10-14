@@ -879,7 +879,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     // must not be rechecked against the redacted mobile payload here.
 
     // --- Already reviewed: show a compact confirmation chip ---
-    if (report.citizenVerifiedAt != null) {
+    if (report.hasCitizenConfirmedResolution) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 20),
         child: Container(

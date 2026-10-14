@@ -539,11 +539,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
 
   Widget _buildOverview(ThemeData theme, AppLocalizations l10n) {
     final reviewCount = _reports
-        .where(
-          (report) =>
-              report.status == ReportStatus.resolved &&
-              report.citizenVerifiedAt == null,
-        )
+        .where((report) => report.needsCitizenReview)
         .length;
 
     return Padding(

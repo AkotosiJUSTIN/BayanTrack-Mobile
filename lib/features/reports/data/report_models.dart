@@ -427,6 +427,7 @@ sealed class Report with _$Report {
 
     // Citizen Closure
     @JsonKey(name: 'citizen_verified_at') String? citizenVerifiedAt,
+    @JsonKey(name: 'citizen_confirmed_resolved') bool? citizenConfirmedResolved,
     @JsonKey(name: 'citizen_satisfaction')
     @NullableIntConverter()
     int? citizenSatisfaction,
