@@ -189,7 +189,7 @@ void main() {
     expect(find.text('Your app is up to date.'), findsNothing);
     expect(find.textContaining('could not be checked'), findsOneWidget);
     repository.unavailable = false;
-    await tester.tap(find.text('Retry'));
+    await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
     expect(find.text('Your app is up to date.'), findsOneWidget);
   });

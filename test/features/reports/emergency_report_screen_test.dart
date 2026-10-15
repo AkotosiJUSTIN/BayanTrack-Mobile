@@ -241,7 +241,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump(const Duration(milliseconds: 400));
 
-      expect(find.text('NOT YET TRANSMITTED'), findsOneWidget);
+      expect(find.text('Not sent yet'), findsOneWidget);
       final checkbox = find.descendant(
         of: find.byKey(const Key('emergency-report-confirmation')),
         matching: find.byType(Checkbox),
@@ -411,7 +411,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('NOT YET TRANSMITTED'), findsOneWidget);
+      expect(find.text('Not sent yet'), findsOneWidget);
       final container = ProviderScope.containerOf(
         tester.element(find.byType(QuickReportScreen)),
       );
@@ -433,7 +433,7 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(AlertDialog),
-          matching: find.text('NOT YET TRANSMITTED'),
+          matching: find.text('Not sent yet'),
         ),
         findsOneWidget,
       );

@@ -33,6 +33,7 @@ const _summary = SharedIncident(
   reportCount: 3,
   assignedDepartment: 'City Engineering',
   integrityStatus: 'pending',
+  canReportMismatch: true,
   updates: [
     IncidentUpdate(
       id: 'update-1',
@@ -48,6 +49,7 @@ Map<String, dynamic> _payload() => {
   'report_count': 3,
   'assigned_department': 'City Engineering',
   'needs_review': true,
+  'can_report_mismatch': true,
   'updates': [
     {
       'id': 'update-1',
@@ -131,6 +133,7 @@ void main() {
       expect(result.dataOrNull?.groupId, 'group-1');
       expect(result.dataOrNull?.reportCount, 3);
       expect(result.dataOrNull?.needsReview, isTrue);
+      expect(result.dataOrNull?.canReportMismatch, isTrue);
       expect(result.dataOrNull?.evidence.single.url, '/media/approved.jpg');
       expect(
         result.dataOrNull?.updates.single.createdAt,
@@ -149,6 +152,39 @@ void main() {
         ),
       );
       expect((await repository.getIncident('report-1')).dataOrNull, isNull);
+    },
+  );
+
+  test(
+    'public and legacy responses cannot grant owner feedback actions',
+    () async {
+      final dio = _Dio();
+      final payload = _payload()..remove('can_report_mismatch');
+      when(
+        () => dio.get<Map<String, dynamic>>(
+          '/reports/report-1/incident/',
+          cancelToken: any(named: 'cancelToken'),
+        ),
+      ).thenAnswer(
+        (_) async => Response(
+          data: {'incident': payload},
+          requestOptions: RequestOptions(path: '/'),
+        ),
+      );
+      final repository = SharedIncidentRepositoryImpl(dio);
+      expect(
+        (await repository.getIncident(
+          'report-1',
+        )).dataOrNull?.canReportMismatch,
+        isFalse,
+      );
+      payload['can_report_mismatch'] = false;
+      expect(
+        (await repository.getIncident(
+          'report-1',
+        )).dataOrNull?.canReportMismatch,
+        isFalse,
+      );
     },
   );
 
@@ -385,6 +421,31 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('public viewers see the same summary without owner feedback', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      _Repository(),
+      load: () async => SharedIncident(
+        groupId: _summary.groupId,
+        status: _summary.status,
+        reportCount: _summary.reportCount,
+        assignedDepartment: _summary.assignedDepartment,
+        integrityStatus: _summary.integrityStatus,
+        updates: _summary.updates,
+      ),
+    );
+    expect(find.text('Incident status: In Progress'), findsOneWidget);
+    expect(find.text('Drainage clearing has started.'), findsOneWidget);
+    expect(
+      find.text('Incident audit: awaiting blockchain confirmation'),
+      findsOneWidget,
+    );
+    expect(find.text('This is a different incident'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('loading, failure and retry states do not hide the report', (
     tester,

@@ -98,7 +98,15 @@ void main() {
     expect(find.byType(SegmentedButton<bool>), findsOneWidget);
     expect(find.text('Map'), findsOneWidget);
     expect(find.text('Filter by status'), findsOneWidget);
-    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byTooltip('Try again'),
+      ),
+      findsNothing,
+    );
+    expect(find.byType(RefreshIndicator), findsOneWidget);
   });
 
   testWidgets('Home search keeps focus when keyboard changes header layout', (
@@ -232,7 +240,20 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Filter by status'), findsOneWidget);
-    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
+    expect(find.byKey(const Key('home-verification-toggle')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byTooltip('Try again'),
+      ),
+      findsNothing,
+    );
+    expect(find.byType(RefreshIndicator), findsOneWidget);
+    expect(find.text('User Verification'), findsNothing);
+    await tester.tap(find.byKey(const Key('home-verification-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.text('User Verification'), findsOneWidget);
   });
 
   testWidgets('My Reports highlights reports awaiting citizen confirmation', (
@@ -363,6 +384,11 @@ void main() {
     expect(find.text('Mark all read'), findsOneWidget);
     expect(find.text('Report update'), findsOneWidget);
     expect(find.text('Your report is now under review.'), findsOneWidget);
+    expect(find.byKey(const Key('home-verification-toggle')), findsOneWidget);
+    expect(find.text('User Verification'), findsNothing);
+    await tester.tap(find.byKey(const Key('home-verification-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.text('User Verification'), findsOneWidget);
   });
 
   testWidgets(

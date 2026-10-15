@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/presentation/failure_message.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/result.dart';
@@ -317,13 +318,13 @@ class KycStatusScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                l10n.verificationSubmitFailed,
+                l10n.verificationLoadFailed,
                 style: theme.textTheme.titleMedium,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
-                l10n.reportsNetworkError,
+                l10n.requestNetworkError,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -681,7 +682,10 @@ class KycStatusScreen extends ConsumerWidget {
 
     final failure = result.failureOrNull;
     if (failure != null) {
-      AppToast.error(context, failure.message);
+      AppToast.error(
+        context,
+        localizedFailureMessage(failure, l10n, fallback: l10n.withdrawalFailed),
+      );
       return;
     }
 

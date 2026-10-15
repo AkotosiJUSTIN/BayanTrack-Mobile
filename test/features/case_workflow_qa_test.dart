@@ -376,7 +376,7 @@ void main() {
           tester.element(find.byType(KycStatusScreen)),
         );
         expect(tester.takeException(), isNull);
-        expect(find.text('Pending Review'), findsNothing);
+        expect(find.text('Waiting for review'), findsNothing);
         expect(find.text('Verify Identity'), findsNothing);
         expect(find.byType(CivicSkeletonBlock), findsWidgets);
         expect(find.bySemanticsLabel(l10n.loading), findsWidgets);
@@ -539,8 +539,8 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsNothing);
     await tester.drag(find.byType(CustomScrollView), const Offset(0, -400));
     await tester.pump();
-    await tester.ensureVisible(find.text('Retry'));
-    await tester.tap(find.text('Retry'));
+    await tester.ensureVisible(find.text('Try again'));
+    await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
     expect(find.text(_report.title!), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -564,7 +564,7 @@ void main() {
       ],
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Retry'));
+    await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
     final tile = tester.widget<SwitchListTile>(
       find.widgetWithText(SwitchListTile, 'Push Notifications'),

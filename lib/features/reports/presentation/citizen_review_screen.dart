@@ -7,6 +7,7 @@ import 'package:signature/signature.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/presentation/widgets/app_toast.dart';
+import '../../../core/presentation/failure_message.dart';
 import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/string_utils.dart';
@@ -154,7 +155,7 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
       final controller = ref.read(
         reportDetailControllerProvider(widget.report.id).notifier,
       );
-      final result = await controller.citizenCloseReport(
+      await controller.citizenCloseReport(
         satisfied: satisfied,
         rating: _rating > 0 ? _rating : null,
         note: note?.isNotEmpty == true ? note : null,
@@ -165,11 +166,9 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
 
       if (!mounted) return null;
 
-      final message =
-          result['message'] as String? ??
-          (satisfied
-              ? l10n.reportConfirmedResolved
-              : l10n.reportReopenedEscalated);
+      final message = satisfied
+          ? l10n.reportConfirmedResolved
+          : l10n.reportReopenedEscalated;
 
       AppToast.success(context, message);
 
@@ -177,7 +176,11 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
       ref.invalidate(reportDetailControllerProvider(widget.report.id));
       return null;
     } catch (e) {
-      return e.toString().replaceFirst('Exception: ', '');
+      return localizedFailureMessage(
+        e,
+        l10n,
+        fallback: l10n.disputeSubmitFailed,
+      );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }

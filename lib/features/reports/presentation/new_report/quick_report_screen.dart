@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../../../../core/presentation/failure_message.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -1278,7 +1279,14 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
       if (!mounted) return;
       result.when(
         success: (_) => AppToast.success(context, l10n.detailsSaved),
-        failure: (failure) => AppToast.warning(context, failure.message),
+        failure: (failure) => AppToast.warning(
+          context,
+          localizedFailureMessage(
+            failure,
+            l10n,
+            fallback: l10n.unableSubmitReport,
+          ),
+        ),
       );
     } catch (_) {
       if (mounted) AppToast.warning(context, l10n.unableSubmitReport);

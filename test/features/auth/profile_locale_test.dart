@@ -1,5 +1,6 @@
 import 'package:bayantrack_mobile/core/providers/locale_provider.dart';
 import 'package:bayantrack_mobile/core/providers/theme_provider.dart';
+import 'package:bayantrack_mobile/features/app_updates/presentation/app_update_controller.dart';
 import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/profile_screen.dart';
@@ -11,6 +12,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../app_updates/app_update_fakes.dart';
+
 class _FailingProfileController extends ProfileController {
   @override
   Future<UserProfile> build() async {
@@ -19,6 +22,47 @@ class _FailingProfileController extends ProfileController {
 }
 
 void main() {
+  testWidgets('Profile checks the app version from its header', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final repository = FakeAppUpdateRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        retry: (_, _) => null,
+        overrides: [
+          sharedPrefsProvider.overrideWithValue(prefs),
+          appUpdateRepositoryProvider.overrideWithValue(repository),
+          userPermissionsProvider.overrideWithValue(UserPermissions(null)),
+          profileControllerProvider.overrideWithBuild(
+            (_, _) =>
+                const UserProfile(id: 'test-user', email: 'test@example.com'),
+          ),
+          profileStatsControllerProvider.overrideWithBuild(
+            (_, _) => const {'total': 0, 'resolved': 0, 'pending': 0},
+          ),
+          kycStatusControllerProvider.overrideWithBuild((_, _) async => null),
+        ],
+        child: const MaterialApp(
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: ProfileScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Check for updates'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('app-version-check')));
+    await tester.pumpAndSettle();
+    expect(find.text('Your app is up to date.'), findsOneWidget);
+    expect(find.text('Installed: 1.0.0+1004'), findsOneWidget);
+    expect(repository.checks, 1);
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('app-version-dialog')), findsNothing);
+  });
+
   testWidgets('Profile language setting switches the app immediately', (
     tester,
   ) async {
@@ -110,10 +154,13 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     expect(
-      find.text('Unable to load profile.', skipOffstage: false),
+      find.text(
+        "We couldn't load your profile. Please try again.",
+        skipOffstage: false,
+      ),
       findsOneWidget,
     );
     expect(find.text('private backend details'), findsNothing);
-    expect(find.widgetWithText(FilledButton, 'Retry'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Try again'), findsOneWidget);
   });
 }

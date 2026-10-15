@@ -104,17 +104,25 @@ void main() {
     await tester.tap(find.text('Push Notifications'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Save unavailable'), findsOneWidget);
-    expect(find.text('Retry'), findsOneWidget);
+    expect(
+      find.text("We couldn't save your notification settings. Try again."),
+      findsOneWidget,
+    );
+    expect(find.text('Save unavailable'), findsNothing);
+    expect(find.text('Try again'), findsOneWidget);
     expect(updates.single[#pushEnabled], isFalse);
     expect(updates.single[#emailEnabled], isNull);
     expect(updates.single[#notifyOnStatusChange], isNull);
 
-    await tester.tap(find.text('Retry'));
+    await tester.tap(find.text('Try again'));
     await tester.pumpAndSettle();
 
     expect(updates, hasLength(2));
     expect(find.text('Save unavailable'), findsNothing);
+    expect(
+      find.text("We couldn't save your notification settings. Try again."),
+      findsNothing,
+    );
     final pushSwitch = tester.widget<SwitchListTile>(
       find.widgetWithText(SwitchListTile, 'Push Notifications'),
     );

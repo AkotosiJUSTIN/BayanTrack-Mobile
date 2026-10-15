@@ -164,9 +164,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                 background: _buildImagePlaceholder(isDark),
               ),
             ),
-            SliverToBoxAdapter(
-              child: _buildErrorState(theme, error.toString()),
-            ),
+            SliverToBoxAdapter(child: _buildErrorState(theme)),
           ],
         ),
         data: (report) {
@@ -294,7 +292,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     );
   }
 
-  Widget _buildErrorState(ThemeData theme, String error) {
+  Widget _buildErrorState(ThemeData theme) {
     final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(32),
@@ -1080,32 +1078,39 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     final Color statusColor;
     final IconData statusIcon;
     final String title;
+    final String message;
 
     if (isHealthy && !isStatusPending) {
       statusColor = successColor;
       statusIcon = Icons.check_circle;
       title = l10n.integrityVerified;
+      message = l10n.recordDetailsMatch;
     } else if (isStatusPending) {
       // Content is intact; only the on-chain status enum lags behind
       statusColor = warningColor;
       statusIcon = Icons.sync_rounded;
       title = l10n.contentVerified;
+      message = l10n.recordStatusPending;
     } else if (isNotAnchored) {
       statusColor = warningColor;
       statusIcon = Icons.hourglass_empty;
       title = l10n.notYetAnchored;
+      message = l10n.recordNotReady;
     } else if (isNotFound) {
       statusColor = warningColor;
       statusIcon = Icons.search_off;
       title = l10n.recordNotFound;
+      message = l10n.recordNotReady;
     } else if (isConnectionError) {
       statusColor = warningColor;
       statusIcon = Icons.cloud_off;
       title = l10n.blockchainUnavailable;
+      message = l10n.recordCheckUnavailable;
     } else {
       statusColor = errorColor;
       statusIcon = Icons.warning;
       title = l10n.integrityBreach;
+      message = l10n.recordDetailsMismatch;
     }
 
     return Container(
@@ -1130,7 +1135,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   ),
                 ),
                 Text(
-                  result.message,
+                  message,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: statusColor,
                   ),
@@ -1222,19 +1227,31 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   }
 
   String _getActionLabel(BlockchainAuditEntry entry) {
+    final l10n = AppLocalizations.of(context);
     // v4 checkpoints intentionally reuse the compact action integer space;
     // equal statuses distinguish them from legacy workflow transitions.
     if (entry.oldStatus == entry.newStatus) {
       return switch (entry.actionType) {
-        0 => 'Created integrity checkpoint',
-        1 => 'Final integrity checkpoint',
-        2 => 'Dispute / reopen checkpoint',
-        3 => 'Administrative override checkpoint',
-        _ => AuditActionType.fromInt(entry.actionType).displayLabel,
+        0 => l10n.recordCreated,
+        1 => l10n.recordFinalized,
+        2 => l10n.recordReopened,
+        3 => l10n.recordStaffUpdated,
+        _ => _localizedAuditAction(entry.actionType, l10n),
       };
     }
-    return AuditActionType.fromInt(entry.actionType).displayLabel;
+    return _localizedAuditAction(entry.actionType, l10n);
   }
+
+  String _localizedAuditAction(int actionType, AppLocalizations l10n) =>
+      switch (AuditActionType.fromInt(actionType)) {
+        AuditActionType.reportSubmitted => l10n.reportSubmitted,
+        AuditActionType.reportAssigned => l10n.historyReportAssigned,
+        AuditActionType.statusUpdated => l10n.historyStatusUpdated,
+        AuditActionType.reportResolved => l10n.historyReportResolved,
+        AuditActionType.reportVerified => l10n.historyReportVerified,
+        AuditActionType.noteAdded => l10n.historyNoteAdded,
+        AuditActionType.aiDecisionRecorded => l10n.historyAssessmentRecorded,
+      };
 
   Future<void> _handleVerification(String reportId) async {
     final l10n = AppLocalizations.of(context);

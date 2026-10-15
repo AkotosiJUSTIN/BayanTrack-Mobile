@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../../core/presentation/failure_message.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -877,9 +878,11 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         }
         AppToast.error(
           context,
-          e is Failure
-              ? e.message
-              : AppLocalizations.of(context).verificationSubmitFailed,
+          localizedFailureMessage(
+            e,
+            AppLocalizations.of(context),
+            fallback: AppLocalizations.of(context).verificationSubmitFailed,
+          ),
         );
       }
     }

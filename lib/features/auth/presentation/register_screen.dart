@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/presentation/failure_message.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -191,7 +192,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     // Show error snackbar when auth fails
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
       if (next is AuthError) {
-        AppToast.error(context, next.message);
+        final l10n = AppLocalizations.of(context);
+        AppToast.error(
+          context,
+          localizedFailureMessage(
+            next.failure ?? next,
+            l10n,
+            fallback: l10n.requestValidationError,
+            authMessage: l10n.authDetailsNotAccepted,
+          ),
+        );
       }
     });
 

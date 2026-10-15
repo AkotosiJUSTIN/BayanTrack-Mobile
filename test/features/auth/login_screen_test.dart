@@ -248,7 +248,13 @@ void main() {
     );
 
     expect(find.byKey(const ValueKey('login-error-message')), findsOneWidget);
-    expect(find.text('Invalid email or password.'), findsOneWidget);
+    expect(
+      find.text(
+        "We couldn't confirm your account details. Check them and try again.",
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Invalid email or password.'), findsNothing);
   });
 }
 

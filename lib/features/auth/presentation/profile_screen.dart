@@ -8,6 +8,7 @@ import '../../../core/providers/connectivity_provider.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../core/providers/theme_provider.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../app_updates/presentation/app_update_gate.dart';
 import '../../kyc/domain/entities/kyc_enums.dart';
 import '../../kyc/presentation/kyc_controller.dart';
 import '../../kyc/presentation/kyc_form_screen.dart';
@@ -37,7 +38,10 @@ class ProfileScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.profile)),
+      appBar: AppBar(
+        title: Text(l10n.profile),
+        actions: const [AppVersionCheckButton()],
+      ),
       body: Column(
         children: [
           const OfflineBanner(),

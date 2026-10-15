@@ -49,7 +49,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get loading => 'Naglo-load…';
 
   @override
-  String get error => 'Error';
+  String get error => 'May nangyaring problema';
 
   @override
   String get unknownError => 'May nangyaring mali. Subukan muli.';
@@ -174,7 +174,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get failedLoadBarangays =>
-      'Hindi ma-load ang mga barangay. I-restart ang app.';
+      'Hindi namin ma-load ang listahan ng mga barangay. Suriin ang koneksyon at subukan muli.';
 
   @override
   String get iAgreeTo => 'Sumasang-ayon ako sa';
@@ -268,7 +268,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get profilePictureBackupPending =>
-      'Hindi pa tapos ang backup ng profile picture';
+      'Naka-save na ang iyong larawan. Inihahanda pa ang backup nito.';
 
   @override
   String get reports => 'Mga Ulat';
@@ -415,7 +415,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get keepDraft => 'Panatilihin ang Draft';
 
   @override
-  String get emergencyNotYetTransmitted => 'HINDI PA NAIPADALA';
+  String get emergencyNotYetTransmitted => 'Hindi pa naipapadala';
 
   @override
   String get emergencyDetailsHint =>
@@ -542,7 +542,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get reportSubmitted => 'Naipadala ang ulat';
 
   @override
-  String get reportPendingSyncTitle => 'Naghihintay na Ma-sync';
+  String get reportPendingSyncTitle => 'Naghihintay na maipadala';
 
   @override
   String get reportPendingSync =>
@@ -550,7 +550,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get reportOutboxRetrying =>
-      'Ligtas na susubukang muli kapag maaabot na ang BayanTrack.';
+      'Hindi pa naipapadala ang ulat. Susubukan naming muli kapag may koneksyon na.';
 
   @override
   String get reportOutboxWaitingAuth =>
@@ -558,11 +558,11 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get reportOutboxNeedsEdit =>
-      'Hindi tinanggap ang ulat. I-edit at isumite itong muli.';
+      'May kailangang baguhin sa ulat bago ito maipadala. Suriin ang detalye at isumite muli.';
 
   @override
   String get reportOutboxConflict =>
-      'Hindi makumpirma ang pagsusumite. I-edit ang ulat bago isumite muli.';
+      'Hindi namin makumpirma kung natanggap ang ulat. Suriin ito bago ipadala muli.';
 
   @override
   String get reportOutboxRetryNow => 'Subukan muli ngayon';
@@ -571,15 +571,14 @@ class AppLocalizationsFil extends AppLocalizations {
   String get reportOutboxEdit => 'I-edit at isumite muli';
 
   @override
-  String get reportEvidenceHandoffTitle => 'Pag-upload ng ebidensya';
+  String get reportEvidenceHandoffTitle => 'Mga kalakip ng ulat';
 
   @override
   String get reportEvidenceHandoffPending =>
-      'Natanggap na ang ulat. Hinihintay pang ma-upload ang ebidensya.';
+      'Natanggap na ang ulat. Hinihintay pang ma-upload ang mga kalakip nito.';
 
   @override
-  String get reportEvidenceHandoffRetry =>
-      'Subukan muling i-upload ang ebidensya';
+  String get reportEvidenceHandoffRetry => 'Subukang i-upload muli';
 
   @override
   String get addOptionalPhoto =>
@@ -631,7 +630,8 @@ class AppLocalizationsFil extends AppLocalizations {
   String get reportCreated => 'Matagumpay na nagawa ang ulat.';
 
   @override
-  String get evidenceUploadPending => 'Nakabinbin ang pag-upload ng ebidensya';
+  String get evidenceUploadPending =>
+      'Hinihintay ang pag-upload ng mga kalakip';
 
   @override
   String get reportHistory => 'Kasaysayan ng Ulat';
@@ -699,16 +699,16 @@ class AppLocalizationsFil extends AppLocalizations {
   String get resolvedStatus => 'Nalutas';
 
   @override
-  String get rejected => 'Tinanggihan';
+  String get rejected => 'Hindi tinanggap';
 
   @override
-  String get unknownLocation => 'Hindi alam na lokasyon';
+  String get unknownLocation => 'Walang ibinigay na lokasyon';
 
   @override
-  String get aiSuggestion => 'Mungkahi ng AI';
+  String get aiSuggestion => 'Iminungkahing prayoridad';
 
   @override
-  String get queuePriority => 'Priyoridad sa pila';
+  String get queuePriority => 'Prayoridad sa pagsusuri';
 
   @override
   String get notificationsEmail => 'Mga Notification sa Email';
@@ -727,7 +727,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get preferencesSaveFailed =>
-      'Hindi ma-save ang notification preferences.';
+      'Hindi namin ma-save ang iyong mga setting ng notification. Subukan muli.';
 
   @override
   String get kyc => 'Pag-verify ng Pagkakakilanlan';
@@ -736,14 +736,15 @@ class AppLocalizationsFil extends AppLocalizations {
   String get kycStatus => 'Status ng Verification';
 
   @override
-  String get kycPending => 'Sinusuri pa ang iyong verification.';
+  String get kycPending =>
+      'Natanggap na ang iyong mga dokumento at naghihintay ng pagsusuri ng staff.';
 
   @override
   String get kycVerified => 'Verified na ang iyong pagkakakilanlan.';
 
   @override
   String get kycRejected =>
-      'Tinanggihan ang iyong verification. Isumite muli ang mga dokumento.';
+      'Hindi pa naaprubahan ang iyong mga dokumento. Basahin ang feedback, itama ang kailangan, at isumite muli.';
 
   @override
   String get kycUnverified =>
@@ -834,7 +835,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get descriptionKeyboardMashing =>
-      'Maglagay ng wastong paglalarawan (may keyboard mashing)';
+      'Ilarawan sa sarili mong mga salita ang nangyari upang maunawaan ng staff ang problema.';
 
   @override
   String get descriptionCoherent => 'Magbigay ng malinaw na paglalarawan';
@@ -869,7 +870,8 @@ class AppLocalizationsFil extends AppLocalizations {
       'Nag-expire na ang iyong password. Palitan ito upang magpatuloy sa paggamit ng BayanTrack.';
 
   @override
-  String get profileLoadFailed => 'Hindi ma-load ang profile.';
+  String get profileLoadFailed =>
+      'Hindi namin ma-load ang iyong profile. Subukan muli.';
 
   @override
   String get profileUpdateFailed =>
@@ -914,7 +916,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get closed => 'Sarado';
 
   @override
-  String get escalated => 'Iniakyat';
+  String get escalated => 'Ipinasa para sa karagdagang pagsusuri';
 
   @override
   String get map => 'Mapa';
@@ -974,7 +976,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get noMoreReports => 'Wala nang ibang ulat';
 
   @override
-  String get unknownDate => 'Hindi alam na petsa';
+  String get unknownDate => 'Wala pang petsa';
 
   @override
   String get today => 'Ngayon';
@@ -1022,10 +1024,10 @@ class AppLocalizationsFil extends AppLocalizations {
   }
 
   @override
-  String get unscored => 'Walang score';
+  String get unscored => 'Hinihintay ang pagtatasa';
 
   @override
-  String get uncategorized => 'Walang kategorya';
+  String get uncategorized => 'Hinihintay ang kategorya';
 
   @override
   String linkedReports(int count) {
@@ -1038,26 +1040,33 @@ class AppLocalizationsFil extends AppLocalizations {
   }
 
   @override
-  String get groupedIncident => 'insidenteng naka-grupo';
+  String get groupedIncident => 'iisang insidente';
 
   @override
-  String get unknownTime => 'Hindi alam';
+  String get unknownTime => 'Wala pang oras';
 
   @override
   String get evidenceFileMissing =>
-      'Naipadala ang ulat. Nawawala ang file ng ebidensya.';
+      'Naipadala ang ulat, pero wala na sa device ang isang kalakip kaya hindi ito mai-upload.';
 
   @override
   String get evidenceUploadFailed =>
-      'Naipadala ang ulat. Nabigo ang pag-upload ng ebidensya.';
+      'Naipadala ang ulat, pero hindi ma-upload ang mga kalakip. Subukang i-upload muli.';
 
   @override
   String evidenceUploadsPending(int count) {
-    return 'Naipadala ang ulat. Nakabinbin ang $count pag-upload ng ebidensya.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Naipadala na ang iyong ulat. Naghihintay ma-upload ang $count kalakip.',
+      zero: 'Naipadala na ang iyong ulat.',
+    );
+    return '$_temp0';
   }
 
   @override
-  String get evidenceUploadCompleted => 'Tapos na ang pag-upload ng ebidensya.';
+  String get evidenceUploadCompleted => 'Na-upload na ang iyong kalakip.';
 
   @override
   String get accountSecurity => 'Account at seguridad';
@@ -1070,7 +1079,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get cachedReportsOffline =>
-      'Hindi maabot ang server. Ipinapakita ang naka-save na mga ulat; maaaring luma ang impormasyon.';
+      'May problema sa pagkonekta. Maaaring hindi pa napapanahon ang mga naka-save na ulat. Subukan muli mamaya.';
 
   @override
   String get dismiss => 'I-dismiss';
@@ -1097,30 +1106,32 @@ class AppLocalizationsFil extends AppLocalizations {
   String get assignmentUpdates => 'Kapag may itinalagang ulat';
 
   @override
-  String get otp => 'OTP';
+  String get otp => 'Verification code';
 
   @override
-  String get enterOtp => 'Ilagay ang OTP';
+  String get enterOtp => 'Ilagay ang verification code';
 
   @override
   String get createNewPassword => 'Gumawa ng bagong password.';
 
   @override
-  String get otpSent => 'Naipadala ang OTP. Tingnan ang iyong email.';
+  String get otpSent =>
+      'Naipadala na ang verification code. Tingnan ang iyong email.';
 
   @override
-  String get otpResent => 'Naipadala muli ang OTP. Tingnan ang iyong email.';
+  String get otpResent =>
+      'Naipadala na ang bagong verification code. Tingnan ang iyong email.';
 
   @override
   String otpSentTo(String email) {
-    return 'Ilagay ang OTP na ipinadala sa $email';
+    return 'Ilagay ang verification code na ipinadala sa $email';
   }
 
   @override
-  String get otpRequired => 'Kinakailangan ang OTP';
+  String get otpRequired => 'Ilagay ang verification code mula sa iyong email.';
 
   @override
-  String get otpSixDigits => 'Dapat 6 na digit ang OTP';
+  String get otpSixDigits => 'Ilagay ang 6-digit na verification code.';
 
   @override
   String get rememberPassword => 'Naaalala mo ang iyong password?';
@@ -1131,7 +1142,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get sessionExpiredVerifyOtp =>
-      'Nag-expire ang iyong session. I-verify muli ang OTP.';
+      'Nag-expire na ang pag-reset ng password na ito. Humingi ng bagong code at subukan muli.';
 
   @override
   String get phoneNumber => 'Numero ng telepono';
@@ -1148,7 +1159,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get avatarUploadFailed =>
-      'Nabigo ang pag-upload. Panatilihin ang preview at pindutin ang Retry kapag handa na.';
+      'Hindi namin ma-upload ang larawan mo. Nandito pa ang preview. Subukan muli.';
 
   @override
   String get profilePictureRemoved => 'Inalis ang profile picture.';
@@ -1189,7 +1200,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get profilePictureReplicationPending =>
-      'Available ang profile picture; nakabinbin ang backup.';
+      'Maaari nang gamitin ang iyong larawan. Inihahanda pa ang backup nito.';
 
   @override
   String get addPicture => 'Magdagdag ng larawan';
@@ -1262,7 +1273,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get cityMetadataUnavailable =>
-      'Hindi available ang impormasyon ng lungsod.';
+      'Hindi namin ma-load ang detalye ng lokasyon ng lungsod. Subukan muli mamaya.';
 
   @override
   String get placeLocationPin => 'Maglagay ng pin sa napiling lungsod.';
@@ -1272,11 +1283,11 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get bundledBarangays =>
-      'Gamit ang nakapaloob na mga barangay ng Urdaneta';
+      'Ginagamit ang naka-save na listahan ng mga barangay sa Urdaneta';
 
   @override
   String get barangaysUnavailable =>
-      'Hindi available ang mga barangay para sa lungsod na ito';
+      'Hindi namin ma-load ang mga barangay sa lungsod na ito. Subukan muli mamaya.';
 
   @override
   String get streetLandmark => 'Kalye / Landmark';
@@ -1316,18 +1327,19 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get locationServicesDisabled =>
-      'Naka-disable ang serbisyo ng lokasyon. I-enable ang GPS.';
+      'Buksan ang lokasyon ng telepono upang mahanap ang iyong puwesto, o maglagay ng pin sa mapa.';
 
   @override
-  String get locationPermissionDenied => 'Hindi pinayagan ang lokasyon';
+  String get locationPermissionDenied =>
+      'Payagan ang access sa lokasyon, o maglagay ng pin sa mapa.';
 
   @override
   String get locationPermissionSettings =>
-      'Permanenteng hindi pinayagan ang lokasyon. I-enable ito sa Settings.';
+      'Payagan ang lokasyon para sa BayanTrack sa Settings. Maaari ka ring maglagay ng pin sa mapa.';
 
   @override
   String get locationRequestTimedOut =>
-      'Nag-time out ang pagkuha ng lokasyon. Subukan muli.';
+      'Mas matagal kaysa inaasahan ang paghanap ng lokasyon. Subukan muli o maglagay ng pin sa mapa.';
 
   @override
   String get gettingLocation => 'Kinukuha ang lokasyon';
@@ -1352,7 +1364,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get locationSet => 'Naitakda';
 
   @override
-  String get locationNotSet => 'Hindi naitakda';
+  String get locationNotSet => 'Pumili ng lokasyon';
 
   @override
   String get zone => 'Lugar';
@@ -1401,11 +1413,10 @@ class AppLocalizationsFil extends AppLocalizations {
   String get noImages => 'Walang larawan';
 
   @override
-  String get aiSuggestionPending =>
-      'Mungkahi ng AI — hinihintay ang pagsusuri ng staff';
+  String get aiSuggestionPending => 'Hinihintay ang pagtatasa ng prayoridad';
 
   @override
-  String get operationalPriority => 'Prayoridad sa operasyon';
+  String get operationalPriority => 'Prayoridad sa pagtugon';
 
   @override
   String confirmedLinkedReports(int count) {
@@ -1435,19 +1446,19 @@ class AppLocalizationsFil extends AppLocalizations {
   String get aiDepartmentSuggestion => 'Mungkahi ng AI para sa departamento';
 
   @override
-  String get currentHandler => 'Kasalukuyang humahawak';
+  String get currentHandler => 'Pangkat na humahawak sa ulat';
 
   @override
   String get respondedBy => 'Tumugon';
 
   @override
-  String get routingStatus => 'Status ng pag-route';
+  String get routingStatus => 'Susunod na hahawak sa ulat';
 
   @override
   String get awaitingStaffConfirmation => 'Hinihintay ang iyong kumpirmasyon';
 
   @override
-  String get routingPolicyApplied => 'Naipatupad ang patakaran sa pag-route';
+  String get routingPolicyApplied => 'Naipasa sa angkop na pangkat';
 
   @override
   String get resolutionProof => 'Katibayan ng tugon';
@@ -1471,49 +1482,50 @@ class AppLocalizationsFil extends AppLocalizations {
       'Suriin ang resolusyon ng Departamento. Ang pagkumpirma ay nagpapahintulot sa City na ipagpatuloy ang pinal na pagsasara; ang pag-dispute ay ibinabalik ang ulat sa City para sa pagsusuri.';
 
   @override
-  String get reviewSignOff => 'Suriin at Pirmahan';
+  String get reviewSignOff => 'Suriin ang tugon';
 
   @override
-  String get blockchainVerification => 'Pag-verify sa Blockchain';
+  String get blockchainVerification => 'Pagsuri sa rekord ng ulat';
 
   @override
-  String get verifyNow => 'I-verify Ngayon';
+  String get verifyNow => 'Suriin ang rekord';
 
   @override
-  String get auditHistory => 'Kasaysayan ng Audit';
+  String get auditHistory => 'Kasaysayan ng rekord ng ulat';
 
   @override
-  String get noAuditEntries => 'Walang audit entry.';
+  String get noAuditEntries => 'Wala pang kasaysayan ng rekord.';
 
   @override
   String get blockchainAnchored =>
-      'Nakaangkla sa blockchain ang ulat na ito. Pindutin ang verify para sa live na pagsusuri ng integridad.';
+      'May protektadong kopya ng rekord ng ulat sa blockchain. Suriin ito upang malaman kung magkatugma ang mga detalye.';
 
   @override
   String get blockchainPending =>
-      'Hinihintay ng ulat na ito ang pag-sync sa blockchain.';
+      'Inihahanda pa ang protektadong rekord. Maaari mo itong suriin muli mamaya.';
 
   @override
-  String get integrityVerified => 'Na-verify ang Integridad';
+  String get integrityVerified => 'Magkatugma ang mga detalye';
 
   @override
-  String get contentVerified => 'Na-verify ang Nilalaman';
+  String get contentVerified =>
+      'Magkatugma ang detalye; hinihintay ang update sa status';
 
   @override
-  String get notYetAnchored => 'Hindi Pa Nakaangkla';
+  String get notYetAnchored => 'Hindi pa handa ang protektadong rekord';
 
   @override
-  String get recordNotFound => 'Hindi Nahanap ang Record';
+  String get recordNotFound => 'Hindi pa nakita ang protektadong rekord';
 
   @override
-  String get blockchainUnavailable => 'Hindi Available ang Blockchain';
+  String get blockchainUnavailable => 'Hindi pa masuri ang rekord';
 
   @override
-  String get integrityBreach => 'May Paglabag sa Integridad';
+  String get integrityBreach => 'Hindi magkatugma ang mga detalye';
 
   @override
   String get verificationFailed =>
-      'Nabigo ang pag-verify. Subukan muli mamaya.';
+      'Hindi namin masuri ang rekord ng ulat. Subukan muli mamaya.';
 
   @override
   String byActor(String actor) {
@@ -1630,7 +1642,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get reportReopenedEscalated =>
-      'Muling binuksan at ini-escalate ang ulat.';
+      'Ibinalik sa City ang iyong alalahanin para sa pagsusuri.';
 
   @override
   String get resubmitUserVerification => 'Muling Isumite ang Beripikasyon';
@@ -1771,7 +1783,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get manualEntryOptionDescription =>
-      'Ikaw mismo ang maglagay ng iyong mga detalye. Hindi gagamit ng OCR.';
+      'Ikaw mismo ang maglagay ng iyong mga detalye nang hindi ini-scan ang ID.';
 
   @override
   String get maxImageFormats => 'Hanggang 10MB bawat isa • JPG, PNG';
@@ -1811,7 +1823,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get mobile => 'Mobile';
 
   @override
-  String get previousRejectionReason => 'Dahilan ng Naunang Pagtanggi:';
+  String get previousRejectionReason => 'Mga kailangang itama:';
 
   @override
   String get tapAddPhoto => 'I-tap para magdagdag ng larawan';
@@ -1851,7 +1863,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get ocrUnsupported =>
-      'Hindi pa available ang OCR para sa uri ng ID na ito. Ilagay nang manu-mano ang detalye.';
+      'Hindi pa namin awtomatikong mabasa ang ganitong uri ng ID. Ilagay mismo ang iyong mga detalye.';
 
   @override
   String get ocrManualReview => 'Suriin ang field na ito';
@@ -1861,7 +1873,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get ocrAuthenticityNotice =>
-      'Tumutulong lamang ang OCR sa pag-fill up. Hindi nito pinatutunayang tunay ang ID.';
+      'Tumutulong lamang ang pag-scan sa pagpuno ng form. Kailangan pa ring suriin ng staff ang iyong ID.';
 
   @override
   String get fixFormErrors => 'Ayusin ang mga error na naka-highlight sa form';
@@ -1918,7 +1930,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get reviewDetails => 'Suriin ang feedback';
 
   @override
-  String get adminFeedback => 'Feedback ng Admin';
+  String get adminFeedback => 'Feedback ng pangkat na nagsuri';
 
   @override
   String get reviewAndResubmit =>
@@ -1938,7 +1950,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get kycResubmitRequested =>
-      'Kailangan ng karagdagang impormasyon. Isumite muli ang iyong mga dokumento.';
+      'Kailangan ng pangkat na nagsusuri ng karagdagang impormasyon. Basahin ang feedback at baguhin ang iyong mga dokumento.';
 
   @override
   String get kycSuspended =>
@@ -1951,10 +1963,10 @@ class AppLocalizationsFil extends AppLocalizations {
   String get pendingReview => 'Hinihintay ang Pagsusuri';
 
   @override
-  String get resubmitRequestedLabel => 'Hiniling ang Muling Pagsusumite';
+  String get resubmitRequestedLabel => 'May kailangang baguhin';
 
   @override
-  String get suspendedLabel => 'Nasuspinde';
+  String get suspendedLabel => 'Pansamantalang itinigil ang beripikasyon';
 
   @override
   String get submit => 'Isumite';
@@ -2048,7 +2060,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String submissionError(String error) {
-    return 'Error sa pagsusumite. $error';
+    return 'Hindi namin maipadala ang ulat. $error';
   }
 
   @override
@@ -2158,15 +2170,16 @@ class AppLocalizationsFil extends AppLocalizations {
   String get divorced => 'Diborsyado';
 
   @override
-  String get governanceCheckingStatus => 'Sinusuri ang kalagayan ng sistema...';
+  String get governanceCheckingStatus =>
+      'Sinusuri kung handa na ang BayanTrack...';
 
   @override
   String get governanceStatusUnavailable =>
-      'Hindi makuha ang kalagayan ng sistema.';
+      'Hindi namin masuri kung magagamit ang serbisyo. Subukan muli.';
 
   @override
   String get governanceReadOnly =>
-      'Maintenance: maaari lamang magbasa. Maaari pa ring mag-ulat ng emergency.';
+      'May maintenance ang BayanTrack. Maaari ka pa ring tumingin ng mga ulat at magsumite ng emergency report.';
 
   @override
   String get governanceTermsChanged =>
@@ -2178,7 +2191,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get governanceTermsUnavailable =>
-      'Hindi makuha ang kasalukuyang mga tuntunin.';
+      'Hindi namin ma-load ang mga tuntunin at patakaran sa pribasiya. Subukan muli.';
 
   @override
   String get governanceConsentLabel =>
@@ -2186,10 +2199,10 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get governanceSyncPaused =>
-      'Naghihintay ng pagtanggap sa mga tuntunin o pagtatapos ng maintenance.';
+      'Naka-pause ang pagpapadala. Basahin ang bagong mga tuntunin, o subukan muli pagkatapos ng maintenance.';
 
   @override
-  String get appCheckVersion => 'Suriin ang bersyon ng app';
+  String get appCheckVersion => 'Tingnan kung may update';
 
   @override
   String get appCheckingVersion => 'Sinusuri kung may update...';
@@ -2206,14 +2219,14 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get appUpdateRequiredMessage =>
-      'May mas bagong release ng BayanTrack. I-install ang pinakabagong APK upang magpatuloy. Mananatili sa device na ito ang iyong mga naka-save na ulat.';
+      'May bagong bersyon ng BayanTrack. I-download at i-install ang Android update upang magpatuloy. Mananatili sa device na ito ang iyong mga naka-save na ulat.';
 
   @override
   String get appGetUpdate => 'Kunin ang update';
 
   @override
   String get appReleaseOpenFailed =>
-      'Hindi mabuksan ang pahina ng mga release. Pakisubukang muli.';
+      'Hindi namin mabuksan ang pahina para sa pag-download. Suriin ang koneksyon at subukan muli.';
 
   @override
   String appInstalledVersion(String version) {
@@ -2227,10 +2240,10 @@ class AppLocalizationsFil extends AppLocalizations {
   String get incidentAssigned => 'Naitalaga';
 
   @override
-  String get incidentEndorsed => 'Naipasa';
+  String get incidentEndorsed => 'Naipasa sa pangkat na tutugon';
 
   @override
-  String get incidentStatusUnavailable => 'Hindi makuha';
+  String get incidentStatusUnavailable => 'Wala pang makuhang status';
 
   @override
   String incidentOperationalStatus(String status) {
@@ -2245,7 +2258,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get incidentNeedsReview =>
-      'Naka-flag ang insidente para sa pagsusuri ng kawani';
+      'Kailangang suriin ng staff ang insidenteng ito';
 
   @override
   String get incidentDifferent => 'Ibang insidente ito';
@@ -2259,7 +2272,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get incidentLoadFailed =>
-      'Hindi makuha ang insidente. Subukang i-refresh.';
+      'Hindi namin ma-load ang insidente. I-refresh ang ulat upang subukan muli.';
 
   @override
   String get incidentFeedbackFailed => 'Hindi na-save ang puna. Subukan muli.';
@@ -2270,19 +2283,112 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get incidentIntegrityConfirmed =>
-      'Audit ng insidente: nakumpirma sa blockchain';
+      'Naka-save na ang protektadong rekord ng insidente.';
 
   @override
   String get incidentIntegrityPending =>
-      'Audit ng insidente: hinihintay ang kumpirmasyon sa blockchain';
+      'Hinihintay ang kumpirmasyon ng protektadong rekord ng insidente.';
 
   @override
   String get incidentIntegrityFailed =>
-      'Audit ng insidente: nabigo ang pagrekord sa blockchain';
+      'Hindi ma-save ang protektadong rekord. Makikita pa rin dito ang insidente.';
 
   @override
   String get incidentIntegrityNotRecorded =>
-      'Audit ng insidente: hindi nakarekord sa blockchain';
+      'Hindi pa naka-save ang protektadong rekord ng insidente.';
+
+  @override
+  String get requestNetworkError =>
+      'Hindi kami makakonekta sa BayanTrack. Suriin ang internet at subukan muli.';
+
+  @override
+  String get requestServiceError =>
+      'May problema ang BayanTrack sa pagkumpleto ng kahilingang ito. Subukan muli mamaya.';
+
+  @override
+  String get requestSignInAgain => 'Mag-sign in muli upang magpatuloy.';
+
+  @override
+  String get requestNotFound =>
+      'Hindi na makuha ang item na ito. I-refresh ang pahina para makita ang pinakabagong impormasyon.';
+
+  @override
+  String get requestStorageError =>
+      'Hindi namin ito ma-save sa iyong device. Suriin ang natitirang storage at subukan muli.';
+
+  @override
+  String get requestTooManyAttempts =>
+      'Masyado nang maraming pagsubok. Maghintay muna bago subukan muli.';
+
+  @override
+  String get requestValidationError =>
+      'May kailangang itama sa mga detalye. Suriin ang inilagay mo at subukan muli.';
+
+  @override
+  String get authDetailsNotAccepted =>
+      'Hindi namin makumpirma ang detalye ng iyong account. Suriin ito at subukan muli.';
+
+  @override
+  String get verificationLoadFailed =>
+      'Hindi namin ma-load ang status ng iyong beripikasyon. Subukan muli.';
+
+  @override
+  String get withdrawalFailed =>
+      'Hindi namin mabawi ang iyong pagsusumite. Subukan muli.';
+
+  @override
+  String get reportDraftRestoreFailed =>
+      'Hindi namin mabuksan muli ang draft para baguhin. I-refresh ang iyong mga ulat at subukan muli.';
+
+  @override
+  String get recordDetailsMatch =>
+      'Magkatugma ang mga detalye ng ulat at ang protektadong rekord.';
+
+  @override
+  String get recordStatusPending =>
+      'Magkatugma ang mga detalye. Hinihintay pa ang update sa protektadong rekord ng status.';
+
+  @override
+  String get recordNotReady =>
+      'Wala pang protektadong rekord na masusuri. Subukan muli mamaya.';
+
+  @override
+  String get recordCheckUnavailable =>
+      'Hindi namin makonekta ang serbisyo ng pagsusuri sa rekord. Subukan muli mamaya.';
+
+  @override
+  String get recordDetailsMismatch =>
+      'Hindi tugma ang mga detalye ng ulat sa protektadong rekord. Makipag-ugnayan sa support para masuri ito.';
+
+  @override
+  String get recordCreated => 'Nai-save ang protektadong rekord ng ulat';
+
+  @override
+  String get recordFinalized => 'Nai-save ang pinal na rekord ng ulat';
+
+  @override
+  String get recordReopened => 'Binuksan muli ang ulat para sa pagsusuri';
+
+  @override
+  String get recordStaffUpdated => 'Na-update ng kawani ang rekord ng ulat';
+
+  @override
+  String get historyReportAssigned => 'Itinalaga ang ulat sa isang pangkat';
+
+  @override
+  String get historyStatusUpdated => 'Na-update ang katayuan ng ulat';
+
+  @override
+  String get historyReportResolved => 'Minarkahang nalutas ang ulat';
+
+  @override
+  String get historyReportVerified => 'Nasuri at napatunayan ang ulat';
+
+  @override
+  String get historyNoteAdded => 'Nagdagdag ng tala ang kawani';
+
+  @override
+  String get historyAssessmentRecorded => 'Nai-save ang pagsusuri sa ulat';
 
   @override
   String appLatestVersion(String version) {

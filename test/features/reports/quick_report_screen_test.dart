@@ -1643,7 +1643,7 @@ void main() {
 
       expect(createReport.callCount, 0);
       expect(find.text(description), findsOneWidget);
-      expect(find.text('NOT YET TRANSMITTED'), findsOneWidget);
+      expect(find.text('Not sent yet'), findsOneWidget);
       expect(
         find.textContaining('call local emergency services'),
         findsOneWidget,

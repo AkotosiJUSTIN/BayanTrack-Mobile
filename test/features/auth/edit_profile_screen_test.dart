@@ -86,8 +86,11 @@ void main() {
       await tester.pumpWidget(_app(repository, pickImage: (_) async => null));
       await tester.pumpAndSettle();
 
-      expect(find.text('Unable to load profile.'), findsOneWidget);
-      expect(find.widgetWithText(OutlinedButton, 'Retry'), findsOneWidget);
+      expect(
+        find.text("We couldn't load your profile. Please try again."),
+        findsOneWidget,
+      );
+      expect(find.widgetWithText(OutlinedButton, 'Try again'), findsOneWidget);
     },
   );
 
@@ -241,10 +244,12 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
       expect(
-        find.text('Upload failed. Keep this preview and tap Retry when ready.'),
+        find.text(
+          "We couldn't upload your photo. Your preview is still here. Please try again.",
+        ),
         findsOneWidget,
       );
-      expect(find.widgetWithText(OutlinedButton, 'Retry'), findsOneWidget);
+      expect(find.widgetWithText(OutlinedButton, 'Try again'), findsOneWidget);
       expect(await tester.runAsync(syntheticAvatar.exists), isTrue);
 
       await tester.tap(find.text('Remove'));

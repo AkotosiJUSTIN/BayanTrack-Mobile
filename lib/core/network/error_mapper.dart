@@ -21,13 +21,7 @@ class ErrorMapper {
   /// Convert any exception to a domain Failure
   static Failure mapException(Object error, [StackTrace? stack]) {
     if (error is DioException) return _mapDioException(error);
-    if (error is FormatException) {
-      return const ValidationFailure('Invalid data format');
-    }
-    if (error is TypeError) {
-      return UnknownFailure('Type error: ${error.toString()}');
-    }
-    return UnknownFailure(error.toString());
+    return const UnknownFailure('Something went wrong. Please try again.');
   }
 
   /// Best message for user-facing validation and request errors.
@@ -46,7 +40,7 @@ class ErrorMapper {
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
         return const NetworkFailure(
-          'Connection timeout. Please check your internet.',
+          'Connecting is taking longer than expected. Please try again.',
         );
       case DioExceptionType.connectionError:
         return const NetworkFailure(
@@ -57,9 +51,13 @@ class ErrorMapper {
       case DioExceptionType.cancel:
         return const NetworkFailure('Request was cancelled.');
       case DioExceptionType.badCertificate:
-        return const NetworkFailure('Security certificate error.');
+        return const NetworkFailure(
+          'We could not connect securely. Please try again later.',
+        );
       case DioExceptionType.unknown:
-        return const NetworkFailure('Network error occurred.');
+        return const NetworkFailure(
+          'We could not connect. Check your connection and try again.',
+        );
     }
   }
 
@@ -89,10 +87,13 @@ class ErrorMapper {
         message ?? 'Invalid input',
         fieldErrors: fieldErrors,
       ),
-      >= 500 => ServerFailure(
-        message ?? 'Server error. Please try again later.',
+      >= 500 => const ServerFailure(
+        'BayanTrack is having trouble completing this request. Please try again shortly.',
       ),
-      _ => UnknownFailure.withStatus(message ?? 'Request failed', statusCode),
+      _ => UnknownFailure.withStatus(
+        'We could not complete this request. Please try again.',
+        statusCode,
+      ),
     };
   }
 
@@ -100,9 +101,11 @@ class ErrorMapper {
   /// Supports: {"detail": "..."}, {"message": "..."}, {"error": "..."}
   static String? _extractMessage(dynamic body) {
     if (body is! Map<String, dynamic>) return null;
-    return body['detail']?.toString() ??
-        body['message']?.toString() ??
-        body['error']?.toString();
+    for (final key in ['detail', 'message', 'error']) {
+      final value = body[key];
+      if (value is String && value.trim().isNotEmpty) return value;
+    }
+    return null;
   }
 
   /// Extract field-level validation errors
@@ -114,7 +117,13 @@ class ErrorMapper {
     // {"error": "...", "details": {"field": ["message"]}}.
     final nested = body['errors'] is Map ? body['errors'] : body['details'];
     if (nested is Map) {
-      return nested.map((k, v) => MapEntry(k.toString(), _flattenError(v)));
+      final errors = <String, String>{};
+      for (final entry in nested.entries) {
+        if (entry.key == 'code') continue;
+        final message = _flattenError(entry.value);
+        if (message != null) errors[entry.key.toString()] = message;
+      }
+      return errors.isEmpty ? null : errors;
     }
 
     // DRF format: {"field": ["error1", "error2"]} or
@@ -124,18 +133,24 @@ class ErrorMapper {
       if (entry.key != 'detail' &&
           entry.key != 'message' &&
           entry.key != 'error' &&
+          entry.key != 'code' &&
           (entry.value is List || entry.value is String)) {
-        errors[entry.key] = entry.value is List
-            ? (entry.value as List).join(', ')
-            : entry.value.toString();
+        final message = _flattenError(entry.value);
+        if (message != null) errors[entry.key] = message;
       }
     }
     return errors.isNotEmpty ? errors : null;
   }
 
   /// Flatten error value to string
-  static String _flattenError(dynamic value) {
-    if (value is List) return value.join(', ');
-    return value.toString();
+  static String? _flattenError(dynamic value) {
+    if (value is String && value.trim().isNotEmpty) return value;
+    if (value is List) {
+      final messages = value.whereType<String>().where(
+        (message) => message.trim().isNotEmpty,
+      );
+      if (messages.isNotEmpty) return messages.join(', ');
+    }
+    return null;
   }
 }

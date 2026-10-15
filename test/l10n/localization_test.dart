@@ -31,21 +31,21 @@ void main() {
     expect(filipino.reportCount(2), '2 ulat');
     expect(
       english.evidenceUploadsPending(1),
-      contains('1 evidence upload pending'),
+      contains('1 attachment is waiting to upload'),
     );
     expect(
       english.evidenceUploadsPending(2),
-      contains('2 evidence uploads pending'),
+      contains('2 attachments are waiting to upload'),
     );
-    expect(
-      filipino.evidenceUploadsPending(2),
-      contains('2 pag-upload ng ebidensya'),
-    );
+    expect(filipino.evidenceUploadsPending(2), contains('2 kalakip'));
+    expect(english.evidenceUploadsPending(0), 'Your report was sent.');
+    expect(filipino.evidenceUploadsPending(0), 'Naipadala na ang iyong ulat.');
   });
 }
 
 Set<String> _translationKeys(String name) {
-  final values = jsonDecode(File('lib/l10n/$name').readAsStringSync())
-      as Map<String, dynamic>;
+  final values =
+      jsonDecode(File('lib/l10n/$name').readAsStringSync())
+          as Map<String, dynamic>;
   return values.keys.where((key) => !key.startsWith('@')).toSet();
 }

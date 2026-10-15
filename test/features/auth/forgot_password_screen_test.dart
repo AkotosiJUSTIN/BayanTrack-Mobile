@@ -206,7 +206,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     verify(() => repository.forgotPassword('ada@example.com')).called(1);
-    expect(find.text('Enter OTP'), findsOneWidget);
+    expect(find.text('Enter verification code'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('forgot-password-illustration')),
       findsNothing,
@@ -235,8 +235,11 @@ void main() {
           .height,
       190,
     );
-    expect(find.text('Enter OTP'), findsOneWidget);
-    expect(find.text('Enter the OTP sent to ada@example.com'), findsOneWidget);
+    expect(find.text('Enter verification code'), findsOneWidget);
+    expect(
+      find.text('Enter the verification code sent to ada@example.com'),
+      findsOneWidget,
+    );
 
     _expectVerticalOrder(tester, [
       'forgot-password-recovery-back-button',
@@ -565,7 +568,7 @@ void main() {
       find.byKey(const ValueKey('forgot-password-recovery-back-button')),
     );
     await tester.pump();
-    expect(find.text('Enter OTP'), findsOneWidget);
+    expect(find.text('Enter verification code'), findsOneWidget);
 
     await tester.tap(
       find.byKey(const ValueKey('forgot-password-recovery-back-button')),

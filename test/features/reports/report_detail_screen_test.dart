@@ -219,7 +219,7 @@ void main() {
         ),
       );
       await _pumpDetail(tester, repository: repository);
-      await tester.scrollUntilVisible(find.text('Integrity Verified'), 400);
+      await tester.scrollUntilVisible(find.text('Report details match'), 400);
       expect(find.text('Previously verified and anchored'), findsOneWidget);
       verify(
         () => repository.verifyReport('RPT-DETAIL-UI-1', cachedOnly: true),
@@ -259,7 +259,7 @@ void main() {
 
     expect(find.byType(OfflineStaleBanner), findsOneWidget);
     expect(
-      find.textContaining('Backend unavailable. Showing saved reports'),
+      find.textContaining("We're having trouble connecting. Saved reports"),
       findsOneWidget,
     );
   });
@@ -274,7 +274,7 @@ void main() {
     expect(find.text('Market Road gate'), findsOneWidget);
     expect(find.text('Current handler'), findsOneWidget);
     expect(
-      find.bySemanticsLabel(RegExp(r'^Queue priority: High')),
+      find.bySemanticsLabel(RegExp(r'^Review priority: High')),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);

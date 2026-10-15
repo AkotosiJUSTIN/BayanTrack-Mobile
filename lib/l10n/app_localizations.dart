@@ -167,7 +167,7 @@ abstract class AppLocalizations {
   /// No description provided for @retry.
   ///
   /// In en, this message translates to:
-  /// **'Retry'**
+  /// **'Try again'**
   String get retry;
 
   /// No description provided for @loading.
@@ -179,7 +179,7 @@ abstract class AppLocalizations {
   /// No description provided for @error.
   ///
   /// In en, this message translates to:
-  /// **'Error'**
+  /// **'Something went wrong'**
   String get error;
 
   /// No description provided for @unknownError.
@@ -413,7 +413,7 @@ abstract class AppLocalizations {
   /// No description provided for @failedLoadBarangays.
   ///
   /// In en, this message translates to:
-  /// **'Failed to load barangays. Please restart the app.'**
+  /// **'We couldn\'t load the barangay list. Check your connection and try again.'**
   String get failedLoadBarangays;
 
   /// No description provided for @iAgreeTo.
@@ -587,7 +587,7 @@ abstract class AppLocalizations {
   /// No description provided for @profilePictureBackupPending.
   ///
   /// In en, this message translates to:
-  /// **'Profile picture backup pending'**
+  /// **'Your photo is saved. Its backup is still being prepared.'**
   String get profilePictureBackupPending;
 
   /// No description provided for @reports.
@@ -857,7 +857,7 @@ abstract class AppLocalizations {
   /// No description provided for @emergencyNotYetTransmitted.
   ///
   /// In en, this message translates to:
-  /// **'NOT YET TRANSMITTED'**
+  /// **'Not sent yet'**
   String get emergencyNotYetTransmitted;
 
   /// No description provided for @emergencyDetailsHint.
@@ -917,7 +917,7 @@ abstract class AppLocalizations {
   /// No description provided for @failedLoadNotifications.
   ///
   /// In en, this message translates to:
-  /// **'Failed to load notifications'**
+  /// **'We couldn\'t load your notifications'**
   String get failedLoadNotifications;
 
   /// No description provided for @notificationsNetworkError.
@@ -1097,19 +1097,19 @@ abstract class AppLocalizations {
   /// No description provided for @reportPendingSyncTitle.
   ///
   /// In en, this message translates to:
-  /// **'Pending Sync'**
+  /// **'Waiting to send'**
   String get reportPendingSyncTitle;
 
   /// No description provided for @reportPendingSync.
   ///
   /// In en, this message translates to:
-  /// **'Saved on this device. Not yet transmitted to BayanTrack.'**
+  /// **'Your report is saved on this device, but hasn\'t been sent yet.'**
   String get reportPendingSync;
 
   /// No description provided for @reportOutboxRetrying.
   ///
   /// In en, this message translates to:
-  /// **'Will retry safely when BayanTrack is reachable.'**
+  /// **'Your report hasn\'t been sent yet. We\'ll try again when we can connect.'**
   String get reportOutboxRetrying;
 
   /// No description provided for @reportOutboxWaitingAuth.
@@ -1121,13 +1121,13 @@ abstract class AppLocalizations {
   /// No description provided for @reportOutboxNeedsEdit.
   ///
   /// In en, this message translates to:
-  /// **'Report was not accepted. Edit and submit it again.'**
+  /// **'Your report needs changes before it can be sent. Review the details and submit it again.'**
   String get reportOutboxNeedsEdit;
 
   /// No description provided for @reportOutboxConflict.
   ///
   /// In en, this message translates to:
-  /// **'Submission could not be confirmed. Edit report before resubmitting.'**
+  /// **'We couldn\'t confirm whether this report was received. Review it before sending again.'**
   String get reportOutboxConflict;
 
   /// No description provided for @reportOutboxRetryNow.
@@ -1145,19 +1145,19 @@ abstract class AppLocalizations {
   /// No description provided for @reportEvidenceHandoffTitle.
   ///
   /// In en, this message translates to:
-  /// **'Evidence upload'**
+  /// **'Report attachments'**
   String get reportEvidenceHandoffTitle;
 
   /// No description provided for @reportEvidenceHandoffPending.
   ///
   /// In en, this message translates to:
-  /// **'Report received. Evidence is still waiting to upload.'**
+  /// **'Your report was received. Its attachments are still waiting to upload.'**
   String get reportEvidenceHandoffPending;
 
   /// No description provided for @reportEvidenceHandoffRetry.
   ///
   /// In en, this message translates to:
-  /// **'Retry evidence upload'**
+  /// **'Try uploading again'**
   String get reportEvidenceHandoffRetry;
 
   /// No description provided for @addOptionalPhoto.
@@ -1253,7 +1253,7 @@ abstract class AppLocalizations {
   /// No description provided for @evidenceUploadPending.
   ///
   /// In en, this message translates to:
-  /// **'Evidence upload pending'**
+  /// **'Attachments waiting to upload'**
   String get evidenceUploadPending;
 
   /// No description provided for @reportHistory.
@@ -1277,7 +1277,7 @@ abstract class AppLocalizations {
   /// No description provided for @failedLoadReports.
   ///
   /// In en, this message translates to:
-  /// **'Failed to load reports'**
+  /// **'We couldn\'t load the reports'**
   String get failedLoadReports;
 
   /// No description provided for @reportDetails.
@@ -1385,25 +1385,25 @@ abstract class AppLocalizations {
   /// No description provided for @rejected.
   ///
   /// In en, this message translates to:
-  /// **'Rejected'**
+  /// **'Not accepted'**
   String get rejected;
 
   /// No description provided for @unknownLocation.
   ///
   /// In en, this message translates to:
-  /// **'Unknown location'**
+  /// **'Location not provided'**
   String get unknownLocation;
 
   /// No description provided for @aiSuggestion.
   ///
   /// In en, this message translates to:
-  /// **'AI suggestion'**
+  /// **'Suggested priority'**
   String get aiSuggestion;
 
   /// No description provided for @queuePriority.
   ///
   /// In en, this message translates to:
-  /// **'Queue priority'**
+  /// **'Review priority'**
   String get queuePriority;
 
   /// No description provided for @notificationsEmail.
@@ -1439,7 +1439,7 @@ abstract class AppLocalizations {
   /// No description provided for @preferencesSaveFailed.
   ///
   /// In en, this message translates to:
-  /// **'Unable to save notification preferences.'**
+  /// **'We couldn\'t save your notification settings. Try again.'**
   String get preferencesSaveFailed;
 
   /// No description provided for @kyc.
@@ -1457,7 +1457,7 @@ abstract class AppLocalizations {
   /// No description provided for @kycPending.
   ///
   /// In en, this message translates to:
-  /// **'Your verification is pending review.'**
+  /// **'Your documents have been received and are waiting for staff review.'**
   String get kycPending;
 
   /// No description provided for @kycVerified.
@@ -1469,7 +1469,7 @@ abstract class AppLocalizations {
   /// No description provided for @kycRejected.
   ///
   /// In en, this message translates to:
-  /// **'Your verification was rejected. Please resubmit your documents.'**
+  /// **'We couldn\'t approve your documents. Review the feedback, make corrections, and submit them again.'**
   String get kycRejected;
 
   /// No description provided for @kycUnverified.
@@ -1613,7 +1613,7 @@ abstract class AppLocalizations {
   /// No description provided for @descriptionKeyboardMashing.
   ///
   /// In en, this message translates to:
-  /// **'Please enter a valid description (keyboard mashing detected)'**
+  /// **'Describe what happened in your own words so staff can understand the issue.'**
   String get descriptionKeyboardMashing;
 
   /// No description provided for @descriptionCoherent.
@@ -1673,7 +1673,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileLoadFailed.
   ///
   /// In en, this message translates to:
-  /// **'Unable to load profile.'**
+  /// **'We couldn\'t load your profile. Please try again.'**
   String get profileLoadFailed;
 
   /// No description provided for @profileUpdateFailed.
@@ -1757,7 +1757,7 @@ abstract class AppLocalizations {
   /// No description provided for @escalated.
   ///
   /// In en, this message translates to:
-  /// **'Escalated'**
+  /// **'Sent for further review'**
   String get escalated;
 
   /// No description provided for @map.
@@ -1847,7 +1847,7 @@ abstract class AppLocalizations {
   /// No description provided for @unknownDate.
   ///
   /// In en, this message translates to:
-  /// **'Unknown date'**
+  /// **'Date not available'**
   String get unknownDate;
 
   /// No description provided for @today.
@@ -1907,7 +1907,7 @@ abstract class AppLocalizations {
   /// No description provided for @unableLoadReports.
   ///
   /// In en, this message translates to:
-  /// **'Unable to load reports'**
+  /// **'We couldn\'t load the reports'**
   String get unableLoadReports;
 
   /// No description provided for @reportsNetworkError.
@@ -1925,13 +1925,13 @@ abstract class AppLocalizations {
   /// No description provided for @unscored.
   ///
   /// In en, this message translates to:
-  /// **'Unscored'**
+  /// **'Awaiting assessment'**
   String get unscored;
 
   /// No description provided for @uncategorized.
   ///
   /// In en, this message translates to:
-  /// **'Uncategorized'**
+  /// **'Awaiting category'**
   String get uncategorized;
 
   /// No description provided for @linkedReports.
@@ -1949,37 +1949,37 @@ abstract class AppLocalizations {
   /// No description provided for @groupedIncident.
   ///
   /// In en, this message translates to:
-  /// **'grouped incident'**
+  /// **'shared incident'**
   String get groupedIncident;
 
   /// No description provided for @unknownTime.
   ///
   /// In en, this message translates to:
-  /// **'Unknown'**
+  /// **'Time not available'**
   String get unknownTime;
 
   /// No description provided for @evidenceFileMissing.
   ///
   /// In en, this message translates to:
-  /// **'Report submitted. Evidence file is missing.'**
+  /// **'Your report was sent, but an attachment is no longer on this device and couldn\'t be uploaded.'**
   String get evidenceFileMissing;
 
   /// No description provided for @evidenceUploadFailed.
   ///
   /// In en, this message translates to:
-  /// **'Report submitted. Evidence upload failed.'**
+  /// **'Your report was sent, but we couldn\'t upload its attachments. Try uploading again.'**
   String get evidenceUploadFailed;
 
   /// No description provided for @evidenceUploadsPending.
   ///
   /// In en, this message translates to:
-  /// **'Report submitted. {count} evidence upload{count, plural, =1 {} other {s}} pending.'**
+  /// **'{count, plural, =0 {Your report was sent.} =1 {Your report was sent. 1 attachment is waiting to upload.} other {Your report was sent. {count} attachments are waiting to upload.}}'**
   String evidenceUploadsPending(int count);
 
   /// No description provided for @evidenceUploadCompleted.
   ///
   /// In en, this message translates to:
-  /// **'Evidence upload completed.'**
+  /// **'Your attachment has been uploaded.'**
   String get evidenceUploadCompleted;
 
   /// No description provided for @accountSecurity.
@@ -2003,7 +2003,7 @@ abstract class AppLocalizations {
   /// No description provided for @cachedReportsOffline.
   ///
   /// In en, this message translates to:
-  /// **'Backend unavailable. Showing saved reports; information may be outdated.'**
+  /// **'We\'re having trouble connecting. Saved reports may not show the latest updates. Please try again shortly.'**
   String get cachedReportsOffline;
 
   /// No description provided for @dismiss.
@@ -2057,13 +2057,13 @@ abstract class AppLocalizations {
   /// No description provided for @otp.
   ///
   /// In en, this message translates to:
-  /// **'OTP'**
+  /// **'Verification code'**
   String get otp;
 
   /// No description provided for @enterOtp.
   ///
   /// In en, this message translates to:
-  /// **'Enter OTP'**
+  /// **'Enter verification code'**
   String get enterOtp;
 
   /// No description provided for @createNewPassword.
@@ -2075,31 +2075,31 @@ abstract class AppLocalizations {
   /// No description provided for @otpSent.
   ///
   /// In en, this message translates to:
-  /// **'OTP sent. Please check your email.'**
+  /// **'A verification code has been sent. Please check your email.'**
   String get otpSent;
 
   /// No description provided for @otpResent.
   ///
   /// In en, this message translates to:
-  /// **'OTP resent. Please check your email.'**
+  /// **'A new verification code has been sent. Please check your email.'**
   String get otpResent;
 
   /// No description provided for @otpSentTo.
   ///
   /// In en, this message translates to:
-  /// **'Enter the OTP sent to {email}'**
+  /// **'Enter the verification code sent to {email}'**
   String otpSentTo(String email);
 
   /// No description provided for @otpRequired.
   ///
   /// In en, this message translates to:
-  /// **'OTP is required'**
+  /// **'Enter the verification code from your email.'**
   String get otpRequired;
 
   /// No description provided for @otpSixDigits.
   ///
   /// In en, this message translates to:
-  /// **'OTP must be 6 digits'**
+  /// **'Enter the 6-digit verification code.'**
   String get otpSixDigits;
 
   /// No description provided for @rememberPassword.
@@ -2117,7 +2117,7 @@ abstract class AppLocalizations {
   /// No description provided for @sessionExpiredVerifyOtp.
   ///
   /// In en, this message translates to:
-  /// **'Your session expired. Please verify the OTP again.'**
+  /// **'This password reset has expired. Request a new code and try again.'**
   String get sessionExpiredVerifyOtp;
 
   /// No description provided for @phoneNumber.
@@ -2147,7 +2147,7 @@ abstract class AppLocalizations {
   /// No description provided for @avatarUploadFailed.
   ///
   /// In en, this message translates to:
-  /// **'Upload failed. Keep this preview and tap Retry when ready.'**
+  /// **'We couldn\'t upload your photo. Your preview is still here. Please try again.'**
   String get avatarUploadFailed;
 
   /// No description provided for @profilePictureRemoved.
@@ -2219,7 +2219,7 @@ abstract class AppLocalizations {
   /// No description provided for @profilePictureReplicationPending.
   ///
   /// In en, this message translates to:
-  /// **'Profile picture available; backup replication is pending.'**
+  /// **'Your photo is ready to use. Its backup is still being prepared.'**
   String get profilePictureReplicationPending;
 
   /// No description provided for @addPicture.
@@ -2357,7 +2357,7 @@ abstract class AppLocalizations {
   /// No description provided for @cityMetadataUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'City metadata is unavailable.'**
+  /// **'We couldn\'t load this city\'s location details. Try again shortly.'**
   String get cityMetadataUnavailable;
 
   /// No description provided for @placeLocationPin.
@@ -2375,13 +2375,13 @@ abstract class AppLocalizations {
   /// No description provided for @bundledBarangays.
   ///
   /// In en, this message translates to:
-  /// **'Using bundled Urdaneta barangays'**
+  /// **'Using the saved Urdaneta barangay list'**
   String get bundledBarangays;
 
   /// No description provided for @barangaysUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Barangays unavailable for this city'**
+  /// **'We couldn\'t load barangays for this city. Try again shortly.'**
   String get barangaysUnavailable;
 
   /// No description provided for @streetLandmark.
@@ -2447,25 +2447,25 @@ abstract class AppLocalizations {
   /// No description provided for @locationServicesDisabled.
   ///
   /// In en, this message translates to:
-  /// **'Location services are disabled. Please enable GPS.'**
+  /// **'Turn on your phone\'s location to find your position, or place a pin on the map.'**
   String get locationServicesDisabled;
 
   /// No description provided for @locationPermissionDenied.
   ///
   /// In en, this message translates to:
-  /// **'Location permission denied'**
+  /// **'Allow location access to use your phone\'s position, or place a pin on the map.'**
   String get locationPermissionDenied;
 
   /// No description provided for @locationPermissionSettings.
   ///
   /// In en, this message translates to:
-  /// **'Location permissions are permanently denied. Enable them in Settings.'**
+  /// **'To use your phone\'s position, allow location access for BayanTrack in Settings. You can also place a pin manually.'**
   String get locationPermissionSettings;
 
   /// No description provided for @locationRequestTimedOut.
   ///
   /// In en, this message translates to:
-  /// **'Location request timed out. Please try again.'**
+  /// **'Finding your location is taking longer than expected. Try again or place a pin on the map.'**
   String get locationRequestTimedOut;
 
   /// No description provided for @gettingLocation.
@@ -2507,7 +2507,7 @@ abstract class AppLocalizations {
   /// No description provided for @locationNotSet.
   ///
   /// In en, this message translates to:
-  /// **'Not set'**
+  /// **'Choose a location'**
   String get locationNotSet;
 
   /// No description provided for @zone.
@@ -2597,13 +2597,13 @@ abstract class AppLocalizations {
   /// No description provided for @aiSuggestionPending.
   ///
   /// In en, this message translates to:
-  /// **'AI suggestion — staff review pending'**
+  /// **'Waiting for a priority assessment'**
   String get aiSuggestionPending;
 
   /// No description provided for @operationalPriority.
   ///
   /// In en, this message translates to:
-  /// **'Operational priority'**
+  /// **'Response priority'**
   String get operationalPriority;
 
   /// No description provided for @confirmedLinkedReports.
@@ -2651,7 +2651,7 @@ abstract class AppLocalizations {
   /// No description provided for @currentHandler.
   ///
   /// In en, this message translates to:
-  /// **'Current handler'**
+  /// **'Team handling this report'**
   String get currentHandler;
 
   /// No description provided for @respondedBy.
@@ -2663,7 +2663,7 @@ abstract class AppLocalizations {
   /// No description provided for @routingStatus.
   ///
   /// In en, this message translates to:
-  /// **'Routing status'**
+  /// **'Where your report goes next'**
   String get routingStatus;
 
   /// No description provided for @awaitingStaffConfirmation.
@@ -2675,7 +2675,7 @@ abstract class AppLocalizations {
   /// No description provided for @routingPolicyApplied.
   ///
   /// In en, this message translates to:
-  /// **'Routing policy applied'**
+  /// **'Sent to the appropriate team'**
   String get routingPolicyApplied;
 
   /// No description provided for @resolutionProof.
@@ -2717,85 +2717,85 @@ abstract class AppLocalizations {
   /// No description provided for @reviewSignOff.
   ///
   /// In en, this message translates to:
-  /// **'Review & Sign Off'**
+  /// **'Review the response'**
   String get reviewSignOff;
 
   /// No description provided for @blockchainVerification.
   ///
   /// In en, this message translates to:
-  /// **'Blockchain Verification'**
+  /// **'Report record check'**
   String get blockchainVerification;
 
   /// No description provided for @verifyNow.
   ///
   /// In en, this message translates to:
-  /// **'Verify Now'**
+  /// **'Check record'**
   String get verifyNow;
 
   /// No description provided for @auditHistory.
   ///
   /// In en, this message translates to:
-  /// **'Audit History'**
+  /// **'Report record history'**
   String get auditHistory;
 
   /// No description provided for @noAuditEntries.
   ///
   /// In en, this message translates to:
-  /// **'No audit entries found.'**
+  /// **'No record history is available yet.'**
   String get noAuditEntries;
 
   /// No description provided for @blockchainAnchored.
   ///
   /// In en, this message translates to:
-  /// **'This report is anchored on the blockchain. Click verify to perform a live integrity check.'**
+  /// **'A protected copy of this report\'s record is saved on the blockchain. Check it to see whether the report details match.'**
   String get blockchainAnchored;
 
   /// No description provided for @blockchainPending.
   ///
   /// In en, this message translates to:
-  /// **'This report is pending blockchain synchronization.'**
+  /// **'The protected record is still being prepared. You can check again later.'**
   String get blockchainPending;
 
   /// No description provided for @integrityVerified.
   ///
   /// In en, this message translates to:
-  /// **'Integrity Verified'**
+  /// **'Report details match'**
   String get integrityVerified;
 
   /// No description provided for @contentVerified.
   ///
   /// In en, this message translates to:
-  /// **'Content Verified'**
+  /// **'Details match; status update pending'**
   String get contentVerified;
 
   /// No description provided for @notYetAnchored.
   ///
   /// In en, this message translates to:
-  /// **'Not Yet Anchored'**
+  /// **'Protected record not ready yet'**
   String get notYetAnchored;
 
   /// No description provided for @recordNotFound.
   ///
   /// In en, this message translates to:
-  /// **'Record Not Found'**
+  /// **'Protected record not found yet'**
   String get recordNotFound;
 
   /// No description provided for @blockchainUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Blockchain Unavailable'**
+  /// **'Record check temporarily unavailable'**
   String get blockchainUnavailable;
 
   /// No description provided for @integrityBreach.
   ///
   /// In en, this message translates to:
-  /// **'Integrity Breach Detected'**
+  /// **'Report details don\'t match'**
   String get integrityBreach;
 
   /// No description provided for @verificationFailed.
   ///
   /// In en, this message translates to:
-  /// **'Verification failed. Please try again later.'**
+  /// **'We couldn\'t check the report record. Please try again shortly.'**
   String get verificationFailed;
 
   /// No description provided for @byActor.
@@ -2999,7 +2999,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportReopenedEscalated.
   ///
   /// In en, this message translates to:
-  /// **'Report has been re-opened and escalated.'**
+  /// **'Your concern has been sent back to the City for review.'**
   String get reportReopenedEscalated;
 
   /// No description provided for @resubmitUserVerification.
@@ -3257,7 +3257,7 @@ abstract class AppLocalizations {
   /// No description provided for @scanIdOptionDescription.
   ///
   /// In en, this message translates to:
-  /// **'Extract details from your ID for review, then complete the rest of the form.'**
+  /// **'Read the details on your ID, check them, and complete the rest of the form.'**
   String get scanIdOptionDescription;
 
   /// No description provided for @manualEntryOptionTitle.
@@ -3269,7 +3269,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualEntryOptionDescription.
   ///
   /// In en, this message translates to:
-  /// **'Fill in your identity details yourself. OCR is skipped.'**
+  /// **'Fill in your details yourself without scanning your ID.'**
   String get manualEntryOptionDescription;
 
   /// No description provided for @maxImageFormats.
@@ -3341,7 +3341,7 @@ abstract class AppLocalizations {
   /// No description provided for @previousRejectionReason.
   ///
   /// In en, this message translates to:
-  /// **'Previous Rejection Reason:'**
+  /// **'What needs to be corrected:'**
   String get previousRejectionReason;
 
   /// No description provided for @tapAddPhoto.
@@ -3407,7 +3407,7 @@ abstract class AppLocalizations {
   /// No description provided for @ocrUnsupported.
   ///
   /// In en, this message translates to:
-  /// **'OCR is not available for this ID type yet. Enter details manually.'**
+  /// **'We can\'t read this type of ID automatically yet. Please enter your details yourself.'**
   String get ocrUnsupported;
 
   /// No description provided for @ocrManualReview.
@@ -3425,7 +3425,7 @@ abstract class AppLocalizations {
   /// No description provided for @ocrAuthenticityNotice.
   ///
   /// In en, this message translates to:
-  /// **'OCR only helps fill the form. It does not verify that the ID is authentic.'**
+  /// **'Scanning only helps fill in the form. Staff still need to review your ID.'**
   String get ocrAuthenticityNotice;
 
   /// No description provided for @fixFormErrors.
@@ -3533,7 +3533,7 @@ abstract class AppLocalizations {
   /// No description provided for @adminFeedback.
   ///
   /// In en, this message translates to:
-  /// **'Admin Feedback'**
+  /// **'Feedback from the review team'**
   String get adminFeedback;
 
   /// No description provided for @reviewAndResubmit.
@@ -3569,7 +3569,7 @@ abstract class AppLocalizations {
   /// No description provided for @kycResubmitRequested.
   ///
   /// In en, this message translates to:
-  /// **'Additional information is required. Please resubmit your documents.'**
+  /// **'The review team needs more information. Check their feedback and update your documents.'**
   String get kycResubmitRequested;
 
   /// No description provided for @kycSuspended.
@@ -3581,25 +3581,25 @@ abstract class AppLocalizations {
   /// No description provided for @unverifiedLabel.
   ///
   /// In en, this message translates to:
-  /// **'Unverified'**
+  /// **'Not yet verified'**
   String get unverifiedLabel;
 
   /// No description provided for @pendingReview.
   ///
   /// In en, this message translates to:
-  /// **'Pending Review'**
+  /// **'Waiting for review'**
   String get pendingReview;
 
   /// No description provided for @resubmitRequestedLabel.
   ///
   /// In en, this message translates to:
-  /// **'Resubmit Requested'**
+  /// **'Update needed'**
   String get resubmitRequestedLabel;
 
   /// No description provided for @suspendedLabel.
   ///
   /// In en, this message translates to:
-  /// **'Suspended'**
+  /// **'Verification paused'**
   String get suspendedLabel;
 
   /// No description provided for @submit.
@@ -3755,7 +3755,7 @@ abstract class AppLocalizations {
   /// No description provided for @submissionError.
   ///
   /// In en, this message translates to:
-  /// **'Submission error. {error}'**
+  /// **'We couldn\'t send your report. {error}'**
   String submissionError(String error);
 
   /// No description provided for @submitDisabled.
@@ -3947,19 +3947,19 @@ abstract class AppLocalizations {
   /// No description provided for @governanceCheckingStatus.
   ///
   /// In en, this message translates to:
-  /// **'Checking system status...'**
+  /// **'Checking whether BayanTrack is ready...'**
   String get governanceCheckingStatus;
 
   /// No description provided for @governanceStatusUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'System status is unavailable.'**
+  /// **'We couldn\'t check service availability. Please try again.'**
   String get governanceStatusUnavailable;
 
   /// No description provided for @governanceReadOnly.
   ///
   /// In en, this message translates to:
-  /// **'Maintenance: read-only. Emergency reporting remains available.'**
+  /// **'BayanTrack is undergoing maintenance. You can still view reports and submit emergency reports.'**
   String get governanceReadOnly;
 
   /// No description provided for @governanceTermsChanged.
@@ -3977,7 +3977,7 @@ abstract class AppLocalizations {
   /// No description provided for @governanceTermsUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Current terms could not be loaded.'**
+  /// **'We couldn\'t load the terms and privacy policy. Please try again.'**
   String get governanceTermsUnavailable;
 
   /// No description provided for @governanceConsentLabel.
@@ -3989,13 +3989,13 @@ abstract class AppLocalizations {
   /// No description provided for @governanceSyncPaused.
   ///
   /// In en, this message translates to:
-  /// **'Waiting for current terms acceptance or maintenance to end.'**
+  /// **'Sending is paused. Review any updated terms, or try again after maintenance.'**
   String get governanceSyncPaused;
 
   /// No description provided for @appCheckVersion.
   ///
   /// In en, this message translates to:
-  /// **'Check app version'**
+  /// **'Check for updates'**
   String get appCheckVersion;
 
   /// No description provided for @appCheckingVersion.
@@ -4025,7 +4025,7 @@ abstract class AppLocalizations {
   /// No description provided for @appUpdateRequiredMessage.
   ///
   /// In en, this message translates to:
-  /// **'A newer BayanTrack release is available. Install the latest APK to continue. Your saved reports will stay on this device.'**
+  /// **'A newer version of BayanTrack is available. Download and install the Android update to continue. Your saved reports will stay on this device.'**
   String get appUpdateRequiredMessage;
 
   /// No description provided for @appGetUpdate.
@@ -4037,7 +4037,7 @@ abstract class AppLocalizations {
   /// No description provided for @appReleaseOpenFailed.
   ///
   /// In en, this message translates to:
-  /// **'The releases page could not be opened. Please try again.'**
+  /// **'We couldn\'t open the download page. Check your connection and try again.'**
   String get appReleaseOpenFailed;
 
   /// No description provided for @appInstalledVersion.
@@ -4061,13 +4061,13 @@ abstract class AppLocalizations {
   /// No description provided for @incidentEndorsed.
   ///
   /// In en, this message translates to:
-  /// **'Endorsed'**
+  /// **'Sent to the response team'**
   String get incidentEndorsed;
 
   /// No description provided for @incidentStatusUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Unavailable'**
+  /// **'Status not available yet'**
   String get incidentStatusUnavailable;
 
   /// No description provided for @incidentOperationalStatus.
@@ -4091,7 +4091,7 @@ abstract class AppLocalizations {
   /// No description provided for @incidentNeedsReview.
   ///
   /// In en, this message translates to:
-  /// **'Incident flagged for staff review'**
+  /// **'Staff need to review this shared incident'**
   String get incidentNeedsReview;
 
   /// No description provided for @incidentDifferent.
@@ -4115,7 +4115,7 @@ abstract class AppLocalizations {
   /// No description provided for @incidentLoadFailed.
   ///
   /// In en, this message translates to:
-  /// **'Shared incident unavailable. Try refreshing.'**
+  /// **'We couldn\'t load the shared incident. Refresh the report to try again.'**
   String get incidentLoadFailed;
 
   /// No description provided for @incidentFeedbackFailed.
@@ -4133,26 +4133,182 @@ abstract class AppLocalizations {
   /// No description provided for @incidentIntegrityConfirmed.
   ///
   /// In en, this message translates to:
-  /// **'Incident audit: confirmed on blockchain'**
+  /// **'A protected record of this incident has been saved.'**
   String get incidentIntegrityConfirmed;
 
   /// No description provided for @incidentIntegrityPending.
   ///
   /// In en, this message translates to:
-  /// **'Incident audit: awaiting blockchain confirmation'**
+  /// **'The protected incident record is waiting for confirmation.'**
   String get incidentIntegrityPending;
 
   /// No description provided for @incidentIntegrityFailed.
   ///
   /// In en, this message translates to:
-  /// **'Incident audit: blockchain recording failed'**
+  /// **'We couldn\'t save the protected incident record. The incident is still available here.'**
   String get incidentIntegrityFailed;
 
   /// No description provided for @incidentIntegrityNotRecorded.
   ///
   /// In en, this message translates to:
-  /// **'Incident audit: not recorded on blockchain'**
+  /// **'A protected record of this incident hasn\'t been saved yet.'**
   String get incidentIntegrityNotRecorded;
+
+  /// No description provided for @requestNetworkError.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t connect to BayanTrack. Check your internet connection and try again.'**
+  String get requestNetworkError;
+
+  /// No description provided for @requestServiceError.
+  ///
+  /// In en, this message translates to:
+  /// **'BayanTrack is having trouble completing this request. Please try again shortly.'**
+  String get requestServiceError;
+
+  /// No description provided for @requestSignInAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to continue.'**
+  String get requestSignInAgain;
+
+  /// No description provided for @requestNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This item is no longer available. Refresh the page to see the latest information.'**
+  String get requestNotFound;
+
+  /// No description provided for @requestStorageError.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t save this on your device. Check your available storage and try again.'**
+  String get requestStorageError;
+
+  /// No description provided for @requestTooManyAttempts.
+  ///
+  /// In en, this message translates to:
+  /// **'There have been too many attempts. Please wait a little before trying again.'**
+  String get requestTooManyAttempts;
+
+  /// No description provided for @requestValidationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Some details need to be corrected. Review what you\'ve entered and try again.'**
+  String get requestValidationError;
+
+  /// No description provided for @authDetailsNotAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t confirm your account details. Check them and try again.'**
+  String get authDetailsNotAccepted;
+
+  /// No description provided for @verificationLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load your verification status. Please try again.'**
+  String get verificationLoadFailed;
+
+  /// No description provided for @withdrawalFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t withdraw your submission. Please try again.'**
+  String get withdrawalFailed;
+
+  /// No description provided for @reportDraftRestoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t reopen this draft for editing. Refresh your reports and try again.'**
+  String get reportDraftRestoreFailed;
+
+  /// No description provided for @recordDetailsMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The report details match the protected record.'**
+  String get recordDetailsMatch;
+
+  /// No description provided for @recordStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'The report details match. The protected status record is still waiting for an update.'**
+  String get recordStatusPending;
+
+  /// No description provided for @recordNotReady.
+  ///
+  /// In en, this message translates to:
+  /// **'There isn\'t a protected record to check yet. Please check again later.'**
+  String get recordNotReady;
+
+  /// No description provided for @recordCheckUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t reach the record-checking service. Please try again shortly.'**
+  String get recordCheckUnavailable;
+
+  /// No description provided for @recordDetailsMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'The report details differ from the protected record. Contact support for help reviewing this.'**
+  String get recordDetailsMismatch;
+
+  /// No description provided for @recordCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Protected report record saved'**
+  String get recordCreated;
+
+  /// No description provided for @recordFinalized.
+  ///
+  /// In en, this message translates to:
+  /// **'Final report record saved'**
+  String get recordFinalized;
+
+  /// No description provided for @recordReopened.
+  ///
+  /// In en, this message translates to:
+  /// **'Report reopened for review'**
+  String get recordReopened;
+
+  /// No description provided for @recordStaffUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Report record updated by staff'**
+  String get recordStaffUpdated;
+
+  /// No description provided for @historyReportAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Report assigned to a team'**
+  String get historyReportAssigned;
+
+  /// No description provided for @historyStatusUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Report status updated'**
+  String get historyStatusUpdated;
+
+  /// No description provided for @historyReportResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Report marked as resolved'**
+  String get historyReportResolved;
+
+  /// No description provided for @historyReportVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Report reviewed and verified'**
+  String get historyReportVerified;
+
+  /// No description provided for @historyNoteAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Staff note added'**
+  String get historyNoteAdded;
+
+  /// No description provided for @historyAssessmentRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Report assessment saved'**
+  String get historyAssessmentRecorded;
 
   /// No description provided for @appLatestVersion.
   ///

@@ -36,7 +36,8 @@ class AuthSuccess extends AuthState {
 
 class AuthError extends AuthState {
   final String message;
-  const AuthError(this.message);
+  final Failure? failure;
+  const AuthError(this.message, {this.failure});
 }
 
 /// AuthController - ViewModel for authentication flows.
@@ -129,7 +130,7 @@ class AuthController extends _$AuthController {
       },
       failure: (failure) {
         debugPrint('[AuthController] login failure: ${failure.runtimeType}');
-        state = AuthError(_failureToMessage(failure));
+        state = AuthError(failure.message, failure: failure);
         return false;
       },
     );
@@ -170,7 +171,7 @@ class AuthController extends _$AuthController {
         return true;
       },
       failure: (failure) {
-        state = AuthError(_failureToMessage(failure));
+        state = AuthError(failure.message, failure: failure);
         return false;
       },
     );
@@ -191,7 +192,7 @@ class AuthController extends _$AuthController {
         return true;
       },
       failure: (failure) {
-        state = AuthError(_failureToMessage(failure));
+        state = AuthError(failure.message, failure: failure);
         return false;
       },
     );
@@ -215,7 +216,7 @@ class AuthController extends _$AuthController {
         return resetToken;
       },
       failure: (failure) {
-        state = AuthError(_failureToMessage(failure));
+        state = AuthError(failure.message, failure: failure);
         return null;
       },
     );
@@ -244,7 +245,7 @@ class AuthController extends _$AuthController {
         return true;
       },
       failure: (failure) {
-        state = AuthError(_failureToMessage(failure));
+        state = AuthError(failure.message, failure: failure);
         return false;
       },
     );
@@ -273,22 +274,5 @@ class AuthController extends _$AuthController {
   /// Reset state to idle
   void resetState() {
     state = const AuthIdle();
-  }
-
-  /// Convert domain Failure to user-friendly message
-  String _failureToMessage(Failure failure) {
-    return switch (failure) {
-      AuthFailure(:final message) => message,
-      SystemRestrictionFailure(:final message) => message,
-      ValidationFailure(:final message, :final fieldErrors) =>
-        fieldErrors != null && fieldErrors.isNotEmpty
-            ? fieldErrors.entries.map((e) => '${e.key}: ${e.value}').join('\n')
-            : message,
-      NetworkFailure(:final message) => message,
-      ServerFailure(:final message) => message,
-      NotFoundFailure(:final message) => message,
-      CacheFailure(:final message) => message,
-      UnknownFailure(:final message) => message,
-    };
   }
 }
