@@ -2365,7 +2365,7 @@ class AppLocalizationsFil extends AppLocalizations {
 
   @override
   String get recordCheckUnavailable =>
-      'Hindi namin makonekta ang serbisyo ng pagsusuri sa rekord. Subukan muli mamaya.';
+      'Hindi namin makumpleto ang pagsusuri sa rekord. Subukan muli mamaya.';
 
   @override
   String get recordDetailsMismatch =>

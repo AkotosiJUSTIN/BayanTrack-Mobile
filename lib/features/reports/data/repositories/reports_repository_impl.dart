@@ -415,6 +415,27 @@ class ReportsRepositoryImpl implements ReportsRepository {
         response.data,
       );
       return Success(ReportMapper.blockchainVerificationFromDto(dtoResult));
+    } on DioException catch (e, stack) {
+      final body = e.response?.data;
+      if (e.response?.statusCode == 503 &&
+          body is Map<String, dynamic> &&
+          body['scan_incomplete'] == true &&
+          body['connection_error'] == true) {
+        try {
+          final pending =
+              blockchain_dto.BlockchainVerificationResultDto.fromJson({
+                ...body,
+                'verified': false,
+                'original_snapshot_verified': null,
+                'current_content_verified': null,
+                'status_verified': null,
+              });
+          return Success(ReportMapper.blockchainVerificationFromDto(pending));
+        } catch (_) {
+          // Malformed service errors remain failures, never verification proof.
+        }
+      }
+      return Err(ErrorMapper.mapException(e, stack));
     } catch (e, stack) {
       return Err(ErrorMapper.mapException(e, stack));
     }

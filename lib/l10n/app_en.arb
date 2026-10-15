@@ -741,7 +741,7 @@
   "recordDetailsMatch": "The report details match the protected record.",
   "recordStatusPending": "The report details match. The protected status record is still waiting for an update.",
   "recordNotReady": "There isn't a protected record to check yet. Please check again later.",
-  "recordCheckUnavailable": "We couldn't reach the record-checking service. Please try again shortly.",
+  "recordCheckUnavailable": "We couldn't complete the record check. Please try again shortly.",
   "recordDetailsMismatch": "The report details differ from the protected record. Contact support for help reviewing this.",
   "recordCreated": "Protected report record saved",
   "recordFinalized": "Final report record saved",

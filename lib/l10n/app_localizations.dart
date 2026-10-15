@@ -4259,7 +4259,7 @@ abstract class AppLocalizations {
   /// No description provided for @recordCheckUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'We couldn\'t reach the record-checking service. Please try again shortly.'**
+  /// **'We couldn\'t complete the record check. Please try again shortly.'**
   String get recordCheckUnavailable;
 
   /// No description provided for @recordDetailsMismatch.

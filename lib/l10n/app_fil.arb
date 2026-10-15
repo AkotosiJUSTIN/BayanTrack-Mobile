@@ -741,7 +741,7 @@
   "recordDetailsMatch": "Magkatugma ang mga detalye ng ulat at ang protektadong rekord.",
   "recordStatusPending": "Magkatugma ang mga detalye. Hinihintay pa ang update sa protektadong rekord ng status.",
   "recordNotReady": "Wala pang protektadong rekord na masusuri. Subukan muli mamaya.",
-  "recordCheckUnavailable": "Hindi namin makonekta ang serbisyo ng pagsusuri sa rekord. Subukan muli mamaya.",
+  "recordCheckUnavailable": "Hindi namin makumpleto ang pagsusuri sa rekord. Subukan muli mamaya.",
   "recordDetailsMismatch": "Hindi tugma ang mga detalye ng ulat sa protektadong rekord. Makipag-ugnayan sa support para masuri ito.",
   "recordCreated": "Nai-save ang protektadong rekord ng ulat",
   "recordFinalized": "Nai-save ang pinal na rekord ng ulat",

@@ -2352,7 +2352,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recordCheckUnavailable =>
-      'We couldn\'t reach the record-checking service. Please try again shortly.';
+      'We couldn\'t complete the record check. Please try again shortly.';
 
   @override
   String get recordDetailsMismatch =>

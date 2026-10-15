@@ -13,6 +13,72 @@ class _OptionsFake extends Fake implements Options {}
 void main() {
   setUpAll(() => registerFallbackValue(_OptionsFake()));
 
+  test(
+    'incomplete chain scan retains an unavailable result with unknown proof',
+    () async {
+      final dio = _DioMock();
+      final request = RequestOptions(
+        path: ApiConstants.reportVerify('report-proof'),
+      );
+      when(() => dio.get(request.path, queryParameters: null)).thenThrow(
+        DioException(
+          requestOptions: request,
+          type: DioExceptionType.badResponse,
+          response: Response(
+            requestOptions: request,
+            statusCode: 503,
+            data: {
+              'report_id': 'report-proof',
+              'verified': false,
+              'original_snapshot_verified': null,
+              'current_content_verified': null,
+              'blockchain_data': <String, dynamic>{},
+              'audit_history': [],
+              'message': 'Checkpoint history is being indexed.',
+              'scan_incomplete': true,
+              'connection_error': true,
+              'is_anchored': true,
+            },
+          ),
+        ),
+      );
+      final result = await ReportsRepositoryImpl(
+        dio,
+      ).verifyReport('report-proof');
+      result.when(
+        success: (proof) {
+          expect(proof.verified, isFalse);
+          expect(proof.originalSnapshotVerified, isNull);
+          expect(proof.currentContentVerified, isNull);
+          expect(proof.connectionError, isTrue);
+        },
+        failure: (failure) => fail(failure.message),
+      );
+    },
+  );
+
+  test('unstructured service outage remains a failure', () async {
+    final dio = _DioMock();
+    final request = RequestOptions(
+      path: ApiConstants.reportVerify('report-proof'),
+    );
+    when(() => dio.get(request.path, queryParameters: null)).thenThrow(
+      DioException(
+        requestOptions: request,
+        type: DioExceptionType.badResponse,
+        response: Response(
+          requestOptions: request,
+          statusCode: 503,
+          data: 'Unavailable',
+        ),
+      ),
+    );
+    expect(
+      (await ReportsRepositoryImpl(dio).verifyReport('report-proof')).isSuccess,
+      isFalse,
+    );
+  });
+
   test('saved verification lookup uses cache-only backend query', () async {
     final dio = _DioMock();
     when(
