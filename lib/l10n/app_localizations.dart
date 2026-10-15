@@ -4046,6 +4046,114 @@ abstract class AppLocalizations {
   /// **'Installed: {version}'**
   String appInstalledVersion(String version);
 
+  /// No description provided for @sharedIncident.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked to a shared incident'**
+  String get sharedIncident;
+
+  /// No description provided for @incidentAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned'**
+  String get incidentAssigned;
+
+  /// No description provided for @incidentEndorsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Endorsed'**
+  String get incidentEndorsed;
+
+  /// No description provided for @incidentStatusUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get incidentStatusUnavailable;
+
+  /// No description provided for @incidentOperationalStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Incident status: {status}'**
+  String incidentOperationalStatus(String status);
+
+  /// No description provided for @incidentProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared progress'**
+  String get incidentProgress;
+
+  /// No description provided for @incidentEvidence.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared response evidence'**
+  String get incidentEvidence;
+
+  /// No description provided for @incidentNeedsReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Incident flagged for staff review'**
+  String get incidentNeedsReview;
+
+  /// No description provided for @incidentDifferent.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a different incident'**
+  String get incidentDifferent;
+
+  /// No description provided for @incidentReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get incidentReason;
+
+  /// No description provided for @incidentReasonRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a reason for staff review.'**
+  String get incidentReasonRequired;
+
+  /// No description provided for @incidentLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared incident unavailable. Try refreshing.'**
+  String get incidentLoadFailed;
+
+  /// No description provided for @incidentFeedbackFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback was not saved. Please try again.'**
+  String get incidentFeedbackFailed;
+
+  /// No description provided for @incidentMembershipChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'This report\'s linked incident has changed. Refresh the report.'**
+  String get incidentMembershipChanged;
+
+  /// No description provided for @incidentIntegrityConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Incident audit: confirmed on blockchain'**
+  String get incidentIntegrityConfirmed;
+
+  /// No description provided for @incidentIntegrityPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Incident audit: awaiting blockchain confirmation'**
+  String get incidentIntegrityPending;
+
+  /// No description provided for @incidentIntegrityFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Incident audit: blockchain recording failed'**
+  String get incidentIntegrityFailed;
+
+  /// No description provided for @incidentIntegrityNotRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Incident audit: not recorded on blockchain'**
+  String get incidentIntegrityNotRecorded;
+
   /// No description provided for @appLatestVersion.
   ///
   /// In en, this message translates to:

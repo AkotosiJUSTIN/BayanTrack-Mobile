@@ -16,6 +16,12 @@ enum NotificationType {
   assignment,
   @JsonValue('report_updated')
   reportUpdated,
+  @JsonValue('report_linked')
+  reportLinked,
+  @JsonValue('report_unlinked')
+  reportUnlinked,
+  @JsonValue('incident_update')
+  incidentUpdate,
   @JsonValue('kyc_update')
   kycUpdate,
   @JsonValue('terms_updated')

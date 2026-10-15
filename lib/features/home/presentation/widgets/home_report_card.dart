@@ -122,14 +122,25 @@ class HomeReportCard extends StatelessWidget {
                               : l10n.queuePriority,
                           style: theme.textTheme.labelSmall,
                         ),
-                        if (report.linkedReportCount > 1 &&
-                            report.isIncidentRepresentative)
-                          Text(
-                            l10n.linkedReports(report.linkedReportCount),
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.primary,
-                            ),
+                      ],
+                    ),
+                  ],
+                  if (report.incidentGroupId != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.link,
+                          size: 16,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            l10n.sharedIncident,
+                            style: theme.textTheme.labelSmall,
                           ),
+                        ),
                       ],
                     ),
                   ],

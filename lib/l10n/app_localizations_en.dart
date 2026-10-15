@@ -2210,6 +2210,69 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get sharedIncident => 'Linked to a shared incident';
+
+  @override
+  String get incidentAssigned => 'Assigned';
+
+  @override
+  String get incidentEndorsed => 'Endorsed';
+
+  @override
+  String get incidentStatusUnavailable => 'Unavailable';
+
+  @override
+  String incidentOperationalStatus(String status) {
+    return 'Incident status: $status';
+  }
+
+  @override
+  String get incidentProgress => 'Shared progress';
+
+  @override
+  String get incidentEvidence => 'Shared response evidence';
+
+  @override
+  String get incidentNeedsReview => 'Incident flagged for staff review';
+
+  @override
+  String get incidentDifferent => 'This is a different incident';
+
+  @override
+  String get incidentReason => 'Reason';
+
+  @override
+  String get incidentReasonRequired => 'Enter a reason for staff review.';
+
+  @override
+  String get incidentLoadFailed =>
+      'Shared incident unavailable. Try refreshing.';
+
+  @override
+  String get incidentFeedbackFailed =>
+      'Feedback was not saved. Please try again.';
+
+  @override
+  String get incidentMembershipChanged =>
+      'This report\'s linked incident has changed. Refresh the report.';
+
+  @override
+  String get incidentIntegrityConfirmed =>
+      'Incident audit: confirmed on blockchain';
+
+  @override
+  String get incidentIntegrityPending =>
+      'Incident audit: awaiting blockchain confirmation';
+
+  @override
+  String get incidentIntegrityFailed =>
+      'Incident audit: blockchain recording failed';
+
+  @override
+  String get incidentIntegrityNotRecorded =>
+      'Incident audit: not recorded on blockchain';
+
+  @override
   String appLatestVersion(String version) {
     return 'Latest release: $version';
   }
