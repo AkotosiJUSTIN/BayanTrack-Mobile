@@ -1,6 +1,7 @@
 import 'package:bayantrack_mobile/core/constants/api_constants.dart';
 import 'package:bayantrack_mobile/core/domain/failures.dart';
 import 'package:bayantrack_mobile/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:bayantrack_mobile/features/reports/presentation/new_report/quick_report_geo.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -8,6 +9,39 @@ import 'package:mocktail/mocktail.dart';
 class _DioMock extends Mock implements Dio {}
 
 void main() {
+  const liveBaseUrl = String.fromEnvironment('LANDMARK_QA_BASE_URL');
+  test(
+    'live backend returns Philippine streets and landmarks through the mobile repository',
+    () async {
+      final client = Dio(BaseOptions(baseUrl: liveBaseUrl));
+      addTearDown(() => client.close(force: true));
+      final liveRepository = AuthRepositoryImpl(client);
+      for (final pin in [(15.974355, 120.569434), (14.5826, 120.9787)]) {
+        final result = await liveRepository.getNearbyLandmarks(
+          latitude: pin.$1,
+          longitude: pin.$2,
+        );
+        expect(result.isSuccess, isTrue, reason: '${result.failureOrNull}');
+        final landmarks = result.dataOrNull!;
+        expect(landmarks.length, inInclusiveRange(2, 8));
+        expect(landmarks.any((item) => item.isStreet), isTrue);
+        expect(landmarks.any((item) => !item.isStreet), isTrue);
+        expect(landmarks.every((item) => item.distanceMeters <= 250), isTrue);
+        final suggestions = suggestNearbyLandmark(landmarks);
+        expect(
+          suggestions.choices.any(
+            (name) =>
+                landmarks.any((item) => item.isStreet && item.name == name),
+          ),
+          isTrue,
+        );
+      }
+    },
+    skip: liveBaseUrl.isEmpty
+        ? 'Set LANDMARK_QA_BASE_URL to opt into live provider checks.'
+        : false,
+  );
+
   late _DioMock dio;
   late AuthRepositoryImpl repository;
 
@@ -41,6 +75,7 @@ void main() {
             'name': 'Market Road',
             'distance_meters': 12.5,
             'category': 'residential',
+            'is_street': true,
           },
         ],
       });
@@ -53,6 +88,7 @@ void main() {
       expect(landmark.name, 'Market Road');
       expect(landmark.distanceMeters, 12.5);
       expect(landmark.category, 'residential');
+      expect(landmark.isStreet, isTrue);
       verify(
         () => dio.get(
           ApiConstants.nearbyLandmarks,
@@ -117,6 +153,7 @@ void main() {
         longitude: 120,
       );
       expect(recovered.dataOrNull!.single.name, 'Recovered School');
+      expect(recovered.dataOrNull!.single.isStreet, isFalse);
     },
   );
 }

@@ -113,6 +113,37 @@ void main() {
   });
 
   group('nearby landmark suggestions', () {
+    test(
+      'dense POIs keep a nearby street among the five selectable suggestions',
+      () {
+        final result = suggestNearbyLandmark([
+          for (var i = 0; i < 7; i++)
+            NearbyLandmarkModel(
+              name: 'Place $i',
+              distanceMeters: 10 + i.toDouble(),
+            ),
+          const NearbyLandmarkModel(
+            name: 'Aruego Street',
+            distanceMeters: 80,
+            isStreet: true,
+          ),
+          const NearbyLandmarkModel(
+            name: 'Distant Road',
+            distanceMeters: 251,
+            isStreet: true,
+          ),
+        ]);
+        expect(result.prefill, isNull);
+        expect(result.choices, [
+          'Place 0',
+          'Place 1',
+          'Place 2',
+          'Place 3',
+          'Aruego Street',
+        ]);
+      },
+    );
+
     test('prefills one strong nearby place', () {
       final result = suggestNearbyLandmark([
         const NearbyLandmarkModel(name: 'Public Market', distanceMeters: 40),

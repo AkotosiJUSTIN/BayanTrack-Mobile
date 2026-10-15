@@ -99,7 +99,13 @@ NearbyLandmarkSuggestion suggestNearbyLandmark(
       unique.first.distanceMeters <= strongNearbyLandmarkRadiusMeters) {
     return NearbyLandmarkSuggestion(prefill: unique.first.name.trim());
   }
+  final choices = unique.take(5).toList();
+  final streets = unique.where((landmark) => landmark.isStreet);
+  if (streets.isNotEmpty && !choices.contains(streets.first)) {
+    choices[choices.length - 1] = streets.first;
+    choices.sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
+  }
   return NearbyLandmarkSuggestion(
-    choices: unique.take(5).map((landmark) => landmark.name.trim()).toList(),
+    choices: choices.map((landmark) => landmark.name.trim()).toList(),
   );
 }
