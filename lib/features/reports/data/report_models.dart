@@ -248,6 +248,7 @@ sealed class ReportImage with _$ReportImage {
     @JsonKey(name: 'report_id') String? reportId,
     @JsonKey(name: 'user_id') String? userId,
     required String url,
+    String? caption,
     @JsonKey(name: 's3_key') String? s3Key,
     String? filename,
     @JsonKey(name: 'file_size') int? fileSize,

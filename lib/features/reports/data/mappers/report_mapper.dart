@@ -144,6 +144,7 @@ class ReportMapper {
     return ReportImage(
       id: dtoImage.id,
       url: dtoImage.url,
+      caption: dtoImage.caption,
       reportId: dtoImage.reportId,
       userId: dtoImage.userId,
       isPrimary: dtoImage.isPrimary,

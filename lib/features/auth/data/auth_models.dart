@@ -327,11 +327,13 @@ class NearbyLandmarkModel {
   final String name;
   final double distanceMeters;
   final String? category;
+  final bool isStreet;
 
   const NearbyLandmarkModel({
     required this.name,
     required this.distanceMeters,
     this.category,
+    this.isStreet = false,
   });
 
   factory NearbyLandmarkModel.fromJson(Map<String, dynamic> json) {
@@ -340,6 +342,7 @@ class NearbyLandmarkModel {
       distanceMeters:
           (json['distance_meters'] as num?)?.toDouble() ?? double.infinity,
       category: json['category']?.toString(),
+      isStreet: json['is_street'] == true,
     );
   }
 }
