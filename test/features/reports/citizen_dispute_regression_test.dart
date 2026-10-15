@@ -8,9 +8,11 @@ import 'package:bayantrack_mobile/features/reports/data/report_models.dart'
     as dto;
 import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report_enums.dart';
+import 'package:bayantrack_mobile/features/reports/domain/entities/shared_incident.dart';
 import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/citizen_review_screen.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/report_detail_controller.dart';
+import 'package:bayantrack_mobile/features/reports/presentation/shared_incident_provider.dart';
 import 'package:bayantrack_mobile/features/reports/reports_di.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +42,7 @@ Future<void> _pumpReview(
   WidgetTester tester,
   ReportsRepository repository, {
   Report report = _report,
+  SharedIncident? incident,
 }) async {
   await tester.pumpWidget(
     ProviderScope(
@@ -48,6 +51,7 @@ Future<void> _pumpReview(
         reportDetailControllerProvider.overrideWithBuild(
           (_, _) async => report,
         ),
+        sharedIncidentProvider(report.id).overrideWith((_) async => incident),
       ],
       child: MaterialApp(
         supportedLocales: AppLocalizations.supportedLocales,
@@ -99,6 +103,66 @@ void _stubDispute(
 }
 
 void main() {
+  testWidgets(
+    'linked assessment shows shared evidence without an empty-image claim',
+    (tester) async {
+      const report = Report(
+        id: 'linked-review',
+        description: 'Own linked report',
+        status: ReportStatus.resolved,
+        incidentGroupId: 'group-1',
+      );
+      await _pumpReview(
+        tester,
+        _ReportsMock(),
+        report: report,
+        incident: const SharedIncident(
+          groupId: 'group-1',
+          status: 'resolved',
+          reportCount: 3,
+          updates: [
+            IncidentUpdate(
+              id: 'resolution',
+              kind: 'resolve',
+              message: 'Shared road repair completed.',
+            ),
+          ],
+          evidence: [
+            IncidentEvidence(
+              id: 'shared-proof',
+              url: 'https://example.com/shared-proof.jpg',
+            ),
+          ],
+        ),
+      );
+      expect(find.text('Shared road repair completed.'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Image &&
+              widget.image is NetworkImage &&
+              (widget.image as NetworkImage).url ==
+                  'https://example.com/shared-proof.jpg',
+        ),
+        findsOneWidget,
+      );
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(CitizenReviewScreen)),
+      );
+      expect(find.text(l10n.noImages), findsNothing);
+    },
+  );
+
+  testWidgets('unlinked assessment retains the empty report-evidence state', (
+    tester,
+  ) async {
+    await _pumpReview(tester, _ReportsMock());
+    final l10n = AppLocalizations.of(
+      tester.element(find.byType(CitizenReviewScreen)),
+    );
+    expect(find.text(l10n.noImages), findsOneWidget);
+  });
+
   testWidgets(
     'successful dispute closes both routes without lifecycle errors',
     (tester) async {

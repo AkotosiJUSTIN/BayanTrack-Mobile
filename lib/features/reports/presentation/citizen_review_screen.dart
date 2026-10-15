@@ -15,6 +15,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../images/data/images_repository.dart';
 import '../domain/entities/report.dart';
 import 'report_detail_controller.dart';
+import 'widgets/shared_incident_section.dart';
 import '../../auth/presentation/auth_controller.dart';
 
 /// Screen shown to citizens so they can review a barangay-resolved report,
@@ -267,7 +268,16 @@ class _CitizenReviewScreenState extends ConsumerState<CitizenReviewScreen> {
                 const SizedBox(height: 24),
                 _buildResolutionCard(theme),
                 const SizedBox(height: 24),
-                _buildResponseEvidence(theme),
+                if (widget.report.incidentGroupId != null) ...[
+                  CivicSurface(
+                    padding: const EdgeInsets.all(16),
+                    child: SharedIncidentSection(reportId: widget.report.id),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+                if (widget.report.incidentGroupId == null ||
+                    widget.report.resolvedProofImages.isNotEmpty)
+                  _buildResponseEvidence(theme),
                 const SizedBox(height: 24),
                 _buildRatingSection(theme),
                 const SizedBox(height: 24),
