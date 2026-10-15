@@ -1505,6 +1505,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'The protected record is still being prepared. You can check again later.';
 
   @override
+  String get originalSnapshotVerified => 'Original snapshot verified';
+
+  @override
+  String get currentContentChanged =>
+      'Current report details differ from the blockchain checkpoint. Review the change history.';
+
+  @override
   String get integrityVerified => 'Report details match';
 
   @override

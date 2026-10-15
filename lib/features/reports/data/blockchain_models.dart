@@ -9,7 +9,9 @@ part 'blockchain_models.g.dart';
 abstract class BlockchainAuditEntryDto with _$BlockchainAuditEntryDto {
   const factory BlockchainAuditEntryDto({
     @JsonKey(name: 'reportId') @StringValueConverter() required String reportId,
-    @JsonKey(name: 'actionType') @NullableIntConverter() required int actionType,
+    @JsonKey(name: 'actionType')
+    @NullableIntConverter()
+    required int actionType,
     @JsonKey(name: 'actor') required String actor,
     @JsonKey(name: 'timestamp') @NullableIntConverter() required int timestamp,
     @JsonKey(name: 'detailsHash') required String detailsHash,
@@ -28,6 +30,8 @@ abstract class BlockchainVerificationResultDto
     @JsonKey(name: 'report_id') required String reportId,
     @JsonKey(name: 'on_chain_id') @NullableStringConverter() String? onChainId,
     required bool verified,
+    @JsonKey(name: 'original_snapshot_verified') bool? originalSnapshotVerified,
+    @JsonKey(name: 'current_content_verified') bool? currentContentVerified,
     @JsonKey(name: 'status_verified') bool? statusVerified,
     @JsonKey(name: 'blockchain_data')
     required Map<String, dynamic> blockchainData,

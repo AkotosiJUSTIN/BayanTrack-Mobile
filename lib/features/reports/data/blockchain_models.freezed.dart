@@ -296,7 +296,7 @@ as int,
 /// @nodoc
 mixin _$BlockchainVerificationResultDto {
 
-@JsonKey(name: 'report_id') String get reportId;@JsonKey(name: 'on_chain_id')@NullableStringConverter() String? get onChainId; bool get verified;@JsonKey(name: 'status_verified') bool? get statusVerified;@JsonKey(name: 'blockchain_data') Map<String, dynamic> get blockchainData;@JsonKey(name: 'audit_history') List<BlockchainAuditEntryDto> get auditHistory; String get message;@JsonKey(name: 'not_found_on_chain') bool get notFoundOnChain;@JsonKey(name: 'connection_error') bool get connectionError;@JsonKey(name: 'is_anchored') bool get isAnchored;
+@JsonKey(name: 'report_id') String get reportId;@JsonKey(name: 'on_chain_id')@NullableStringConverter() String? get onChainId; bool get verified;@JsonKey(name: 'original_snapshot_verified') bool? get originalSnapshotVerified;@JsonKey(name: 'current_content_verified') bool? get currentContentVerified;@JsonKey(name: 'status_verified') bool? get statusVerified;@JsonKey(name: 'blockchain_data') Map<String, dynamic> get blockchainData;@JsonKey(name: 'audit_history') List<BlockchainAuditEntryDto> get auditHistory; String get message;@JsonKey(name: 'not_found_on_chain') bool get notFoundOnChain;@JsonKey(name: 'connection_error') bool get connectionError;@JsonKey(name: 'is_anchored') bool get isAnchored;
 /// Create a copy of BlockchainVerificationResultDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -309,16 +309,16 @@ $BlockchainVerificationResultDtoCopyWith<BlockchainVerificationResultDto> get co
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BlockchainVerificationResultDto&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.onChainId, onChainId) || other.onChainId == onChainId)&&(identical(other.verified, verified) || other.verified == verified)&&(identical(other.statusVerified, statusVerified) || other.statusVerified == statusVerified)&&const DeepCollectionEquality().equals(other.blockchainData, blockchainData)&&const DeepCollectionEquality().equals(other.auditHistory, auditHistory)&&(identical(other.message, message) || other.message == message)&&(identical(other.notFoundOnChain, notFoundOnChain) || other.notFoundOnChain == notFoundOnChain)&&(identical(other.connectionError, connectionError) || other.connectionError == connectionError)&&(identical(other.isAnchored, isAnchored) || other.isAnchored == isAnchored));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BlockchainVerificationResultDto&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.onChainId, onChainId) || other.onChainId == onChainId)&&(identical(other.verified, verified) || other.verified == verified)&&(identical(other.originalSnapshotVerified, originalSnapshotVerified) || other.originalSnapshotVerified == originalSnapshotVerified)&&(identical(other.currentContentVerified, currentContentVerified) || other.currentContentVerified == currentContentVerified)&&(identical(other.statusVerified, statusVerified) || other.statusVerified == statusVerified)&&const DeepCollectionEquality().equals(other.blockchainData, blockchainData)&&const DeepCollectionEquality().equals(other.auditHistory, auditHistory)&&(identical(other.message, message) || other.message == message)&&(identical(other.notFoundOnChain, notFoundOnChain) || other.notFoundOnChain == notFoundOnChain)&&(identical(other.connectionError, connectionError) || other.connectionError == connectionError)&&(identical(other.isAnchored, isAnchored) || other.isAnchored == isAnchored));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,reportId,onChainId,verified,statusVerified,const DeepCollectionEquality().hash(blockchainData),const DeepCollectionEquality().hash(auditHistory),message,notFoundOnChain,connectionError,isAnchored);
+int get hashCode => Object.hash(runtimeType,reportId,onChainId,verified,originalSnapshotVerified,currentContentVerified,statusVerified,const DeepCollectionEquality().hash(blockchainData),const DeepCollectionEquality().hash(auditHistory),message,notFoundOnChain,connectionError,isAnchored);
 
 @override
 String toString() {
-  return 'BlockchainVerificationResultDto(reportId: $reportId, onChainId: $onChainId, verified: $verified, statusVerified: $statusVerified, blockchainData: $blockchainData, auditHistory: $auditHistory, message: $message, notFoundOnChain: $notFoundOnChain, connectionError: $connectionError, isAnchored: $isAnchored)';
+  return 'BlockchainVerificationResultDto(reportId: $reportId, onChainId: $onChainId, verified: $verified, originalSnapshotVerified: $originalSnapshotVerified, currentContentVerified: $currentContentVerified, statusVerified: $statusVerified, blockchainData: $blockchainData, auditHistory: $auditHistory, message: $message, notFoundOnChain: $notFoundOnChain, connectionError: $connectionError, isAnchored: $isAnchored)';
 }
 
 
@@ -329,7 +329,7 @@ abstract mixin class $BlockchainVerificationResultDtoCopyWith<$Res>  {
   factory $BlockchainVerificationResultDtoCopyWith(BlockchainVerificationResultDto value, $Res Function(BlockchainVerificationResultDto) _then) = _$BlockchainVerificationResultDtoCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'report_id') String reportId,@JsonKey(name: 'on_chain_id')@NullableStringConverter() String? onChainId, bool verified,@JsonKey(name: 'status_verified') bool? statusVerified,@JsonKey(name: 'blockchain_data') Map<String, dynamic> blockchainData,@JsonKey(name: 'audit_history') List<BlockchainAuditEntryDto> auditHistory, String message,@JsonKey(name: 'not_found_on_chain') bool notFoundOnChain,@JsonKey(name: 'connection_error') bool connectionError,@JsonKey(name: 'is_anchored') bool isAnchored
+@JsonKey(name: 'report_id') String reportId,@JsonKey(name: 'on_chain_id')@NullableStringConverter() String? onChainId, bool verified,@JsonKey(name: 'original_snapshot_verified') bool? originalSnapshotVerified,@JsonKey(name: 'current_content_verified') bool? currentContentVerified,@JsonKey(name: 'status_verified') bool? statusVerified,@JsonKey(name: 'blockchain_data') Map<String, dynamic> blockchainData,@JsonKey(name: 'audit_history') List<BlockchainAuditEntryDto> auditHistory, String message,@JsonKey(name: 'not_found_on_chain') bool notFoundOnChain,@JsonKey(name: 'connection_error') bool connectionError,@JsonKey(name: 'is_anchored') bool isAnchored
 });
 
 
@@ -346,12 +346,14 @@ class _$BlockchainVerificationResultDtoCopyWithImpl<$Res>
 
 /// Create a copy of BlockchainVerificationResultDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? reportId = null,Object? onChainId = freezed,Object? verified = null,Object? statusVerified = freezed,Object? blockchainData = null,Object? auditHistory = null,Object? message = null,Object? notFoundOnChain = null,Object? connectionError = null,Object? isAnchored = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? reportId = null,Object? onChainId = freezed,Object? verified = null,Object? originalSnapshotVerified = freezed,Object? currentContentVerified = freezed,Object? statusVerified = freezed,Object? blockchainData = null,Object? auditHistory = null,Object? message = null,Object? notFoundOnChain = null,Object? connectionError = null,Object? isAnchored = null,}) {
   return _then(_self.copyWith(
 reportId: null == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
 as String,onChainId: freezed == onChainId ? _self.onChainId : onChainId // ignore: cast_nullable_to_non_nullable
 as String?,verified: null == verified ? _self.verified : verified // ignore: cast_nullable_to_non_nullable
-as bool,statusVerified: freezed == statusVerified ? _self.statusVerified : statusVerified // ignore: cast_nullable_to_non_nullable
+as bool,originalSnapshotVerified: freezed == originalSnapshotVerified ? _self.originalSnapshotVerified : originalSnapshotVerified // ignore: cast_nullable_to_non_nullable
+as bool?,currentContentVerified: freezed == currentContentVerified ? _self.currentContentVerified : currentContentVerified // ignore: cast_nullable_to_non_nullable
+as bool?,statusVerified: freezed == statusVerified ? _self.statusVerified : statusVerified // ignore: cast_nullable_to_non_nullable
 as bool?,blockchainData: null == blockchainData ? _self.blockchainData : blockchainData // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,auditHistory: null == auditHistory ? _self.auditHistory : auditHistory // ignore: cast_nullable_to_non_nullable
 as List<BlockchainAuditEntryDto>,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
@@ -443,10 +445,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'report_id')  String reportId, @JsonKey(name: 'on_chain_id')@NullableStringConverter()  String? onChainId,  bool verified, @JsonKey(name: 'status_verified')  bool? statusVerified, @JsonKey(name: 'blockchain_data')  Map<String, dynamic> blockchainData, @JsonKey(name: 'audit_history')  List<BlockchainAuditEntryDto> auditHistory,  String message, @JsonKey(name: 'not_found_on_chain')  bool notFoundOnChain, @JsonKey(name: 'connection_error')  bool connectionError, @JsonKey(name: 'is_anchored')  bool isAnchored)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'report_id')  String reportId, @JsonKey(name: 'on_chain_id')@NullableStringConverter()  String? onChainId,  bool verified, @JsonKey(name: 'original_snapshot_verified')  bool? originalSnapshotVerified, @JsonKey(name: 'current_content_verified')  bool? currentContentVerified, @JsonKey(name: 'status_verified')  bool? statusVerified, @JsonKey(name: 'blockchain_data')  Map<String, dynamic> blockchainData, @JsonKey(name: 'audit_history')  List<BlockchainAuditEntryDto> auditHistory,  String message, @JsonKey(name: 'not_found_on_chain')  bool notFoundOnChain, @JsonKey(name: 'connection_error')  bool connectionError, @JsonKey(name: 'is_anchored')  bool isAnchored)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BlockchainVerificationResultDto() when $default != null:
-return $default(_that.reportId,_that.onChainId,_that.verified,_that.statusVerified,_that.blockchainData,_that.auditHistory,_that.message,_that.notFoundOnChain,_that.connectionError,_that.isAnchored);case _:
+return $default(_that.reportId,_that.onChainId,_that.verified,_that.originalSnapshotVerified,_that.currentContentVerified,_that.statusVerified,_that.blockchainData,_that.auditHistory,_that.message,_that.notFoundOnChain,_that.connectionError,_that.isAnchored);case _:
   return orElse();
 
 }
@@ -464,10 +466,10 @@ return $default(_that.reportId,_that.onChainId,_that.verified,_that.statusVerifi
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'report_id')  String reportId, @JsonKey(name: 'on_chain_id')@NullableStringConverter()  String? onChainId,  bool verified, @JsonKey(name: 'status_verified')  bool? statusVerified, @JsonKey(name: 'blockchain_data')  Map<String, dynamic> blockchainData, @JsonKey(name: 'audit_history')  List<BlockchainAuditEntryDto> auditHistory,  String message, @JsonKey(name: 'not_found_on_chain')  bool notFoundOnChain, @JsonKey(name: 'connection_error')  bool connectionError, @JsonKey(name: 'is_anchored')  bool isAnchored)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'report_id')  String reportId, @JsonKey(name: 'on_chain_id')@NullableStringConverter()  String? onChainId,  bool verified, @JsonKey(name: 'original_snapshot_verified')  bool? originalSnapshotVerified, @JsonKey(name: 'current_content_verified')  bool? currentContentVerified, @JsonKey(name: 'status_verified')  bool? statusVerified, @JsonKey(name: 'blockchain_data')  Map<String, dynamic> blockchainData, @JsonKey(name: 'audit_history')  List<BlockchainAuditEntryDto> auditHistory,  String message, @JsonKey(name: 'not_found_on_chain')  bool notFoundOnChain, @JsonKey(name: 'connection_error')  bool connectionError, @JsonKey(name: 'is_anchored')  bool isAnchored)  $default,) {final _that = this;
 switch (_that) {
 case _BlockchainVerificationResultDto():
-return $default(_that.reportId,_that.onChainId,_that.verified,_that.statusVerified,_that.blockchainData,_that.auditHistory,_that.message,_that.notFoundOnChain,_that.connectionError,_that.isAnchored);case _:
+return $default(_that.reportId,_that.onChainId,_that.verified,_that.originalSnapshotVerified,_that.currentContentVerified,_that.statusVerified,_that.blockchainData,_that.auditHistory,_that.message,_that.notFoundOnChain,_that.connectionError,_that.isAnchored);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -484,10 +486,10 @@ return $default(_that.reportId,_that.onChainId,_that.verified,_that.statusVerifi
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'report_id')  String reportId, @JsonKey(name: 'on_chain_id')@NullableStringConverter()  String? onChainId,  bool verified, @JsonKey(name: 'status_verified')  bool? statusVerified, @JsonKey(name: 'blockchain_data')  Map<String, dynamic> blockchainData, @JsonKey(name: 'audit_history')  List<BlockchainAuditEntryDto> auditHistory,  String message, @JsonKey(name: 'not_found_on_chain')  bool notFoundOnChain, @JsonKey(name: 'connection_error')  bool connectionError, @JsonKey(name: 'is_anchored')  bool isAnchored)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'report_id')  String reportId, @JsonKey(name: 'on_chain_id')@NullableStringConverter()  String? onChainId,  bool verified, @JsonKey(name: 'original_snapshot_verified')  bool? originalSnapshotVerified, @JsonKey(name: 'current_content_verified')  bool? currentContentVerified, @JsonKey(name: 'status_verified')  bool? statusVerified, @JsonKey(name: 'blockchain_data')  Map<String, dynamic> blockchainData, @JsonKey(name: 'audit_history')  List<BlockchainAuditEntryDto> auditHistory,  String message, @JsonKey(name: 'not_found_on_chain')  bool notFoundOnChain, @JsonKey(name: 'connection_error')  bool connectionError, @JsonKey(name: 'is_anchored')  bool isAnchored)?  $default,) {final _that = this;
 switch (_that) {
 case _BlockchainVerificationResultDto() when $default != null:
-return $default(_that.reportId,_that.onChainId,_that.verified,_that.statusVerified,_that.blockchainData,_that.auditHistory,_that.message,_that.notFoundOnChain,_that.connectionError,_that.isAnchored);case _:
+return $default(_that.reportId,_that.onChainId,_that.verified,_that.originalSnapshotVerified,_that.currentContentVerified,_that.statusVerified,_that.blockchainData,_that.auditHistory,_that.message,_that.notFoundOnChain,_that.connectionError,_that.isAnchored);case _:
   return null;
 
 }
@@ -499,12 +501,14 @@ return $default(_that.reportId,_that.onChainId,_that.verified,_that.statusVerifi
 @JsonSerializable()
 
 class _BlockchainVerificationResultDto implements BlockchainVerificationResultDto {
-  const _BlockchainVerificationResultDto({@JsonKey(name: 'report_id') required this.reportId, @JsonKey(name: 'on_chain_id')@NullableStringConverter() this.onChainId, required this.verified, @JsonKey(name: 'status_verified') this.statusVerified, @JsonKey(name: 'blockchain_data') required final  Map<String, dynamic> blockchainData, @JsonKey(name: 'audit_history') required final  List<BlockchainAuditEntryDto> auditHistory, required this.message, @JsonKey(name: 'not_found_on_chain') this.notFoundOnChain = false, @JsonKey(name: 'connection_error') this.connectionError = false, @JsonKey(name: 'is_anchored') this.isAnchored = true}): _blockchainData = blockchainData,_auditHistory = auditHistory;
+  const _BlockchainVerificationResultDto({@JsonKey(name: 'report_id') required this.reportId, @JsonKey(name: 'on_chain_id')@NullableStringConverter() this.onChainId, required this.verified, @JsonKey(name: 'original_snapshot_verified') this.originalSnapshotVerified, @JsonKey(name: 'current_content_verified') this.currentContentVerified, @JsonKey(name: 'status_verified') this.statusVerified, @JsonKey(name: 'blockchain_data') required final  Map<String, dynamic> blockchainData, @JsonKey(name: 'audit_history') required final  List<BlockchainAuditEntryDto> auditHistory, required this.message, @JsonKey(name: 'not_found_on_chain') this.notFoundOnChain = false, @JsonKey(name: 'connection_error') this.connectionError = false, @JsonKey(name: 'is_anchored') this.isAnchored = true}): _blockchainData = blockchainData,_auditHistory = auditHistory;
   factory _BlockchainVerificationResultDto.fromJson(Map<String, dynamic> json) => _$BlockchainVerificationResultDtoFromJson(json);
 
 @override@JsonKey(name: 'report_id') final  String reportId;
 @override@JsonKey(name: 'on_chain_id')@NullableStringConverter() final  String? onChainId;
 @override final  bool verified;
+@override@JsonKey(name: 'original_snapshot_verified') final  bool? originalSnapshotVerified;
+@override@JsonKey(name: 'current_content_verified') final  bool? currentContentVerified;
 @override@JsonKey(name: 'status_verified') final  bool? statusVerified;
  final  Map<String, dynamic> _blockchainData;
 @override@JsonKey(name: 'blockchain_data') Map<String, dynamic> get blockchainData {
@@ -538,16 +542,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BlockchainVerificationResultDto&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.onChainId, onChainId) || other.onChainId == onChainId)&&(identical(other.verified, verified) || other.verified == verified)&&(identical(other.statusVerified, statusVerified) || other.statusVerified == statusVerified)&&const DeepCollectionEquality().equals(other._blockchainData, _blockchainData)&&const DeepCollectionEquality().equals(other._auditHistory, _auditHistory)&&(identical(other.message, message) || other.message == message)&&(identical(other.notFoundOnChain, notFoundOnChain) || other.notFoundOnChain == notFoundOnChain)&&(identical(other.connectionError, connectionError) || other.connectionError == connectionError)&&(identical(other.isAnchored, isAnchored) || other.isAnchored == isAnchored));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BlockchainVerificationResultDto&&(identical(other.reportId, reportId) || other.reportId == reportId)&&(identical(other.onChainId, onChainId) || other.onChainId == onChainId)&&(identical(other.verified, verified) || other.verified == verified)&&(identical(other.originalSnapshotVerified, originalSnapshotVerified) || other.originalSnapshotVerified == originalSnapshotVerified)&&(identical(other.currentContentVerified, currentContentVerified) || other.currentContentVerified == currentContentVerified)&&(identical(other.statusVerified, statusVerified) || other.statusVerified == statusVerified)&&const DeepCollectionEquality().equals(other._blockchainData, _blockchainData)&&const DeepCollectionEquality().equals(other._auditHistory, _auditHistory)&&(identical(other.message, message) || other.message == message)&&(identical(other.notFoundOnChain, notFoundOnChain) || other.notFoundOnChain == notFoundOnChain)&&(identical(other.connectionError, connectionError) || other.connectionError == connectionError)&&(identical(other.isAnchored, isAnchored) || other.isAnchored == isAnchored));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,reportId,onChainId,verified,statusVerified,const DeepCollectionEquality().hash(_blockchainData),const DeepCollectionEquality().hash(_auditHistory),message,notFoundOnChain,connectionError,isAnchored);
+int get hashCode => Object.hash(runtimeType,reportId,onChainId,verified,originalSnapshotVerified,currentContentVerified,statusVerified,const DeepCollectionEquality().hash(_blockchainData),const DeepCollectionEquality().hash(_auditHistory),message,notFoundOnChain,connectionError,isAnchored);
 
 @override
 String toString() {
-  return 'BlockchainVerificationResultDto(reportId: $reportId, onChainId: $onChainId, verified: $verified, statusVerified: $statusVerified, blockchainData: $blockchainData, auditHistory: $auditHistory, message: $message, notFoundOnChain: $notFoundOnChain, connectionError: $connectionError, isAnchored: $isAnchored)';
+  return 'BlockchainVerificationResultDto(reportId: $reportId, onChainId: $onChainId, verified: $verified, originalSnapshotVerified: $originalSnapshotVerified, currentContentVerified: $currentContentVerified, statusVerified: $statusVerified, blockchainData: $blockchainData, auditHistory: $auditHistory, message: $message, notFoundOnChain: $notFoundOnChain, connectionError: $connectionError, isAnchored: $isAnchored)';
 }
 
 
@@ -558,7 +562,7 @@ abstract mixin class _$BlockchainVerificationResultDtoCopyWith<$Res> implements 
   factory _$BlockchainVerificationResultDtoCopyWith(_BlockchainVerificationResultDto value, $Res Function(_BlockchainVerificationResultDto) _then) = __$BlockchainVerificationResultDtoCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'report_id') String reportId,@JsonKey(name: 'on_chain_id')@NullableStringConverter() String? onChainId, bool verified,@JsonKey(name: 'status_verified') bool? statusVerified,@JsonKey(name: 'blockchain_data') Map<String, dynamic> blockchainData,@JsonKey(name: 'audit_history') List<BlockchainAuditEntryDto> auditHistory, String message,@JsonKey(name: 'not_found_on_chain') bool notFoundOnChain,@JsonKey(name: 'connection_error') bool connectionError,@JsonKey(name: 'is_anchored') bool isAnchored
+@JsonKey(name: 'report_id') String reportId,@JsonKey(name: 'on_chain_id')@NullableStringConverter() String? onChainId, bool verified,@JsonKey(name: 'original_snapshot_verified') bool? originalSnapshotVerified,@JsonKey(name: 'current_content_verified') bool? currentContentVerified,@JsonKey(name: 'status_verified') bool? statusVerified,@JsonKey(name: 'blockchain_data') Map<String, dynamic> blockchainData,@JsonKey(name: 'audit_history') List<BlockchainAuditEntryDto> auditHistory, String message,@JsonKey(name: 'not_found_on_chain') bool notFoundOnChain,@JsonKey(name: 'connection_error') bool connectionError,@JsonKey(name: 'is_anchored') bool isAnchored
 });
 
 
@@ -575,12 +579,14 @@ class __$BlockchainVerificationResultDtoCopyWithImpl<$Res>
 
 /// Create a copy of BlockchainVerificationResultDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? reportId = null,Object? onChainId = freezed,Object? verified = null,Object? statusVerified = freezed,Object? blockchainData = null,Object? auditHistory = null,Object? message = null,Object? notFoundOnChain = null,Object? connectionError = null,Object? isAnchored = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? reportId = null,Object? onChainId = freezed,Object? verified = null,Object? originalSnapshotVerified = freezed,Object? currentContentVerified = freezed,Object? statusVerified = freezed,Object? blockchainData = null,Object? auditHistory = null,Object? message = null,Object? notFoundOnChain = null,Object? connectionError = null,Object? isAnchored = null,}) {
   return _then(_BlockchainVerificationResultDto(
 reportId: null == reportId ? _self.reportId : reportId // ignore: cast_nullable_to_non_nullable
 as String,onChainId: freezed == onChainId ? _self.onChainId : onChainId // ignore: cast_nullable_to_non_nullable
 as String?,verified: null == verified ? _self.verified : verified // ignore: cast_nullable_to_non_nullable
-as bool,statusVerified: freezed == statusVerified ? _self.statusVerified : statusVerified // ignore: cast_nullable_to_non_nullable
+as bool,originalSnapshotVerified: freezed == originalSnapshotVerified ? _self.originalSnapshotVerified : originalSnapshotVerified // ignore: cast_nullable_to_non_nullable
+as bool?,currentContentVerified: freezed == currentContentVerified ? _self.currentContentVerified : currentContentVerified // ignore: cast_nullable_to_non_nullable
+as bool?,statusVerified: freezed == statusVerified ? _self.statusVerified : statusVerified // ignore: cast_nullable_to_non_nullable
 as bool?,blockchainData: null == blockchainData ? _self._blockchainData : blockchainData // ignore: cast_nullable_to_non_nullable
 as Map<String, dynamic>,auditHistory: null == auditHistory ? _self._auditHistory : auditHistory // ignore: cast_nullable_to_non_nullable
 as List<BlockchainAuditEntryDto>,message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable

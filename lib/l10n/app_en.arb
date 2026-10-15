@@ -477,6 +477,8 @@
   "noAuditEntries": "No record history is available yet.",
   "blockchainAnchored": "A protected copy of this report's record is saved on the blockchain. Check it to see whether the report details match.",
   "blockchainPending": "The protected record is still being prepared. You can check again later.",
+  "originalSnapshotVerified": "Original snapshot verified",
+  "currentContentChanged": "Current report details differ from the blockchain checkpoint. Review the change history.",
   "integrityVerified": "Report details match",
   "contentVerified": "Details match; status update pending",
   "notYetAnchored": "Protected record not ready yet",
