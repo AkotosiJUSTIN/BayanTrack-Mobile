@@ -10,11 +10,13 @@ import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.
 import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report_enums.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report_image.dart';
+import 'package:bayantrack_mobile/features/reports/domain/entities/shared_incident.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/blockchain_verification.dart';
 import 'package:bayantrack_mobile/features/reports/domain/reports_repository.dart';
 import 'package:bayantrack_mobile/features/reports/reports_di.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/report_detail_controller.dart';
 import 'package:bayantrack_mobile/features/reports/presentation/report_detail_screen.dart';
+import 'package:bayantrack_mobile/features/reports/presentation/shared_incident_provider.dart';
 import 'package:bayantrack_mobile/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,6 +43,7 @@ Report _report({
   bool isStale = false,
   DateTime? citizenVerifiedAt,
   bool? citizenConfirmedResolved,
+  String? incidentGroupId,
 }) => Report(
   id: 'RPT-DETAIL-UI-1',
   isStale: isStale,
@@ -62,6 +65,8 @@ Report _report({
   verifiedAt: DateTime(2026, 8, 27, 11),
   citizenVerifiedAt: citizenVerifiedAt,
   citizenConfirmedResolved: citizenConfirmedResolved,
+  incidentGroupId: incidentGroupId,
+  linkedReportCount: incidentGroupId == null ? 1 : 3,
 );
 
 Future<void> _pumpDetail(
@@ -89,6 +94,13 @@ Future<void> _pumpDetail(
         backendReachabilityProvider.overrideWith(_TestReachability.new),
         reportDetailControllerProvider.overrideWithBuild(
           (_, _) async => report ?? _report(),
+        ),
+        sharedIncidentProvider('RPT-DETAIL-UI-1').overrideWith(
+          (_) async => const SharedIncident(
+            groupId: 'group-1',
+            status: 'in_progress',
+            reportCount: 3,
+          ),
         ),
       ],
       child: MaterialApp(
@@ -274,6 +286,23 @@ void main() {
     await _pumpDetail(tester, report: _report(status: ReportStatus.resolved));
 
     expect(find.text('Review & Sign Off'), findsOneWidget);
+  });
+
+  testWidgets('group member keeps independent citizen review and status', (
+    tester,
+  ) async {
+    await _pumpDetail(
+      tester,
+      report: _report(
+        status: ReportStatus.resolved,
+        incidentGroupId: 'group-1',
+      ),
+    );
+
+    expect(find.text('Linked to a shared incident'), findsOneWidget);
+    expect(find.text('Incident status: In Progress'), findsOneWidget);
+    expect(find.text('Review & Sign Off'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets(

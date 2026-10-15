@@ -2221,6 +2221,70 @@ class AppLocalizationsFil extends AppLocalizations {
   }
 
   @override
+  String get sharedIncident => 'Naka-link sa iisang insidente';
+
+  @override
+  String get incidentAssigned => 'Naitalaga';
+
+  @override
+  String get incidentEndorsed => 'Naipasa';
+
+  @override
+  String get incidentStatusUnavailable => 'Hindi makuha';
+
+  @override
+  String incidentOperationalStatus(String status) {
+    return 'Katayuan ng insidente: $status';
+  }
+
+  @override
+  String get incidentProgress => 'Mga update sa insidente';
+
+  @override
+  String get incidentEvidence => 'Ebidensya ng tugon sa insidente';
+
+  @override
+  String get incidentNeedsReview =>
+      'Naka-flag ang insidente para sa pagsusuri ng kawani';
+
+  @override
+  String get incidentDifferent => 'Ibang insidente ito';
+
+  @override
+  String get incidentReason => 'Dahilan';
+
+  @override
+  String get incidentReasonRequired =>
+      'Maglagay ng dahilan para sa pagsusuri ng kawani.';
+
+  @override
+  String get incidentLoadFailed =>
+      'Hindi makuha ang insidente. Subukang i-refresh.';
+
+  @override
+  String get incidentFeedbackFailed => 'Hindi na-save ang puna. Subukan muli.';
+
+  @override
+  String get incidentMembershipChanged =>
+      'Nagbago ang naka-link na insidente. I-refresh ang ulat.';
+
+  @override
+  String get incidentIntegrityConfirmed =>
+      'Audit ng insidente: nakumpirma sa blockchain';
+
+  @override
+  String get incidentIntegrityPending =>
+      'Audit ng insidente: hinihintay ang kumpirmasyon sa blockchain';
+
+  @override
+  String get incidentIntegrityFailed =>
+      'Audit ng insidente: nabigo ang pagrekord sa blockchain';
+
+  @override
+  String get incidentIntegrityNotRecorded =>
+      'Audit ng insidente: hindi nakarekord sa blockchain';
+
+  @override
   String appLatestVersion(String version) {
     return 'Pinakabagong release: $version';
   }

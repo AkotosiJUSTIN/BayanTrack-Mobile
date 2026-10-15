@@ -21,6 +21,7 @@ import '../domain/entities/report_image.dart';
 import 'citizen_review_screen.dart';
 import 'report_detail_controller.dart';
 import 'widgets/priority_badge.dart';
+import 'widgets/shared_incident_section.dart';
 import 'report_labels.dart';
 
 /// Report Detail Screen showing full report with images and details
@@ -334,7 +335,6 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
         (report.municipalityId == defaultMunicipalityId
             ? bundledUrdanetaMunicipality
             : null);
-    final linkedReportCount = report.linkedReportCount;
     final reportShortId = report.id.length > 8
         ? report.id.substring(0, 8)
         : report.id;
@@ -409,13 +409,6 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              if (linkedReportCount > 1 && report.isIncidentRepresentative)
-                Text(
-                  l10n.confirmedLinkedReports(linkedReportCount),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
               if (report.credibilityScore != null)
                 Text(
                   l10n.credibility(report.credibilityScore!.round()),
@@ -454,6 +447,11 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
               ),
             ),
           const SizedBox(height: 16),
+
+          if (report.incidentGroupId != null) ...[
+            SharedIncidentSection(reportId: report.id),
+            const SizedBox(height: 24),
+          ],
 
           if (report.createdAt != null ||
               report.submittedAt != null ||

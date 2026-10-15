@@ -474,6 +474,18 @@ class _NotificationSkeleton extends StatelessWidget {
       color: theme.colorScheme.primary,
       icon: Icons.edit_note_outlined,
     ),
+    NotificationType.reportLinked => (
+      color: theme.colorScheme.secondary,
+      icon: Icons.link,
+    ),
+    NotificationType.reportUnlinked => (
+      color: theme.colorScheme.secondary,
+      icon: Icons.link_off,
+    ),
+    NotificationType.incidentUpdate => (
+      color: theme.colorScheme.primary,
+      icon: Icons.update,
+    ),
     NotificationType.kycUpdate => (
       color: theme.colorScheme.secondary,
       icon: Icons.verified_user_outlined,

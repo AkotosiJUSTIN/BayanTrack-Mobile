@@ -7,6 +7,7 @@ import '../../kyc/presentation/kyc_controller.dart';
 import '../../notifications/presentation/notifications_controller.dart';
 import '../../reports/presentation/report_detail_controller.dart';
 import '../../reports/presentation/reports_controller.dart';
+import '../../reports/presentation/shared_incident_provider.dart';
 import '../auth_di.dart';
 import 'auth_controller.dart';
 import 'profile_controller.dart';
@@ -75,6 +76,7 @@ class AuthRealtimeController {
       _ref.read(myReportsRefreshProvider.notifier).increment();
       if (event.entityKind == 'report') {
         _ref.invalidate(reportDetailControllerProvider(event.entityId));
+        _ref.invalidate(sharedIncidentProvider(event.entityId));
       }
     }
     if (targets.contains(RealtimeTarget.notifications)) {
