@@ -477,6 +477,8 @@
   "noAuditEntries": "Wala pang kasaysayan ng rekord.",
   "blockchainAnchored": "May protektadong kopya ng rekord ng ulat sa blockchain. Suriin ito upang malaman kung magkatugma ang mga detalye.",
   "blockchainPending": "Inihahanda pa ang protektadong rekord. Maaari mo itong suriin muli mamaya.",
+  "originalSnapshotVerified": "Napatunayan ang orihinal na rekord",
+  "currentContentChanged": "Iba na ang kasalukuyang detalye ng ulat sa blockchain checkpoint. Suriin ang kasaysayan ng mga pagbabago.",
   "integrityVerified": "Magkatugma ang mga detalye",
   "contentVerified": "Magkatugma ang detalye; hinihintay ang update sa status",
   "notYetAnchored": "Hindi pa handa ang protektadong rekord",

@@ -1509,6 +1509,13 @@ class AppLocalizationsFil extends AppLocalizations {
       'Inihahanda pa ang protektadong rekord. Maaari mo itong suriin muli mamaya.';
 
   @override
+  String get originalSnapshotVerified => 'Napatunayan ang orihinal na rekord';
+
+  @override
+  String get currentContentChanged =>
+      'Iba na ang kasalukuyang detalye ng ulat sa blockchain checkpoint. Suriin ang kasaysayan ng mga pagbabago.';
+
+  @override
   String get integrityVerified => 'Magkatugma ang mga detalye';
 
   @override

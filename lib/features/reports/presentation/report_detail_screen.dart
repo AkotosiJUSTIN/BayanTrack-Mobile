@@ -1106,6 +1106,12 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       statusIcon = Icons.cloud_off;
       title = l10n.blockchainUnavailable;
       message = l10n.recordCheckUnavailable;
+    } else if (result.originalSnapshotVerified == true &&
+        result.currentContentVerified == false) {
+      statusColor = warningColor;
+      statusIcon = Icons.history;
+      title = l10n.originalSnapshotVerified;
+      message = l10n.currentContentChanged;
     } else {
       statusColor = errorColor;
       statusIcon = Icons.warning;

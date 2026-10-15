@@ -383,6 +383,42 @@ void main() {
     );
   });
 
+  testWidgets(
+    'changed content shows original snapshot proof without current success',
+    (tester) async {
+      final repository = _ReportsMock();
+      when(
+        () => repository.verifyReport('RPT-DETAIL-UI-1', cachedOnly: true),
+      ).thenAnswer((_) async => const Err(ServerFailure('No saved proof')));
+      when(() => repository.verifyReport('RPT-DETAIL-UI-1')).thenAnswer(
+        (_) async => const Success(
+          BlockchainVerificationResult(
+            reportId: 'RPT-DETAIL-UI-1',
+            verified: false,
+            originalSnapshotVerified: true,
+            currentContentVerified: false,
+            blockchainData: {},
+            auditHistory: [],
+            message: 'Changed content',
+          ),
+        ),
+      );
+      await _pumpDetail(tester, repository: repository);
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(ReportDetailScreen)),
+      );
+      final button = find.text(l10n.verifyNow);
+      await tester.scrollUntilVisible(button, 400);
+      await tester.pumpAndSettle();
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.originalSnapshotVerified), findsOneWidget);
+      expect(find.text(l10n.currentContentChanged), findsOneWidget);
+      expect(find.text(l10n.integrityVerified), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('keeps the same hierarchy in dark mode', (tester) async {
     await _pumpDetail(tester, theme: AppTheme.dark);
 

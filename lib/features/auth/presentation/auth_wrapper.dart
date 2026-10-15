@@ -69,11 +69,18 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     ref.listenManual<bool>(isOnlineProvider, (_, next) {
       _syncEvidenceForCurrentAuth(next);
       _syncReportOutboxForCurrentAuth(next);
+      if (next) _recoverPushRegistration();
     }, fireImmediately: true);
-    ref.listenManual<BackendReachability>(backendReachabilityProvider, (_, _) {
+    ref.listenManual<BackendReachability>(backendReachabilityProvider, (
+      _,
+      next,
+    ) {
       final isOnline = ref.read(isOnlineProvider);
       _syncEvidenceForCurrentAuth(isOnline);
       _syncReportOutboxForCurrentAuth(isOnline);
+      if (isOnline && next == BackendReachability.reachable) {
+        _recoverPushRegistration();
+      }
     }, fireImmediately: true);
     ref.listenManual<AsyncValue<SystemGovernanceState>>(
       systemGovernanceProvider,
@@ -169,6 +176,23 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     final state = ref.read(authControllerProvider);
     final userId = state is AuthSuccess ? state.user?.id : null;
     _syncEvidenceQueue(userId, isOnline);
+  }
+
+  void _recoverPushRegistration() {
+    final state = ref.read(authControllerProvider);
+    if (state is! AuthSuccess || state.user == null) return;
+    unawaited(
+      ref
+          .read(pushServiceProvider)
+          .ensureRegistered(
+            'android',
+            ref.read(dioProvider),
+            userId: state.user!.id,
+          )
+          .catchError((Object error) {
+            debugPrint('Push registration recovery failed: $error');
+          }),
+    );
   }
 
   void _syncReportOutboxForCurrentAuth(bool isOnline) {

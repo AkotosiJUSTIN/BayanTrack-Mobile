@@ -40,6 +40,11 @@ class BlockchainVerificationResult extends Equatable {
   final String reportId;
   final String? onChainId;
   final bool verified;
+
+  /// Hash comparisons only; null when no proof/check is available.
+  final bool? originalSnapshotVerified;
+  final bool? currentContentVerified;
+
   /// Null for v4 checkpoints because workflow status remains off-chain.
   final bool? statusVerified;
   final Map<String, dynamic> blockchainData;
@@ -60,6 +65,8 @@ class BlockchainVerificationResult extends Equatable {
     required this.reportId,
     this.onChainId,
     required this.verified,
+    this.originalSnapshotVerified,
+    this.currentContentVerified,
     this.statusVerified,
     required this.blockchainData,
     required this.auditHistory,
@@ -74,6 +81,8 @@ class BlockchainVerificationResult extends Equatable {
     reportId,
     onChainId,
     verified,
+    originalSnapshotVerified,
+    currentContentVerified,
     statusVerified,
     blockchainData,
     auditHistory,
@@ -118,24 +127,24 @@ enum AuditActionType {
   /// Unknown future values safely fall back to [statusUpdated] so that
   /// "Unknown Action" can never appear in the UI.
   static AuditActionType fromInt(int value) => switch (value) {
-        0 => AuditActionType.reportSubmitted,
-        1 => AuditActionType.reportAssigned,
-        2 => AuditActionType.statusUpdated,
-        3 => AuditActionType.reportResolved,
-        4 => AuditActionType.reportVerified,
-        5 => AuditActionType.noteAdded,
-        6 => AuditActionType.aiDecisionRecorded,
-        _ => AuditActionType.statusUpdated, // safe, forward-compatible fallback
-      };
+    0 => AuditActionType.reportSubmitted,
+    1 => AuditActionType.reportAssigned,
+    2 => AuditActionType.statusUpdated,
+    3 => AuditActionType.reportResolved,
+    4 => AuditActionType.reportVerified,
+    5 => AuditActionType.noteAdded,
+    6 => AuditActionType.aiDecisionRecorded,
+    _ => AuditActionType.statusUpdated, // safe, forward-compatible fallback
+  };
 
   /// Human-readable label for display in the audit trail UI.
   String get displayLabel => switch (this) {
-        AuditActionType.reportSubmitted => 'Report Submitted',
-        AuditActionType.reportAssigned => 'Report Assigned',
-        AuditActionType.statusUpdated => 'Status Updated',
-        AuditActionType.reportResolved => 'Report Resolved',
-        AuditActionType.reportVerified => 'Report Verified',
-        AuditActionType.noteAdded => 'Note Added',
-        AuditActionType.aiDecisionRecorded => 'AI Decision Recorded',
-      };
+    AuditActionType.reportSubmitted => 'Report Submitted',
+    AuditActionType.reportAssigned => 'Report Assigned',
+    AuditActionType.statusUpdated => 'Status Updated',
+    AuditActionType.reportResolved => 'Report Resolved',
+    AuditActionType.reportVerified => 'Report Verified',
+    AuditActionType.noteAdded => 'Note Added',
+    AuditActionType.aiDecisionRecorded => 'AI Decision Recorded',
+  };
 }

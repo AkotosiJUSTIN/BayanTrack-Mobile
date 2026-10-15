@@ -2762,6 +2762,18 @@ abstract class AppLocalizations {
   /// **'The protected record is still being prepared. You can check again later.'**
   String get blockchainPending;
 
+  /// No description provided for @originalSnapshotVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Original snapshot verified'**
+  String get originalSnapshotVerified;
+
+  /// No description provided for @currentContentChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Current report details differ from the blockchain checkpoint. Review the change history.'**
+  String get currentContentChanged;
+
   /// No description provided for @integrityVerified.
   ///
   /// In en, this message translates to:

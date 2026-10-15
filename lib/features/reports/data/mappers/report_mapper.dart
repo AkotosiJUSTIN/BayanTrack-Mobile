@@ -196,6 +196,8 @@ class ReportMapper {
       reportId: result.reportId,
       onChainId: result.onChainId,
       verified: result.verified,
+      originalSnapshotVerified: result.originalSnapshotVerified,
+      currentContentVerified: result.currentContentVerified,
       statusVerified: result.statusVerified,
       blockchainData: result.blockchainData,
       auditHistory: result.auditHistory
