@@ -119,12 +119,13 @@ class SharedIncidentSection extends ConsumerWidget {
           Text(l10n.incidentEvidence, style: theme.textTheme.titleSmall),
           const SizedBox(height: 8),
           SizedBox(
-            height: 112,
+            height: 160,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: incident.evidence.length,
               separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
+                final caption = incident.evidence[index].caption?.trim();
                 final url = ApiConstants.getImageUrl(
                   incident.evidence[index].url,
                 );
@@ -164,12 +165,30 @@ class SharedIncidentSection extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      child: Image.network(
-                        url,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const Center(
-                          child: Icon(Icons.broken_image_outlined),
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Image.network(
+                              url,
+                              width: 144,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => const Center(
+                                child: Icon(Icons.broken_image_outlined),
+                              ),
+                            ),
+                          ),
+                          if (caption?.isNotEmpty == true)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                caption!,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),

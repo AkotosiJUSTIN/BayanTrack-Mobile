@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 class ReportImage extends Equatable {
   final String id;
   final String url;
+  final String? caption;
   final String? reportId;
   final String? userId;
   final bool isPrimary;
@@ -21,6 +22,7 @@ class ReportImage extends Equatable {
   const ReportImage({
     required this.id,
     required this.url,
+    this.caption,
     this.reportId,
     this.userId,
     this.isPrimary = false,
@@ -34,8 +36,9 @@ class ReportImage extends Equatable {
   bool get isSignature => purpose == 'signature';
 
   @override
-  List<Object?> get props => [id, url, reportId, isPrimary, purpose];
+  List<Object?> get props => [id, url, caption, reportId, isPrimary, purpose];
 
   @override
-  String toString() => 'ReportImage($id, $url, primary: $isPrimary, purpose: $purpose)';
+  String toString() =>
+      'ReportImage($id, $url, primary: $isPrimary, purpose: $purpose)';
 }

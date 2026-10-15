@@ -80,6 +80,7 @@ class SharedIncidentRepositoryImpl implements SharedIncidentRepository {
         return IncidentEvidence(
           id: evidence['id'] as String,
           url: evidence['url'] as String,
+          caption: evidence['caption'] as String?,
         );
       }).toList(),
     );

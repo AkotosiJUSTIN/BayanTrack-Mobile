@@ -103,6 +103,40 @@ void _stubDispute(
 }
 
 void main() {
+  testWidgets('assessment retains and displays the report evidence caption', (
+    tester,
+  ) async {
+    final image = ReportMapper.imageFromDto(
+      dto.ReportImage.fromJson({
+        'id': 'proof-1',
+        'url': 'https://example.com/repair.jpg',
+        'caption': 'roadwork finished',
+      }),
+    );
+    expect(
+      ReportMapper.imageFromDto(
+        dto.ReportImage.fromJson({
+          'id': 'legacy',
+          'url': 'https://example.com/legacy.jpg',
+        }),
+      ).caption,
+      isNull,
+    );
+    await _pumpReview(
+      tester,
+      _ReportsMock(),
+      report: Report(
+        id: 'review-caption',
+        description: 'Own report',
+        status: ReportStatus.resolved,
+        images: [image],
+        resolvedProofImageIds: [image.id],
+      ),
+    );
+    expect(find.text('roadwork finished'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'linked assessment shows shared evidence without an empty-image claim',
     (tester) async {

@@ -59,7 +59,11 @@ Map<String, dynamic> _payload() => {
     },
   ],
   'evidence': [
-    {'id': 'photo-1', 'url': '/media/approved.jpg'},
+    {
+      'id': 'photo-1',
+      'url': '/media/approved.jpg',
+      'caption': 'Roadwork finished',
+    },
   ],
   'integrity': {'status': 'pending', 'tx_hash': '0x123'},
   'reports': [
@@ -135,6 +139,7 @@ void main() {
       expect(result.dataOrNull?.needsReview, isTrue);
       expect(result.dataOrNull?.canReportMismatch, isTrue);
       expect(result.dataOrNull?.evidence.single.url, '/media/approved.jpg');
+      expect(result.dataOrNull?.evidence.single.caption, 'Roadwork finished');
       expect(
         result.dataOrNull?.updates.single.createdAt,
         DateTime.utc(2026, 10, 15, 8).toLocal(),
@@ -600,11 +605,13 @@ void main() {
           IncidentEvidence(
             id: 'approved',
             url: 'https://example.com/proof.jpg',
+            caption: 'Roadwork finished',
           ),
         ],
       ),
     );
-    await tester.tap(find.bySemanticsLabel('Shared response evidence 1'));
+    expect(find.text('Roadwork finished'), findsOneWidget);
+    await tester.tap(find.text('Roadwork finished'));
     await tester.pumpAndSettle();
     expect(find.byType(InteractiveViewer), findsOneWidget);
     expect(tester.takeException(), isNull);
