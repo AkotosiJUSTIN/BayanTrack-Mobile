@@ -135,15 +135,16 @@ void main() {
       ),
     );
     await _pumpDetail(tester, repository: repository);
-    await tester.scrollUntilVisible(find.text('Verify Now'), 400);
+    await tester.scrollUntilVisible(find.text('Check record'), 400);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Verify Now'));
+    await tester.tap(find.text('Check record'));
     await tester.pumpAndSettle();
     saved.complete(
       const Success(
         BlockchainVerificationResult(
           reportId: 'RPT-DETAIL-UI-1',
-          verified: true,
+          verified: false,
+          connectionError: true,
           blockchainData: {},
           auditHistory: [],
           message: 'Old saved result',
@@ -151,7 +152,11 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('New verification result'), findsOneWidget);
+    expect(
+      find.text('The report details match the protected record.'),
+      findsOneWidget,
+    );
+    expect(find.text('New verification result'), findsNothing);
     expect(find.text('Old saved result'), findsNothing);
   });
 
@@ -170,9 +175,9 @@ void main() {
         (_) async => Success(_report(status: ReportStatus.resolved)),
       );
       await _pumpDetail(tester, repository: repository);
-      await tester.scrollUntilVisible(find.text('Verify Now'), 400);
+      await tester.scrollUntilVisible(find.text('Check record'), 400);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Verify Now'));
+      await tester.tap(find.text('Check record'));
       await tester.pump();
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       final container = ProviderScope.containerOf(
@@ -219,8 +224,12 @@ void main() {
         ),
       );
       await _pumpDetail(tester, repository: repository);
-      await tester.scrollUntilVisible(find.text('Integrity Verified'), 400);
-      expect(find.text('Previously verified and anchored'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Report details match'), 400);
+      expect(
+        find.text('The report details match the protected record.'),
+        findsOneWidget,
+      );
+      expect(find.text('Previously verified and anchored'), findsNothing);
       verify(
         () => repository.verifyReport('RPT-DETAIL-UI-1', cachedOnly: true),
       ).called(1);
@@ -240,14 +249,14 @@ void main() {
         () => repository.verifyReport('RPT-DETAIL-UI-1'),
       ).thenThrow(StateError('Unexpected failure'));
       await _pumpDetail(tester, repository: repository);
-      await tester.scrollUntilVisible(find.text('Verify Now'), 400);
+      await tester.scrollUntilVisible(find.text('Check record'), 400);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Verify Now'));
+      await tester.tap(find.text('Check record'));
       await tester.pumpAndSettle();
       expect(find.byType(CircularProgressIndicator), findsNothing);
-      await tester.ensureVisible(find.text('Verify Now'));
+      await tester.ensureVisible(find.text('Check record'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Verify Now'));
+      await tester.tap(find.text('Check record'));
       await tester.pumpAndSettle();
       verify(() => repository.verifyReport('RPT-DETAIL-UI-1')).called(2);
       expect(tester.takeException(), isNull);
@@ -259,7 +268,7 @@ void main() {
 
     expect(find.byType(OfflineStaleBanner), findsOneWidget);
     expect(
-      find.textContaining('Backend unavailable. Showing saved reports'),
+      find.textContaining("We're having trouble connecting. Saved reports"),
       findsOneWidget,
     );
   });
@@ -272,9 +281,9 @@ void main() {
     expect(find.text('Blocked drainage near the market'), findsOneWidget);
     expect(find.text('Description'), findsOneWidget);
     expect(find.text('Market Road gate'), findsOneWidget);
-    expect(find.text('Current handler'), findsOneWidget);
+    expect(find.text('Team handling this report'), findsOneWidget);
     expect(
-      find.bySemanticsLabel(RegExp(r'^Queue priority: High')),
+      find.bySemanticsLabel(RegExp(r'^Review priority: High')),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
@@ -285,7 +294,7 @@ void main() {
   ) async {
     await _pumpDetail(tester, report: _report(status: ReportStatus.resolved));
 
-    expect(find.text('Review & Sign Off'), findsOneWidget);
+    expect(find.text('Review the response'), findsOneWidget);
   });
 
   testWidgets('group member keeps independent citizen review and status', (
@@ -301,7 +310,7 @@ void main() {
 
     expect(find.text('Linked to a shared incident'), findsOneWidget);
     expect(find.text('Incident status: In Progress'), findsOneWidget);
-    expect(find.text('Review & Sign Off'), findsOneWidget);
+    expect(find.text('Review the response'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -317,7 +326,7 @@ void main() {
         ),
       );
 
-      expect(find.text('Review & Sign Off'), findsOneWidget);
+      expect(find.text('Review the response'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
@@ -335,7 +344,7 @@ void main() {
           ),
         );
 
-        expect(find.text('Review & Sign Off'), findsNothing);
+        expect(find.text('Review the response'), findsNothing);
         expect(tester.takeException(), isNull);
       },
     );

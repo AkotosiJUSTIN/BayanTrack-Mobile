@@ -5,6 +5,7 @@ class SharedIncident {
     required this.reportCount,
     this.assignedDepartment,
     this.needsReview = false,
+    this.canReportMismatch = false,
     this.updates = const [],
     this.evidence = const [],
     this.integrityStatus = 'not_recorded',
@@ -16,6 +17,7 @@ class SharedIncident {
   final int reportCount;
   final String? assignedDepartment;
   final bool needsReview;
+  final bool canReportMismatch;
   final List<IncidentUpdate> updates;
   final List<IncidentEvidence> evidence;
   final String integrityStatus;

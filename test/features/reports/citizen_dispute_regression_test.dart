@@ -150,7 +150,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(calls, 1);
-    expect(find.text('Connection lost.'), findsOneWidget);
+    expect(
+      find.text(
+        "We couldn't connect to BayanTrack. Check your internet connection and try again.",
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Connection lost.'), findsNothing);
     expect(
       tester.widget<TextField>(find.byKey(_reasonKey)).controller!.text,
       'The drain is still blocked.',

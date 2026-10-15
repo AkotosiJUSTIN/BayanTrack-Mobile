@@ -156,7 +156,10 @@ void main() {
       final container = await _pump(tester, repository);
 
       expect(find.text('Ordinary workspace'), findsOneWidget);
-      expect(find.text('Checking system status...'), findsNothing);
+      expect(
+        find.text('Checking whether BayanTrack is ready...'),
+        findsNothing,
+      );
       expect(find.byType(LinearProgressIndicator), findsNothing);
       expect(
         permitsReportSnapshot(container.read(systemGovernanceProvider), {

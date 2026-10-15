@@ -67,7 +67,7 @@ void main() {
     await _pumpReview(tester, theme: AppTheme.light);
     expect(
       find.text(
-        'OCR only helps fill the form. It does not verify that the ID is authentic.',
+        'Scanning only helps fill in the form. Staff still need to review your ID.',
       ),
       findsOneWidget,
     );
@@ -78,7 +78,7 @@ void main() {
     await _pumpReview(tester, theme: AppTheme.dark);
     expect(
       find.text(
-        'OCR only helps fill the form. It does not verify that the ID is authentic.',
+        'Scanning only helps fill in the form. Staff still need to review your ID.',
       ),
       findsOneWidget,
     );

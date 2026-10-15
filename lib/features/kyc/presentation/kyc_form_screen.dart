@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/domain/failures.dart';
+import '../../../core/presentation/failure_message.dart';
 import '../../../core/utils/kyc_validators.dart';
 import '../../../core/utils/validators.dart';
 import '../../../l10n/app_localizations.dart';
@@ -877,9 +878,11 @@ class _KycFormScreenState extends ConsumerState<KycFormScreen> {
         }
         AppToast.error(
           context,
-          e is Failure
-              ? e.message
-              : AppLocalizations.of(context).verificationSubmitFailed,
+          localizedFailureMessage(
+            e,
+            AppLocalizations.of(context),
+            fallback: AppLocalizations.of(context).verificationSubmitFailed,
+          ),
         );
       }
     }

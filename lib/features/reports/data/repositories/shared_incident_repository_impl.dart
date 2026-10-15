@@ -63,6 +63,7 @@ class SharedIncidentRepositoryImpl implements SharedIncidentRepository {
       reportCount: (json['report_count'] as num).toInt(),
       assignedDepartment: json['assigned_department'] as String?,
       needsReview: json['needs_review'] == true,
+      canReportMismatch: json['can_report_mismatch'] == true,
       integrityStatus: integrity['status'] as String? ?? 'not_recorded',
       transactionHash: integrity['tx_hash'] as String?,
       updates: (json['updates'] as List? ?? []).map((value) {

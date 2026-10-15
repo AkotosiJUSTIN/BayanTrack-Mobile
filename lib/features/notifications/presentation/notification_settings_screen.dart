@@ -240,10 +240,10 @@ class _NotificationSettingsScreenState
       if (mounted) {
         setState(() => _retrySave = null);
       }
-    } catch (error) {
+    } catch (_) {
       if (mounted) {
         setState(() {
-          _saveError = error.toString().replaceFirst('Exception: ', '');
+          _saveError = AppLocalizations.of(context).preferencesSaveFailed;
         });
       }
     } finally {

@@ -180,11 +180,14 @@ void main() {
 
     await tester.pumpWidget(_app(repository));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Retry').first);
+    final refreshing = tester
+        .widget<RefreshIndicator>(find.byType(RefreshIndicator))
+        .onRefresh();
     await tester.pump();
     expect(find.text('Saved report A'), findsOneWidget);
 
     refresh.complete(const Err(NetworkFailure('offline')));
+    await refreshing;
     await tester.pumpAndSettle();
 
     expect(calls, 2);
@@ -225,11 +228,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Report received. Evidence is still waiting to upload.'),
+      find.text(
+        'Your report was received. Its attachments are still waiting to upload.',
+      ),
       findsOneWidget,
     );
-    expect(find.text('Retry evidence upload'), findsOneWidget);
-    expect(find.text('NOT YET TRANSMITTED'), findsNothing);
+    expect(find.text('Try uploading again'), findsOneWidget);
+    expect(find.text('Not sent yet'), findsNothing);
   });
 
   testWidgets('uncertain emergency send does not claim receipt', (
@@ -268,10 +273,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Will retry safely when BayanTrack is reachable.'),
+      find.text(
+        "Your report hasn't been sent yet. We'll try again when we can connect.",
+      ),
       findsOneWidget,
     );
-    expect(find.text('NOT YET TRANSMITTED'), findsOneWidget);
+    expect(find.text('Not sent yet'), findsOneWidget);
     expect(
       find.textContaining('BayanTrack has not confirmed receipt'),
       findsOneWidget,

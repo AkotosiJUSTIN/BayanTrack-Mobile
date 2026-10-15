@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/presentation/failure_message.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import '../../../l10n/app_localizations.dart';
@@ -124,7 +125,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        if (authState case AuthError(:final message)) ...[
+                        if (authState is AuthError) ...[
                           const SizedBox(height: 16),
                           Semantics(
                             liveRegion: true,
@@ -136,7 +137,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                message,
+                                localizedFailureMessage(
+                                  authState.failure ?? authState,
+                                  l10n,
+                                  fallback: l10n.authDetailsNotAccepted,
+                                  authMessage: l10n.authDetailsNotAccepted,
+                                ),
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: theme.colorScheme.onErrorContainer,
                                 ),

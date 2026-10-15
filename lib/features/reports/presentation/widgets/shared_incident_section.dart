@@ -178,24 +178,26 @@ class SharedIncidentSection extends ConsumerWidget {
             ),
           ),
         ],
-        const SizedBox(height: 8),
-        TextButton.icon(
-          onPressed: () async {
-            final submitted = await showDialog<bool>(
-              context: context,
-              barrierDismissible: false,
-              builder: (_) => _MismatchDialog(
-                reportId: reportId,
-                groupId: incident.groupId,
-              ),
-            );
-            if (submitted == true && ref.context.mounted) {
-              ref.invalidate(sharedIncidentProvider(reportId));
-            }
-          },
-          icon: const Icon(Icons.flag_outlined),
-          label: Text(l10n.incidentDifferent),
-        ),
+        if (incident.canReportMismatch) ...[
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: () async {
+              final submitted = await showDialog<bool>(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => _MismatchDialog(
+                  reportId: reportId,
+                  groupId: incident.groupId,
+                ),
+              );
+              if (submitted == true && ref.context.mounted) {
+                ref.invalidate(sharedIncidentProvider(reportId));
+              }
+            },
+            icon: const Icon(Icons.flag_outlined),
+            label: Text(l10n.incidentDifferent),
+          ),
+        ],
       ],
     );
   }

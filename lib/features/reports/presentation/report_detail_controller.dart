@@ -52,7 +52,7 @@ class ReportDetailController extends _$ReportDetailController {
   /// Submit citizen closure / review for a resolved report.
   ///
   /// Returns the backend response payload (message, report_status) on success,
-  /// or throws an exception with the failure message on error.
+  /// or throws the typed failure on error.
   Future<Map<String, dynamic>> citizenCloseReport({
     required bool satisfied,
     int? rating,
@@ -76,7 +76,7 @@ class ReportDetailController extends _$ReportDetailController {
 
     return result.when(
       success: (data) => data,
-      failure: (failure) => throw Exception(failure.message),
+      failure: (failure) => throw failure,
     );
   }
 }

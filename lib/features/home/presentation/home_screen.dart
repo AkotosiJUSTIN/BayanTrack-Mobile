@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/presentation/widgets/civic_components.dart';
+import '../../../core/presentation/failure_message.dart';
 import '../../../core/presentation/widgets/empty_content_placeholder.dart';
 import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/presentation/widgets/offline_stale_banner.dart';
@@ -15,7 +16,6 @@ import '../../auth/data/user_permissions.dart';
 import '../../auth/presentation/barangays_provider.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/verification_widgets.dart';
-import '../../app_updates/presentation/app_update_gate.dart';
 import '../../images/data/evidence_file_stager.dart';
 import '../../images/presentation/evidence_photo_review.dart';
 import '../../images/data/evidence_upload_queue.dart';
@@ -289,7 +289,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         failure: (failure) async {
           setState(() {
             _isUpdatingFastReport = false;
-            _fastReportFollowUpError = failure.message;
+            _fastReportFollowUpError = localizedFailureMessage(
+              failure,
+              l10n,
+              fallback: l10n.unableSubmitReport,
+            );
           });
         },
       );
@@ -556,17 +560,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       // Search is always above the keyboard; resizing would also relayout the
       // map/list subtree for every IME inset frame.
       resizeToAvoidBottomInset: false,
-      appBar: AppBar(
-        title: Text(l10n.home),
-        actions: [
-          const AppVersionCheckButton(),
-          IconButton(
-            tooltip: l10n.retry,
-            onPressed: _onRefresh,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(l10n.home)),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final textScale = MediaQuery.textScalerOf(context).scale(1);
@@ -996,49 +990,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final color = reportStatusIndicatorColor(status);
     final isSelected = _selectedStatusFilters.contains(status);
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FilterChip(
-          key: Key('home-map-status-${status.apiValue}'),
-          avatar: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.32),
-                        blurRadius: 4,
-                      ),
-                    ]
-                  : null,
-            ),
-          ),
-          label: Text(_statusFilterLabel(status, l10n)),
-          selected: isSelected,
-          showCheckmark: false,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          visualDensity: VisualDensity.compact,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          backgroundColor: theme.colorScheme.surfaceContainerLow,
-          selectedColor: color.withValues(
-            alpha: theme.brightness == Brightness.dark ? 0.24 : 0.14,
-          ),
-          labelStyle: theme.textTheme.labelSmall?.copyWith(
-            color: isSelected
-                ? reportStatusForegroundColor(status, theme)
-                : theme.colorScheme.onSurface,
-            fontWeight: FontWeight.w700,
-          ),
-          side: BorderSide.none,
-          onSelected: (_) => _toggleStatusFilter(status),
+    return FilterChip(
+      key: Key('home-map-status-${status.apiValue}'),
+      avatar: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          boxShadow: isSelected
+              ? [BoxShadow(color: color.withValues(alpha: 0.32), blurRadius: 4)]
+              : null,
         ),
-      ],
+      ),
+      label: Text(_statusFilterLabel(status, l10n)),
+      selected: isSelected,
+      showCheckmark: false,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      backgroundColor: theme.colorScheme.surfaceContainerLow,
+      selectedColor: color.withValues(
+        alpha: theme.brightness == Brightness.dark ? 0.24 : 0.14,
+      ),
+      labelStyle: theme.textTheme.labelSmall?.copyWith(
+        color: isSelected
+            ? reportStatusForegroundColor(status, theme)
+            : theme.colorScheme.onSurface,
+        fontWeight: FontWeight.w700,
+      ),
+      side: BorderSide.none,
+      onSelected: (_) => _toggleStatusFilter(status),
     );
   }
 

@@ -124,7 +124,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Withdraw submission'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Pending Review'), findsNothing);
+    expect(find.text('Waiting for review'), findsNothing);
     expect(find.text('Verify Identity'), findsOneWidget);
     verify(() => repository.withdrawKyc()).called(1);
     verify(() => repository.getKycStatus()).called(1);
@@ -144,7 +144,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Withdraw submission'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Pending Review'), findsOneWidget);
+    expect(find.text('Waiting for review'), findsOneWidget);
     expect(find.text('Verify Identity'), findsNothing);
     verifyNever(() => repository.getKycStatus());
   });

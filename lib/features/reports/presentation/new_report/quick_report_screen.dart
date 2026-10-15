@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/constants/urdaneta_geo.dart';
 import '../../../../core/maps/municipality_map.dart';
+import '../../../../core/presentation/failure_message.dart';
 import '../../../../core/presentation/widgets/app_toast.dart';
 import '../../../../core/providers/connectivity_provider.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -655,8 +656,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
         if (!mounted) return;
         setState(() {
           _isLoadingLocation = false;
-          _locationError =
-              '${l10n.error}: ${l10n.refreshLocation} / ${l10n.manualPin}';
+          _locationError = l10n.locationUnavailable;
         });
       }
       return;
@@ -667,7 +667,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
       if (!serviceEnabled) {
         if (!mounted) return;
         setState(() {
-          _locationError = '${l10n.locationServicesDisabled} ${l10n.manualPin}';
+          _locationError = l10n.locationServicesDisabled;
           _isLoadingLocation = false;
         });
         return;
@@ -679,8 +679,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
         if (permission == LocationPermission.denied) {
           if (!mounted) return;
           setState(() {
-            _locationError =
-                '${l10n.locationPermissionDenied}. ${l10n.manualPin}';
+            _locationError = l10n.locationPermissionDenied;
             _isLoadingLocation = false;
           });
           return;
@@ -690,8 +689,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
       if (permission == LocationPermission.deniedForever) {
         if (!mounted) return;
         setState(() {
-          _locationError =
-              '${l10n.locationPermissionSettings} ${l10n.manualPin}';
+          _locationError = l10n.locationPermissionSettings;
           _isLoadingLocation = false;
         });
         return;
@@ -711,8 +709,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _locationError =
-            '${l10n.error}: ${l10n.refreshLocation} / ${l10n.manualPin}';
+        _locationError = l10n.locationUnavailable;
         _isLoadingLocation = false;
       });
     }
@@ -757,7 +754,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
         _isGettingPreciseLocation = false;
         _isLoadingLocation = false;
         if (_currentPosition == null) {
-          _locationError = '${l10n.locationRequestTimedOut} ${l10n.manualPin}';
+          _locationError = l10n.locationRequestTimedOut;
         }
       });
     } catch (e) {
@@ -766,8 +763,7 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
         _isGettingPreciseLocation = false;
         _isLoadingLocation = false;
         if (_currentPosition == null) {
-          _locationError =
-              '${l10n.error}: ${l10n.refreshLocation} / ${l10n.manualPin}';
+          _locationError = l10n.locationUnavailable;
         }
       });
     }
@@ -1278,7 +1274,14 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
       if (!mounted) return;
       result.when(
         success: (_) => AppToast.success(context, l10n.detailsSaved),
-        failure: (failure) => AppToast.warning(context, failure.message),
+        failure: (failure) => AppToast.warning(
+          context,
+          localizedFailureMessage(
+            failure,
+            l10n,
+            fallback: l10n.unableSubmitReport,
+          ),
+        ),
       );
     } catch (_) {
       if (mounted) AppToast.warning(context, l10n.unableSubmitReport);

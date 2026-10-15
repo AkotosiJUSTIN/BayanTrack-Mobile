@@ -43,13 +43,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get save => 'Save';
 
   @override
-  String get retry => 'Retry';
+  String get retry => 'Try again';
 
   @override
   String get loading => 'Loading…';
 
   @override
-  String get error => 'Error';
+  String get error => 'Something went wrong';
 
   @override
   String get unknownError => 'Something went wrong. Please try again.';
@@ -173,7 +173,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get failedLoadBarangays =>
-      'Failed to load barangays. Please restart the app.';
+      'We couldn\'t load the barangay list. Check your connection and try again.';
 
   @override
   String get iAgreeTo => 'I agree to the';
@@ -265,7 +265,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get profilePictureBackupPending => 'Profile picture backup pending';
+  String get profilePictureBackupPending =>
+      'Your photo is saved. Its backup is still being prepared.';
 
   @override
   String get reports => 'Reports';
@@ -412,7 +413,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keepDraft => 'Keep Draft';
 
   @override
-  String get emergencyNotYetTransmitted => 'NOT YET TRANSMITTED';
+  String get emergencyNotYetTransmitted => 'Not sent yet';
 
   @override
   String get emergencyDetailsHint => 'Add details that can help responders.';
@@ -444,7 +445,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'You have no new notifications at the moment.';
 
   @override
-  String get failedLoadNotifications => 'Failed to load notifications';
+  String get failedLoadNotifications => 'We couldn\'t load your notifications';
 
   @override
   String get notificationsNetworkError =>
@@ -538,15 +539,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportSubmitted => 'Report submitted';
 
   @override
-  String get reportPendingSyncTitle => 'Pending Sync';
+  String get reportPendingSyncTitle => 'Waiting to send';
 
   @override
   String get reportPendingSync =>
-      'Saved on this device. Not yet transmitted to BayanTrack.';
+      'Your report is saved on this device, but hasn\'t been sent yet.';
 
   @override
   String get reportOutboxRetrying =>
-      'Will retry safely when BayanTrack is reachable.';
+      'Your report hasn\'t been sent yet. We\'ll try again when we can connect.';
 
   @override
   String get reportOutboxWaitingAuth =>
@@ -554,11 +555,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportOutboxNeedsEdit =>
-      'Report was not accepted. Edit and submit it again.';
+      'Your report needs changes before it can be sent. Review the details and submit it again.';
 
   @override
   String get reportOutboxConflict =>
-      'Submission could not be confirmed. Edit report before resubmitting.';
+      'We couldn\'t confirm whether this report was received. Review it before sending again.';
 
   @override
   String get reportOutboxRetryNow => 'Retry now';
@@ -567,14 +568,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportOutboxEdit => 'Edit and resubmit';
 
   @override
-  String get reportEvidenceHandoffTitle => 'Evidence upload';
+  String get reportEvidenceHandoffTitle => 'Report attachments';
 
   @override
   String get reportEvidenceHandoffPending =>
-      'Report received. Evidence is still waiting to upload.';
+      'Your report was received. Its attachments are still waiting to upload.';
 
   @override
-  String get reportEvidenceHandoffRetry => 'Retry evidence upload';
+  String get reportEvidenceHandoffRetry => 'Try uploading again';
 
   @override
   String get addOptionalPhoto => 'Add an optional photo as evidence?';
@@ -625,7 +626,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportCreated => 'Report created successfully.';
 
   @override
-  String get evidenceUploadPending => 'Evidence upload pending';
+  String get evidenceUploadPending => 'Attachments waiting to upload';
 
   @override
   String get reportHistory => 'Report History';
@@ -637,7 +638,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noReportsMessage => 'Reports you submit will appear here.';
 
   @override
-  String get failedLoadReports => 'Failed to load reports';
+  String get failedLoadReports => 'We couldn\'t load the reports';
 
   @override
   String get reportDetails => 'Report Details';
@@ -694,16 +695,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resolvedStatus => 'Resolved';
 
   @override
-  String get rejected => 'Rejected';
+  String get rejected => 'Not accepted';
 
   @override
-  String get unknownLocation => 'Unknown location';
+  String get unknownLocation => 'Location not provided';
 
   @override
-  String get aiSuggestion => 'AI suggestion';
+  String get aiSuggestion => 'Suggested priority';
 
   @override
-  String get queuePriority => 'Queue priority';
+  String get queuePriority => 'Review priority';
 
   @override
   String get notificationsEmail => 'Email Notifications';
@@ -722,7 +723,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get preferencesSaveFailed =>
-      'Unable to save notification preferences.';
+      'We couldn\'t save your notification settings. Try again.';
 
   @override
   String get kyc => 'Identity Verification';
@@ -731,14 +732,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get kycStatus => 'Verification Status';
 
   @override
-  String get kycPending => 'Your verification is pending review.';
+  String get kycPending =>
+      'Your documents have been received and are waiting for staff review.';
 
   @override
   String get kycVerified => 'Your identity is verified.';
 
   @override
   String get kycRejected =>
-      'Your verification was rejected. Please resubmit your documents.';
+      'We couldn\'t approve your documents. Review the feedback, make corrections, and submit them again.';
 
   @override
   String get kycUnverified =>
@@ -829,7 +831,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get descriptionKeyboardMashing =>
-      'Please enter a valid description (keyboard mashing detected)';
+      'Describe what happened in your own words so staff can understand the issue.';
 
   @override
   String get descriptionCoherent => 'Please enter a coherent description';
@@ -864,7 +866,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your password has expired. Change it to continue using BayanTrack.';
 
   @override
-  String get profileLoadFailed => 'Unable to load profile.';
+  String get profileLoadFailed =>
+      'We couldn\'t load your profile. Please try again.';
 
   @override
   String get profileUpdateFailed =>
@@ -908,7 +911,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get closed => 'Closed';
 
   @override
-  String get escalated => 'Escalated';
+  String get escalated => 'Sent for further review';
 
   @override
   String get map => 'Map';
@@ -968,7 +971,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noMoreReports => 'No more reports';
 
   @override
-  String get unknownDate => 'Unknown date';
+  String get unknownDate => 'Date not available';
 
   @override
   String get today => 'Today';
@@ -1005,7 +1008,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'You have no reports for the selected filter.';
 
   @override
-  String get unableLoadReports => 'Unable to load reports';
+  String get unableLoadReports => 'We couldn\'t load the reports';
 
   @override
   String get reportsNetworkError =>
@@ -1017,10 +1020,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get unscored => 'Unscored';
+  String get unscored => 'Awaiting assessment';
 
   @override
-  String get uncategorized => 'Uncategorized';
+  String get uncategorized => 'Awaiting category';
 
   @override
   String linkedReports(int count) {
@@ -1033,32 +1036,33 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get groupedIncident => 'grouped incident';
+  String get groupedIncident => 'shared incident';
 
   @override
-  String get unknownTime => 'Unknown';
+  String get unknownTime => 'Time not available';
 
   @override
   String get evidenceFileMissing =>
-      'Report submitted. Evidence file is missing.';
+      'Your report was sent, but an attachment is no longer on this device and couldn\'t be uploaded.';
 
   @override
   String get evidenceUploadFailed =>
-      'Report submitted. Evidence upload failed.';
+      'Your report was sent, but we couldn\'t upload its attachments. Try uploading again.';
 
   @override
   String evidenceUploadsPending(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 's',
-      one: '',
+      other: 'Your report was sent. $count attachments are waiting to upload.',
+      one: 'Your report was sent. 1 attachment is waiting to upload.',
+      zero: 'Your report was sent.',
     );
-    return 'Report submitted. $count evidence upload$_temp0 pending.';
+    return '$_temp0';
   }
 
   @override
-  String get evidenceUploadCompleted => 'Evidence upload completed.';
+  String get evidenceUploadCompleted => 'Your attachment has been uploaded.';
 
   @override
   String get accountSecurity => 'Account & security';
@@ -1071,7 +1075,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cachedReportsOffline =>
-      'Backend unavailable. Showing saved reports; information may be outdated.';
+      'We\'re having trouble connecting. Saved reports may not show the latest updates. Please try again shortly.';
 
   @override
   String get dismiss => 'Dismiss';
@@ -1098,30 +1102,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assignmentUpdates => 'When a report is assigned';
 
   @override
-  String get otp => 'OTP';
+  String get otp => 'Verification code';
 
   @override
-  String get enterOtp => 'Enter OTP';
+  String get enterOtp => 'Enter verification code';
 
   @override
   String get createNewPassword => 'Create your new password.';
 
   @override
-  String get otpSent => 'OTP sent. Please check your email.';
+  String get otpSent =>
+      'A verification code has been sent. Please check your email.';
 
   @override
-  String get otpResent => 'OTP resent. Please check your email.';
+  String get otpResent =>
+      'A new verification code has been sent. Please check your email.';
 
   @override
   String otpSentTo(String email) {
-    return 'Enter the OTP sent to $email';
+    return 'Enter the verification code sent to $email';
   }
 
   @override
-  String get otpRequired => 'OTP is required';
+  String get otpRequired => 'Enter the verification code from your email.';
 
   @override
-  String get otpSixDigits => 'OTP must be 6 digits';
+  String get otpSixDigits => 'Enter the 6-digit verification code.';
 
   @override
   String get rememberPassword => 'Remember your password?';
@@ -1132,7 +1138,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sessionExpiredVerifyOtp =>
-      'Your session expired. Please verify the OTP again.';
+      'This password reset has expired. Request a new code and try again.';
 
   @override
   String get phoneNumber => 'Phone number';
@@ -1149,7 +1155,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get avatarUploadFailed =>
-      'Upload failed. Keep this preview and tap Retry when ready.';
+      'We couldn\'t upload your photo. Your preview is still here. Please try again.';
 
   @override
   String get profilePictureRemoved => 'Profile picture removed.';
@@ -1190,7 +1196,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profilePictureReplicationPending =>
-      'Profile picture available; backup replication is pending.';
+      'Your photo is ready to use. Its backup is still being prepared.';
 
   @override
   String get addPicture => 'Add picture';
@@ -1262,7 +1268,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locationDetails => 'Location Details';
 
   @override
-  String get cityMetadataUnavailable => 'City metadata is unavailable.';
+  String get cityMetadataUnavailable =>
+      'We couldn\'t load this city\'s location details. Try again shortly.';
 
   @override
   String get placeLocationPin => 'Place a location pin for the selected city.';
@@ -1271,10 +1278,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pleaseSelectCity => 'Please select a city';
 
   @override
-  String get bundledBarangays => 'Using bundled Urdaneta barangays';
+  String get bundledBarangays => 'Using the saved Urdaneta barangay list';
 
   @override
-  String get barangaysUnavailable => 'Barangays unavailable for this city';
+  String get barangaysUnavailable =>
+      'We couldn\'t load barangays for this city. Try again shortly.';
 
   @override
   String get streetLandmark => 'Street / Landmark';
@@ -1313,18 +1321,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get locationServicesDisabled =>
-      'Location services are disabled. Please enable GPS.';
+      'Turn on your phone\'s location to find your position, or place a pin on the map.';
 
   @override
-  String get locationPermissionDenied => 'Location permission denied';
+  String get locationPermissionDenied =>
+      'Allow location access to use your phone\'s position, or place a pin on the map.';
 
   @override
   String get locationPermissionSettings =>
-      'Location permissions are permanently denied. Enable them in Settings.';
+      'To use your phone\'s position, allow location access for BayanTrack in Settings. You can also place a pin manually.';
 
   @override
   String get locationRequestTimedOut =>
-      'Location request timed out. Please try again.';
+      'Finding your location is taking longer than expected. Try again or place a pin on the map.';
+
+  @override
+  String get locationUnavailable =>
+      'We couldn\'t find your location. Try again or place a pin on the map.';
 
   @override
   String get gettingLocation => 'Getting location';
@@ -1349,7 +1362,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locationSet => 'Set';
 
   @override
-  String get locationNotSet => 'Not set';
+  String get locationNotSet => 'Choose a location';
 
   @override
   String get zone => 'Zone';
@@ -1399,10 +1412,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noImages => 'No images';
 
   @override
-  String get aiSuggestionPending => 'AI suggestion — staff review pending';
+  String get aiSuggestionPending => 'Waiting for a priority assessment';
 
   @override
-  String get operationalPriority => 'Operational priority';
+  String get operationalPriority => 'Response priority';
 
   @override
   String confirmedLinkedReports(int count) {
@@ -1432,19 +1445,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiDepartmentSuggestion => 'AI department suggestion';
 
   @override
-  String get currentHandler => 'Current handler';
+  String get currentHandler => 'Team handling this report';
 
   @override
   String get respondedBy => 'Responded by';
 
   @override
-  String get routingStatus => 'Routing status';
+  String get routingStatus => 'Where your report goes next';
 
   @override
   String get awaitingStaffConfirmation => 'Awaiting your confirmation';
 
   @override
-  String get routingPolicyApplied => 'Routing policy applied';
+  String get routingPolicyApplied => 'Sent to the appropriate team';
 
   @override
   String get resolutionProof => 'Response evidence';
@@ -1469,49 +1482,49 @@ class AppLocalizationsEn extends AppLocalizations {
       'Review the Department\'s resolution. Confirming lets the City proceed with final closure; disputing returns the report to the City for review.';
 
   @override
-  String get reviewSignOff => 'Review & Sign Off';
+  String get reviewSignOff => 'Review the response';
 
   @override
-  String get blockchainVerification => 'Blockchain Verification';
+  String get blockchainVerification => 'Report record check';
 
   @override
-  String get verifyNow => 'Verify Now';
+  String get verifyNow => 'Check record';
 
   @override
-  String get auditHistory => 'Audit History';
+  String get auditHistory => 'Report record history';
 
   @override
-  String get noAuditEntries => 'No audit entries found.';
+  String get noAuditEntries => 'No record history is available yet.';
 
   @override
   String get blockchainAnchored =>
-      'This report is anchored on the blockchain. Click verify to perform a live integrity check.';
+      'A protected copy of this report\'s record is saved on the blockchain. Check it to see whether the report details match.';
 
   @override
   String get blockchainPending =>
-      'This report is pending blockchain synchronization.';
+      'The protected record is still being prepared. You can check again later.';
 
   @override
-  String get integrityVerified => 'Integrity Verified';
+  String get integrityVerified => 'Report details match';
 
   @override
-  String get contentVerified => 'Content Verified';
+  String get contentVerified => 'Details match; status update pending';
 
   @override
-  String get notYetAnchored => 'Not Yet Anchored';
+  String get notYetAnchored => 'Protected record not ready yet';
 
   @override
-  String get recordNotFound => 'Record Not Found';
+  String get recordNotFound => 'Protected record not found yet';
 
   @override
-  String get blockchainUnavailable => 'Blockchain Unavailable';
+  String get blockchainUnavailable => 'Record check temporarily unavailable';
 
   @override
-  String get integrityBreach => 'Integrity Breach Detected';
+  String get integrityBreach => 'Report details don\'t match';
 
   @override
   String get verificationFailed =>
-      'Verification failed. Please try again later.';
+      'We couldn\'t check the report record. Please try again shortly.';
 
   @override
   String byActor(String actor) {
@@ -1626,7 +1639,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reportReopenedEscalated =>
-      'Report has been re-opened and escalated.';
+      'Your concern has been sent back to the City for review.';
 
   @override
   String get resubmitUserVerification => 'Resubmit User Verification';
@@ -1759,14 +1772,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scanIdOptionDescription =>
-      'Extract details from your ID for review, then complete the rest of the form.';
+      'Read the details on your ID, check them, and complete the rest of the form.';
 
   @override
   String get manualEntryOptionTitle => 'Enter details manually';
 
   @override
   String get manualEntryOptionDescription =>
-      'Fill in your identity details yourself. OCR is skipped.';
+      'Fill in your details yourself without scanning your ID.';
 
   @override
   String get maxImageFormats => 'Max 10MB each • JPG, PNG formats';
@@ -1805,7 +1818,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mobile => 'Mobile';
 
   @override
-  String get previousRejectionReason => 'Previous Rejection Reason:';
+  String get previousRejectionReason => 'What needs to be corrected:';
 
   @override
   String get tapAddPhoto => 'Tap to add photo';
@@ -1846,7 +1859,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ocrUnsupported =>
-      'OCR is not available for this ID type yet. Enter details manually.';
+      'We can\'t read this type of ID automatically yet. Please enter your details yourself.';
 
   @override
   String get ocrManualReview => 'Check this field';
@@ -1856,7 +1869,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ocrAuthenticityNotice =>
-      'OCR only helps fill the form. It does not verify that the ID is authentic.';
+      'Scanning only helps fill in the form. Staff still need to review your ID.';
 
   @override
   String get fixFormErrors => 'Please fix the highlighted errors in the form';
@@ -1912,7 +1925,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reviewDetails => 'Please review feedback';
 
   @override
-  String get adminFeedback => 'Admin Feedback';
+  String get adminFeedback => 'Feedback from the review team';
 
   @override
   String get reviewAndResubmit =>
@@ -1932,23 +1945,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get kycResubmitRequested =>
-      'Additional information is required. Please resubmit your documents.';
+      'The review team needs more information. Check their feedback and update your documents.';
 
   @override
   String get kycSuspended =>
       'Your account verification has been suspended. Please contact support.';
 
   @override
-  String get unverifiedLabel => 'Unverified';
+  String get unverifiedLabel => 'Not yet verified';
 
   @override
-  String get pendingReview => 'Pending Review';
+  String get pendingReview => 'Waiting for review';
 
   @override
-  String get resubmitRequestedLabel => 'Resubmit Requested';
+  String get resubmitRequestedLabel => 'Update needed';
 
   @override
-  String get suspendedLabel => 'Suspended';
+  String get suspendedLabel => 'Verification paused';
 
   @override
   String get submit => 'Submit';
@@ -2040,7 +2053,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String submissionError(String error) {
-    return 'Submission error. $error';
+    return 'We couldn\'t send your report. $error';
   }
 
   @override
@@ -2149,14 +2162,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get divorced => 'Divorced';
 
   @override
-  String get governanceCheckingStatus => 'Checking system status...';
+  String get governanceCheckingStatus =>
+      'Checking whether BayanTrack is ready...';
 
   @override
-  String get governanceStatusUnavailable => 'System status is unavailable.';
+  String get governanceStatusUnavailable =>
+      'We couldn\'t check service availability. Please try again.';
 
   @override
   String get governanceReadOnly =>
-      'Maintenance: read-only. Emergency reporting remains available.';
+      'BayanTrack is undergoing maintenance. You can still view reports and submit emergency reports.';
 
   @override
   String get governanceTermsChanged =>
@@ -2167,7 +2182,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Acceptance was not saved. Please try again.';
 
   @override
-  String get governanceTermsUnavailable => 'Current terms could not be loaded.';
+  String get governanceTermsUnavailable =>
+      'We couldn\'t load the terms and privacy policy. Please try again.';
 
   @override
   String get governanceConsentLabel =>
@@ -2175,10 +2191,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get governanceSyncPaused =>
-      'Waiting for current terms acceptance or maintenance to end.';
+      'Sending is paused. Review any updated terms, or try again after maintenance.';
 
   @override
-  String get appCheckVersion => 'Check app version';
+  String get appCheckVersion => 'Check for updates';
 
   @override
   String get appCheckingVersion => 'Checking for updates...';
@@ -2195,14 +2211,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get appUpdateRequiredMessage =>
-      'A newer BayanTrack release is available. Install the latest APK to continue. Your saved reports will stay on this device.';
+      'A newer version of BayanTrack is available. Download and install the Android update to continue. Your saved reports will stay on this device.';
 
   @override
   String get appGetUpdate => 'Get update';
 
   @override
   String get appReleaseOpenFailed =>
-      'The releases page could not be opened. Please try again.';
+      'We couldn\'t open the download page. Check your connection and try again.';
 
   @override
   String appInstalledVersion(String version) {
@@ -2216,10 +2232,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incidentAssigned => 'Assigned';
 
   @override
-  String get incidentEndorsed => 'Endorsed';
+  String get incidentEndorsed => 'Sent to the response team';
 
   @override
-  String get incidentStatusUnavailable => 'Unavailable';
+  String get incidentStatusUnavailable => 'Status not available yet';
 
   @override
   String incidentOperationalStatus(String status) {
@@ -2233,7 +2249,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get incidentEvidence => 'Shared response evidence';
 
   @override
-  String get incidentNeedsReview => 'Incident flagged for staff review';
+  String get incidentNeedsReview => 'Staff need to review this shared incident';
 
   @override
   String get incidentDifferent => 'This is a different incident';
@@ -2246,7 +2262,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get incidentLoadFailed =>
-      'Shared incident unavailable. Try refreshing.';
+      'We couldn\'t load the shared incident. Refresh the report to try again.';
 
   @override
   String get incidentFeedbackFailed =>
@@ -2258,19 +2274,112 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get incidentIntegrityConfirmed =>
-      'Incident audit: confirmed on blockchain';
+      'A protected record of this incident has been saved.';
 
   @override
   String get incidentIntegrityPending =>
-      'Incident audit: awaiting blockchain confirmation';
+      'The protected incident record is waiting for confirmation.';
 
   @override
   String get incidentIntegrityFailed =>
-      'Incident audit: blockchain recording failed';
+      'We couldn\'t save the protected incident record. The incident is still available here.';
 
   @override
   String get incidentIntegrityNotRecorded =>
-      'Incident audit: not recorded on blockchain';
+      'A protected record of this incident hasn\'t been saved yet.';
+
+  @override
+  String get requestNetworkError =>
+      'We couldn\'t connect to BayanTrack. Check your internet connection and try again.';
+
+  @override
+  String get requestServiceError =>
+      'BayanTrack is having trouble completing this request. Please try again shortly.';
+
+  @override
+  String get requestSignInAgain => 'Please sign in again to continue.';
+
+  @override
+  String get requestNotFound =>
+      'This item is no longer available. Refresh the page to see the latest information.';
+
+  @override
+  String get requestStorageError =>
+      'We couldn\'t save this on your device. Check your available storage and try again.';
+
+  @override
+  String get requestTooManyAttempts =>
+      'There have been too many attempts. Please wait a little before trying again.';
+
+  @override
+  String get requestValidationError =>
+      'Some details need to be corrected. Review what you\'ve entered and try again.';
+
+  @override
+  String get authDetailsNotAccepted =>
+      'We couldn\'t confirm your account details. Check them and try again.';
+
+  @override
+  String get verificationLoadFailed =>
+      'We couldn\'t load your verification status. Please try again.';
+
+  @override
+  String get withdrawalFailed =>
+      'We couldn\'t withdraw your submission. Please try again.';
+
+  @override
+  String get reportDraftRestoreFailed =>
+      'We couldn\'t reopen this draft for editing. Refresh your reports and try again.';
+
+  @override
+  String get recordDetailsMatch =>
+      'The report details match the protected record.';
+
+  @override
+  String get recordStatusPending =>
+      'The report details match. The protected status record is still waiting for an update.';
+
+  @override
+  String get recordNotReady =>
+      'There isn\'t a protected record to check yet. Please check again later.';
+
+  @override
+  String get recordCheckUnavailable =>
+      'We couldn\'t reach the record-checking service. Please try again shortly.';
+
+  @override
+  String get recordDetailsMismatch =>
+      'The report details differ from the protected record. Contact support for help reviewing this.';
+
+  @override
+  String get recordCreated => 'Protected report record saved';
+
+  @override
+  String get recordFinalized => 'Final report record saved';
+
+  @override
+  String get recordReopened => 'Report reopened for review';
+
+  @override
+  String get recordStaffUpdated => 'Report record updated by staff';
+
+  @override
+  String get historyReportAssigned => 'Report assigned to a team';
+
+  @override
+  String get historyStatusUpdated => 'Report status updated';
+
+  @override
+  String get historyReportResolved => 'Report marked as resolved';
+
+  @override
+  String get historyReportVerified => 'Report reviewed and verified';
+
+  @override
+  String get historyNoteAdded => 'Staff note added';
+
+  @override
+  String get historyAssessmentRecorded => 'Report assessment saved';
 
   @override
   String appLatestVersion(String version) {

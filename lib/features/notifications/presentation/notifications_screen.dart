@@ -41,7 +41,10 @@ class NotificationsScreen extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
-              child: VerificationBanner(permissions: permissions),
+              child: VerificationBanner(
+                permissions: permissions,
+                compact: true,
+              ),
             ),
             SliverToBoxAdapter(child: _buildIntro(theme, l10n)),
             ...notificationsAsync.when(

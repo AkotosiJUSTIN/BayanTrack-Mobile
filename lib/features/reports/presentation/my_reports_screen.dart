@@ -242,16 +242,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.myReports),
-        actions: [
-          IconButton(
-            tooltip: l10n.retry,
-            onPressed: _onRefresh,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(l10n.myReports)),
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         child: CustomScrollView(
@@ -259,7 +250,10 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
-              child: VerificationBanner(permissions: permissions),
+              child: VerificationBanner(
+                permissions: permissions,
+                compact: true,
+              ),
             ),
             if (_isStale || backendUnreachable)
               const SliverToBoxAdapter(child: OfflineStaleBanner()),
@@ -495,8 +489,13 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
       await ref
           .read(reportCreateOutboxProvider)
           .restoreRejectedDraft(item.ownerId, item.localReportId);
-    } on StateError catch (error) {
-      if (mounted) AppToast.error(context, error.message.toString());
+    } on StateError {
+      if (mounted) {
+        AppToast.error(
+          context,
+          AppLocalizations.of(context).reportDraftRestoreFailed,
+        );
+      }
       return;
     } catch (_) {
       if (mounted) {
