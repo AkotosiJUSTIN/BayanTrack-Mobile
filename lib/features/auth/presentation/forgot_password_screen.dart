@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/presentation/failure_message.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/presentation/failure_message.dart';
 import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/presentation/widgets/password_strength_indicator.dart';
 import '../../../core/theme/app_colors.dart';

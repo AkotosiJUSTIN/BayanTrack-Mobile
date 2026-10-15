@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/presentation/failure_message.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/domain/result.dart';
+import '../../../core/presentation/failure_message.dart';
 import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../core/theme/app_colors.dart';

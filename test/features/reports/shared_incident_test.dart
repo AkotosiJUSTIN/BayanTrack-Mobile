@@ -410,11 +410,11 @@ void main() {
       expect(find.text('Incident status: In Progress'), findsOneWidget);
       expect(find.text('Drainage clearing has started.'), findsOneWidget);
       expect(
-        find.text('Incident audit: awaiting blockchain confirmation'),
+        find.text('The protected incident record is waiting for confirmation.'),
         findsOneWidget,
       );
       expect(
-        find.text('Incident audit: confirmed on blockchain'),
+        find.text('A protected record of this incident has been saved.'),
         findsNothing,
       );
       expect(find.text('never-displayed'), findsNothing);
@@ -440,7 +440,7 @@ void main() {
     expect(find.text('Incident status: In Progress'), findsOneWidget);
     expect(find.text('Drainage clearing has started.'), findsOneWidget);
     expect(
-      find.text('Incident audit: awaiting blockchain confirmation'),
+      find.text('The protected incident record is waiting for confirmation.'),
       findsOneWidget,
     );
     expect(find.text('This is a different incident'), findsNothing);
@@ -464,7 +464,9 @@ void main() {
     pending.completeError(Exception('Unavailable'));
     await tester.pumpAndSettle();
     expect(
-      find.text('Shared incident unavailable. Try refreshing.'),
+      find.text(
+        "We couldn't load the shared incident. Refresh the report to try again.",
+      ),
       findsOneWidget,
     );
     await tester.tap(find.byIcon(Icons.refresh));

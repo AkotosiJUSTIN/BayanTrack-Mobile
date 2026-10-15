@@ -1342,6 +1342,10 @@ class AppLocalizationsFil extends AppLocalizations {
       'Mas matagal kaysa inaasahan ang paghanap ng lokasyon. Subukan muli o maglagay ng pin sa mapa.';
 
   @override
+  String get locationUnavailable =>
+      'Hindi namin mahanap ang iyong lokasyon. Subukan muli o maglagay ng pin sa mapa.';
+
+  @override
   String get gettingLocation => 'Kinukuha ang lokasyon';
 
   @override

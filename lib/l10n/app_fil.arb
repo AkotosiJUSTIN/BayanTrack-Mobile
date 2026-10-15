@@ -424,6 +424,7 @@
   "locationPermissionDenied": "Payagan ang access sa lokasyon, o maglagay ng pin sa mapa.",
   "locationPermissionSettings": "Payagan ang lokasyon para sa BayanTrack sa Settings. Maaari ka ring maglagay ng pin sa mapa.",
   "locationRequestTimedOut": "Mas matagal kaysa inaasahan ang paghanap ng lokasyon. Subukan muli o maglagay ng pin sa mapa.",
+  "locationUnavailable": "Hindi namin mahanap ang iyong lokasyon. Subukan muli o maglagay ng pin sa mapa.",
   "gettingLocation": "Kinukuha ang lokasyon",
   "gettingLocationNotification": "Kinukuha ng BayanTrack ang iyong lokasyon",
   "reviewSubmit": "Suriin at Isumite",

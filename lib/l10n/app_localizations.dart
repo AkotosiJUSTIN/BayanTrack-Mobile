@@ -2468,6 +2468,12 @@ abstract class AppLocalizations {
   /// **'Finding your location is taking longer than expected. Try again or place a pin on the map.'**
   String get locationRequestTimedOut;
 
+  /// No description provided for @locationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find your location. Try again or place a pin on the map.'**
+  String get locationUnavailable;
+
   /// No description provided for @gettingLocation.
   ///
   /// In en, this message translates to:

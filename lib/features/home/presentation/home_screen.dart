@@ -990,49 +990,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final color = reportStatusIndicatorColor(status);
     final isSelected = _selectedStatusFilters.contains(status);
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FilterChip(
-          key: Key('home-map-status-${status.apiValue}'),
-          avatar: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOut,
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.32),
-                        blurRadius: 4,
-                      ),
-                    ]
-                  : null,
-            ),
-          ),
-          label: Text(_statusFilterLabel(status, l10n)),
-          selected: isSelected,
-          showCheckmark: false,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          visualDensity: VisualDensity.compact,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          backgroundColor: theme.colorScheme.surfaceContainerLow,
-          selectedColor: color.withValues(
-            alpha: theme.brightness == Brightness.dark ? 0.24 : 0.14,
-          ),
-          labelStyle: theme.textTheme.labelSmall?.copyWith(
-            color: isSelected
-                ? reportStatusForegroundColor(status, theme)
-                : theme.colorScheme.onSurface,
-            fontWeight: FontWeight.w700,
-          ),
-          side: BorderSide.none,
-          onSelected: (_) => _toggleStatusFilter(status),
+    return FilterChip(
+      key: Key('home-map-status-${status.apiValue}'),
+      avatar: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          boxShadow: isSelected
+              ? [BoxShadow(color: color.withValues(alpha: 0.32), blurRadius: 4)]
+              : null,
         ),
-      ],
+      ),
+      label: Text(_statusFilterLabel(status, l10n)),
+      selected: isSelected,
+      showCheckmark: false,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      visualDensity: VisualDensity.compact,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      backgroundColor: theme.colorScheme.surfaceContainerLow,
+      selectedColor: color.withValues(
+        alpha: theme.brightness == Brightness.dark ? 0.24 : 0.14,
+      ),
+      labelStyle: theme.textTheme.labelSmall?.copyWith(
+        color: isSelected
+            ? reportStatusForegroundColor(status, theme)
+            : theme.colorScheme.onSurface,
+        fontWeight: FontWeight.w700,
+      ),
+      side: BorderSide.none,
+      onSelected: (_) => _toggleStatusFilter(status),
     );
   }
 

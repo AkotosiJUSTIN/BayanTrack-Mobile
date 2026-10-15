@@ -228,7 +228,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Report received. Evidence is still waiting to upload.'),
+      find.text(
+        'Your report was received. Its attachments are still waiting to upload.',
+      ),
       findsOneWidget,
     );
     expect(find.text('Try uploading again'), findsOneWidget);
@@ -271,7 +273,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('Will retry safely when BayanTrack is reachable.'),
+      find.text(
+        "Your report hasn't been sent yet. We'll try again when we can connect.",
+      ),
       findsOneWidget,
     );
     expect(find.text('Not sent yet'), findsOneWidget);

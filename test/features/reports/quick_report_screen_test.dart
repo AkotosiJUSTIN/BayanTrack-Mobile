@@ -1117,7 +1117,12 @@ void main() {
       locate: () => Future<Position>.error(StateError('GPS unavailable')),
     );
     await tester.pump();
-    expect(find.text('Error: Refresh location / Manual Pin'), findsOneWidget);
+    expect(
+      find.text(
+        "We couldn't find your location. Try again or place a pin on the map.",
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('widget reports location required when GPS is unavailable', (
@@ -1536,7 +1541,9 @@ void main() {
     expect(states.last['quickReportStatus'], 'networkUnavailable');
     expect(find.byKey(const Key('quick-report-submit-error')), findsNothing);
     expect(
-      find.text('Saved on this device. Not yet transmitted to BayanTrack.'),
+      find.text(
+        "Your report is saved on this device, but hasn't been sent yet.",
+      ),
       findsOneWidget,
     );
   });

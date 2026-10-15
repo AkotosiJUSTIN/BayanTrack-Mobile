@@ -1336,6 +1336,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Finding your location is taking longer than expected. Try again or place a pin on the map.';
 
   @override
+  String get locationUnavailable =>
+      'We couldn\'t find your location. Try again or place a pin on the map.';
+
+  @override
   String get gettingLocation => 'Getting location';
 
   @override

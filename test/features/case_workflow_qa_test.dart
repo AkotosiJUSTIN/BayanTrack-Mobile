@@ -188,11 +188,11 @@ void main() {
       expect(find.byType(CivicSkeletonBlock), findsNothing);
       delayed.complete(const Err(NetworkFailure('Synthetic outage')));
       await tester.pumpAndSettle();
-      expect(find.text(l10n.reportsNetworkError), findsOneWidget);
+      expect(find.text(l10n.requestNetworkError), findsOneWidget);
       expect(find.text(l10n.verifyIdentity), findsNothing);
       await tester.tap(find.text(l10n.retry));
       await tester.pumpAndSettle();
-      expect(find.text(l10n.reportsNetworkError), findsNothing);
+      expect(find.text(l10n.requestNetworkError), findsNothing);
       verify(repository.getKycStatus).called(3);
       expect(tester.takeException(), isNull);
     },
@@ -214,7 +214,7 @@ void main() {
       final l10n = AppLocalizations.of(
         tester.element(find.byType(KycStatusScreen)),
       );
-      expect(find.text(l10n.reportsNetworkError), findsOneWidget);
+      expect(find.text(l10n.requestNetworkError), findsOneWidget);
       expect(find.text(l10n.verifyIdentity), findsNothing);
       expect(find.byType(CivicSkeletonBlock), findsNothing);
       expect(tester.takeException(), isNull);
@@ -461,7 +461,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Responded by'), findsNothing);
-    expect(find.text('Current handler'), findsOneWidget);
+    expect(find.text('Team handling this report'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -637,7 +637,7 @@ void main() {
     scroll.position.jumpTo(scroll.position.maxScrollExtent);
     await tester.pump();
     final initialExtent = scroll.position.maxScrollExtent;
-    await tester.tap(find.text('Verify Now'));
+    await tester.tap(find.text('Check record'));
     await tester.pump();
     expect(scroll.position.maxScrollExtent, initialExtent);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);

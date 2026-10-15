@@ -424,6 +424,7 @@
   "locationPermissionDenied": "Allow location access to use your phone's position, or place a pin on the map.",
   "locationPermissionSettings": "To use your phone's position, allow location access for BayanTrack in Settings. You can also place a pin manually.",
   "locationRequestTimedOut": "Finding your location is taking longer than expected. Try again or place a pin on the map.",
+  "locationUnavailable": "We couldn't find your location. Try again or place a pin on the map.",
   "gettingLocation": "Getting location",
   "gettingLocationNotification": "BayanTrack is getting your location",
   "reviewSubmit": "Review & Submit",

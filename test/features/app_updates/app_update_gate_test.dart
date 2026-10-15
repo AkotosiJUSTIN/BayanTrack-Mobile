@@ -154,11 +154,17 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('app-update-download')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('could not be opened'), findsOneWidget);
+    expect(
+      find.textContaining("couldn't open the download page"),
+      findsOneWidget,
+    );
     await tester.tap(find.byKey(const Key('app-update-download')));
     await tester.pumpAndSettle();
     expect(opens, 2);
-    expect(find.textContaining('could not be opened'), findsNothing);
+    expect(
+      find.textContaining("couldn't open the download page"),
+      findsNothing,
+    );
   });
 
   testWidgets('manual check confirms installed and latest versions', (

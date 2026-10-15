@@ -392,7 +392,10 @@ void main() {
 
     await _tapVisible(tester, 'forgot-password-verify-button');
     await tester.pump();
-    expect(find.text('OTP is required'), findsOneWidget);
+    expect(
+      find.text('Enter the verification code from your email.'),
+      findsOneWidget,
+    );
 
     await tester.enterText(
       find.byKey(const ValueKey('forgot-password-otp-field')),
@@ -400,7 +403,7 @@ void main() {
     );
     await _tapVisible(tester, 'forgot-password-verify-button');
     await tester.pump();
-    expect(find.text('OTP must be 6 digits'), findsOneWidget);
+    expect(find.text('Enter the 6-digit verification code.'), findsOneWidget);
 
     await _tapVisible(tester, 'forgot-password-resend-button');
     await tester.pump();

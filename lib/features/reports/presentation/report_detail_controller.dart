@@ -24,7 +24,7 @@ class ReportDetailController extends _$ReportDetailController {
 
     return result.when(
       success: (data) => data,
-      failure: (failure) => throw failure,
+      failure: (failure) => throw Exception(failure.message),
     );
   }
 
