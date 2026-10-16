@@ -34,6 +34,12 @@ _BlockchainVerificationResultDto _$BlockchainVerificationResultDtoFromJson(
   Map<String, dynamic> json,
 ) => _BlockchainVerificationResultDto(
   reportId: json['report_id'] as String,
+  protectedSnapshotToken: json['protected_snapshot_token'] as String?,
+  verifiedAt: json['verified_at'] as String?,
+  reason: json['verify_status_reason'] as String?,
+  verificationPending:
+      _readVerificationPending(json, 'verification_pending') as bool? ?? false,
+  verificationState: json['verify_status'] as String?,
   onChainId: const NullableStringConverter().fromJson(json['on_chain_id']),
   verified: json['verified'] as bool,
   originalSnapshotVerified: json['original_snapshot_verified'] as bool?,
@@ -53,6 +59,11 @@ Map<String, dynamic> _$BlockchainVerificationResultDtoToJson(
   _BlockchainVerificationResultDto instance,
 ) => <String, dynamic>{
   'report_id': instance.reportId,
+  'protected_snapshot_token': instance.protectedSnapshotToken,
+  'verified_at': instance.verifiedAt,
+  'verify_status_reason': instance.reason,
+  'verification_pending': instance.verificationPending,
+  'verify_status': instance.verificationState,
   'on_chain_id': const NullableStringConverter().toJson(instance.onChainId),
   'verified': instance.verified,
   'original_snapshot_verified': instance.originalSnapshotVerified,

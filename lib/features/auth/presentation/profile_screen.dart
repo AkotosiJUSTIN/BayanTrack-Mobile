@@ -1,3 +1,6 @@
+import 'dart:async';
+import '../../../core/presentation/widgets/session_screen_lifecycle.dart';
+import '../../../core/presentation/widgets/content_freshness_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -37,119 +40,124 @@ class ProfileScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.profile),
-        actions: const [AppVersionCheckButton()],
-      ),
-      body: Column(
-        children: [
-          const OfflineBanner(),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                ref.invalidate(profileControllerProvider);
-                ref.invalidate(profileStatsControllerProvider);
-                try {
-                  await Future.wait([
-                    ref.read(profileControllerProvider.future),
-                    ref.read(profileStatsControllerProvider.future),
-                  ]);
-                } catch (_) {
-                  // The refreshed sections render their own retry states.
-                }
-              },
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                children: [
-                  profileAsync.when(
-                    data: (profile) =>
-                        _buildProfileHeader(context, profile, theme),
-                    loading: () => const _ProfileSkeleton(),
-                    error: (_, _) => _buildProfileError(context, ref, theme),
-                  ),
-                  const SizedBox(height: 20),
-                  statsAsync.when(
-                    data: (stats) => _buildStatsRow(context, stats, theme),
-                    loading: () => const _StatsSkeleton(),
-                    error: (_, _) => Center(
-                      child: TextButton.icon(
-                        onPressed: () =>
-                            ref.invalidate(profileStatsControllerProvider),
-                        icon: const Icon(Icons.refresh, size: 18),
-                        label: Text(l10n.retry),
+    return SessionScreenLifecycle(
+      onVisible: () =>
+          unawaited(ref.read(profileControllerProvider.notifier).reload()),
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.profile),
+          actions: const [AppVersionCheckButton()],
+        ),
+        body: Column(
+          children: [
+            const OfflineBanner(),
+            const ContentFreshnessBanner(cacheKey: 'profile:me'),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(profileStatsControllerProvider);
+                  try {
+                    await Future.wait([
+                      ref.read(profileControllerProvider.notifier).reload(),
+                      ref.read(profileStatsControllerProvider.future),
+                    ]);
+                  } catch (_) {
+                    // The refreshed sections render their own retry states.
+                  }
+                },
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                  children: [
+                    profileAsync.when(
+                      skipError: profileAsync.hasValue,
+                      data: (profile) =>
+                          _buildProfileHeader(context, profile, theme),
+                      loading: () => const _ProfileSkeleton(),
+                      error: (_, _) => _buildProfileError(context, ref, theme),
+                    ),
+                    const SizedBox(height: 20),
+                    statsAsync.when(
+                      data: (stats) => _buildStatsRow(context, stats, theme),
+                      loading: () => const _StatsSkeleton(),
+                      error: (_, _) => Center(
+                        child: TextButton.icon(
+                          onPressed: () =>
+                              ref.invalidate(profileStatsControllerProvider),
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: Text(l10n.retry),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  CivicSectionHeading(title: l10n.userVerification),
-                  Consumer(
-                    builder: (context, ref, _) {
-                      final kycStatusAsync = ref.watch(
-                        kycStatusControllerProvider,
-                      );
-                      return kycStatusAsync.when(
-                        data: (kycStatus) =>
-                            _buildKycStatusCard(context, ref, kycStatus),
-                        loading: () => const CivicSkeletonBlock(height: 108),
-                        error: (_, _) =>
-                            _buildKycStatusCard(context, ref, null),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  CivicSectionHeading(title: l10n.accountSecurity),
-                  _buildAccountMenu(context),
-                  const SizedBox(height: 24),
-                  CivicSectionHeading(title: l10n.preferences),
-                  _buildPreferencesMenu(context),
-                  const SizedBox(height: 24),
-                  const HelpSafetySection(),
-                  const SizedBox(height: 16),
-                  CivicSettingsGroup(
-                    children: [
-                      CivicSettingsRow(
-                        key: const ValueKey('profile-terms-and-privacy'),
-                        icon: Icons.description_outlined,
-                        title: l10n.termsAndPrivacy,
-                        showDivider: false,
-                        onTap: () {
-                          ref.invalidate(publishedTermsProvider);
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) =>
-                                  const CurrentTermsScreen(readOnly: true),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  _buildLogoutTile(context, ref),
-                  const SizedBox(height: 16),
-                  FutureBuilder<PackageInfo>(
-                    future: PackageInfo.fromPlatform(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) return const SizedBox.shrink();
-                      return Text(
-                        l10n.version(
-                          snapshot.data!.version,
-                          snapshot.data!.buildNumber,
+                    const SizedBox(height: 24),
+                    CivicSectionHeading(title: l10n.userVerification),
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final kycStatusAsync = ref.watch(
+                          kycStatusControllerProvider,
+                        );
+                        return kycStatusAsync.when(
+                          data: (kycStatus) =>
+                              _buildKycStatusCard(context, ref, kycStatus),
+                          loading: () => const CivicSkeletonBlock(height: 108),
+                          error: (_, _) =>
+                              _buildKycStatusCard(context, ref, null),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    CivicSectionHeading(title: l10n.accountSecurity),
+                    _buildAccountMenu(context),
+                    const SizedBox(height: 24),
+                    CivicSectionHeading(title: l10n.preferences),
+                    _buildPreferencesMenu(context),
+                    const SizedBox(height: 24),
+                    const HelpSafetySection(),
+                    const SizedBox(height: 16),
+                    CivicSettingsGroup(
+                      children: [
+                        CivicSettingsRow(
+                          key: const ValueKey('profile-terms-and-privacy'),
+                          icon: Icons.description_outlined,
+                          title: l10n.termsAndPrivacy,
+                          showDivider: false,
+                          onTap: () {
+                            ref.invalidate(publishedTermsProvider);
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    const CurrentTermsScreen(readOnly: true),
+                              ),
+                            );
+                          },
                         ),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        textAlign: TextAlign.center,
-                      );
-                    },
-                  ),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _buildLogoutTile(context, ref),
+                    const SizedBox(height: 16),
+                    FutureBuilder<PackageInfo>(
+                      future: PackageInfo.fromPlatform(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) return const SizedBox.shrink();
+                        return Text(
+                          l10n.version(
+                            snapshot.data!.version,
+                            snapshot.data!.buildNumber,
+                          ),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

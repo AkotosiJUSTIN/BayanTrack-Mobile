@@ -621,24 +621,25 @@ void main() {
   ) async {
     final repo = _Reports();
     final delayed = Completer<Result<BlockchainVerificationResult>>();
+    when(
+      () => repo.getReport('QA-LEAF3'),
+    ).thenAnswer((_) async => const Success(_report));
+    when(
+      () => repo.verifyReport('QA-LEAF3', cachedOnly: true),
+    ).thenAnswer((_) async => const Err(ServerFailure('No saved proof')));
     when(() => repo.verifyReport('QA-LEAF3')).thenAnswer((_) => delayed.future);
     await _pump(
       tester,
       const ReportDetailScreen(reportId: 'QA-LEAF3'),
-      overrides: [
-        reportsRepositoryDomainProvider.overrideWithValue(repo),
-        reportDetailControllerProvider.overrideWithBuild(
-          (_, _) async => _report,
-        ),
-      ],
+      overrides: [reportsRepositoryDomainProvider.overrideWithValue(repo)],
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
     final scroll = tester.state<ScrollableState>(find.byType(Scrollable).first);
     scroll.position.jumpTo(scroll.position.maxScrollExtent);
     await tester.pump();
     final initialExtent = scroll.position.maxScrollExtent;
-    await tester.tap(find.text('Check record'));
-    await tester.pump();
+    // Automatic verification is already running when fresh details arrive.
+    expect(find.text('Check record'), findsNothing);
     expect(scroll.position.maxScrollExtent, initialExtent);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(find.byType(CivicSkeletonBlock), findsNothing);

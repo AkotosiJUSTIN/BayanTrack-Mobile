@@ -5,6 +5,9 @@ import 'report_models.dart'
 part 'blockchain_models.freezed.dart';
 part 'blockchain_models.g.dart';
 
+Object? _readVerificationPending(Map<dynamic, dynamic> json, String key) =>
+    json[key] == true || json['scan_incomplete'] == true;
+
 @freezed
 abstract class BlockchainAuditEntryDto with _$BlockchainAuditEntryDto {
   const factory BlockchainAuditEntryDto({
@@ -28,6 +31,13 @@ abstract class BlockchainVerificationResultDto
     with _$BlockchainVerificationResultDto {
   const factory BlockchainVerificationResultDto({
     @JsonKey(name: 'report_id') required String reportId,
+    @JsonKey(name: 'protected_snapshot_token') String? protectedSnapshotToken,
+    @JsonKey(name: 'verified_at') String? verifiedAt,
+    @JsonKey(name: 'verify_status_reason') String? reason,
+    @JsonKey(name: 'verification_pending', readValue: _readVerificationPending)
+    @Default(false)
+    bool verificationPending,
+    @JsonKey(name: 'verify_status') String? verificationState,
     @JsonKey(name: 'on_chain_id') @NullableStringConverter() String? onChainId,
     required bool verified,
     @JsonKey(name: 'original_snapshot_verified') bool? originalSnapshotVerified,

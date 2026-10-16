@@ -1,3 +1,5 @@
+import 'dart:async';
+import '../../../core/providers/session_content_cache.dart';
 import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../auth_di.dart';
@@ -13,8 +15,22 @@ part 'profile_controller.g.dart';
 /// for backward compatibility with screens.
 @riverpod
 class ProfileController extends _$ProfileController {
+  int _revision = 0;
   @override
   Future<UserProfile> build() async {
+    _revision++;
+    final cache = ref.watch(sessionContentCacheProvider);
+    final cached = cache.read<UserProfile>('profile:me');
+    if (cached != null) {
+      Future.microtask(reload);
+      return cached;
+    }
+    final profile = await _fetch();
+    cache.write('profile:me', profile);
+    return profile;
+  }
+
+  Future<UserProfile> _fetch() async {
     final getCurrentUser = ref.read(getCurrentUserUseCaseProvider);
     final result = await getCurrentUser();
 
@@ -25,6 +41,8 @@ class ProfileController extends _$ProfileController {
   }
 
   Future<void> updateProfile(ProfileUpdateRequest request) async {
+    final revision = ++_revision;
+    final cache = ref.read(sessionContentCacheProvider);
     final previous = state;
     final result = await ref
         .read(profileMutationUseCaseProvider)
@@ -34,9 +52,13 @@ class ProfileController extends _$ProfileController {
           phone: request.phone,
           expectedRevision: request.expectedRevision,
         );
-    if (!ref.mounted) return;
+    if (!ref.mounted || cache.isClosed || revision != _revision) return;
     result.when(
-      success: (user) => state = AsyncData(_profileFromUser(user)),
+      success: (user) {
+        final profile = _profileFromUser(user);
+        cache.write('profile:me', profile);
+        state = AsyncData(profile);
+      },
       failure: (failure) {
         final error = Exception(failure.message);
         state = previous;
@@ -49,12 +71,18 @@ class ProfileController extends _$ProfileController {
     File imageFile, {
     void Function(int sent, int total)? onSendProgress,
   }) async {
+    final revision = ++_revision;
+    final cache = ref.read(sessionContentCacheProvider);
     final result = await ref
         .read(profileMutationUseCaseProvider)
         .uploadAvatar(imageFile, onSendProgress: onSendProgress);
-    if (!ref.mounted) return;
+    if (!ref.mounted || cache.isClosed || revision != _revision) return;
     result.when(
-      success: (user) => state = AsyncData(_profileFromUser(user)),
+      success: (user) {
+        final profile = _profileFromUser(user);
+        cache.write('profile:me', profile);
+        state = AsyncData(profile);
+      },
       failure: (failure) {
         final error = Exception(failure.message);
         throw error;
@@ -63,12 +91,18 @@ class ProfileController extends _$ProfileController {
   }
 
   Future<void> removeAvatar() async {
+    final revision = ++_revision;
+    final cache = ref.read(sessionContentCacheProvider);
     final result = await ref
         .read(profileMutationUseCaseProvider)
         .removeAvatar();
-    if (!ref.mounted) return;
+    if (!ref.mounted || cache.isClosed || revision != _revision) return;
     result.when(
-      success: (user) => state = AsyncData(_profileFromUser(user)),
+      success: (user) {
+        final profile = _profileFromUser(user);
+        cache.write('profile:me', profile);
+        state = AsyncData(profile);
+      },
       failure: (failure) {
         final error = Exception(failure.message);
         throw error;
@@ -91,8 +125,21 @@ class ProfileController extends _$ProfileController {
   }
 
   Future<void> reload() async {
-    state = const AsyncValue.loading();
-    ref.invalidateSelf();
+    final revision = ++_revision;
+    final cache = ref.read(sessionContentCacheProvider);
+    final freshness = ref.read(contentFreshnessProvider.notifier);
+    freshness.set('profile:me', ContentFreshness.refreshing);
+    try {
+      final profile = await _fetch();
+      if (!ref.mounted || cache.isClosed || revision != _revision) return;
+      cache.write('profile:me', profile);
+      freshness.set('profile:me', ContentFreshness.current);
+      state = AsyncData(profile);
+    } catch (error, stack) {
+      if (!ref.mounted || cache.isClosed || revision != _revision) return;
+      freshness.set('profile:me', ContentFreshness.stale);
+      if (!state.hasValue) state = AsyncError<UserProfile>(error, stack);
+    }
   }
 
   UserProfile _profileFromUser(User user) => UserProfile(

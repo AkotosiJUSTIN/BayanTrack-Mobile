@@ -1,3 +1,4 @@
+import 'core/presentation/widgets/session_screen_lifecycle.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -69,6 +70,7 @@ class MyApp extends ConsumerWidget {
       title: 'BayanTrack',
       debugShowCheckedModeBanner: false,
       navigatorKey: _navigatorKey,
+      navigatorObservers: [sessionRouteObserver],
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: themeMode,

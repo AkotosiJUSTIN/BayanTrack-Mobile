@@ -1,3 +1,5 @@
+import 'dart:async';
+import '../../../core/providers/session_content_cache.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../domain/entities/blockchain_verification.dart';
 import '../domain/entities/report.dart';
@@ -13,9 +15,23 @@ Duration? _noDetailRetry(int retryCount, Object error) => null;
 /// Returns domain [Report] entity.
 @Riverpod(retry: _noDetailRetry)
 class ReportDetailController extends _$ReportDetailController {
+  int _revision = 0;
   @override
   Future<Report> build(String reportId) async {
-    return _fetchReport(reportId);
+    _revision++;
+    _refreshing = null;
+    isFresh = false;
+    final cache = ref.watch(sessionContentCacheProvider);
+    final cached = cache.read<Report>('report:$reportId');
+    if (cached != null) {
+      Future.microtask(refresh);
+      return cached;
+    }
+    final report = await _fetchReport(reportId);
+    if (cache.isClosed) throw StateError('Session changed.');
+    isFresh = !report.isStale;
+    cache.write('report:$reportId', report);
+    return report;
   }
 
   Future<Report> _fetchReport(String reportId) async {
@@ -28,11 +44,41 @@ class ReportDetailController extends _$ReportDetailController {
     );
   }
 
+  bool isFresh = false;
+  Future<void>? _refreshing;
+
   /// Refresh the report
   Future<void> refresh() async {
-    final id = reportId;
-    final next = await AsyncValue.guard(() => _fetchReport(id));
-    if (ref.mounted) state = next;
+    if (_refreshing != null) return _refreshing;
+    late final Future<void> task;
+    task = _refresh().whenComplete(() {
+      if (identical(_refreshing, task)) _refreshing = null;
+    });
+    _refreshing = task;
+    return task;
+  }
+
+  Future<void> _refresh() async {
+    final revision = ++_revision;
+    final cache = ref.read(sessionContentCacheProvider);
+    final freshness = ref.read(contentFreshnessProvider.notifier);
+    freshness.set('report:$reportId', ContentFreshness.refreshing);
+    try {
+      final report = await _fetchReport(reportId);
+      if (!ref.mounted || cache.isClosed || revision != _revision) return;
+      isFresh = !report.isStale;
+      cache.write('report:$reportId', report);
+      state = AsyncData(report);
+      freshness.set(
+        'report:$reportId',
+        isFresh ? ContentFreshness.current : ContentFreshness.stale,
+      );
+    } catch (error, stack) {
+      if (!ref.mounted || cache.isClosed || revision != _revision) return;
+      isFresh = false;
+      freshness.set('report:$reportId', ContentFreshness.stale);
+      if (!state.hasValue) state = AsyncError<Report>(error, stack);
+    }
   }
 
   /// Verify the report against blockchain
@@ -61,22 +107,35 @@ class ReportDetailController extends _$ReportDetailController {
     String? signatureImageId,
     String? signatureName,
   }) async {
+    if (!isFresh || state.hasError) {
+      throw StateError('Refresh the report before submitting a review.');
+    }
+    final cache = ref.read(sessionContentCacheProvider);
     final id = reportId;
     final useCase = ref.read(citizenCloseReportUseCaseProvider);
+    final pendingReview = ref.keepAlive();
+    try {
+      final result = await useCase(
+        reportId: id,
+        satisfied: satisfied,
+        rating: rating,
+        note: note,
+        reason: reason,
+        signatureImageId: signatureImageId,
+        signatureName: signatureName,
+      );
 
-    final result = await useCase(
-      reportId: id,
-      satisfied: satisfied,
-      rating: rating,
-      note: note,
-      reason: reason,
-      signatureImageId: signatureImageId,
-      signatureName: signatureName,
-    );
-
-    return result.when(
-      success: (data) => data,
-      failure: (failure) => throw failure,
-    );
+      if (!ref.mounted || cache.isClosed) throw StateError('Session changed.');
+      return result.when(
+        success: (data) {
+          ref.read(sessionContentCacheProvider).remove('verification:$id');
+          unawaited(refresh());
+          return data;
+        },
+        failure: (failure) => throw failure,
+      );
+    } finally {
+      pendingReview.close();
+    }
   }
 }

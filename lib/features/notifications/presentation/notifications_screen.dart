@@ -1,3 +1,6 @@
+import 'dart:async';
+import '../../../core/presentation/widgets/session_screen_lifecycle.dart';
+import '../../../core/presentation/widgets/content_freshness_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -26,39 +29,49 @@ class NotificationsScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.notifications)),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(notificationsControllerProvider);
-          try {
-            await ref.read(notificationsControllerProvider.future);
-          } catch (_) {
-            // The inline error state gives the user the retry action.
-          }
-        },
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: VerificationBanner(
-                permissions: permissions,
-                compact: true,
+    return SessionScreenLifecycle(
+      onVisible: () => unawaited(
+        ref.read(notificationsControllerProvider.notifier).refresh(),
+      ),
+      child: Scaffold(
+        appBar: AppBar(title: Text(l10n.notifications)),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            try {
+              await ref
+                  .read(notificationsControllerProvider.notifier)
+                  .refresh();
+            } catch (_) {
+              // The inline error state gives the user the retry action.
+            }
+          },
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              const SliverToBoxAdapter(
+                child: ContentFreshnessBanner(cacheKey: 'notifications:me'),
               ),
-            ),
-            SliverToBoxAdapter(child: _buildIntro(theme, l10n)),
-            ...notificationsAsync.when(
-              data: (data) =>
-                  _buildDataSlivers(context, ref, data, theme, l10n),
-              loading: () => _buildLoadingSlivers(),
-              error: (_, _) => [
-                SliverFillRemaining(
-                  hasScrollBody: true,
-                  child: _buildErrorState(context, ref, theme, l10n),
+              SliverToBoxAdapter(
+                child: VerificationBanner(
+                  permissions: permissions,
+                  compact: true,
                 ),
-              ],
-            ),
-          ],
+              ),
+              SliverToBoxAdapter(child: _buildIntro(theme, l10n)),
+              ...notificationsAsync.when(
+                skipError: notificationsAsync.hasValue,
+                data: (data) =>
+                    _buildDataSlivers(context, ref, data, theme, l10n),
+                loading: () => _buildLoadingSlivers(),
+                error: (_, _) => [
+                  SliverFillRemaining(
+                    hasScrollBody: true,
+                    child: _buildErrorState(context, ref, theme, l10n),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -134,6 +147,14 @@ class NotificationsScreen extends ConsumerWidget {
     if (data.results.isEmpty) {
       return [
         SliverToBoxAdapter(child: summary),
+        if (data.hasNext)
+          SliverToBoxAdapter(
+            child: TextButton(
+              onPressed: () =>
+                  ref.read(notificationsControllerProvider.notifier).loadMore(),
+              child: Text(l10n.loadMore),
+            ),
+          ),
         SliverFillRemaining(
           hasScrollBody: false,
           child: EmptyContentPlaceholder(
@@ -148,6 +169,14 @@ class NotificationsScreen extends ConsumerWidget {
 
     return [
       SliverToBoxAdapter(child: summary),
+      if (data.hasNext)
+        SliverToBoxAdapter(
+          child: TextButton(
+            onPressed: () =>
+                ref.read(notificationsControllerProvider.notifier).loadMore(),
+            child: Text(l10n.loadMore),
+          ),
+        ),
       SliverPadding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         sliver: SliverList.separated(

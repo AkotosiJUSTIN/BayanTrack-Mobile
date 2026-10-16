@@ -1,3 +1,4 @@
+import '../../../core/providers/session_content_cache.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -396,6 +397,13 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(authControllerProvider);
+    if (state is AuthSuccess && state.user != null) {
+      ref.listen(kycStatusControllerProvider, (previous, next) {
+        if (previous?.value?.status != next.value?.status) {
+          ref.invalidate(sessionContentCacheProvider);
+        }
+      });
+    }
     ref.watch(appLocaleProvider);
     ref.watch(backendReachabilityProvider);
     debugPrint('[AuthWrapper] AuthState changed: ${state.runtimeType}');

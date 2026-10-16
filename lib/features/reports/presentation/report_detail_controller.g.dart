@@ -64,7 +64,7 @@ final class ReportDetailControllerProvider
 }
 
 String _$reportDetailControllerHash() =>
-    r'99939e4cdb7687f09cf78a7703bc04b7d28f6538';
+    r'b6548d4d124da5c4098b92020ae8eaa89d5de84f';
 
 /// Controller for fetching a single report by ID.
 ///

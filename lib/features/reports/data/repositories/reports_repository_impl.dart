@@ -426,6 +426,9 @@ class ReportsRepositoryImpl implements ReportsRepository {
               blockchain_dto.BlockchainVerificationResultDto.fromJson({
                 ...body,
                 'verified': false,
+                'verification_pending': true,
+                'verify_status_reason':
+                    body['verify_status_reason'] ?? 'chain_scan_incomplete',
                 'original_snapshot_verified': null,
                 'current_content_verified': null,
                 'status_verified': null,
