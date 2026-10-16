@@ -1,3 +1,4 @@
+import '../../../core/presentation/widgets/session_screen_lifecycle.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -5,7 +6,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../core/presentation/widgets/app_toast.dart';
 import '../../../core/presentation/widgets/civic_components.dart';
 import '../../../core/presentation/widgets/offline_stale_banner.dart';
 import '../../../core/providers/backend_reachability_provider.dart';
@@ -20,6 +20,8 @@ import '../domain/entities/report_enums.dart';
 import '../domain/entities/report_image.dart';
 import 'citizen_review_screen.dart';
 import 'report_detail_controller.dart';
+import 'report_verification_controller.dart';
+import '../../../core/presentation/widgets/content_freshness_banner.dart';
 import 'widgets/priority_badge.dart';
 import 'widgets/shared_incident_section.dart';
 import 'report_labels.dart';
@@ -44,34 +46,6 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
   int _currentImageIndex = 0;
   BlockchainVerificationResult? _verificationResult;
   bool _isVerifying = false;
-  int _verificationRequest = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_loadSavedVerification());
-  }
-
-  @override
-  void didUpdateWidget(covariant ReportDetailScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.reportId != widget.reportId) {
-      _verificationResult = null;
-      _isVerifying = false;
-      unawaited(_loadSavedVerification());
-    }
-  }
-
-  Future<void> _loadSavedVerification() async {
-    final request = ++_verificationRequest;
-    final result = await ref
-        .read(reportDetailControllerProvider(widget.reportId).notifier)
-        .verifyReport(cachedOnly: true);
-    if (!mounted || request != _verificationRequest) return;
-    if (result?.verified == true) {
-      setState(() => _verificationResult = result);
-    }
-  }
 
   @override
   void dispose() {
@@ -92,104 +66,101 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     final reportAsync = ref.watch(
       reportDetailControllerProvider(widget.reportId),
     );
-    ref.listen(reportDetailControllerProvider(widget.reportId), (
-      previous,
-      next,
-    ) {
-      if (previous?.hasValue == true &&
-          next.hasValue &&
-          previous?.value != next.value) {
-        _verificationResult = null;
-        _isVerifying = false;
-        unawaited(_loadSavedVerification());
-      }
-    });
-    ref.listen<BackendReachability>(backendReachabilityProvider, (
-      previous,
-      next,
-    ) {
-      if (previous == BackendReachability.unreachable &&
-          next == BackendReachability.reachable) {
-        ref
-            .read(reportDetailControllerProvider(widget.reportId).notifier)
-            .refresh();
-      }
-    });
+    final verification = ref.watch(reportVerificationProvider(widget.reportId));
+    _verificationResult = verification.result;
+    _isVerifying = verification.checking;
 
-    return Scaffold(
-      body: reportAsync.when(
-        loading: () => Semantics(
-          container: true,
-          liveRegion: true,
-          label: l10n.loading,
-          child: CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                expandedHeight: 300,
-                pinned: true,
-                title: Text(l10n.reportDetails),
-                flexibleSpace: FlexibleSpaceBar(
-                  background: const CivicSkeletonBlock(height: 300, radius: 0),
-                ),
-              ),
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CivicSkeletonBlock(width: 96, height: 24),
-                      SizedBox(height: 16),
-                      CivicSkeletonBlock(height: 28),
-                      SizedBox(height: 12),
-                      CivicSkeletonBlock(height: 16),
-                      SizedBox(height: 24),
-                      CivicSkeletonBlock(height: 120),
-                      SizedBox(height: 24),
-                      CivicSkeletonBlock(height: 160),
-                    ],
+    return SessionScreenLifecycle(
+      onVisible: () => ref
+          .read(reportVerificationProvider(widget.reportId).notifier)
+          .setActive(true),
+      onHidden: () => ref
+          .read(reportVerificationProvider(widget.reportId).notifier)
+          .setActive(false),
+      child: Scaffold(
+        body: reportAsync.when(
+          skipError: reportAsync.hasValue,
+          loading: () => Semantics(
+            container: true,
+            liveRegion: true,
+            label: l10n.loading,
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  expandedHeight: 300,
+                  pinned: true,
+                  title: Text(l10n.reportDetails),
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: const CivicSkeletonBlock(
+                      height: 300,
+                      radius: 0,
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-        error: (error, stack) => CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              expandedHeight: 300,
-              pinned: true,
-              title: Text(l10n.reportDetails),
-              flexibleSpace: FlexibleSpaceBar(
-                background: _buildImagePlaceholder(isDark),
-              ),
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CivicSkeletonBlock(width: 96, height: 24),
+                        SizedBox(height: 16),
+                        CivicSkeletonBlock(height: 28),
+                        SizedBox(height: 12),
+                        CivicSkeletonBlock(height: 16),
+                        SizedBox(height: 24),
+                        CivicSkeletonBlock(height: 120),
+                        SizedBox(height: 24),
+                        CivicSkeletonBlock(height: 160),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            SliverToBoxAdapter(child: _buildErrorState(theme)),
-          ],
-        ),
-        data: (report) {
-          final imageUrls = report.coreImages
-              .map((img) => ApiConstants.getImageUrl(img.url))
-              .toList();
-
-          return CustomScrollView(
+          ),
+          error: (error, stack) => CustomScrollView(
             slivers: [
               SliverAppBar(
                 expandedHeight: 300,
                 pinned: true,
                 title: Text(l10n.reportDetails),
                 flexibleSpace: FlexibleSpaceBar(
-                  background: _buildImageCarousel(isDark, imageUrls),
+                  background: _buildImagePlaceholder(isDark),
                 ),
               ),
-              if (report.isStale || backendUnreachable)
-                const SliverToBoxAdapter(child: OfflineStaleBanner()),
-              SliverToBoxAdapter(
-                child: _buildReportContent(theme, isDark, report),
-              ),
+              SliverToBoxAdapter(child: _buildErrorState(theme)),
             ],
-          );
-        },
+          ),
+          data: (report) {
+            final imageUrls = report.coreImages
+                .map((img) => ApiConstants.getImageUrl(img.url))
+                .toList();
+
+            return CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  expandedHeight: 300,
+                  pinned: true,
+                  title: Text(l10n.reportDetails),
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: _buildImageCarousel(isDark, imageUrls),
+                  ),
+                ),
+                SliverToBoxAdapter(
+                  child: ContentFreshnessBanner(
+                    cacheKey: 'report:${widget.reportId}',
+                  ),
+                ),
+                if (report.isStale || backendUnreachable)
+                  const SliverToBoxAdapter(child: OfflineStaleBanner()),
+                SliverToBoxAdapter(
+                  child: _buildReportContent(theme, isDark, report),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -943,17 +914,26 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: () async {
-                  final acted = await Navigator.of(context).push<bool>(
-                    MaterialPageRoute(
-                      builder: (_) => CitizenReviewScreen(report: report),
-                    ),
-                  );
-                  // Refresh report after review is submitted
-                  if (acted == true && mounted) {
-                    ref.invalidate(reportDetailControllerProvider(report.id));
-                  }
-                },
+                onPressed:
+                    !ref
+                        .read(
+                          reportDetailControllerProvider(report.id).notifier,
+                        )
+                        .isFresh
+                    ? null
+                    : () async {
+                        final acted = await Navigator.of(context).push<bool>(
+                          MaterialPageRoute(
+                            builder: (_) => CitizenReviewScreen(report: report),
+                          ),
+                        );
+                        // Refresh report after review is submitted
+                        if (acted == true && mounted) {
+                          ref.invalidate(
+                            reportDetailControllerProvider(report.id),
+                          );
+                        }
+                      },
                 icon: const Icon(Icons.rate_review_outlined),
                 label: Text(l10n.reviewSignOff),
                 style: FilledButton.styleFrom(
@@ -1023,6 +1003,18 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
               ),
             ),
           const SizedBox(height: 12),
+          if (_verificationResult?.verifiedAt != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                l10n.recordCheckedAt(
+                  DateFormat.yMd().add_jm().format(
+                    _verificationResult!.verifiedAt!.toLocal(),
+                  ),
+                ),
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
           if (_verificationResult != null) ...[
             _buildVerificationStatus(theme),
             const Divider(height: 24),
@@ -1065,11 +1057,16 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
     // `verified` = content hash intact. `statusVerified` is only populated for
     // legacy v3 status events; v4 checkpoints deliberately leave workflow
     // status off-chain and return null.
-    final isHealthy = result.verified; // content integrity only
+    final report = ref
+        .read(reportDetailControllerProvider(widget.reportId))
+        .value;
+    final isHealthy =
+        report != null && ReportVerificationController.matches(report, result);
 
     // Determine the display state
     final isNotFound = result.notFoundOnChain;
-    final isConnectionError = result.connectionError;
+    final isConnectionError =
+        result.connectionError || result.reason == 'ipfs_unreachable';
     final isNotAnchored = !result.isAnchored;
     final isNeutral = isNotFound || isConnectionError || isNotAnchored;
     // Status is out of sync with blockchain (expected after staff actions)
@@ -1091,6 +1088,11 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       statusIcon = Icons.sync_rounded;
       title = l10n.contentVerified;
       message = l10n.recordStatusPending;
+    } else if (result.verificationPending && !isConnectionError) {
+      statusColor = warningColor;
+      statusIcon = Icons.sync_rounded;
+      title = l10n.recordCheckpointPendingTitle;
+      message = l10n.recordCheckpointPending;
     } else if (isNotAnchored) {
       statusColor = warningColor;
       statusIcon = Icons.hourglass_empty;
@@ -1241,7 +1243,7 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
         0 => l10n.recordCreated,
         1 => l10n.recordFinalized,
         2 => l10n.recordReopened,
-        3 => l10n.recordStaffUpdated,
+        3 => l10n.recordUpdated,
         _ => _localizedAuditAction(entry.actionType, l10n),
       };
     }
@@ -1260,26 +1262,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
       };
 
   Future<void> _handleVerification(String reportId) async {
-    final l10n = AppLocalizations.of(context);
-    if (_isVerifying) return;
-    final request = ++_verificationRequest;
-    setState(() => _isVerifying = true);
-
-    final controller = ref.read(
-      reportDetailControllerProvider(reportId).notifier,
-    );
-    final result = await controller.verifyReport();
-
-    if (mounted && request == _verificationRequest) {
-      setState(() {
-        _verificationResult = result;
-        _isVerifying = false;
-      });
-
-      if (result == null) {
-        AppToast.error(context, l10n.verificationFailed);
-      }
-    }
+    await ref
+        .read(reportVerificationProvider(reportId).notifier)
+        .check(force: true);
   }
 
   Widget _buildStatusBadge(BuildContext context, ReportStatus status) {

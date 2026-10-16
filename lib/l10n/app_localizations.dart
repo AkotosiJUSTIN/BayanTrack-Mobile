@@ -4333,6 +4333,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Latest release: {version}'**
   String appLatestVersion(String version);
+
+  /// No description provided for @cachedContentRefreshing.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing saved information. Checking for updates...'**
+  String get cachedContentRefreshing;
+
+  /// No description provided for @cachedContentStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing saved information. Could not refresh; try again.'**
+  String get cachedContentStale;
+
+  /// No description provided for @recordUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Protected report record updated'**
+  String get recordUpdated;
+
+  /// No description provided for @recordCheckedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'This saved version was checked at {time}.'**
+  String recordCheckedAt(String time);
+
+  /// No description provided for @loadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get loadMore;
+
+  /// No description provided for @recordCheckpointPendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Protected record update pending'**
+  String get recordCheckpointPendingTitle;
+
+  /// No description provided for @recordCheckpointPending.
+  ///
+  /// In en, this message translates to:
+  /// **'An updated protected record is waiting to be saved. This version has not been verified yet.'**
+  String get recordCheckpointPending;
 }
 
 class _AppLocalizationsDelegate

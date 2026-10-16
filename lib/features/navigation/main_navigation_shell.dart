@@ -1,3 +1,6 @@
+import 'dart:async';
+import '../auth/presentation/profile_controller.dart';
+import '../notifications/presentation/notifications_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
@@ -45,6 +48,16 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
 
   void _onTabTapped(int index) {
     if (index < 0 || index >= _screens.length) return;
+    if (index != _currentIndex &&
+        _visitedTabs.contains(index) &&
+        widget.screens == null) {
+      if (index == 2) {
+        unawaited(ref.read(notificationsControllerProvider.notifier).refresh());
+      }
+      if (index == 3) {
+        unawaited(ref.read(profileControllerProvider.notifier).reload());
+      }
+    }
     setState(() {
       _currentIndex = index;
       _visitedTabs.add(index);

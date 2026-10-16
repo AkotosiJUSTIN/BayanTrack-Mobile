@@ -25,6 +25,16 @@ import 'package:mocktail/mocktail.dart';
 
 class _ReportsMock extends Mock implements ReportsRepository {}
 
+class _TestDetailController extends ReportDetailController {
+  _TestDetailController(this.report);
+  final Report report;
+  @override
+  Future<Report> build(String reportId) async {
+    isFresh = !report.isStale;
+    return report;
+  }
+}
+
 class _TestMunicipalities extends Municipalities {
   @override
   FutureOr<List<MunicipalityModel>> build() => const [
@@ -46,6 +56,7 @@ Report _report({
   String? incidentGroupId,
 }) => Report(
   id: 'RPT-DETAIL-UI-1',
+  protectedSnapshotToken: status.name,
   isStale: isStale,
   title: 'Blocked drainage near the market',
   description: 'Water is collecting beside the public market.',
@@ -92,9 +103,9 @@ Future<void> _pumpDetail(
         reportsRepositoryDomainProvider.overrideWithValue(repository),
         municipalitiesProvider.overrideWith(_TestMunicipalities.new),
         backendReachabilityProvider.overrideWith(_TestReachability.new),
-        reportDetailControllerProvider.overrideWithBuild(
-          (_, _) async => report ?? _report(),
-        ),
+        reportDetailControllerProvider(
+          'RPT-DETAIL-UI-1',
+        ).overrideWith(() => _TestDetailController(report ?? _report())),
         sharedIncidentProvider('RPT-DETAIL-UI-1').overrideWith(
           (_) async => const SharedIncident(
             groupId: 'group-1',
@@ -111,99 +122,108 @@ Future<void> _pumpDetail(
       ),
     ),
   );
-  await tester.pumpAndSettle();
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 100));
 }
 
 void main() {
-  testWidgets('late saved proof cannot replace a newer manual result', (
+  testWidgets(
+    'automatic cached lookup and manual taps do not duplicate checks',
+    (tester) async {
+      final repository = _ReportsMock();
+      final saved = Completer<Result<BlockchainVerificationResult>>();
+      when(
+        () => repository.verifyReport('RPT-DETAIL-UI-1', cachedOnly: true),
+      ).thenAnswer((_) => saved.future);
+      when(() => repository.verifyReport('RPT-DETAIL-UI-1')).thenAnswer(
+        (_) async => const Success(
+          BlockchainVerificationResult(
+            reportId: 'RPT-DETAIL-UI-1',
+            verified: true,
+            currentContentVerified: true,
+            originalSnapshotVerified: true,
+            protectedSnapshotToken: 'inProgress',
+            blockchainData: {},
+            auditHistory: [],
+            message: 'proof',
+          ),
+        ),
+      );
+      await _pumpDetail(tester, repository: repository);
+      await tester.scrollUntilVisible(find.text('Report record check'), 400);
+      await tester.pump();
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      verifyNever(() => repository.verifyReport('RPT-DETAIL-UI-1'));
+      saved.complete(const Err(ServerFailure('No saved proof')));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('The report details match the protected record.'),
+        findsOneWidget,
+      );
+      verify(() => repository.verifyReport('RPT-DETAIL-UI-1')).called(1);
+    },
+  );
+
+  testWidgets('report snapshot update rejects an older in-flight check', (
     tester,
   ) async {
     final repository = _ReportsMock();
-    final saved = Completer<Result<BlockchainVerificationResult>>();
+    final pending = Completer<Result<BlockchainVerificationResult>>();
+    var calls = 0;
     when(
       () => repository.verifyReport('RPT-DETAIL-UI-1', cachedOnly: true),
-    ).thenAnswer((_) => saved.future);
+    ).thenAnswer((_) async => const Err(ServerFailure('No proof')));
     when(() => repository.verifyReport('RPT-DETAIL-UI-1')).thenAnswer(
-      (_) async => const Success(
-        BlockchainVerificationResult(
-          reportId: 'RPT-DETAIL-UI-1',
-          verified: true,
-          blockchainData: {},
-          auditHistory: [],
-          message: 'New verification result',
-        ),
-      ),
+      (_) => ++calls == 1
+          ? pending.future
+          : Future.value(
+              const Success(
+                BlockchainVerificationResult(
+                  reportId: 'RPT-DETAIL-UI-1',
+                  verified: false,
+                  connectionError: true,
+                  protectedSnapshotToken: 'resolved',
+                  blockchainData: {},
+                  auditHistory: [],
+                  message: 'unavailable',
+                ),
+              ),
+            ),
     );
+    when(
+      () => repository.getReport('RPT-DETAIL-UI-1'),
+    ).thenAnswer((_) async => Success(_report(status: ReportStatus.resolved)));
     await _pumpDetail(tester, repository: repository);
-    await tester.scrollUntilVisible(find.text('Check record'), 400);
+    await tester.scrollUntilVisible(find.text('Report record check'), 400);
+    await tester.pump();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ReportDetailScreen)),
+    );
+    await container
+        .read(reportDetailControllerProvider('RPT-DETAIL-UI-1').notifier)
+        .refresh();
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Check record'));
-    await tester.pumpAndSettle();
-    saved.complete(
+    pending.complete(
       const Success(
         BlockchainVerificationResult(
           reportId: 'RPT-DETAIL-UI-1',
-          verified: false,
-          connectionError: true,
+          verified: true,
+          currentContentVerified: true,
+          originalSnapshotVerified: true,
+          protectedSnapshotToken: 'inProgress',
           blockchainData: {},
           auditHistory: [],
-          message: 'Old saved result',
+          message: 'obsolete',
         ),
       ),
     );
     await tester.pumpAndSettle();
     expect(
       find.text('The report details match the protected record.'),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.text('New verification result'), findsNothing);
-    expect(find.text('Old saved result'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
-
-  testWidgets(
-    'report refresh cancels pending verification without a stuck spinner',
-    (tester) async {
-      final repository = _ReportsMock();
-      final pending = Completer<Result<BlockchainVerificationResult>>();
-      when(
-        () => repository.verifyReport('RPT-DETAIL-UI-1', cachedOnly: true),
-      ).thenAnswer((_) async => const Err(ServerFailure('No saved proof')));
-      when(
-        () => repository.verifyReport('RPT-DETAIL-UI-1'),
-      ).thenAnswer((_) => pending.future);
-      when(() => repository.getReport('RPT-DETAIL-UI-1')).thenAnswer(
-        (_) async => Success(_report(status: ReportStatus.resolved)),
-      );
-      await _pumpDetail(tester, repository: repository);
-      await tester.scrollUntilVisible(find.text('Check record'), 400);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Check record'));
-      await tester.pump();
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(ReportDetailScreen)),
-      );
-      await container
-          .read(reportDetailControllerProvider('RPT-DETAIL-UI-1').notifier)
-          .refresh();
-      await tester.pumpAndSettle();
-      expect(find.byType(CircularProgressIndicator), findsNothing);
-      pending.complete(
-        const Success(
-          BlockchainVerificationResult(
-            reportId: 'RPT-DETAIL-UI-1',
-            verified: true,
-            blockchainData: {},
-            auditHistory: [],
-            message: 'Obsolete pending result',
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('Obsolete pending result'), findsNothing);
-      expect(tester.takeException(), isNull);
-    },
-  );
 
   testWidgets(
     'loads shared verified and anchored proof without tapping verify',
@@ -216,6 +236,9 @@ void main() {
           BlockchainVerificationResult(
             reportId: 'RPT-DETAIL-UI-1',
             verified: true,
+            currentContentVerified: true,
+            originalSnapshotVerified: true,
+            protectedSnapshotToken: 'inProgress',
             isAnchored: true,
             blockchainData: {},
             auditHistory: [],
@@ -258,8 +281,46 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Check record'));
       await tester.pumpAndSettle();
-      verify(() => repository.verifyReport('RPT-DETAIL-UI-1')).called(2);
+      verify(() => repository.verifyReport('RPT-DETAIL-UI-1')).called(3);
       expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'pending checkpoint never displays a mismatch or a verified claim',
+    (tester) async {
+      final repository = _ReportsMock();
+      when(
+        () => repository.verifyReport('RPT-DETAIL-UI-1', cachedOnly: true),
+      ).thenAnswer((_) async => const Err(ServerFailure('No proof')));
+      when(() => repository.verifyReport('RPT-DETAIL-UI-1')).thenAnswer(
+        (_) async => const Success(
+          BlockchainVerificationResult(
+            reportId: 'RPT-DETAIL-UI-1',
+            verified: false,
+            verificationPending: true,
+            reason: 'checkpoint_pending',
+            verificationState: 'UNVERIFIED',
+            currentContentVerified: null,
+            protectedSnapshotToken: 'inProgress',
+            blockchainData: {},
+            auditHistory: [],
+            message: 'pending',
+          ),
+        ),
+      );
+      await _pumpDetail(tester, repository: repository);
+      await tester.scrollUntilVisible(
+        find.text('Protected record update pending'),
+        400,
+      );
+      await tester.pump();
+      expect(find.text('Protected record update pending'), findsOneWidget);
+      expect(find.text("Report details don't match"), findsNothing);
+      expect(
+        find.text('The report details match the protected record.'),
+        findsNothing,
+      );
     },
   );
 

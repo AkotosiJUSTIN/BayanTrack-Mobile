@@ -2405,4 +2405,31 @@ class AppLocalizationsFil extends AppLocalizations {
   String appLatestVersion(String version) {
     return 'Pinakabagong release: $version';
   }
+
+  @override
+  String get cachedContentRefreshing =>
+      'Ipinapakita ang naka-save na impormasyon. Tinitingnan ang mga update...';
+
+  @override
+  String get cachedContentStale =>
+      'Ipinapakita ang naka-save na impormasyon. Hindi ma-refresh; subukang muli.';
+
+  @override
+  String get recordUpdated => 'Na-update ang protektadong tala ng ulat';
+
+  @override
+  String recordCheckedAt(String time) {
+    return 'Nasuri ang naka-save na bersyong ito noong $time.';
+  }
+
+  @override
+  String get loadMore => 'Mag-load pa';
+
+  @override
+  String get recordCheckpointPendingTitle =>
+      'Nakabinbin ang update sa protektadong tala';
+
+  @override
+  String get recordCheckpointPending =>
+      'Naghihintay pang ma-save ang na-update na protektadong tala. Hindi pa nasusuri ang bersyong ito.';
 }

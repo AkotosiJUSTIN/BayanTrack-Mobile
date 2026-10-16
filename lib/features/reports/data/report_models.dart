@@ -272,6 +272,7 @@ sealed class ReportImage with _$ReportImage {
 @freezed
 sealed class Report with _$Report {
   const factory Report({
+    @JsonKey(name: 'protected_snapshot_token') String? protectedSnapshotToken,
     required String id,
     @JsonKey(name: 'report_id') String? reportId,
     @JsonKey(name: 'user_id') String? userId,

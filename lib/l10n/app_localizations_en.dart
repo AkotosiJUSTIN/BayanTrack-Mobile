@@ -2392,4 +2392,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String appLatestVersion(String version) {
     return 'Latest release: $version';
   }
+
+  @override
+  String get cachedContentRefreshing =>
+      'Showing saved information. Checking for updates...';
+
+  @override
+  String get cachedContentStale =>
+      'Showing saved information. Could not refresh; try again.';
+
+  @override
+  String get recordUpdated => 'Protected report record updated';
+
+  @override
+  String recordCheckedAt(String time) {
+    return 'This saved version was checked at $time.';
+  }
+
+  @override
+  String get loadMore => 'Load more';
+
+  @override
+  String get recordCheckpointPendingTitle => 'Protected record update pending';
+
+  @override
+  String get recordCheckpointPending =>
+      'An updated protected record is waiting to be saved. This version has not been verified yet.';
 }

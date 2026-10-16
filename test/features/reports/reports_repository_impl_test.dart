@@ -51,6 +51,8 @@ void main() {
           expect(proof.originalSnapshotVerified, isNull);
           expect(proof.currentContentVerified, isNull);
           expect(proof.connectionError, isTrue);
+          expect(proof.verificationPending, isTrue);
+          expect(proof.reason, 'chain_scan_incomplete');
         },
         failure: (failure) => fail(failure.message),
       );

@@ -8,19 +8,16 @@ part of 'notifications_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Controller for notifications list - auto-fetches on first access
 
 @ProviderFor(NotificationsController)
 final notificationsControllerProvider = NotificationsControllerProvider._();
 
-/// Controller for notifications list - auto-fetches on first access
 final class NotificationsControllerProvider
     extends
         $AsyncNotifierProvider<
           NotificationsController,
           PaginatedNotifications
         > {
-  /// Controller for notifications list - auto-fetches on first access
   NotificationsControllerProvider._()
     : super(
         from: null,
@@ -41,9 +38,7 @@ final class NotificationsControllerProvider
 }
 
 String _$notificationsControllerHash() =>
-    r'63a31c6038e2964e518ce1bd15fd6366416b3827';
-
-/// Controller for notifications list - auto-fetches on first access
+    r'809e4c96ff044e64b0a37d5c31294f44a8f11c80';
 
 abstract class _$NotificationsController
     extends $AsyncNotifier<PaginatedNotifications> {

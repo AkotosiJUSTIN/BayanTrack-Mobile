@@ -22,6 +22,16 @@ import 'package:mocktail/mocktail.dart';
 
 class _ReportsMock extends Mock implements ReportsRepository {}
 
+class _FreshDetail extends ReportDetailController {
+  _FreshDetail(this.report);
+  final Report report;
+  @override
+  Future<Report> build(String reportId) async {
+    isFresh = true;
+    return report;
+  }
+}
+
 const _report = Report(
   id: 'RPT-DISPUTE-1',
   description: 'Synthetic resolved report',
@@ -48,9 +58,9 @@ Future<void> _pumpReview(
     ProviderScope(
       overrides: [
         reportsRepositoryDomainProvider.overrideWithValue(repository),
-        reportDetailControllerProvider.overrideWithBuild(
-          (_, _) async => report,
-        ),
+        reportDetailControllerProvider(
+          report.id,
+        ).overrideWith(() => _FreshDetail(report)),
         sharedIncidentProvider(report.id).overrideWith((_) async => incident),
       ],
       child: MaterialApp(

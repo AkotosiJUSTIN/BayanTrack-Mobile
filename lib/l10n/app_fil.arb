@@ -754,5 +754,19 @@
   "historyNoteAdded": "Nagdagdag ng tala ang kawani",
   "historyAssessmentRecorded": "Nai-save ang pagsusuri sa ulat",
   "appLatestVersion": "Pinakabagong release: {version}",
-  "@appLatestVersion": {"placeholders": {"version": {"type": "String"}}}
+  "@appLatestVersion": {"placeholders": {"version": {"type": "String"}}},
+  "cachedContentRefreshing": "Ipinapakita ang naka-save na impormasyon. Tinitingnan ang mga update...",
+  "cachedContentStale": "Ipinapakita ang naka-save na impormasyon. Hindi ma-refresh; subukang muli.",
+  "recordUpdated": "Na-update ang protektadong tala ng ulat",
+  "recordCheckedAt": "Nasuri ang naka-save na bersyong ito noong {time}.",
+  "@recordCheckedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "loadMore": "Mag-load pa",
+  "recordCheckpointPendingTitle": "Nakabinbin ang update sa protektadong tala",
+  "recordCheckpointPending": "Naghihintay pang ma-save ang na-update na protektadong tala. Hindi pa nasusuri ang bersyong ito."
 }

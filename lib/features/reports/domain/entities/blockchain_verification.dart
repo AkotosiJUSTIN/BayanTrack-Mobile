@@ -38,6 +38,11 @@ class BlockchainAuditEntry extends Equatable {
 /// Represents the result of a blockchain verification check.
 class BlockchainVerificationResult extends Equatable {
   final String reportId;
+  final String? protectedSnapshotToken;
+  final DateTime? verifiedAt;
+  final String? reason;
+  final bool verificationPending;
+  final String? verificationState;
   final String? onChainId;
   final bool verified;
 
@@ -64,6 +69,11 @@ class BlockchainVerificationResult extends Equatable {
   const BlockchainVerificationResult({
     required this.reportId,
     this.onChainId,
+    this.protectedSnapshotToken,
+    this.verifiedAt,
+    this.reason,
+    this.verificationPending = false,
+    this.verificationState,
     required this.verified,
     this.originalSnapshotVerified,
     this.currentContentVerified,
@@ -80,6 +90,11 @@ class BlockchainVerificationResult extends Equatable {
   List<Object?> get props => [
     reportId,
     onChainId,
+    protectedSnapshotToken,
+    verifiedAt,
+    reason,
+    verificationPending,
+    verificationState,
     verified,
     originalSnapshotVerified,
     currentContentVerified,

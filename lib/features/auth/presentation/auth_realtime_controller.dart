@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/providers/session_content_cache.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/realtime/realtime_contract.dart';
@@ -6,6 +7,7 @@ import '../../../core/realtime/realtime_service.dart';
 import '../../kyc/presentation/kyc_controller.dart';
 import '../../notifications/presentation/notifications_controller.dart';
 import '../../reports/presentation/report_detail_controller.dart';
+import '../../reports/presentation/report_verification_controller.dart';
 import '../../reports/presentation/reports_controller.dart';
 import '../../reports/presentation/shared_incident_provider.dart';
 import '../auth_di.dart';
@@ -75,6 +77,10 @@ class AuthRealtimeController {
       _ref.invalidate(myReportsControllerProvider);
       _ref.read(myReportsRefreshProvider.notifier).increment();
       if (event.entityKind == 'report') {
+        final cache = _ref.read(sessionContentCacheProvider);
+        cache.remove('report:${event.entityId}');
+        cache.remove('verification:${event.entityId}');
+        _ref.invalidate(reportVerificationProvider(event.entityId));
         _ref.invalidate(reportDetailControllerProvider(event.entityId));
         _ref.invalidate(sharedIncidentProvider(event.entityId));
       }
@@ -83,10 +89,12 @@ class AuthRealtimeController {
       _ref.invalidate(notificationsControllerProvider);
     }
     if (targets.contains(RealtimeTarget.verification)) {
+      _ref.invalidate(sessionContentCacheProvider);
       _ref.invalidate(kycStatusControllerProvider);
     }
     if (targets.contains(RealtimeTarget.profile) &&
         event.entityId == _connectedUserId) {
+      _ref.read(sessionContentCacheProvider).remove('profile:me');
       _ref.invalidate(profileControllerProvider);
     }
   }

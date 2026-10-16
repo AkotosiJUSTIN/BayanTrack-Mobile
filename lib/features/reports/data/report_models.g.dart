@@ -60,6 +60,7 @@ Map<String, dynamic> _$ReportImageToJson(_ReportImage instance) =>
     };
 
 _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
+  protectedSnapshotToken: json['protected_snapshot_token'] as String?,
   id: json['id'] as String,
   reportId: json['report_id'] as String?,
   userId: json['user_id'] as String?,
@@ -225,6 +226,7 @@ _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
 );
 
 Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
+  'protected_snapshot_token': instance.protectedSnapshotToken,
   'id': instance.id,
   'report_id': instance.reportId,
   'user_id': instance.userId,

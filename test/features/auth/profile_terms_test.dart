@@ -1,4 +1,5 @@
 import 'package:bayantrack_mobile/core/providers/theme_provider.dart';
+import 'package:bayantrack_mobile/core/providers/backend_reachability_provider.dart';
 import 'package:bayantrack_mobile/core/theme/app_theme.dart';
 import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/auth/data/user_permissions.dart';
@@ -31,6 +32,11 @@ PublishedTerms _terms(String version) => PublishedTerms(
   },
 );
 
+class _Reachability extends BackendReachabilityNotifier {
+  @override
+  BackendReachability build() => BackendReachability.reachable;
+}
+
 class _Repository extends SystemGovernanceRepository {
   _Repository() : super(Dio());
 
@@ -61,6 +67,7 @@ void main() {
           final container = ProviderContainer(
             retry: (_, _) => null,
             overrides: [
+              backendReachabilityProvider.overrideWith(_Reachability.new),
               sharedPrefsProvider.overrideWithValue(prefs),
               userPermissionsProvider.overrideWithValue(UserPermissions(null)),
               profileControllerProvider.overrideWithBuild(

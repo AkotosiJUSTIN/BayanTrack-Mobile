@@ -754,5 +754,19 @@
   "historyNoteAdded": "Staff note added",
   "historyAssessmentRecorded": "Report assessment saved",
   "appLatestVersion": "Latest release: {version}",
-  "@appLatestVersion": {"placeholders": {"version": {"type": "String"}}}
+  "@appLatestVersion": {"placeholders": {"version": {"type": "String"}}},
+  "cachedContentRefreshing": "Showing saved information. Checking for updates...",
+  "cachedContentStale": "Showing saved information. Could not refresh; try again.",
+  "recordUpdated": "Protected report record updated",
+  "recordCheckedAt": "This saved version was checked at {time}.",
+  "@recordCheckedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "loadMore": "Load more",
+  "recordCheckpointPendingTitle": "Protected record update pending",
+  "recordCheckpointPending": "An updated protected record is waiting to be saved. This version has not been verified yet."
 }
