@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../widgets/incident_choice_field.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -88,6 +89,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
   final MapController _mapController = MapController();
   final TextEditingController _descriptionController = TextEditingController();
   String _lastDescription = '';
+  String? _incidentTypeKey;
+  String? _incidentCatalogVersion;
   ReportCategoryOption? _selectedEmergencyCategory;
   List<ReportCategoryOption> _emergencyCategories = const [];
   bool _isLoadingEmergencyCategories = false;
@@ -258,6 +261,9 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
       final point = LatLng(latitude, longitude);
       if (_contains(point)) _selectedPoint = point;
     }
+    _incidentTypeKey = draft.payload['incidentTypeKey'] as String?;
+    _incidentCatalogVersion =
+        draft.payload['incidentCatalogVersion'] as String?;
     final categoryKey = draft.payload['categoryKey'];
     _restoredEmergencyCategoryKey = categoryKey is String ? categoryKey : null;
     _emergencyConfirmed = false;
@@ -281,6 +287,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
   }
 
   Map<String, Object?> _captureDraftPayload() => {
+    'incidentTypeKey': _incidentTypeKey,
+    'incidentCatalogVersion': _incidentCatalogVersion,
     'description': _descriptionController.text,
     'latitude': _selectedPoint?.latitude,
     'longitude': _selectedPoint?.longitude,
@@ -291,7 +299,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
 
   bool _hasDraftContent(Map<String, Object?> payload) =>
       (payload['description'] as String? ?? '').trim().isNotEmpty ||
-      payload['categoryKey'] != null;
+      payload['categoryKey'] != null ||
+      payload['incidentTypeKey'] != null;
 
   void _scheduleDraftSave() {
     if (!_draftReady || !_canPersistDraft || !_persistDraft) return;
@@ -385,6 +394,8 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
     bool includeLandmark = false,
   }) => {
     'category': category,
+    'incidentTypeKey': _incidentTypeKey,
+    'incidentCatalogVersion': _incidentCatalogVersion,
     'description': description,
     'isHappeningNow': true,
     'zone': _resolvedBarangay?.name,
@@ -2000,6 +2011,20 @@ class _QuickReportScreenState extends ConsumerState<QuickReportScreen>
                       _buildEmergencyNotice(theme),
                       _emergencyHotlines(),
                     ],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: IncidentChoiceField(
+                        value: _incidentTypeKey,
+                        enabled: !_isSubmitting,
+                        onChanged: (key, version) {
+                          setState(() {
+                            _incidentTypeKey = key;
+                            _incidentCatalogVersion = version;
+                          });
+                          _scheduleDraftSave();
+                        },
+                      ),
+                    ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
                       child: Column(

@@ -307,6 +307,9 @@ sealed class Report with _$Report {
     @JsonKey(name: 'category_label_snapshot') String? categoryLabelSnapshot,
     @JsonKey(name: 'taxonomy_version') String? taxonomyVersion,
     @JsonKey(name: 'incident_type') String? incidentType,
+    @JsonKey(name: 'incident_type_key') String? incidentTypeKey,
+    @JsonKey(name: 'incident_type_display') String? incidentTypeDisplay,
+    @JsonKey(name: 'incident_catalog_version') String? incidentCatalogVersion,
     String? title,
     @Default('') String description,
     @JsonKey(name: 'incident_datetime') String? incidentDatetime,
@@ -483,6 +486,9 @@ sealed class CreateReportRequest with _$CreateReportRequest {
     // Report Details (Section A)
     String? category,
     @JsonKey(name: 'incident_type') String? incidentType,
+    @JsonKey(name: 'incident_type_key') String? incidentTypeKey,
+    @JsonKey(name: 'incident_type_display') String? incidentTypeDisplay,
+    @JsonKey(name: 'incident_catalog_version') String? incidentCatalogVersion,
     String? title,
     @Default('') String description,
     @JsonKey(name: 'incident_datetime') String? incidentDatetime,
@@ -529,6 +535,9 @@ sealed class UpdateReportRequest with _$UpdateReportRequest {
     String? description,
     String? category,
     @JsonKey(name: 'incident_type') String? incidentType,
+    @JsonKey(name: 'incident_type_key') String? incidentTypeKey,
+    @JsonKey(name: 'incident_type_display') String? incidentTypeDisplay,
+    @JsonKey(name: 'incident_catalog_version') String? incidentCatalogVersion,
     String? zone,
     @JsonKey(name: 'street_landmark') String? streetLandmark,
     @JsonKey(name: 'municipality_id') String? municipalityId,
@@ -656,6 +665,10 @@ List<Map<String, dynamic>> _categoryOptionsToJson(
 @freezed
 sealed class ReportFormOptions with _$ReportFormOptions {
   const factory ReportFormOptions({
+    @JsonKey(name: 'incident_catalog_version') String? incidentCatalogVersion,
+    @JsonKey(name: 'incident_types')
+    @Default([])
+    List<Map<String, dynamic>> incidentTypes,
     @JsonKey(name: 'taxonomy_version')
     @Default('taxonomy_v1')
     String taxonomyVersion,

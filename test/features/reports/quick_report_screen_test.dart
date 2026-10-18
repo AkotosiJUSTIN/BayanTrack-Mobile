@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bayantrack_mobile/features/reports/presentation/widgets/incident_choice_field.dart';
 import 'package:bayantrack_mobile/features/system_governance/system_governance_models.dart';
 import 'package:bayantrack_mobile/features/system_governance/system_governance_provider.dart';
 
@@ -95,6 +96,8 @@ class _TestCreateReportUseCase extends CreateReportUseCase {
   Future<Result<domain_report.Report>> call({
     String? category,
     String? incidentType,
+    String? incidentTypeKey,
+    String? incidentCatalogVersion,
     String? title,
     String description = '',
     String? incidentDatetime,
@@ -220,6 +223,9 @@ Future<void> _pumpQuickReport(
     ).thenAnswer((_) async => const Success(<NearbyLandmarkModel>[]));
   }
   final overrides = <Override>[
+    incidentChoicesProvider.overrideWith(
+      (ref) async => (version: null, items: <Map<String, dynamic>>[]),
+    ),
     systemGovernanceProvider.overrideWithBuild(
       (_, _) => const SystemGovernanceState(
         maintenanceEnabled: false,
@@ -580,7 +586,7 @@ void main() {
 
     expect(find.byKey(const Key('quick-report-city')), findsOneWidget);
     expect(find.text('Urdaneta City'), findsOneWidget);
-    expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+    expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
     expect(find.text('Bactad East'), findsAtLeastNWidgets(1));
     expect(find.text('Public Market'), findsOneWidget);
   });

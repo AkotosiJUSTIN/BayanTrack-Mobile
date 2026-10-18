@@ -41,10 +41,18 @@ void main() {
       final drafts = [
         _draft('user-A', ReportDraftType.full, {
           'description': 'Incomplete full report',
+          'incidentTypeKey': 'reported_killing',
+          'incidentCatalogVersion': 'incident_catalog_v1',
         }),
-        _draft('user-A', ReportDraftType.quick, {'description': 'Quick note'}),
+        _draft('user-A', ReportDraftType.quick, {
+          'description': 'Quick note',
+          'incidentTypeKey': 'fire',
+          'incidentCatalogVersion': 'incident_catalog_v1',
+        }),
         _draft('user-A', ReportDraftType.emergency, {
           'categoryKey': 'flood_disaster',
+          'incidentTypeKey': 'flooding',
+          'incidentCatalogVersion': 'incident_catalog_v1',
         }),
       ];
       for (final draft in drafts) {

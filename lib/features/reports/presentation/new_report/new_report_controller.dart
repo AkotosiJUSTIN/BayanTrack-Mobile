@@ -23,6 +23,8 @@ class NewReportState {
 
   // Section A: Report Details
   final ReportCategory? category;
+  final String? incidentTypeKey;
+  final String? incidentCatalogVersion;
   final String? title;
   final String description;
   final DateTime? incidentDatetime;
@@ -60,6 +62,8 @@ class NewReportState {
   const NewReportState({
     this.selectedImages = const [],
     this.category,
+    this.incidentTypeKey,
+    this.incidentCatalogVersion,
     this.title,
     this.description = '',
     this.incidentDatetime,
@@ -92,6 +96,9 @@ class NewReportState {
   NewReportState copyWith({
     List<File>? selectedImages,
     ReportCategory? category,
+    String? incidentTypeKey,
+    String? incidentCatalogVersion,
+    bool clearIncident = false,
     String? title,
     String? description,
     DateTime? incidentDatetime,
@@ -128,6 +135,12 @@ class NewReportState {
     return NewReportState(
       selectedImages: selectedImages ?? this.selectedImages,
       category: category ?? this.category,
+      incidentTypeKey: clearIncident
+          ? null
+          : incidentTypeKey ?? this.incidentTypeKey,
+      incidentCatalogVersion: clearIncident
+          ? null
+          : incidentCatalogVersion ?? this.incidentCatalogVersion,
       title: title ?? this.title,
       description: description ?? this.description,
       incidentDatetime: incidentDatetime ?? this.incidentDatetime,
@@ -261,6 +274,8 @@ class NewReportController extends _$NewReportController {
     state = NewReportState(
       selectedImages: attachments,
       category: category,
+      incidentTypeKey: _draftString(payload['incidentTypeKey']),
+      incidentCatalogVersion: _draftString(payload['incidentCatalogVersion']),
       title: _draftString(payload['title']),
       description: _draftString(payload['description']) ?? '',
       incidentDatetime: DateTime.tryParse(
@@ -443,6 +458,14 @@ class NewReportController extends _$NewReportController {
 
   // ==================== CONSENT (Section C) ====================
 
+  void setIncident(String? key, String? version) {
+    state = state.copyWith(
+      incidentTypeKey: key,
+      incidentCatalogVersion: version,
+      clearIncident: key == null,
+    );
+  }
+
   void setDeclarationConfirmed(bool value) {
     state = state.copyWith(declarationConfirmed: value);
   }
@@ -453,6 +476,8 @@ class NewReportController extends _$NewReportController {
 
   Map<String, Object?> submissionSnapshot() => {
     'category': state.category?.value,
+    'incidentTypeKey': state.incidentTypeKey,
+    'incidentCatalogVersion': state.incidentCatalogVersion,
     'title': state.title,
     'description': state.description,
     'incidentDatetime': state.incidentDatetime?.toUtc().toIso8601String(),
@@ -485,6 +510,8 @@ class NewReportController extends _$NewReportController {
       final useCase = ref.read(createReportUseCaseProvider);
       final result = await useCase(
         category: state.category?.value,
+        incidentTypeKey: state.incidentTypeKey,
+        incidentCatalogVersion: state.incidentCatalogVersion,
         title: state.title,
         description: state.description,
         incidentDatetime: state.incidentDatetime?.toUtc().toIso8601String(),

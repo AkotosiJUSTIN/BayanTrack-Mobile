@@ -152,6 +152,11 @@ final reportCreateOutboxProvider = Provider<ReportCreateOutbox>((ref) {
             createReport(
               category: _snapshotString(payload, 'category'),
               incidentType: _snapshotString(payload, 'incidentType'),
+              incidentTypeKey: _snapshotString(payload, 'incidentTypeKey'),
+              incidentCatalogVersion: _snapshotString(
+                payload,
+                'incidentCatalogVersion',
+              ),
               title: _snapshotString(payload, 'title'),
               description: _snapshotString(payload, 'description') ?? '',
               incidentDatetime: _snapshotString(payload, 'incidentDatetime'),

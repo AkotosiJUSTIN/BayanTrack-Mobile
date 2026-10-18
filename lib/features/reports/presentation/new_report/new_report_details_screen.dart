@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/incident_choice_field.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/urdaneta_geo.dart';
@@ -208,6 +209,11 @@ class _NewReportDetailsScreenState
                                           return null;
                                         },
                                       ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    IncidentChoiceField(
+                                      value: state.incidentTypeKey,
+                                      onChanged: controller.setIncident,
                                     ),
                                     const SizedBox(height: 16),
                                     _buildSectionLabel(

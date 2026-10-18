@@ -86,6 +86,9 @@ class Report extends Equatable {
   final String? categoryDisplay;
   final String? taxonomyVersion;
   final String? incidentType;
+  final String? incidentTypeKey;
+  final String? incidentTypeDisplay;
+  final String? incidentCatalogVersion;
   final String? title;
   final String description;
   final DateTime? incidentDatetime;
@@ -212,6 +215,9 @@ class Report extends Equatable {
     this.categoryDisplay,
     this.taxonomyVersion,
     this.incidentType,
+    this.incidentTypeKey,
+    this.incidentTypeDisplay,
+    this.incidentCatalogVersion,
     this.title,
     required this.description,
     this.incidentDatetime,
@@ -378,6 +384,10 @@ class Report extends Equatable {
     updatedAt,
     category,
     categoryKey,
+    incidentType,
+    incidentTypeKey,
+    incidentTypeDisplay,
+    incidentCatalogVersion,
     categoryDisplay,
     taxonomyVersion,
     title,

@@ -14,6 +14,8 @@ class CreateReportUseCase {
   Future<Result<Report>> call({
     String? category,
     String? incidentType,
+    String? incidentTypeKey,
+    String? incidentCatalogVersion,
     String? title,
     String description = '',
     String? incidentDatetime,
@@ -39,6 +41,8 @@ class CreateReportUseCase {
     return _repository.createReport(
       category: category,
       incidentType: incidentType,
+      incidentTypeKey: incidentTypeKey,
+      incidentCatalogVersion: incidentCatalogVersion,
       title: title,
       description: description,
       incidentDatetime: incidentDatetime,

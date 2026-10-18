@@ -93,6 +93,8 @@ class _TestCreateReportUseCase extends CreateReportUseCase {
   Future<Result<domain.Report>> call({
     String? category,
     String? incidentType,
+    String? incidentTypeKey,
+    String? incidentCatalogVersion,
     String? title,
     String description = '',
     String? incidentDatetime,

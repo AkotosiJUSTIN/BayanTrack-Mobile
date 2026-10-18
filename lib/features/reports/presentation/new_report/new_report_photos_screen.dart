@@ -281,6 +281,8 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen>
       resumeStep: state.resumeStep,
       payload: {
         'category': state.category?.value,
+        'incidentTypeKey': state.incidentTypeKey,
+        'incidentCatalogVersion': state.incidentCatalogVersion,
         'title': state.title,
         'description': state.description,
         'incidentDatetime': state.incidentDatetime?.toIso8601String(),

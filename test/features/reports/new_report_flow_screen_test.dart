@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:bayantrack_mobile/features/reports/presentation/widgets/incident_choice_field.dart';
 
 import 'package:bayantrack_mobile/core/constants/urdaneta_barangays.dart';
 import 'package:bayantrack_mobile/core/domain/result.dart';
@@ -93,6 +94,9 @@ Widget _app(
 }) {
   return ProviderScope(
     overrides: [
+      incidentChoicesProvider.overrideWith(
+        (ref) async => (version: null, items: <Map<String, dynamic>>[]),
+      ),
       userPermissionsProvider.overrideWithValue(UserPermissions(null)),
       municipalitiesProvider.overrideWith(_TestMunicipalities.new),
       municipalityBarangaysProvider.overrideWith(
@@ -166,7 +170,7 @@ void main() {
     expect(find.text('Urdaneta City'), findsOneWidget);
     expect(find.byKey(const Key('full-report-city')), findsOneWidget);
     expect(find.byKey(const Key('full-report-barangay')), findsOneWidget);
-    expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+    expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -176,6 +180,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          incidentChoicesProvider.overrideWith(
+            (ref) async => (version: null, items: <Map<String, dynamic>>[]),
+          ),
           newReportControllerProvider.overrideWith(
             _UnavailableLandmarkReportController.new,
           ),
