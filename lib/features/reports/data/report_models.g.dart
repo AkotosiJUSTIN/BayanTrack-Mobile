@@ -6,6 +6,41 @@ part of 'report_models.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+_SupportTask _$SupportTaskFromJson(Map<String, dynamic> json) => _SupportTask(
+  taskId: json['task_id'] as String?,
+  departmentKey: json['department_key'] as String,
+  department: json['department'] as String,
+  task: json['task'] as String,
+  required: json['required'] as bool? ?? false,
+  state: json['state'] as String? ?? 'pending',
+  note: json['note'] as String?,
+  assignedAt: json['assigned_at'] as String?,
+  acknowledgedAt: json['acknowledged_at'] as String?,
+  inProgressAt: json['in_progress_at'] as String?,
+  completedAt: json['completed_at'] as String?,
+  waivedAt: json['waived_at'] as String?,
+  updatedAt: json['updated_at'] as String?,
+  updatedBy: json['updated_by'] as String?,
+);
+
+Map<String, dynamic> _$SupportTaskToJson(_SupportTask instance) =>
+    <String, dynamic>{
+      'task_id': instance.taskId,
+      'department_key': instance.departmentKey,
+      'department': instance.department,
+      'task': instance.task,
+      'required': instance.required,
+      'state': instance.state,
+      'note': instance.note,
+      'assigned_at': instance.assignedAt,
+      'acknowledged_at': instance.acknowledgedAt,
+      'in_progress_at': instance.inProgressAt,
+      'completed_at': instance.completedAt,
+      'waived_at': instance.waivedAt,
+      'updated_at': instance.updatedAt,
+      'updated_by': instance.updatedBy,
+    };
+
 _DepartmentSuggestion _$DepartmentSuggestionFromJson(
   Map<String, dynamic> json,
 ) => _DepartmentSuggestion(
@@ -93,6 +128,17 @@ _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
   isEmergency: json['is_emergency'] as bool? ?? false,
   status: json['status'] as String? ?? 'submitted',
   assignedDepartment: json['assigned_department'] as String?,
+  supportDepartments:
+      (json['support_departments'] as List<dynamic>?)
+          ?.map((e) => SupportTask.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+  routingStatus: json['routing_status'] as String?,
+  routingReviewReasons:
+      (json['routing_review_reasons'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
   respondingAgency: json['responding_agency'] as String?,
   adminRemarks: json['admin_remarks'] as String?,
   categoryConfidence: (json['category_confidence'] as num?)?.toDouble(),
@@ -258,6 +304,9 @@ Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
   'is_emergency': instance.isEmergency,
   'status': instance.status,
   'assigned_department': instance.assignedDepartment,
+  'support_departments': instance.supportDepartments,
+  'routing_status': instance.routingStatus,
+  'routing_review_reasons': instance.routingReviewReasons,
   'responding_agency': instance.respondingAgency,
   'admin_remarks': instance.adminRemarks,
   'category_confidence': instance.categoryConfidence,

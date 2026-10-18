@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:bayantrack_mobile/core/constants/api_constants.dart';
 import 'package:bayantrack_mobile/core/domain/failures.dart';
 import 'package:bayantrack_mobile/features/reports/data/report_cache_store.dart';
+import 'package:bayantrack_mobile/features/reports/data/mappers/report_mapper.dart';
 import 'package:bayantrack_mobile/features/reports/data/report_models.dart'
     as dto;
 import 'package:bayantrack_mobile/features/reports/data/repositories/reports_repository_impl.dart';
@@ -45,6 +46,66 @@ void main() {
   });
 
   const query = {'page': 1, 'page_size': 20, 'sort_by': 'date'};
+
+  test(
+    'routing and support progress survive cache and domain mapping',
+    () async {
+      final routed = dto.Report.fromJson({
+        'id': 'routed-report',
+        'status': 'assigned',
+        'assigned_department_key': 'mdrrmo',
+        'department_source': 'rule_policy',
+        'department_policy_version': 'multi_agency_v1',
+        'department_rules_applied': ['flood_blocked_drainage'],
+        'routing_status': 'assigned',
+        'routing_review_reasons': [
+          'department_missing_handlers:general_services',
+        ],
+        'support_departments': [
+          {
+            'task_id': 'stable-task',
+            'department_key': 'municipal_engineering',
+            'department': 'Engineering',
+            'task': 'Inspect and restore drainage',
+            'required': true,
+            'state': 'completed',
+            'note': 'Drainage restored',
+            'completed_at': '2026-10-18T08:00:00Z',
+            'updated_by': 'handler',
+          },
+          {
+            'department_key': 'poso',
+            'department': 'POSO',
+            'task': 'Legacy support task',
+          },
+        ],
+      });
+      await cache.writeReport(
+        ownerId: 'owner',
+        reportId: routed.id,
+        report: routed,
+      );
+      final restored = await ReportCacheStore(
+        storage,
+      ).readReport(ownerId: 'owner', reportId: routed.id);
+      final report = ReportMapper.fromDto(restored!);
+      expect(report.departmentSource, 'rule_policy');
+      expect(report.departmentRulesApplied, ['flood_blocked_drainage']);
+      expect(report.routingStatus, 'assigned');
+      expect(report.routingReviewReasons, [
+        'department_missing_handlers:general_services',
+      ]);
+      final task = report.supportDepartments.first;
+      expect(task.taskId, 'stable-task');
+      expect(task.required, isTrue);
+      expect(task.state, 'completed');
+      expect(task.note, 'Drainage restored');
+      expect(task.completedAt?.toUtc(), DateTime.utc(2026, 10, 18, 8));
+      expect(task.updatedBy, 'handler');
+      expect(report.supportDepartments.last.required, isFalse);
+      expect(report.supportDepartments.last.state, 'pending');
+    },
+  );
 
   test('cached dispute remains reviewable after a new resolution', () async {
     await cache.writeReport(

@@ -197,6 +197,29 @@ enum LocationAccuracy {
 // ==================== ROUTING / DEPARTMENT METADATA ====================
 
 @freezed
+sealed class SupportTask with _$SupportTask {
+  const factory SupportTask({
+    @JsonKey(name: 'task_id') String? taskId,
+    @JsonKey(name: 'department_key') required String departmentKey,
+    required String department,
+    required String task,
+    @Default(false) bool required,
+    @Default('pending') String state,
+    String? note,
+    @JsonKey(name: 'assigned_at') String? assignedAt,
+    @JsonKey(name: 'acknowledged_at') String? acknowledgedAt,
+    @JsonKey(name: 'in_progress_at') String? inProgressAt,
+    @JsonKey(name: 'completed_at') String? completedAt,
+    @JsonKey(name: 'waived_at') String? waivedAt,
+    @JsonKey(name: 'updated_at') String? updatedAt,
+    @JsonKey(name: 'updated_by') String? updatedBy,
+  }) = _SupportTask;
+
+  factory SupportTask.fromJson(Map<String, dynamic> json) =>
+      _$SupportTaskFromJson(json);
+}
+
+@freezed
 sealed class DepartmentSuggestion with _$DepartmentSuggestion {
   const factory DepartmentSuggestion({
     required String key,
@@ -318,6 +341,13 @@ sealed class Report with _$Report {
     // System Fields
     @Default('submitted') String status,
     @JsonKey(name: 'assigned_department') String? assignedDepartment,
+    @JsonKey(name: 'support_departments')
+    @Default([])
+    List<SupportTask> supportDepartments,
+    @JsonKey(name: 'routing_status') String? routingStatus,
+    @JsonKey(name: 'routing_review_reasons')
+    @Default([])
+    List<String> routingReviewReasons,
     @JsonKey(name: 'responding_agency') String? respondingAgency,
     @JsonKey(name: 'admin_remarks') String? adminRemarks,
 
