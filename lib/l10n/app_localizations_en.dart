@@ -340,7 +340,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addImage => 'Add image';
 
   @override
-  String get completeFastReport => 'Complete your Fast Report';
+  String get completeFastReport => 'Complete your Emergency Report';
 
   @override
   String get completeFastReportBody =>
@@ -373,7 +373,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Confirm the emergency and location before submitting.';
 
   @override
-  String get submitEmergencyReport => 'Submit Emergency Report';
+  String get submitEmergencyReport => 'Send Emergency Report';
 
   @override
   String get submittingEmergencyReport => 'Sending Emergency Report…';
@@ -2418,4 +2418,55 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get recordCheckpointPending =>
       'An updated protected record is waiting to be saved. This version has not been verified yet.';
+
+  @override
+  String get emergencyStructuredGuidance =>
+      'Choose what is happening, confirm the location, then send.';
+
+  @override
+  String get emergencySituation => 'What is happening?';
+
+  @override
+  String get emergencyDangerQuestion =>
+      'Is anyone injured or in immediate danger?';
+
+  @override
+  String get emergencyNotSure => 'Not sure';
+
+  @override
+  String get emergencyOptionalNotes => 'Notes (optional)';
+
+  @override
+  String get emergencyOptionalNotesHint => 'Anything responders should know';
+
+  @override
+  String get emergencySelectionsRequired =>
+      'Choose an incident type, situation, and danger level.';
+
+  @override
+  String get emergencyNotesLimit => 'Keep notes within 300 characters.';
+
+  @override
+  String get emergencyChangeLocation => 'Change location';
+
+  @override
+  String get emergencyEnterCoordinates => 'Enter coordinates';
+
+  @override
+  String get emergencyLegacyDraftNotice =>
+      'Your saved text and location are kept. Choose the emergency type, situation, and danger level, then confirm Send. This draft has not been sent.';
+
+  @override
+  String get latitude => 'Latitude';
+
+  @override
+  String get longitude => 'Longitude';
+
+  @override
+  String get emergencySendDeclaration =>
+      'By tapping Send, I confirm this emergency and location are accurate, declare the information is true, and consent to data processing to handle this report.';
+
+  @override
+  String get emergencyDetailsFull =>
+      'This report has reached its details limit.';
 }

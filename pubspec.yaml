@@ -97,6 +97,7 @@ flutter:
 
   # Assets
   assets:
+    - assets/emergency_catalog.json
     - assets/images/branding/
     - assets/images/auth/
     - assets/images/onboarding/

@@ -255,6 +255,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
     bool dataProcessingConsent = true,
     bool isQuickReport = false,
     bool isEmergency = false,
+    Map<String, dynamic>? emergencyContext,
     String? idempotencyKey,
     CancelToken? cancelToken,
   }) async {
@@ -282,12 +283,23 @@ class ReportsRepositoryImpl implements ReportsRepository {
         declarationConfirmed: declarationConfirmed,
         dataProcessingConsent: dataProcessingConsent,
         isEmergency: isEmergency,
+        emergencyContext: emergencyContext,
       );
 
       final requestData = {
         ...request.toJson(),
         'is_quick_report': isQuickReport,
       };
+      if (emergencyContext != null) {
+        for (final key in [
+          'title',
+          'description',
+          'category',
+          'incident_type',
+        ]) {
+          requestData.remove(key);
+        }
+      }
       final response = await _dio.post(
         ApiConstants.reports,
         data: requestData,

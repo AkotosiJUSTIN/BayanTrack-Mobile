@@ -47,6 +47,7 @@ class _RecordingCreateReportUseCase extends CreateReportUseCase {
     bool dataProcessingConsent = true,
     bool isQuickReport = false,
     bool isEmergency = false,
+    Map<String, dynamic>? emergencyContext,
     String? idempotencyKey,
     CancelToken? cancelToken,
   }) async {

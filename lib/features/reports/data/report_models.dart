@@ -340,6 +340,8 @@ sealed class Report with _$Report {
     @NullableIntConverter()
     int? peopleAffected,
     @JsonKey(name: 'is_emergency') @Default(false) bool isEmergency,
+    @JsonKey(name: 'emergency_context', includeIfNull: false)
+    Map<String, dynamic>? emergencyContext,
 
     // System Fields
     @Default('submitted') String status,
@@ -520,6 +522,8 @@ sealed class CreateReportRequest with _$CreateReportRequest {
     @Default(true)
     bool dataProcessingConsent,
     @JsonKey(name: 'is_emergency') @Default(false) bool isEmergency,
+    @JsonKey(name: 'emergency_context', includeIfNull: false)
+    Map<String, dynamic>? emergencyContext,
   }) = _CreateReportRequest;
 
   factory CreateReportRequest.fromJson(Map<String, dynamic> json) =>
@@ -672,6 +676,8 @@ sealed class ReportFormOptions with _$ReportFormOptions {
     @JsonKey(name: 'taxonomy_version')
     @Default('taxonomy_v1')
     String taxonomyVersion,
+    @JsonKey(name: 'emergency_catalog', includeIfNull: false)
+    Map<String, dynamic>? emergencyCatalog,
     @JsonKey(fromJson: _categoryOptionsFromJson, toJson: _categoryOptionsToJson)
     required List<ReportCategoryOption> categories,
     required List<Map<String, dynamic>> statuses,

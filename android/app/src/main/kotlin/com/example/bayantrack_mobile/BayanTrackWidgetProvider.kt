@@ -189,7 +189,7 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
                     if (filipino) "Subukan muli" else "Retry"
                 quickReportStatus == STATUS_NETWORK_UNAVAILABLE ->
                     if (filipino) "Offline / Subukan muli" else "Offline / Retry"
-                else -> "Fast Report"
+                else -> "Emergency Report"
             }
             val compactInputLabel = when {
                 !authenticated -> if (filipino) "Mag-sign in para mag-report" else "Sign in to report"
@@ -201,9 +201,9 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
                     if (filipino) "Subukan muli" else "Retry"
                 quickReportStatus == STATUS_NETWORK_UNAVAILABLE ->
                     if (filipino) "Offline / Subukan muli" else "Offline / Retry"
-                else -> if (filipino) "Ilarawan ang insidente" else "Describe incident"
+                else -> if (filipino) "Piliin ang insidente" else "Choose incident"
             }
-            val compactSubmitLabel = if (filipino) "I-submit" else "Submit"
+            val compactSubmitLabel = if (filipino) "Buksan" else "Open"
             val fastReportStatus = when {
                 !authenticated -> if (filipino) "Mag-sign in para mag-report" else "Sign in to report"
                 quickReportStatus == STATUS_SUBMITTING ->
@@ -219,7 +219,7 @@ class BayanTrackWidgetProvider : AppWidgetProvider() {
             val openAppLabel = if (filipino) "Buksan ang BayanTrack" else "Open BayanTrack"
 
             views.setTextViewText(R.id.widget_brand, "BayanTrack")
-            views.setTextViewText(R.id.widget_title, "Fast Report")
+            views.setTextViewText(R.id.widget_title, "Emergency Report")
             views.setTextViewText(
                 R.id.widget_quick_report,
                 if (compact) compactInputLabel else fastReportLabel,

@@ -129,6 +129,7 @@ _Report _$ReportFromJson(Map<String, dynamic> json) => _Report(
     json['people_affected'],
   ),
   isEmergency: json['is_emergency'] as bool? ?? false,
+  emergencyContext: json['emergency_context'] as Map<String, dynamic>?,
   status: json['status'] as String? ?? 'submitted',
   assignedDepartment: json['assigned_department'] as String?,
   supportDepartments:
@@ -308,6 +309,7 @@ Map<String, dynamic> _$ReportToJson(_Report instance) => <String, dynamic>{
     instance.peopleAffected,
   ),
   'is_emergency': instance.isEmergency,
+  'emergency_context': ?instance.emergencyContext,
   'status': instance.status,
   'assigned_department': instance.assignedDepartment,
   'support_departments': instance.supportDepartments,
@@ -420,6 +422,7 @@ _CreateReportRequest _$CreateReportRequestFromJson(Map<String, dynamic> json) =>
       declarationConfirmed: json['declaration_confirmed'] as bool? ?? true,
       dataProcessingConsent: json['data_processing_consent'] as bool? ?? true,
       isEmergency: json['is_emergency'] as bool? ?? false,
+      emergencyContext: json['emergency_context'] as Map<String, dynamic>?,
     );
 
 Map<String, dynamic> _$CreateReportRequestToJson(
@@ -448,6 +451,7 @@ Map<String, dynamic> _$CreateReportRequestToJson(
   'declaration_confirmed': instance.declarationConfirmed,
   'data_processing_consent': instance.dataProcessingConsent,
   'is_emergency': instance.isEmergency,
+  'emergency_context': ?instance.emergencyContext,
 };
 
 _UpdateReportRequest _$UpdateReportRequestFromJson(Map<String, dynamic> json) =>
@@ -571,6 +575,7 @@ _ReportFormOptions _$ReportFormOptionsFromJson(Map<String, dynamic> json) =>
               .toList() ??
           const [],
       taxonomyVersion: json['taxonomy_version'] as String? ?? 'taxonomy_v1',
+      emergencyCatalog: json['emergency_catalog'] as Map<String, dynamic>?,
       categories: _categoryOptionsFromJson(json['categories'] as List),
       statuses: (json['statuses'] as List<dynamic>)
           .map((e) => e as Map<String, dynamic>)
@@ -585,6 +590,7 @@ Map<String, dynamic> _$ReportFormOptionsToJson(_ReportFormOptions instance) =>
       'incident_catalog_version': instance.incidentCatalogVersion,
       'incident_types': instance.incidentTypes,
       'taxonomy_version': instance.taxonomyVersion,
+      'emergency_catalog': ?instance.emergencyCatalog,
       'categories': _categoryOptionsToJson(instance.categories),
       'statuses': instance.statuses,
       'severity_levels': instance.severityLevels,

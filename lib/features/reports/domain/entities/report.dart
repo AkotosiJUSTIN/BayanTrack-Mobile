@@ -111,6 +111,7 @@ class Report extends Equatable {
   final SeverityLevel severity;
   final int? peopleAffected;
   final bool isEmergency;
+  final Map<String, dynamic>? emergencyContext;
 
   // System Fields
   final ReportStatus status;
@@ -236,6 +237,7 @@ class Report extends Equatable {
     this.severity = SeverityLevel.medium,
     this.peopleAffected,
     this.isEmergency = false,
+    this.emergencyContext,
     this.status = ReportStatus.submitted,
     this.assignedDepartment,
     this.supportDepartments = const [],
@@ -395,6 +397,7 @@ class Report extends Equatable {
     status,
     severity,
     isEmergency,
+    emergencyContext,
     createdAt,
     citizenVerifiedAt,
     citizenConfirmedResolved,

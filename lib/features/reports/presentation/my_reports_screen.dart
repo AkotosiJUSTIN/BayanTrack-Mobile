@@ -509,12 +509,7 @@ class _MyReportsScreenState extends ConsumerState<MyReportsScreen> {
     if (!mounted) return;
     final screen = item.type == ReportDraftType.full
         ? const NewReportPhotosScreen()
-        : QuickReportScreen(
-            emergencyMode: item.type == ReportDraftType.emergency,
-            fastReportMode:
-                item.type == ReportDraftType.quick &&
-                item.payload['isEmergency'] == true,
-          );
+        : EmergencyReportScreen(resumeDraftType: item.type);
     await Navigator.of(
       context,
     ).push(MaterialPageRoute<void>(builder: (_) => screen));

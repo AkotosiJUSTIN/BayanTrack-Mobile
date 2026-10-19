@@ -35,6 +35,7 @@ class CreateReportUseCase {
     bool dataProcessingConsent = true,
     bool isQuickReport = false,
     bool isEmergency = false,
+    Map<String, dynamic>? emergencyContext,
     String? idempotencyKey,
     CancelToken? cancelToken,
   }) {
@@ -62,6 +63,7 @@ class CreateReportUseCase {
       dataProcessingConsent: dataProcessingConsent,
       isQuickReport: isQuickReport,
       isEmergency: isEmergency,
+      emergencyContext: emergencyContext,
       idempotencyKey: idempotencyKey,
       cancelToken: cancelToken,
     );

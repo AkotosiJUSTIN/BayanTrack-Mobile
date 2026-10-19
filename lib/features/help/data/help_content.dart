@@ -36,7 +36,7 @@ const helpFaqCategories = <HelpFaqCategory>[
       HelpFaqEntry(
         question: 'How do I navigate the app?',
         answer:
-            'Use Home, My Reports, Notifications, and Profile in the bottom bar. Tap the center plus button to start a Quick or Full Report.',
+            'Use Home, My Reports, Notifications, and Profile in the bottom bar. Tap the center plus button to start an Emergency Report or Full Report.',
       ),
       HelpFaqEntry(
         question: 'Do I need to verify my email after signing up?',
@@ -49,9 +49,9 @@ const helpFaqCategories = <HelpFaqCategory>[
     title: 'Reporting an Issue',
     entries: [
       HelpFaqEntry(
-        question: 'What is Quick Report?',
+        question: 'What is Emergency Report?',
         answer:
-            'Quick Report sends a short issue description with its location. Before submitting, the app checks for reports within 500 meters and lets you review up to three nearby results.',
+            'Emergency Report lets you choose the incident type, situation, and whether anyone is injured or in immediate danger. Location is automatic and can be changed. Notes are optional; tap Send to confirm the emergency, location, declaration, and consent.',
       ),
       HelpFaqEntry(
         question: 'What is a Full Report?',
@@ -74,9 +74,9 @@ const helpFaqCategories = <HelpFaqCategory>[
             'Yes. Add evidence from the camera or photo library in the report flow. Evidence uploads can remain queued for retry if the connection is unavailable.',
       ),
       HelpFaqEntry(
-        question: 'What happens when nearby reports are found?',
+        question: 'Will nearby reports interrupt an emergency submission?',
         answer:
-            'Quick Report shows up to three nearby reports so you can review them. You can return to your report or choose Submit Anyway; the app does not automatically merge it with another report.',
+            'Emergency Report sends your selected incident directly without a nearby-report review step. Staff can review related reports after submission.',
       ),
     ],
   ),

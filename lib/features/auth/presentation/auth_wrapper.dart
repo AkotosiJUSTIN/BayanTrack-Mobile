@@ -313,7 +313,7 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
         return;
       }
 
-      final page = const QuickReportScreen(fastReportMode: true);
+      final page = const EmergencyReportScreen();
       final navigation = Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => page));

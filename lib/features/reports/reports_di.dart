@@ -148,6 +148,7 @@ final reportCreateOutboxProvider = Provider<ReportCreateOutbox>((ref) {
     canSubmit: (payload) =>
         permitsReportSnapshot(ref.read(systemGovernanceProvider), payload),
     submit:
+<<<<<<< Updated upstream
         ({required payload, required idempotencyKey, required cancelToken}) =>
             createReport(
               category: _snapshotString(payload, 'category'),
@@ -187,6 +188,45 @@ final reportCreateOutboxProvider = Provider<ReportCreateOutbox>((ref) {
               idempotencyKey: idempotencyKey,
               cancelToken: cancelToken,
             ),
+=======
+        ({
+          required payload,
+          required idempotencyKey,
+          required cancelToken,
+        }) => createReport(
+          category: _snapshotString(payload, 'category'),
+          incidentType: _snapshotString(payload, 'incidentType'),
+          title: _snapshotString(payload, 'title'),
+          description: _snapshotString(payload, 'description') ?? '',
+          incidentDatetime: _snapshotString(payload, 'incidentDatetime'),
+          isHappeningNow: _snapshotBool(payload, 'isHappeningNow'),
+          zone: _snapshotString(payload, 'zone'),
+          streetLandmark: _snapshotString(payload, 'streetLandmark'),
+          municipalityId:
+              _snapshotString(payload, 'municipalityId') ?? 'urdaneta',
+          barangayId: _snapshotString(payload, 'barangayId'),
+          cityMunicipality: _snapshotString(payload, 'cityMunicipality'),
+          province: _snapshotString(payload, 'province'),
+          latitude: _snapshotString(payload, 'latitude'),
+          longitude: _snapshotString(payload, 'longitude'),
+          locationAccuracy:
+              _snapshotString(payload, 'locationAccuracy') ?? 'approximate',
+          location: _snapshotString(payload, 'location'),
+          barangay: _snapshotString(payload, 'barangay'),
+          declarationConfirmed: _snapshotBool(payload, 'declarationConfirmed'),
+          dataProcessingConsent: _snapshotBool(
+            payload,
+            'dataProcessingConsent',
+          ),
+          isQuickReport: _snapshotBool(payload, 'isQuickReport'),
+          isEmergency: _snapshotBool(payload, 'isEmergency'),
+          emergencyContext: payload['emergencyContext'] is Map
+              ? Map<String, dynamic>.from(payload['emergencyContext'] as Map)
+              : null,
+          idempotencyKey: idempotencyKey,
+          cancelToken: cancelToken,
+        ),
+>>>>>>> Stashed changes
     handoffAttachments: (item) async {
       if (!await isCurrentOwner(item.ownerId) ||
           !await session.isAuthenticated ||

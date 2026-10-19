@@ -101,6 +101,11 @@ class ReportsRepository {
     String? idempotencyKey,
   }) async {
     final jsonData = {...request.toJson(), 'is_quick_report': isQuickReport};
+    if (request.emergencyContext != null) {
+      for (final key in ['title', 'description', 'category', 'incident_type']) {
+        jsonData.remove(key);
+      }
+    }
     final response = idempotencyKey == null
         ? await _dio.post(ApiConstants.reports, data: jsonData)
         : await _dio.post(

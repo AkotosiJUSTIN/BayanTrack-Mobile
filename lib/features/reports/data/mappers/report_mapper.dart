@@ -46,6 +46,7 @@ class ReportMapper {
       severity: SeverityLevel.fromString(dtoReport.severity),
       peopleAffected: dtoReport.peopleAffected,
       isEmergency: dtoReport.isEmergency,
+      emergencyContext: dtoReport.emergencyContext,
       status: ReportStatus.fromString(dtoReport.status),
       assignedDepartment: dtoReport.assignedDepartment,
       supportDepartments: dtoReport.supportDepartments
