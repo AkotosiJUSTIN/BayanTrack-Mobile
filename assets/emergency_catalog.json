@@ -1,0 +1,311 @@
+{
+  "version": 1,
+  "types": [
+    {
+      "key": "fire_smoke",
+      "label": "Fire or smoke",
+      "label_fil": "Sunog o usok",
+      "category_key": "public_safety",
+      "situations": [
+        {
+          "key": "building_fire",
+          "label": "Building fire",
+          "label_fil": "Sunog sa gusali",
+          "routing_text": "A building is on fire."
+        },
+        {
+          "key": "outdoor_fire",
+          "label": "Outdoor fire",
+          "label_fil": "Sunog sa labas",
+          "routing_text": "There is an outdoor fire."
+        },
+        {
+          "key": "heavy_smoke",
+          "label": "Heavy smoke",
+          "label_fil": "Makapal na usok",
+          "routing_text": "There is heavy smoke."
+        },
+        {
+          "key": "other_unknown",
+          "label": "Other / Not sure",
+          "label_fil": "Iba / Hindi tiyak",
+          "routing_text": ""
+        }
+      ]
+    },
+    {
+      "key": "flood_disaster",
+      "label": "Flood or disaster",
+      "label_fil": "Baha o sakuna",
+      "category_key": "flood_disaster",
+      "situations": [
+        {
+          "key": "street_flooding",
+          "label": "Street flooding",
+          "label_fil": "Baha sa kalsada",
+          "routing_text": "The street is flooded."
+        },
+        {
+          "key": "rising_water",
+          "label": "Rising water",
+          "label_fil": "Tumataas na tubig",
+          "routing_text": "Floodwater is rising."
+        },
+        {
+          "key": "storm_damage",
+          "label": "Storm damage",
+          "label_fil": "Pinsala ng bagyo",
+          "routing_text": "There is storm damage."
+        },
+        {
+          "key": "flood_blocked_drainage",
+          "label": "Flooding with blocked drainage",
+          "label_fil": "Baha at baradong kanal",
+          "routing_text": "Flooding because of blocked drainage."
+        },
+        {
+          "key": "other_unknown",
+          "label": "Other / Not sure",
+          "label_fil": "Iba / Hindi tiyak",
+          "routing_text": ""
+        }
+      ]
+    },
+    {
+      "key": "medical_emergency",
+      "label": "Medical emergency",
+      "label_fil": "Emerhensiyang medikal",
+      "category_key": "public_safety",
+      "situations": [
+        {
+          "key": "injury",
+          "label": "Injury",
+          "label_fil": "Pinsala sa katawan",
+          "routing_text": "A person is injured."
+        },
+        {
+          "key": "sudden_illness",
+          "label": "Sudden illness",
+          "label_fil": "Biglaang pagkakasakit",
+          "routing_text": "A person has suddenly become ill."
+        },
+        {
+          "key": "person_collapsed",
+          "label": "Person collapsed",
+          "label_fil": "Taong bumagsak",
+          "routing_text": "A person has collapsed."
+        },
+        {
+          "key": "other_unknown",
+          "label": "Other / Not sure",
+          "label_fil": "Iba / Hindi tiyak",
+          "routing_text": ""
+        }
+      ]
+    },
+    {
+      "key": "accident",
+      "label": "Accident",
+      "label_fil": "Aksidente",
+      "category_key": "public_safety",
+      "situations": [
+        {
+          "key": "vehicle_collision",
+          "label": "Vehicle collision",
+          "label_fil": "Banggaan ng sasakyan",
+          "routing_text": "There is a vehicle collision."
+        },
+        {
+          "key": "pedestrian_hit",
+          "label": "Pedestrian hit",
+          "label_fil": "Taong nabangga",
+          "routing_text": "A pedestrian was hit by a vehicle."
+        },
+        {
+          "key": "other_accident",
+          "label": "Other accident",
+          "label_fil": "Ibang aksidente",
+          "routing_text": "An accident has occurred."
+        },
+        {
+          "key": "other_unknown",
+          "label": "Other / Not sure",
+          "label_fil": "Iba / Hindi tiyak",
+          "routing_text": ""
+        }
+      ]
+    },
+    {
+      "key": "safety_threat",
+      "label": "Safety threat",
+      "label_fil": "Banta sa kaligtasan",
+      "category_key": "public_safety",
+      "situations": [
+        {
+          "key": "violence",
+          "label": "Violence",
+          "label_fil": "Karahasan",
+          "routing_text": "Violence is occurring."
+        },
+        {
+          "key": "threatening_behavior",
+          "label": "Threatening behavior",
+          "label_fil": "Nagbabantang kilos",
+          "routing_text": "There is threatening behavior."
+        },
+        {
+          "key": "dangerous_animal",
+          "label": "Dangerous animal",
+          "label_fil": "Mapanganib na hayop",
+          "routing_text": "There is a dangerous animal."
+        },
+        {
+          "key": "other_unknown",
+          "label": "Other / Not sure",
+          "label_fil": "Iba / Hindi tiyak",
+          "routing_text": ""
+        }
+      ]
+    },
+    {
+      "key": "infrastructure_hazard",
+      "label": "Infrastructure hazard",
+      "label_fil": "Panganib sa imprastraktura",
+      "category_key": "engineering_infrastructure",
+      "situations": [
+        {
+          "key": "road_collapse",
+          "label": "Road collapse",
+          "label_fil": "Gumuhong kalsada",
+          "routing_text": "A road has collapsed."
+        },
+        {
+          "key": "damaged_bridge",
+          "label": "Damaged bridge",
+          "label_fil": "Sirang tulay",
+          "routing_text": "A bridge is damaged."
+        },
+        {
+          "key": "unsafe_structure",
+          "label": "Unsafe structure",
+          "label_fil": "Hindi ligtas na istruktura",
+          "routing_text": "A structure is unsafe."
+        },
+        {
+          "key": "road_damage_traffic_obstruction",
+          "label": "Road damage blocking traffic",
+          "label_fil": "Sirang kalsadang humaharang sa trapiko",
+          "routing_text": "A damaged road is blocking traffic."
+        },
+        {
+          "key": "other_unknown",
+          "label": "Other / Not sure",
+          "label_fil": "Iba / Hindi tiyak",
+          "routing_text": ""
+        }
+      ]
+    },
+    {
+      "key": "utility_hazard",
+      "label": "Utility hazard",
+      "label_fil": "Panganib sa kuryente o tubig",
+      "category_key": "public_utilities",
+      "situations": [
+        {
+          "key": "fallen_wire",
+          "label": "Fallen wire",
+          "label_fil": "Bumagsak na kawad",
+          "routing_text": "An electrical wire has fallen."
+        },
+        {
+          "key": "sparking_equipment",
+          "label": "Sparking equipment",
+          "label_fil": "Kagamitang kumikislap",
+          "routing_text": "Electrical equipment is sparking."
+        },
+        {
+          "key": "burst_water_pipe",
+          "label": "Burst water pipe",
+          "label_fil": "Pumutok na tubo ng tubig",
+          "routing_text": "A water pipe has burst."
+        },
+        {
+          "key": "other_unknown",
+          "label": "Other / Not sure",
+          "label_fil": "Iba / Hindi tiyak",
+          "routing_text": ""
+        }
+      ]
+    },
+    {
+      "key": "environmental_hazard",
+      "label": "Environmental hazard",
+      "label_fil": "Panganib sa kapaligiran",
+      "category_key": "waste_environment",
+      "situations": [
+        {
+          "key": "chemical_spill",
+          "label": "Chemical spill",
+          "label_fil": "Natapong kemikal",
+          "routing_text": "There is a chemical spill."
+        },
+        {
+          "key": "blocked_drainage",
+          "label": "Blocked drainage",
+          "label_fil": "Baradong kanal",
+          "routing_text": "Drainage is blocked."
+        },
+        {
+          "key": "garbage_blocked_drainage",
+          "label": "Garbage blocking drainage",
+          "label_fil": "Basurang bumabara sa kanal",
+          "routing_text": "Garbage is blocking the drainage."
+        },
+        {
+          "key": "contaminated_water",
+          "label": "Contaminated water",
+          "label_fil": "Kontaminadong tubig",
+          "routing_text": "Water is contaminated."
+        },
+        {
+          "key": "other_unknown",
+          "label": "Other / Not sure",
+          "label_fil": "Iba / Hindi tiyak",
+          "routing_text": ""
+        }
+      ]
+    },
+    {
+      "key": "other_emergency",
+      "label": "Other emergency",
+      "label_fil": "Ibang emerhensiya",
+      "category_key": null,
+      "situations": [
+        {
+          "key": "rescue_needed",
+          "label": "Rescue needed",
+          "label_fil": "Kailangan ng pagsagip",
+          "routing_text": "Rescue is needed."
+        },
+        {
+          "key": "assistance_needed",
+          "label": "Assistance needed",
+          "label_fil": "Kailangan ng tulong",
+          "routing_text": "Assistance is needed."
+        },
+        {
+          "key": "not_sure",
+          "label": "Not sure",
+          "label_fil": "Hindi tiyak",
+          "routing_text": ""
+        },
+        {
+          "key": "other_unknown",
+          "label": "Other / Not sure",
+          "label_fil": "Iba / Hindi tiyak",
+          "routing_text": ""
+        }
+      ]
+    }
+  ]
+}

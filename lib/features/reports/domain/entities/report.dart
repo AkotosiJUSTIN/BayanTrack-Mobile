@@ -17,6 +17,58 @@ class DepartmentSuggestion extends Equatable {
   List<Object?> get props => [key, label, probability];
 }
 
+class SupportTask extends Equatable {
+  final String? taskId;
+  final String departmentKey;
+  final String department;
+  final String task;
+  final bool required;
+  final String state;
+  final String? note;
+  final DateTime? assignedAt;
+  final DateTime? acknowledgedAt;
+  final DateTime? inProgressAt;
+  final DateTime? completedAt;
+  final DateTime? waivedAt;
+  final DateTime? updatedAt;
+  final String? updatedBy;
+
+  const SupportTask({
+    this.taskId,
+    required this.departmentKey,
+    required this.department,
+    required this.task,
+    this.required = false,
+    this.state = 'pending',
+    this.note,
+    this.assignedAt,
+    this.acknowledgedAt,
+    this.inProgressAt,
+    this.completedAt,
+    this.waivedAt,
+    this.updatedAt,
+    this.updatedBy,
+  });
+
+  @override
+  List<Object?> get props => [
+    taskId,
+    departmentKey,
+    department,
+    task,
+    required,
+    state,
+    note,
+    assignedAt,
+    acknowledgedAt,
+    inProgressAt,
+    completedAt,
+    waivedAt,
+    updatedAt,
+    updatedBy,
+  ];
+}
+
 /// Domain entity representing a citizen report.
 ///
 /// This is a pure Dart class with no JSON annotations.
@@ -34,6 +86,9 @@ class Report extends Equatable {
   final String? categoryDisplay;
   final String? taxonomyVersion;
   final String? incidentType;
+  final String? incidentTypeKey;
+  final String? incidentTypeDisplay;
+  final String? incidentCatalogVersion;
   final String? title;
   final String description;
   final DateTime? incidentDatetime;
@@ -56,10 +111,14 @@ class Report extends Equatable {
   final SeverityLevel severity;
   final int? peopleAffected;
   final bool isEmergency;
+  final Map<String, dynamic>? emergencyContext;
 
   // System Fields
   final ReportStatus status;
   final String? assignedDepartment;
+  final List<SupportTask> supportDepartments;
+  final String? routingStatus;
+  final List<String> routingReviewReasons;
   final String? respondingAgency;
   final String? adminRemarks;
 
@@ -157,6 +216,9 @@ class Report extends Equatable {
     this.categoryDisplay,
     this.taxonomyVersion,
     this.incidentType,
+    this.incidentTypeKey,
+    this.incidentTypeDisplay,
+    this.incidentCatalogVersion,
     this.title,
     required this.description,
     this.incidentDatetime,
@@ -175,8 +237,12 @@ class Report extends Equatable {
     this.severity = SeverityLevel.medium,
     this.peopleAffected,
     this.isEmergency = false,
+    this.emergencyContext,
     this.status = ReportStatus.submitted,
     this.assignedDepartment,
+    this.supportDepartments = const [],
+    this.routingStatus,
+    this.routingReviewReasons = const [],
     this.respondingAgency,
     this.adminRemarks,
     this.categoryConfidence,
@@ -320,6 +386,10 @@ class Report extends Equatable {
     updatedAt,
     category,
     categoryKey,
+    incidentType,
+    incidentTypeKey,
+    incidentTypeDisplay,
+    incidentCatalogVersion,
     categoryDisplay,
     taxonomyVersion,
     title,
@@ -327,6 +397,7 @@ class Report extends Equatable {
     status,
     severity,
     isEmergency,
+    emergencyContext,
     createdAt,
     citizenVerifiedAt,
     citizenConfirmedResolved,
@@ -336,6 +407,9 @@ class Report extends Equatable {
     credibilityScore,
     municipalityId,
     barangayId,
+    supportDepartments,
+    routingStatus,
+    routingReviewReasons,
   ];
 
   @override

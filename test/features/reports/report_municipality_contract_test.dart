@@ -26,6 +26,8 @@ class _RecordingCreateReportUseCase extends CreateReportUseCase {
   Future<Result<Report>> call({
     String? category,
     String? incidentType,
+    String? incidentTypeKey,
+    String? incidentCatalogVersion,
     String? title,
     String description = '',
     String? incidentDatetime,
@@ -45,6 +47,7 @@ class _RecordingCreateReportUseCase extends CreateReportUseCase {
     bool dataProcessingConsent = true,
     bool isQuickReport = false,
     bool isEmergency = false,
+    Map<String, dynamic>? emergencyContext,
     String? idempotencyKey,
     CancelToken? cancelToken,
   }) async {

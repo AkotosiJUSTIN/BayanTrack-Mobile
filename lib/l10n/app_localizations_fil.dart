@@ -342,7 +342,7 @@ class AppLocalizationsFil extends AppLocalizations {
   String get addImage => 'Magdagdag ng larawan';
 
   @override
-  String get completeFastReport => 'Kumpletuhin ang iyong Fast Report';
+  String get completeFastReport => 'Kumpletuhin ang iyong Emergency Report';
 
   @override
   String get completeFastReportBody =>
@@ -375,7 +375,7 @@ class AppLocalizationsFil extends AppLocalizations {
       'Kumpirmahin ang emergency at lokasyon bago isumite.';
 
   @override
-  String get submitEmergencyReport => 'Isumite ang Emergency Report';
+  String get submitEmergencyReport => 'Ipadala ang Emergency Report';
 
   @override
   String get submittingEmergencyReport => 'Ipinapadala ang Emergency Report…';
@@ -2432,4 +2432,57 @@ class AppLocalizationsFil extends AppLocalizations {
   @override
   String get recordCheckpointPending =>
       'Naghihintay pang ma-save ang na-update na protektadong tala. Hindi pa nasusuri ang bersyong ito.';
+
+  @override
+  String get emergencyStructuredGuidance =>
+      'Piliin ang nangyayari, kumpirmahin ang lokasyon, at ipadala.';
+
+  @override
+  String get emergencySituation => 'Ano ang nangyayari?';
+
+  @override
+  String get emergencyDangerQuestion =>
+      'May nasugatan o nasa agarang panganib ba?';
+
+  @override
+  String get emergencyNotSure => 'Hindi tiyak';
+
+  @override
+  String get emergencyOptionalNotes => 'Mga tala (opsyonal)';
+
+  @override
+  String get emergencyOptionalNotesHint =>
+      'Anumang dapat malaman ng mga tutugon';
+
+  @override
+  String get emergencySelectionsRequired =>
+      'Piliin ang uri ng insidente, sitwasyon, at antas ng panganib.';
+
+  @override
+  String get emergencyNotesLimit =>
+      'Hanggang 300 character lamang ang mga tala.';
+
+  @override
+  String get emergencyChangeLocation => 'Palitan ang lokasyon';
+
+  @override
+  String get emergencyEnterCoordinates => 'Ilagay ang mga coordinate';
+
+  @override
+  String get emergencyLegacyDraftNotice =>
+      'Napanatili ang iyong teksto at lokasyon. Piliin ang uri ng emerhensiya, sitwasyon, at antas ng panganib, saka kumpirmahin ang Ipadala. Hindi pa naipapadala ang draft na ito.';
+
+  @override
+  String get latitude => 'Latitude';
+
+  @override
+  String get longitude => 'Longitude';
+
+  @override
+  String get emergencySendDeclaration =>
+      'Sa pagpindot ng Ipadala, kinukumpirma kong tama ang emerhensiya at lokasyon, totoo ang impormasyon, at pumapayag ako sa pagproseso ng datos para sa ulat na ito.';
+
+  @override
+  String get emergencyDetailsFull =>
+      'Naabot na ng ulat ang limitasyon para sa mga detalye.';
 }

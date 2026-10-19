@@ -53,7 +53,7 @@
             android:gravity="center_vertical"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:text="Fast Report"
+            android:text="Emergency Report"
             android:textColor="@color/widget_on_surface"
             android:textSize="14sp"
             android:textStyle="bold" />
@@ -70,7 +70,7 @@
             android:maxLines="1"
             android:paddingStart="8dp"
             android:paddingEnd="8dp"
-            android:text="Describe incident"
+            android:text="Choose incident"
             android:textColor="@color/widget_on_surface_secondary"
             android:textSize="11sp" />
 
@@ -85,7 +85,7 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:minHeight="28dp"
-            android:text="Submit"
+            android:text="Open"
             android:textColor="@color/widget_on_primary"
             android:textSize="11sp"
             android:textStyle="bold" />

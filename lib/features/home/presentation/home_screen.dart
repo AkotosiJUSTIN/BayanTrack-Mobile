@@ -1,3 +1,4 @@
+import '../../reports/data/emergency_catalog.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -232,6 +233,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final report = _fastReportFollowUp;
     if (report == null || _isUpdatingFastReport) return;
     final l10n = AppLocalizations.of(context);
+    var originalDescription = report.description;
+    var maxDetails = 2000;
+    if (report.emergencyContext != null) {
+      final latest = await ref.read(getReportUseCaseProvider)(report.id);
+      if (!mounted) return;
+      String? freshDescription;
+      latest.when(
+        success: (current) {
+          if (!current.isStale) freshDescription = current.description;
+        },
+        failure: (_) {},
+      );
+      if (freshDescription == null) {
+        AppToast.warning(context, l10n.unableSubmitReport);
+        return;
+      }
+      originalDescription = freshDescription!;
+      maxDetails = emergencyDetailsRemaining(originalDescription);
+      if (maxDetails == 0) {
+        AppToast.info(context, l10n.emergencyDetailsFull);
+        return;
+      }
+    }
     final controller = TextEditingController();
     final details = await showDialog<String>(
       context: context,
@@ -243,7 +267,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           autofocus: true,
           minLines: 3,
           maxLines: 6,
-          maxLength: 2000,
+          maxLength: maxDetails,
           decoration: InputDecoration(hintText: l10n.emergencyDetailsHint),
         ),
         actions: [
@@ -272,9 +296,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       _isUpdatingFastReport = true;
       _fastReportFollowUpError = null;
     });
-    final enrichedDescription = report.description.trim().isEmpty
+    final enrichedDescription = report.emergencyContext != null
+        ? appendEmergencyDetails(originalDescription, details)
+        : originalDescription.trim().isEmpty
         ? details
-        : '${report.description.trim()}\n\nAdditional details:\n$details';
+        : '${originalDescription.trim()}\n\nAdditional details:\n$details';
     try {
       final result = await ref.read(updateReportUseCaseProvider)(
         id: report.id,

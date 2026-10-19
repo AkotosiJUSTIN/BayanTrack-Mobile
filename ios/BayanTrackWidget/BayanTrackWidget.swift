@@ -61,14 +61,14 @@ struct BayanTrackWidgetView: View {
     VStack(alignment: .leading, spacing: 10) {
       Label("BayanTrack", systemImage: "location.shield.fill")
         .font(.caption.bold())
-      Text("Fast Report")
+      Text("Emergency Report")
         .font(.headline)
       Text(statusLabel)
         .font(.caption)
         .foregroundStyle(.secondary)
       Spacer(minLength: 0)
       Link(destination: URL(string: "bayantrack://fast-report")!) {
-        Label("Fast Report", systemImage: "bolt.fill")
+        Label("Emergency Report", systemImage: "bolt.fill")
           .frame(maxWidth: .infinity)
       }
       .buttonStyle(.borderedProminent)
@@ -93,8 +93,8 @@ struct BayanTrackWidget: Widget {
     StaticConfiguration(kind: kind, provider: FastReportProvider()) { entry in
       BayanTrackWidgetView(entry: entry)
     }
-    .configurationDisplayName("BayanTrack Fast Report")
-    .description("Open an emergency Fast Report or the BayanTrack dashboard.")
+    .configurationDisplayName("BayanTrack Emergency Report")
+    .description("Open an Emergency Report or the BayanTrack dashboard.")
     .supportedFamilies([.systemSmall, .systemMedium])
   }
 }

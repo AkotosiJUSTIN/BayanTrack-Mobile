@@ -2,6 +2,7 @@ import '../../../core/presentation/widgets/session_screen_lifecycle.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'widgets/incident_choice_field.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -589,6 +590,22 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
               ),
             ],
             const SizedBox(height: 24),
+          ],
+
+          if (report.incidentTypeDisplay != null ||
+              report.incidentType != null) ...[
+            _buildInfoRow(
+              Localizations.localeOf(context).languageCode == 'fil'
+                  ? 'Insidenteng iniulat ng mamamayan'
+                  : 'Citizen-reported incident',
+              incidentDisplay(
+                report.incidentTypeKey,
+                Localizations.localeOf(context).languageCode,
+                report.incidentTypeDisplay ?? report.incidentType!,
+              ),
+              theme,
+            ),
+            const SizedBox(height: 16),
           ],
 
           // AI Analysis (if available)

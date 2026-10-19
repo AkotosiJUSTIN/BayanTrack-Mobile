@@ -197,6 +197,29 @@ enum LocationAccuracy {
 // ==================== ROUTING / DEPARTMENT METADATA ====================
 
 @freezed
+sealed class SupportTask with _$SupportTask {
+  const factory SupportTask({
+    @JsonKey(name: 'task_id') String? taskId,
+    @JsonKey(name: 'department_key') required String departmentKey,
+    required String department,
+    required String task,
+    @Default(false) bool required,
+    @Default('pending') String state,
+    String? note,
+    @JsonKey(name: 'assigned_at') String? assignedAt,
+    @JsonKey(name: 'acknowledged_at') String? acknowledgedAt,
+    @JsonKey(name: 'in_progress_at') String? inProgressAt,
+    @JsonKey(name: 'completed_at') String? completedAt,
+    @JsonKey(name: 'waived_at') String? waivedAt,
+    @JsonKey(name: 'updated_at') String? updatedAt,
+    @JsonKey(name: 'updated_by') String? updatedBy,
+  }) = _SupportTask;
+
+  factory SupportTask.fromJson(Map<String, dynamic> json) =>
+      _$SupportTaskFromJson(json);
+}
+
+@freezed
 sealed class DepartmentSuggestion with _$DepartmentSuggestion {
   const factory DepartmentSuggestion({
     required String key,
@@ -284,6 +307,9 @@ sealed class Report with _$Report {
     @JsonKey(name: 'category_label_snapshot') String? categoryLabelSnapshot,
     @JsonKey(name: 'taxonomy_version') String? taxonomyVersion,
     @JsonKey(name: 'incident_type') String? incidentType,
+    @JsonKey(name: 'incident_type_key') String? incidentTypeKey,
+    @JsonKey(name: 'incident_type_display') String? incidentTypeDisplay,
+    @JsonKey(name: 'incident_catalog_version') String? incidentCatalogVersion,
     String? title,
     @Default('') String description,
     @JsonKey(name: 'incident_datetime') String? incidentDatetime,
@@ -314,10 +340,19 @@ sealed class Report with _$Report {
     @NullableIntConverter()
     int? peopleAffected,
     @JsonKey(name: 'is_emergency') @Default(false) bool isEmergency,
+    @JsonKey(name: 'emergency_context', includeIfNull: false)
+    Map<String, dynamic>? emergencyContext,
 
     // System Fields
     @Default('submitted') String status,
     @JsonKey(name: 'assigned_department') String? assignedDepartment,
+    @JsonKey(name: 'support_departments')
+    @Default([])
+    List<SupportTask> supportDepartments,
+    @JsonKey(name: 'routing_status') String? routingStatus,
+    @JsonKey(name: 'routing_review_reasons')
+    @Default([])
+    List<String> routingReviewReasons,
     @JsonKey(name: 'responding_agency') String? respondingAgency,
     @JsonKey(name: 'admin_remarks') String? adminRemarks,
 
@@ -453,6 +488,9 @@ sealed class CreateReportRequest with _$CreateReportRequest {
     // Report Details (Section A)
     String? category,
     @JsonKey(name: 'incident_type') String? incidentType,
+    @JsonKey(name: 'incident_type_key') String? incidentTypeKey,
+    @JsonKey(name: 'incident_type_display') String? incidentTypeDisplay,
+    @JsonKey(name: 'incident_catalog_version') String? incidentCatalogVersion,
     String? title,
     @Default('') String description,
     @JsonKey(name: 'incident_datetime') String? incidentDatetime,
@@ -484,6 +522,8 @@ sealed class CreateReportRequest with _$CreateReportRequest {
     @Default(true)
     bool dataProcessingConsent,
     @JsonKey(name: 'is_emergency') @Default(false) bool isEmergency,
+    @JsonKey(name: 'emergency_context', includeIfNull: false)
+    Map<String, dynamic>? emergencyContext,
   }) = _CreateReportRequest;
 
   factory CreateReportRequest.fromJson(Map<String, dynamic> json) =>
@@ -499,6 +539,9 @@ sealed class UpdateReportRequest with _$UpdateReportRequest {
     String? description,
     String? category,
     @JsonKey(name: 'incident_type') String? incidentType,
+    @JsonKey(name: 'incident_type_key') String? incidentTypeKey,
+    @JsonKey(name: 'incident_type_display') String? incidentTypeDisplay,
+    @JsonKey(name: 'incident_catalog_version') String? incidentCatalogVersion,
     String? zone,
     @JsonKey(name: 'street_landmark') String? streetLandmark,
     @JsonKey(name: 'municipality_id') String? municipalityId,
@@ -626,9 +669,15 @@ List<Map<String, dynamic>> _categoryOptionsToJson(
 @freezed
 sealed class ReportFormOptions with _$ReportFormOptions {
   const factory ReportFormOptions({
+    @JsonKey(name: 'incident_catalog_version') String? incidentCatalogVersion,
+    @JsonKey(name: 'incident_types')
+    @Default([])
+    List<Map<String, dynamic>> incidentTypes,
     @JsonKey(name: 'taxonomy_version')
     @Default('taxonomy_v1')
     String taxonomyVersion,
+    @JsonKey(name: 'emergency_catalog', includeIfNull: false)
+    Map<String, dynamic>? emergencyCatalog,
     @JsonKey(fromJson: _categoryOptionsFromJson, toJson: _categoryOptionsToJson)
     required List<ReportCategoryOption> categories,
     required List<Map<String, dynamic>> statuses,

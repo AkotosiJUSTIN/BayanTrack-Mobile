@@ -101,10 +101,10 @@ class _MainNavigationShellState extends ConsumerState<MainNavigationShell> {
                 FilledButton.icon(
                   onPressed: () {
                     Navigator.pop(sheetContext);
-                    _openReportFlow(const QuickReportScreen());
+                    _openReportFlow(const EmergencyReportScreen());
                   },
                   icon: const Icon(Icons.flash_on),
-                  label: Text(l10n.quickReport),
+                  label: Text(l10n.emergencyReport),
                 ),
                 const SizedBox(height: 10),
                 OutlinedButton.icon(

@@ -731,7 +731,7 @@ abstract class AppLocalizations {
   /// No description provided for @completeFastReport.
   ///
   /// In en, this message translates to:
-  /// **'Complete your Fast Report'**
+  /// **'Complete your Emergency Report'**
   String get completeFastReport;
 
   /// No description provided for @completeFastReportBody.
@@ -785,7 +785,7 @@ abstract class AppLocalizations {
   /// No description provided for @submitEmergencyReport.
   ///
   /// In en, this message translates to:
-  /// **'Submit Emergency Report'**
+  /// **'Send Emergency Report'**
   String get submitEmergencyReport;
 
   /// No description provided for @submittingEmergencyReport.
@@ -4375,6 +4375,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'An updated protected record is waiting to be saved. This version has not been verified yet.'**
   String get recordCheckpointPending;
+
+  /// No description provided for @emergencyStructuredGuidance.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose what is happening, confirm the location, then send.'**
+  String get emergencyStructuredGuidance;
+
+  /// No description provided for @emergencySituation.
+  ///
+  /// In en, this message translates to:
+  /// **'What is happening?'**
+  String get emergencySituation;
+
+  /// No description provided for @emergencyDangerQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Is anyone injured or in immediate danger?'**
+  String get emergencyDangerQuestion;
+
+  /// No description provided for @emergencyNotSure.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sure'**
+  String get emergencyNotSure;
+
+  /// No description provided for @emergencyOptionalNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes (optional)'**
+  String get emergencyOptionalNotes;
+
+  /// No description provided for @emergencyOptionalNotesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Anything responders should know'**
+  String get emergencyOptionalNotesHint;
+
+  /// No description provided for @emergencySelectionsRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose an incident type, situation, and danger level.'**
+  String get emergencySelectionsRequired;
+
+  /// No description provided for @emergencyNotesLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep notes within 300 characters.'**
+  String get emergencyNotesLimit;
+
+  /// No description provided for @emergencyChangeLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Change location'**
+  String get emergencyChangeLocation;
+
+  /// No description provided for @emergencyEnterCoordinates.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter coordinates'**
+  String get emergencyEnterCoordinates;
+
+  /// No description provided for @emergencyLegacyDraftNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Your saved text and location are kept. Choose the emergency type, situation, and danger level, then confirm Send. This draft has not been sent.'**
+  String get emergencyLegacyDraftNotice;
+
+  /// No description provided for @latitude.
+  ///
+  /// In en, this message translates to:
+  /// **'Latitude'**
+  String get latitude;
+
+  /// No description provided for @longitude.
+  ///
+  /// In en, this message translates to:
+  /// **'Longitude'**
+  String get longitude;
+
+  /// No description provided for @emergencySendDeclaration.
+  ///
+  /// In en, this message translates to:
+  /// **'By tapping Send, I confirm this emergency and location are accurate, declare the information is true, and consent to data processing to handle this report.'**
+  String get emergencySendDeclaration;
+
+  /// No description provided for @emergencyDetailsFull.
+  ///
+  /// In en, this message translates to:
+  /// **'This report has reached its details limit.'**
+  String get emergencyDetailsFull;
 }
 
 class _AppLocalizationsDelegate

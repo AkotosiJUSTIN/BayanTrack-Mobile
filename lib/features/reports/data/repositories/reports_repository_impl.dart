@@ -234,6 +234,8 @@ class ReportsRepositoryImpl implements ReportsRepository {
   Future<Result<Report>> createReport({
     String? category,
     String? incidentType,
+    String? incidentTypeKey,
+    String? incidentCatalogVersion,
     String? title,
     String description = '',
     String? incidentDatetime,
@@ -253,6 +255,7 @@ class ReportsRepositoryImpl implements ReportsRepository {
     bool dataProcessingConsent = true,
     bool isQuickReport = false,
     bool isEmergency = false,
+    Map<String, dynamic>? emergencyContext,
     String? idempotencyKey,
     CancelToken? cancelToken,
   }) async {
@@ -260,6 +263,8 @@ class ReportsRepositoryImpl implements ReportsRepository {
       final request = dto.CreateReportRequest(
         category: category,
         incidentType: incidentType,
+        incidentTypeKey: incidentTypeKey,
+        incidentCatalogVersion: incidentCatalogVersion,
         title: title,
         description: description,
         incidentDatetime: incidentDatetime,
@@ -278,12 +283,23 @@ class ReportsRepositoryImpl implements ReportsRepository {
         declarationConfirmed: declarationConfirmed,
         dataProcessingConsent: dataProcessingConsent,
         isEmergency: isEmergency,
+        emergencyContext: emergencyContext,
       );
 
       final requestData = {
         ...request.toJson(),
         'is_quick_report': isQuickReport,
       };
+      if (emergencyContext != null) {
+        for (final key in [
+          'title',
+          'description',
+          'category',
+          'incident_type',
+        ]) {
+          requestData.remove(key);
+        }
+      }
       final response = await _dio.post(
         ApiConstants.reports,
         data: requestData,
@@ -313,6 +329,8 @@ class ReportsRepositoryImpl implements ReportsRepository {
     String? description,
     String? category,
     String? incidentType,
+    String? incidentTypeKey,
+    String? incidentCatalogVersion,
     String? zone,
     String? streetLandmark,
     String? municipalityId,
@@ -327,6 +345,8 @@ class ReportsRepositoryImpl implements ReportsRepository {
         description: description,
         category: category,
         incidentType: incidentType,
+        incidentTypeKey: incidentTypeKey,
+        incidentCatalogVersion: incidentCatalogVersion,
         zone: zone,
         streetLandmark: streetLandmark,
         municipalityId: municipalityId,

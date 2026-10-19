@@ -25,6 +25,9 @@ class ReportMapper {
       categoryDisplay: dtoReport.categoryDisplay ?? dtoReport.category,
       taxonomyVersion: dtoReport.taxonomyVersion,
       incidentType: dtoReport.incidentType,
+      incidentTypeKey: dtoReport.incidentTypeKey,
+      incidentTypeDisplay: dtoReport.incidentTypeDisplay,
+      incidentCatalogVersion: dtoReport.incidentCatalogVersion,
       title: dtoReport.title,
       description: dtoReport.description,
       incidentDatetime: parseApiDateTime(dtoReport.incidentDatetime),
@@ -43,8 +46,31 @@ class ReportMapper {
       severity: SeverityLevel.fromString(dtoReport.severity),
       peopleAffected: dtoReport.peopleAffected,
       isEmergency: dtoReport.isEmergency,
+      emergencyContext: dtoReport.emergencyContext,
       status: ReportStatus.fromString(dtoReport.status),
       assignedDepartment: dtoReport.assignedDepartment,
+      supportDepartments: dtoReport.supportDepartments
+          .map(
+            (task) => SupportTask(
+              taskId: task.taskId,
+              departmentKey: task.departmentKey,
+              department: task.department,
+              task: task.task,
+              required: task.required,
+              state: task.state,
+              note: task.note,
+              assignedAt: parseApiDateTime(task.assignedAt),
+              acknowledgedAt: parseApiDateTime(task.acknowledgedAt),
+              inProgressAt: parseApiDateTime(task.inProgressAt),
+              completedAt: parseApiDateTime(task.completedAt),
+              waivedAt: parseApiDateTime(task.waivedAt),
+              updatedAt: parseApiDateTime(task.updatedAt),
+              updatedBy: task.updatedBy,
+            ),
+          )
+          .toList(growable: false),
+      routingStatus: dtoReport.routingStatus,
+      routingReviewReasons: dtoReport.routingReviewReasons,
       respondingAgency: dtoReport.respondingAgency?.trim().isNotEmpty == true
           ? dtoReport.respondingAgency
           : null,

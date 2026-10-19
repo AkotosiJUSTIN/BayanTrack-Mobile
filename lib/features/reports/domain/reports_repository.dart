@@ -35,6 +35,8 @@ abstract interface class ReportsRepository {
   Future<Result<Report>> createReport({
     String? category,
     String? incidentType,
+    String? incidentTypeKey,
+    String? incidentCatalogVersion,
     String? title,
     String description = '',
     String? incidentDatetime,
@@ -54,6 +56,7 @@ abstract interface class ReportsRepository {
     bool dataProcessingConsent = true,
     bool isQuickReport = false,
     bool isEmergency = false,
+    Map<String, dynamic>? emergencyContext,
     String? idempotencyKey,
     CancelToken? cancelToken,
   });
@@ -65,6 +68,8 @@ abstract interface class ReportsRepository {
     String? description,
     String? category,
     String? incidentType,
+    String? incidentTypeKey,
+    String? incidentCatalogVersion,
     String? zone,
     String? streetLandmark,
     String? municipalityId,

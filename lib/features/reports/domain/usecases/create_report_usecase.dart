@@ -14,6 +14,8 @@ class CreateReportUseCase {
   Future<Result<Report>> call({
     String? category,
     String? incidentType,
+    String? incidentTypeKey,
+    String? incidentCatalogVersion,
     String? title,
     String description = '',
     String? incidentDatetime,
@@ -33,12 +35,15 @@ class CreateReportUseCase {
     bool dataProcessingConsent = true,
     bool isQuickReport = false,
     bool isEmergency = false,
+    Map<String, dynamic>? emergencyContext,
     String? idempotencyKey,
     CancelToken? cancelToken,
   }) {
     return _repository.createReport(
       category: category,
       incidentType: incidentType,
+      incidentTypeKey: incidentTypeKey,
+      incidentCatalogVersion: incidentCatalogVersion,
       title: title,
       description: description,
       incidentDatetime: incidentDatetime,
@@ -58,6 +63,7 @@ class CreateReportUseCase {
       dataProcessingConsent: dataProcessingConsent,
       isQuickReport: isQuickReport,
       isEmergency: isEmergency,
+      emergencyContext: emergencyContext,
       idempotencyKey: idempotencyKey,
       cancelToken: cancelToken,
     );

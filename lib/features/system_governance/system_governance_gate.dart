@@ -114,9 +114,7 @@ class _EmergencyButton extends StatelessWidget {
   Widget build(BuildContext context) => OutlinedButton.icon(
     key: const Key('governance-emergency-button'),
     onPressed: () => Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => const QuickReportScreen(emergencyMode: true),
-      ),
+      MaterialPageRoute<void>(builder: (_) => const EmergencyReportScreen()),
     ),
     icon: const Icon(Icons.emergency_outlined),
     label: Text(AppLocalizations.of(context).emergencyReport),

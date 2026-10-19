@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/network/dio_provider.dart';
 import 'report_models.dart';
+import 'incident_catalog.g.dart';
 
 part 'reports_repository.g.dart';
 
@@ -100,6 +101,11 @@ class ReportsRepository {
     String? idempotencyKey,
   }) async {
     final jsonData = {...request.toJson(), 'is_quick_report': isQuickReport};
+    if (request.emergencyContext != null) {
+      for (final key in ['title', 'description', 'category', 'incident_type']) {
+        jsonData.remove(key);
+      }
+    }
     final response = idempotencyKey == null
         ? await _dio.post(ApiConstants.reports, data: jsonData)
         : await _dio.post(
@@ -179,43 +185,12 @@ class ReportsRepository {
   }
 }
 
-const offlineReportFormOptions = ReportFormOptions(
-  taxonomyVersion: 'taxonomy_v1',
-  categories: [
-    ReportCategoryOption(
-      key: 'engineering_infrastructure',
-      label: 'Municipal Engineering & Infrastructure',
-      taxonomyVersion: 'taxonomy_v1',
-      active: true,
-    ),
-    ReportCategoryOption(
-      key: 'flood_disaster',
-      label: 'Flood & Disaster Response',
-      taxonomyVersion: 'taxonomy_v1',
-      active: true,
-    ),
-    ReportCategoryOption(
-      key: 'waste_environment',
-      label: 'Solid Waste & Environmental Management',
-      taxonomyVersion: 'taxonomy_v1',
-      active: true,
-    ),
-    ReportCategoryOption(
-      key: 'public_safety',
-      label: 'Public Safety & Order',
-      taxonomyVersion: 'taxonomy_v1',
-      active: true,
-    ),
-    ReportCategoryOption(
-      key: 'public_utilities',
-      label: 'Public Utilities & Service',
-      taxonomyVersion: 'taxonomy_v1',
-      active: true,
-    ),
-  ],
-  statuses: [],
-  severityLevels: [],
-);
+final offlineReportFormOptions = ReportFormOptions.fromJson({
+  ...bundledIncidentCatalog,
+  'taxonomy_version': 'taxonomy_v1',
+  'statuses': <Map<String, dynamic>>[],
+  'severity_levels': <Map<String, dynamic>>[],
+});
 
 class NearbyReport {
   final String category;

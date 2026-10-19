@@ -254,6 +254,8 @@ void main() {
         type: ReportDraftType.emergency,
         payload: const {
           'category': 'fire_incident',
+          'incidentTypeKey': 'fire',
+          'incidentCatalogVersion': 'incident_catalog_v1',
           'latitude': '15.979204',
           'longitude': '120.622210',
           'description': '',
@@ -265,6 +267,8 @@ void main() {
       final restored = await drafts.read('user-a', ReportDraftType.emergency);
       expect(restored!.draftId, rejected.localReportId);
       expect(restored.payload['categoryKey'], 'fire_incident');
+      expect(restored.payload['incidentTypeKey'], 'fire');
+      expect(restored.payload['incidentCatalogVersion'], 'incident_catalog_v1');
       expect(restored.payload['latitude'], 15.979204);
       expect(restored.payload['longitude'], 120.622210);
       expect(restored.payload['isQuickReport'], false);
