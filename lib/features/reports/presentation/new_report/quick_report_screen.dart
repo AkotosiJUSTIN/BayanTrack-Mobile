@@ -1,5 +1,4 @@
 import 'dart:async';
-import '../widgets/incident_choice_field.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -85,14 +84,6 @@ class _EmergencyReportScreenState extends ConsumerState<EmergencyReportScreen>
   final MapController _mapController = MapController();
   final TextEditingController _descriptionController = TextEditingController();
   String _lastDescription = '';
-<<<<<<< Updated upstream
-  String? _incidentTypeKey;
-  String? _incidentCatalogVersion;
-  ReportCategoryOption? _selectedEmergencyCategory;
-  List<ReportCategoryOption> _emergencyCategories = const [];
-  bool _isLoadingEmergencyCategories = false;
-  String? _emergencyCategoryError;
-=======
   EmergencyCatalog? _catalog;
   EmergencyType? _selectedType;
   EmergencySituation? _selectedSituation;
@@ -102,7 +93,6 @@ class _EmergencyReportScreenState extends ConsumerState<EmergencyReportScreen>
   bool _legacyDraft = false;
   bool _showLocationMap = false;
   bool _showNotes = false;
->>>>>>> Stashed changes
   final MunicipalityModel _selectedMunicipality = bundledUrdanetaMunicipality;
   bool _isSubmitting = false;
   bool _isLoadingLocation = false;
@@ -283,14 +273,6 @@ class _EmergencyReportScreenState extends ConsumerState<EmergencyReportScreen>
         _locationInputMode = _QuickLocationInputMode.manual;
       }
     }
-<<<<<<< Updated upstream
-    _incidentTypeKey = draft.payload['incidentTypeKey'] as String?;
-    _incidentCatalogVersion =
-        draft.payload['incidentCatalogVersion'] as String?;
-    final categoryKey = draft.payload['categoryKey'];
-    _restoredEmergencyCategoryKey = categoryKey is String ? categoryKey : null;
-    _emergencyConfirmed = false;
-=======
     if (!_legacyDraft) {
       final context = draft.payload['emergencyContext'];
       _restoredTypeKey =
@@ -312,7 +294,6 @@ class _EmergencyReportScreenState extends ConsumerState<EmergencyReportScreen>
       }
     }
     _showNotes = _descriptionController.text.isNotEmpty;
->>>>>>> Stashed changes
   }
 
   Future<bool> _discardSavedDraft(ReportDraft draft) async {
@@ -333,14 +314,9 @@ class _EmergencyReportScreenState extends ConsumerState<EmergencyReportScreen>
   }
 
   Map<String, Object?> _captureDraftPayload() => {
-<<<<<<< Updated upstream
-    'incidentTypeKey': _incidentTypeKey,
-    'incidentCatalogVersion': _incidentCatalogVersion,
-=======
     'emergencyFormVersion': 1,
     'legacyDraft': _legacyDraft,
     'notes': _descriptionController.text,
->>>>>>> Stashed changes
     'description': _descriptionController.text,
     'latitude': _selectedPoint?.latitude,
     'longitude': _selectedPoint?.longitude,
@@ -349,15 +325,9 @@ class _EmergencyReportScreenState extends ConsumerState<EmergencyReportScreen>
     'danger': _danger,
   };
   bool _hasDraftContent(Map<String, Object?> payload) =>
-<<<<<<< Updated upstream
-      (payload['description'] as String? ?? '').trim().isNotEmpty ||
-      payload['categoryKey'] != null ||
-      payload['incidentTypeKey'] != null;
-=======
       (payload['notes'] as String? ?? '').trim().isNotEmpty ||
       payload['typeKey'] != null ||
       payload['legacyDraft'] == true;
->>>>>>> Stashed changes
 
   void _scheduleDraftSave() {
     if (!_draftReady || !_canPersistDraft || !_persistDraft) return;
@@ -444,35 +414,6 @@ class _EmergencyReportScreenState extends ConsumerState<EmergencyReportScreen>
         );
   }
 
-<<<<<<< Updated upstream
-  Map<String, Object?> _quickSubmissionPayload({
-    required String description,
-    String? category,
-    required bool emergency,
-    bool includeLandmark = false,
-  }) => {
-    'category': category,
-    'incidentTypeKey': _incidentTypeKey,
-    'incidentCatalogVersion': _incidentCatalogVersion,
-    'description': description,
-    'isHappeningNow': true,
-    'zone': _resolvedBarangay?.name,
-    'streetLandmark': includeLandmark ? _resolvedLandmark : null,
-    'municipalityId': _selectedMunicipality.id,
-    'barangayId': _resolvedBarangay?.id,
-    'cityMunicipality': _selectedMunicipality.name,
-    'province': _selectedMunicipality.province,
-    'latitude': _selectedPoint!.latitude.toStringAsFixed(10),
-    'longitude': _selectedPoint!.longitude.toStringAsFixed(10),
-    'locationAccuracy': 'exact',
-    'location': null,
-    'barangay': _resolvedBarangay?.name,
-    'declarationConfirmed': true,
-    'dataProcessingConsent': true,
-    'isQuickReport': !widget.emergencyMode,
-    'isEmergency': emergency,
-  };
-=======
   Map<String, Object?> _submissionPayload() {
     final type = _selectedType!;
     final situation = _selectedSituation!;
@@ -506,7 +447,6 @@ class _EmergencyReportScreenState extends ConsumerState<EmergencyReportScreen>
       'isEmergency': true,
     };
   }
->>>>>>> Stashed changes
 
   Future<void> _showPendingSync(
     ReportCreateOutboxItem item, {
@@ -1614,25 +1554,7 @@ class _EmergencyReportScreenState extends ConsumerState<EmergencyReportScreen>
                         ),
                       ),
                     Padding(
-<<<<<<< Updated upstream
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                      child: IncidentChoiceField(
-                        value: _incidentTypeKey,
-                        enabled: !_isSubmitting,
-                        onChanged: (key, version) {
-                          setState(() {
-                            _incidentTypeKey = key;
-                            _incidentCatalogVersion = version;
-                          });
-                          _scheduleDraftSave();
-                        },
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-=======
                       padding: const EdgeInsets.all(16),
->>>>>>> Stashed changes
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
