@@ -74,6 +74,7 @@ void main() {
       expect(report.emergencyContext, context);
       expect(report.toJson()['emergency_context'], context);
       expect(ReportMapper.fromDto(report).emergencyContext, context);
+      expect(ReportMapper.fromDto(report).isQuickReport, isTrue);
       expect(
         const dto.Report(
           id: 'legacy',

@@ -16,12 +16,18 @@ class PushService {
   StreamSubscription<RemoteMessage>? _messageOpenedSubscription;
   Future<void>? _registrationFuture;
   String? _registrationKey;
+  Timer? _registrationRetry;
+  int _registrationGeneration = 0;
+  bool _disposed = false;
   bool _permissionRequested = false;
 
   FirebaseMessaging get _firebaseMessaging =>
       _messaging ?? FirebaseMessaging.instance;
 
   Future<String?> getToken() => _firebaseMessaging.getToken();
+
+  Future<RemoteMessage?> getInitialMessage() =>
+      _firebaseMessaging.getInitialMessage();
 
   Future<void> requestPermission() async {
     if (_permissionRequested) return;
@@ -82,56 +88,93 @@ class PushService {
     Dio dio, {
     String? userId,
   }) async {
+    if (_disposed) return;
     final registrationKey = '$userId:$deviceType';
-    final pending = _registrationFuture;
-    if (pending != null) {
-      if (_registrationKey == registrationKey) return pending;
-      await pending;
+    if (_registrationKey != registrationKey) {
+      cancelRegistration();
+      _registrationKey = registrationKey;
     }
+    _registrationRetry?.cancel();
+    final pending = _registrationFuture;
+    if (pending != null) return pending;
 
-    final future = _ensureRegistered(deviceType, dio, userId: userId);
-    _registrationKey = registrationKey;
+    final generation = _registrationGeneration;
+    final future = _ensureRegistered(
+      deviceType,
+      dio,
+      generation: generation,
+      userId: userId,
+    );
     _registrationFuture = future;
     try {
       await future;
+    } catch (_) {
+      if (!_disposed && generation == _registrationGeneration) {
+        _registrationRetry = Timer(const Duration(seconds: 30), () {
+          unawaited(
+            ensureRegistered(deviceType, dio, userId: userId).catchError(
+              (Object error) => debugPrint(
+                'Push registration retry failed (${error.runtimeType})',
+              ),
+            ),
+          );
+        });
+      }
+      rethrow;
     } finally {
       if (identical(_registrationFuture, future)) {
         _registrationFuture = null;
-        _registrationKey = null;
       }
     }
+  }
+
+  /// Stop retries and prevent a late token lookup from registering after logout.
+  void cancelRegistration() {
+    _registrationGeneration++;
+    _registrationRetry?.cancel();
+    _registrationRetry = null;
+    _registrationFuture = null;
+    _registrationKey = null;
   }
 
   Future<void> _ensureRegistered(
     String deviceType,
     Dio dio, {
+    required int generation,
     String? userId,
   }) async {
     await requestPermission();
 
     String? token;
     for (var attempt = 0; attempt < 5; attempt++) {
-      token = await _firebaseMessaging.getToken();
+      if (_disposed || generation != _registrationGeneration) return;
+      try {
+        token = await _firebaseMessaging.getToken();
+      } catch (_) {
+        if (attempt == 4) rethrow;
+      }
       if (token != null && token.isNotEmpty) {
         break;
       }
       debugPrint('FCM token not ready yet, retrying (${attempt + 1}/5)');
-      await Future.delayed(Duration(seconds: attempt + 1));
+      if (attempt < 4) await Future.delayed(Duration(seconds: attempt + 1));
     }
 
+    if (_disposed || generation != _registrationGeneration) return;
     if (token == null || token.isEmpty) {
-      debugPrint('FCM token is still unavailable; will retry later');
-      return;
+      throw StateError('FCM token unavailable; registration will retry');
     }
 
     // Try registering with simple retry/backoff
     int attempts = 0;
     while (attempts < 3) {
+      if (_disposed || generation != _registrationGeneration) return;
       try {
         await registerToken(token, deviceType, dio, userId: userId);
         return;
       } catch (_) {
         attempts += 1;
+        if (attempts == 3) rethrow;
         await Future.delayed(Duration(seconds: 1 << attempts));
       }
     }
@@ -152,6 +195,8 @@ class PushService {
   }
 
   void dispose() {
+    _disposed = true;
+    cancelRegistration();
     unawaited(_tokenRefreshSubscription?.cancel());
     unawaited(_messageSubscription?.cancel());
     unawaited(_messageOpenedSubscription?.cancel());
