@@ -8,12 +8,10 @@ import '../../navigation/main_navigation_shell.dart';
 import 'auth_controller.dart';
 import 'login_screen.dart';
 import 'password_expired_screen.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../../../core/presentation/widgets/app_toast.dart';
 import '../../notifications/push_service.dart';
 import '../../notifications/local_notification_service.dart';
-import '../../notifications/presentation/notifications_controller.dart';
 import '../../notifications/presentation/notification_navigation.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../../core/providers/backend_reachability_provider.dart';
@@ -160,6 +158,9 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
     _syncReportOutbox(userId, ref.read(isOnlineProvider), force: true);
 
     final realtime = ref.read(authRealtimeControllerProvider);
+    if (_pushUserId != userId) {
+      ref.read(pushServiceProvider).cancelRegistration();
+    }
     if (userId == null) {
       _pushUserId = null;
       realtime.stop();
@@ -228,7 +229,16 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
       if (_pushUserId != userId) return;
       pushService.onTokenRefresh((token) async {
         if (!mounted || _pushUserId != userId) return;
-        await pushService.registerToken(token, 'android', dio, userId: userId);
+        try {
+          await pushService.registerToken(
+            token,
+            'android',
+            dio,
+            userId: userId,
+          );
+        } catch (_) {
+          _recoverPushRegistration();
+        }
       });
 
       // Foreground message handler: show simple in-app snackbar and persist
@@ -243,13 +253,17 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
             message.notification?.body ??
             message.data['body']?.toString() ??
             '';
-        ref.invalidate(notificationsControllerProvider);
+        refreshNotificationContent(ref, message.data);
         if (message.data['type'] == 'terms_updated' ||
             message.data['type'] == 'maintenance_changed') {
           ref.invalidate(publishedTermsProvider);
           unawaited(ref.read(systemGovernanceProvider.notifier).refresh());
         }
-        await LocalNotificationService.showFromRemoteMessage(message);
+        try {
+          await LocalNotificationService.showFromRemoteMessage(message);
+        } catch (error) {
+          debugPrint('Local push display failed (${error.runtimeType})');
+        }
         if (!notificationContext.mounted) return;
         AppToast.info(notificationContext, '$title: $body');
       });
@@ -261,9 +275,13 @@ class _AuthWrapperState extends ConsumerState<AuthWrapper>
       });
 
       // If launched from terminated state via notification
-      final initial = await FirebaseMessaging.instance.getInitialMessage();
-      if (initial != null && mounted && _pushUserId == userId) {
-        openNotificationDestination(context, ref, initial.data);
+      try {
+        final initial = await pushService.getInitialMessage();
+        if (initial != null && mounted && _pushUserId == userId) {
+          openNotificationDestination(context, ref, initial.data);
+        }
+      } catch (error) {
+        debugPrint('Initial notification lookup failed (${error.runtimeType})');
       }
       if (!mounted || _pushUserId != userId) return;
       await pushService.ensureRegistered('android', dio, userId: userId);

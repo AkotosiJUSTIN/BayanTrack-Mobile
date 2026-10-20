@@ -13,6 +13,7 @@ import 'package:bayantrack_mobile/features/auth/presentation/auth_controller.dar
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
 import 'package:bayantrack_mobile/features/home/presentation/home_screen.dart';
 import 'package:bayantrack_mobile/features/navigation/main_navigation_shell.dart';
+import 'package:bayantrack_mobile/features/notifications/presentation/notification_navigation.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/paginated_reports.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report_enums.dart';
@@ -264,6 +265,43 @@ void main() {
     expect(calls, 1);
   });
 
+  testWidgets('Home shows public emergencies without a reporter identity', (
+    tester,
+  ) async {
+    final repository = _ReportsRepositoryMock();
+    _stubMyReports(repository, reports: const []);
+    _stubReports(
+      repository,
+      () async => const Success(
+        PaginatedReports(
+          results: [
+            Report(
+              id: 'public-emergency',
+              title: 'Public building fire',
+              description: 'Fire near the public market',
+              isEmergency: true,
+              latitude: 15.97,
+              longitude: 120.57,
+            ),
+          ],
+          total: 1,
+        ),
+      ),
+    );
+    await tester.pumpWidget(
+      _app(repository, authState: const AuthSuccess('ready', _citizen)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.location_on), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.list));
+    await tester.pumpAndSettle();
+    expect(find.text('Public building fire'), findsOneWidget);
+    expect(find.text('Test Citizen'), findsNothing);
+    expect(find.text('citizen@example.com'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Home retry emits a fresh public reports request after failure', (
     tester,
   ) async {
@@ -440,6 +478,48 @@ void main() {
       expect(find.byIcon(Icons.location_on), findsNothing);
     },
   );
+
+  testWidgets('report push refreshes Home when realtime is disconnected', (
+    tester,
+  ) async {
+    final repository = _ReportsRepositoryMock();
+    var calls = 0;
+    _stubReports(repository, () async {
+      calls++;
+      return calls == 1
+          ? const Success(PaginatedReports.empty)
+          : const Success(
+              PaginatedReports(
+                results: [
+                  Report(
+                    id: 'own-emergency',
+                    title: 'Building fire',
+                    description: 'Synthetic emergency',
+                    isEmergency: true,
+                    latitude: 15.97,
+                    longitude: 120.57,
+                  ),
+                ],
+                total: 1,
+              ),
+            );
+    });
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.location_on), findsNothing);
+
+    final ref = tester
+        .state<ConsumerState<HomeScreen>>(find.byType(HomeScreen))
+        .ref;
+    refreshNotificationContent(ref, {
+      'type': 'report_submitted',
+      'report_id': 'own-emergency',
+    });
+    await tester.pumpAndSettle();
+    expect(calls, 2);
+    expect(find.byIcon(Icons.location_on), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('map status chips filter loaded reports locally and toggle', (
     tester,

@@ -338,9 +338,10 @@ class Report extends Equatable {
   PriorityLevel? get displayPriorityLevel =>
       queuePriorityLevel ?? suggestedPriorityLevel ?? priorityLevel;
 
-  /// Quick Reports are marked by the backend's central priority policy.
-  /// Include the legacy reason so older records remain recognizable.
+  /// Citizen projections omit internal priority rules, so recognize the
+  /// structured context as well as legacy priority metadata.
   bool get isQuickReport =>
+      emergencyContext != null ||
       priorityRulesApplied.contains('quick_report_flag_set') ||
       priorityReasons.contains('quick_report_flag_set');
 

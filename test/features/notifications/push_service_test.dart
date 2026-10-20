@@ -151,18 +151,21 @@ void main() {
     when(() => messaging.getToken()).thenAnswer((_) async => null);
     final dio = _DioMock();
     final service = _PushService(messaging);
+    addTearDown(service.dispose);
     final registration = service.ensureRegistered(
       'android',
       dio,
       userId: 'user-1',
     );
+    final failed = expectLater(registration, throwsStateError);
     await tester.pump();
     for (var attempt = 0; attempt < 5; attempt++) {
       await tester.pump(const Duration(seconds: 5));
     }
-    await registration;
+    await failed;
     verify(() => messaging.getToken()).called(5);
     verifyZeroInteractions(dio);
+    service.dispose();
   });
 
   testWidgets('registration retries backend failure with backoff', (
@@ -196,18 +199,27 @@ void main() {
     expect(attempts, 2);
   });
 
-  test('token lookup failure can recover on the next connection', () async {
+  testWidgets('token lookup failure retries while the app stays open', (
+    tester,
+  ) async {
     final messaging = _MessagingMock();
     when(() => messaging.getToken()).thenThrow(StateError('FCM unavailable'));
     final dio = _DioMock();
     _stubRegistration(dio, 'current-token');
     final service = _PushService(messaging);
-    await expectLater(
+    addTearDown(service.dispose);
+    final failed = expectLater(
       service.ensureRegistered('android', dio, userId: 'user-1'),
       throwsStateError,
     );
+    await tester.pump();
+    for (final seconds in [1, 2, 3, 4]) {
+      await tester.pump(Duration(seconds: seconds));
+    }
+    await failed;
+    verify(() => messaging.getToken()).called(5);
     when(() => messaging.getToken()).thenAnswer((_) async => 'current-token');
-    await service.ensureRegistered('android', dio, userId: 'user-1');
+    await tester.pump(const Duration(seconds: 30));
     verify(
       () => dio.post(
         ApiConstants.notificationPushToken,
@@ -215,6 +227,74 @@ void main() {
       ),
     ).called(1);
   });
+
+  testWidgets(
+    'transient Firebase exception retries the lookup before registration',
+    (tester) async {
+      final messaging = _MessagingMock();
+      var lookups = 0;
+      when(() => messaging.getToken()).thenAnswer((_) async {
+        if (++lookups == 1) throw StateError('SERVICE_NOT_AVAILABLE');
+        return 'current-token';
+      });
+      final dio = _DioMock();
+      _stubRegistration(dio, 'current-token');
+      final service = _PushService(messaging);
+      addTearDown(service.dispose);
+      final registration = service.ensureRegistered(
+        'android',
+        dio,
+        userId: 'user-1',
+      );
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      await registration;
+      expect(lookups, 2);
+      verify(
+        () => dio.post(
+          ApiConstants.notificationPushToken,
+          data: {'token': 'current-token', 'device_type': 'android'},
+        ),
+      ).called(1);
+    },
+  );
+
+  testWidgets(
+    'logout cancels pending lookup and scheduled registration retry',
+    (tester) async {
+      final messaging = _MessagingMock();
+      final token = Completer<String?>();
+      when(() => messaging.getToken()).thenAnswer((_) => token.future);
+      final dio = _DioMock();
+      final service = _PushService(messaging);
+      addTearDown(service.dispose);
+      final registration = service.ensureRegistered(
+        'android',
+        dio,
+        userId: 'user-1',
+      );
+      await tester.pump();
+      service.cancelRegistration();
+      token.complete('late-token');
+      await registration;
+      verifyZeroInteractions(dio);
+
+      when(() => messaging.getToken()).thenAnswer((_) async => null);
+      final failed = expectLater(
+        service.ensureRegistered('android', dio, userId: 'user-1'),
+        throwsStateError,
+      );
+      await tester.pump();
+      for (final seconds in [1, 2, 3, 4]) {
+        await tester.pump(Duration(seconds: seconds));
+      }
+      await failed;
+      service.cancelRegistration();
+      await tester.pump(const Duration(seconds: 60));
+      verify(() => messaging.getToken()).called(6);
+      verifyZeroInteractions(dio);
+    },
+  );
 
   test(
     'failed backend registration can be retried without a cached success',
