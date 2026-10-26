@@ -8,8 +8,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/presentation/widgets/app_toast.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/auth_controller.dart';
-import '../../../auth/data/user_permissions.dart';
-import '../../../auth/presentation/verification_widgets.dart';
 import '../../../images/data/evidence_file_stager.dart';
 import '../../../images/data/evidence_upload_queue_provider.dart';
 import '../../../images/presentation/evidence_photo_review.dart';
@@ -448,7 +446,6 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen>
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(newReportControllerProvider);
-    final permissions = ref.watch(userPermissionsProvider);
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -474,7 +471,6 @@ class _NewReportPhotosScreenState extends ConsumerState<NewReportPhotosScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            VerificationBanner(permissions: permissions),
             ReportFlowProgress(step: 1, total: 4),
             Expanded(
               child: SingleChildScrollView(
