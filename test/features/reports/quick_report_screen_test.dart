@@ -9,7 +9,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test(
-    'offline catalog provides localized types and exact situation keys',
+    'offline catalog provides localized situations without obsolete not_sure',
     () async {
       final catalog = await EmergencyCatalog.bundled();
       expect(catalog.types, hasLength(9));
@@ -24,9 +24,16 @@ void main() {
       expect(catalog.types.last.situations.map((s) => s.key), [
         'rescue_needed',
         'assistance_needed',
-        'not_sure',
         'other_unknown',
       ]);
+      for (final type in catalog.types) {
+        expect(type.situations.map((s) => s.key), isNot(contains('not_sure')));
+        final other = type.situations.singleWhere(
+          (s) => s.key == 'other_unknown',
+        );
+        expect(other.localized(false), 'Other');
+        expect(other.localized(true), 'Iba');
+      }
     },
   );
 
