@@ -170,7 +170,7 @@ void main() {
     expect(find.text('Urdaneta City'), findsOneWidget);
     expect(find.byKey(const Key('full-report-city')), findsOneWidget);
     expect(find.byKey(const Key('full-report-barangay')), findsOneWidget);
-    expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
+    expect(find.byType(DropdownButtonFormField<String>), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

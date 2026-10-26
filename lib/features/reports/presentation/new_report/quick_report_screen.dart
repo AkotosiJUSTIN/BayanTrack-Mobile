@@ -559,7 +559,10 @@ class _EmergencyReportScreenState extends ConsumerState<EmergencyReportScreen>
 
   void _applyCatalog(EmergencyCatalog catalog) {
     final typeKey = _selectedType?.key ?? _restoredTypeKey;
-    final situationKey = _selectedSituation?.key ?? _restoredSituationKey;
+    final savedSituationKey = _selectedSituation?.key ?? _restoredSituationKey;
+    final situationKey = savedSituationKey == 'not_sure'
+        ? 'other_unknown'
+        : savedSituationKey;
     setState(() {
       _catalog = catalog;
       _selectedType = null;

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../widgets/incident_choice_field.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/urdaneta_geo.dart';
@@ -10,7 +9,7 @@ import 'new_report_review_screen.dart';
 import 'quick_report_geo.dart';
 import 'report_flow_widgets.dart';
 
-/// Third step: Enter report details (category, incident type, description, severity)
+/// Third step: Enter the report title, description, and location details.
 class NewReportDetailsScreen extends ConsumerStatefulWidget {
   const NewReportDetailsScreen({super.key});
 
@@ -209,11 +208,6 @@ class _NewReportDetailsScreenState
                                           return null;
                                         },
                                       ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    IncidentChoiceField(
-                                      value: state.incidentTypeKey,
-                                      onChanged: controller.setIncident,
                                     ),
                                     const SizedBox(height: 16),
                                     _buildSectionLabel(
