@@ -37,6 +37,7 @@ class EmergencyCatalog {
                     situation['label_fil'] as String,
                   );
                 })
+                .where((situation) => situation.key != 'not_sure')
                 .toList(growable: false),
           );
         })
@@ -69,7 +70,9 @@ class EmergencySituation {
   final String key;
   final String label;
   final String labelFil;
-  String localized(bool filipino) => filipino ? labelFil : label;
+  String localized(bool filipino) => key == 'other_unknown'
+      ? (filipino ? 'Iba' : 'Other')
+      : (filipino ? labelFil : label);
 }
 
 Map<String, dynamic> emergencyContext({

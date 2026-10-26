@@ -783,8 +783,9 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
         ),
         const SizedBox(height: 8),
         CivicSurface(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (report.createdAt != null)
                 _buildInfoRow(
