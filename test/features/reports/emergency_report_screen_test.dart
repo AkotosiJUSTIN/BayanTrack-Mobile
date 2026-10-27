@@ -154,6 +154,29 @@ Position _position() => Position(
 );
 
 Future<void> _tap(WidgetTester tester, String key) async {
+  if (key.startsWith('emergency-type-') ||
+      key.startsWith('emergency-situation-')) {
+    final fields = find.byType(DropdownButtonFormField<String>);
+    final field = key.startsWith('emergency-type-')
+        ? fields.first
+        : fields.last;
+    await tester.ensureVisible(field);
+    await tester.tap(field);
+    await tester.pumpAndSettle();
+    final option = find.byKey(Key(key)).last;
+    await tester.scrollUntilVisible(
+      option,
+      160,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await Scrollable.ensureVisible(tester.element(option), alignment: 0.5);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(of: option, matching: find.byType(Text)).hitTestable(),
+    );
+    await tester.pumpAndSettle();
+    return;
+  }
   final finder = find.byKey(Key(key));
   await tester.ensureVisible(finder);
   await tester.tap(finder);
@@ -306,11 +329,11 @@ void main() {
     await _tap(tester, 'emergency-type-fire_smoke');
     expect(
       tester
-          .widget<ChoiceChip>(
-            find.byKey(const Key('emergency-situation-building_fire')),
+          .widget<DropdownButtonFormField<String>>(
+            find.byType(DropdownButtonFormField<String>).last,
           )
-          .selected,
-      isTrue,
+          .initialValue,
+      'building_fire',
     );
     await _tap(tester, 'emergency-type-flood_disaster');
     expect(
@@ -761,10 +784,7 @@ void main() {
           locationOverride: () async => _position(),
         ),
       );
-      expect(
-        find.byKey(const Key('emergency-type-fire_smoke')),
-        findsOneWidget,
-      );
+      expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
       expect(find.byKey(const Key('emergency-report-submit')), findsOneWidget);
       expect(find.byKey(const Key('quick-report-description')), findsNothing);
     },
@@ -772,7 +792,7 @@ void main() {
 
   for (final size in [const Size(320, 640), const Size(360, 800)]) {
     testWidgets(
-      'Filipino large text fits ${size.width} screen and chips preserve selection',
+      'Filipino large text fits ${size.width} screen and dropdowns preserve selection',
       (tester) async {
         tester.view.physicalSize = size;
         tester.view.devicePixelRatio = 1;
@@ -786,15 +806,18 @@ void main() {
           locale: const Locale('fil'),
           textScale: 1.8,
         );
-        expect(find.text('Sunog o usok'), findsOneWidget);
+        expect(find.text('Uri ng insidente'), findsOneWidget);
+        await _tap(tester, 'emergency-type-infrastructure_hazard');
+        await _tap(tester, 'emergency-situation-unsafe_structure');
+        expect(tester.takeException(), isNull);
         await _choose(tester);
         expect(
           tester
-              .widget<ChoiceChip>(
-                find.byKey(const Key('emergency-type-fire_smoke')),
+              .widget<DropdownButtonFormField<String>>(
+                find.byType(DropdownButtonFormField<String>).first,
               )
-              .selected,
-          isTrue,
+              .initialValue,
+          'fire_smoke',
         );
         await _tap(tester, 'emergency-report-submit');
         expect(find.text('Add details'), findsNothing);
