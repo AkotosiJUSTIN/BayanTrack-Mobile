@@ -1461,46 +1461,86 @@ class _EmergencyReportScreenState extends ConsumerState<EmergencyReportScreen>
                     if (_catalog == null)
                       const Center(child: CircularProgressIndicator())
                     else
-                      _choices(l10n.emergencyIncidentType, [
-                        for (final type in _catalog!.types)
-                          ChoiceChip(
-                            key: Key('emergency-type-${type.key}'),
-                            label: Text(type.localized(filipino)),
-                            selected: _selectedType?.key == type.key,
-                            onSelected: _isSubmitting
-                                ? null
-                                : (_) {
-                                    if (_selectedType?.key == type.key) return;
-                                    setState(() {
-                                      _selectedType = type;
-                                      _restoredTypeKey = type.key;
-                                      _selectedSituation = null;
-                                      _restoredSituationKey = null;
-                                      _submissionError = null;
-                                    });
-                                    _scheduleDraftSave();
-                                  },
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                        child: DropdownButtonFormField<String>(
+                          key: ValueKey(
+                            'emergency-type-selector-${_selectedType?.key}',
                           ),
-                      ]),
+                          initialValue: _selectedType?.key,
+                          isExpanded: true,
+                          isDense: false,
+                          itemHeight: null,
+                          decoration: InputDecoration(
+                            labelText: l10n.emergencyIncidentType,
+                          ),
+                          items: [
+                            for (final type in _catalog!.types)
+                              DropdownMenuItem(
+                                key: Key('emergency-type-${type.key}'),
+                                value: type.key,
+                                child: Text(type.localized(filipino)),
+                              ),
+                          ],
+                          onChanged: _isSubmitting
+                              ? null
+                              : (key) {
+                                  if (key == null ||
+                                      _selectedType?.key == key) {
+                                    return;
+                                  }
+                                  setState(() {
+                                    _selectedType = _catalog!.types.firstWhere(
+                                      (type) => type.key == key,
+                                    );
+                                    _restoredTypeKey = key;
+                                    _selectedSituation = null;
+                                    _restoredSituationKey = null;
+                                    _submissionError = null;
+                                  });
+                                  _scheduleDraftSave();
+                                },
+                        ),
+                      ),
                     if (_selectedType != null)
-                      _choices(l10n.emergencySituation, [
-                        for (final situation in _selectedType!.situations)
-                          ChoiceChip(
-                            key: Key('emergency-situation-${situation.key}'),
-                            label: Text(situation.localized(filipino)),
-                            selected: _selectedSituation?.key == situation.key,
-                            onSelected: _isSubmitting
-                                ? null
-                                : (_) {
-                                    setState(() {
-                                      _selectedSituation = situation;
-                                      _restoredSituationKey = situation.key;
-                                      _submissionError = null;
-                                    });
-                                    _scheduleDraftSave();
-                                  },
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                        child: DropdownButtonFormField<String>(
+                          key: ValueKey(
+                            'emergency-situation-selector-${_selectedType!.key}-${_selectedSituation?.key}',
                           ),
-                      ]),
+                          initialValue: _selectedSituation?.key,
+                          isExpanded: true,
+                          isDense: false,
+                          itemHeight: null,
+                          decoration: InputDecoration(
+                            labelText: l10n.emergencySituation,
+                          ),
+                          items: [
+                            for (final situation in _selectedType!.situations)
+                              DropdownMenuItem(
+                                key: Key(
+                                  'emergency-situation-${situation.key}',
+                                ),
+                                value: situation.key,
+                                child: Text(situation.localized(filipino)),
+                              ),
+                          ],
+                          onChanged: _isSubmitting
+                              ? null
+                              : (key) {
+                                  if (key == null) return;
+                                  setState(() {
+                                    _selectedSituation = _selectedType!
+                                        .situations
+                                        .firstWhere((item) => item.key == key);
+                                    _restoredSituationKey = key;
+                                    _submissionError = null;
+                                  });
+                                  _scheduleDraftSave();
+                                },
+                        ),
+                      ),
                     _choices(l10n.emergencyDangerQuestion, [
                       for (final entry in {
                         'yes': l10n.yes,
