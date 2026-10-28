@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/providers/session_content_cache.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entities/shared_incident.dart';
 import '../report_detail_controller.dart';
@@ -36,6 +37,9 @@ class SharedIncidentSection extends ConsumerWidget {
             IconButton(
               tooltip: l10n.retry,
               onPressed: () {
+                ref
+                    .read(sessionContentCacheProvider)
+                    .remove('incident:$reportId');
                 ref.invalidate(reportDetailControllerProvider(reportId));
                 ref.invalidate(sharedIncidentProvider(reportId));
               },
@@ -210,6 +214,9 @@ class SharedIncidentSection extends ConsumerWidget {
                 ),
               );
               if (submitted == true && ref.context.mounted) {
+                ref
+                    .read(sessionContentCacheProvider)
+                    .remove('incident:$reportId');
                 ref.invalidate(sharedIncidentProvider(reportId));
               }
             },
@@ -304,6 +311,9 @@ class _MismatchDialogState extends ConsumerState<_MismatchDialog> {
               : l10n.incidentFeedbackFailed;
         });
         if (_stale) {
+          ref
+              .read(sessionContentCacheProvider)
+              .remove('incident:${widget.reportId}');
           ref.invalidate(reportDetailControllerProvider(widget.reportId));
           ref.invalidate(sharedIncidentProvider(widget.reportId));
         }

@@ -26,12 +26,33 @@ void main() {
       cache.write('report:$i', i);
     }
     cache.write('verification:1', 'proof');
+    cache.write('incident:1', 'summary');
     expect(cache.read<int>('report:0'), 0);
     cache.write('report:20', 20);
     expect(cache.read<int>('report:1'), isNull);
     expect(cache.read<String>('verification:1'), isNull);
+    expect(cache.read<String>('incident:1'), isNull);
     expect(cache.read<int>('report:0'), 0);
   });
+  test(
+    'incident summaries retain 20 entries and group invalidation preserves other content',
+    () {
+      final cache = SessionContentCache();
+      for (var i = 0; i < 21; i++) {
+        cache.write('incident:$i', i);
+      }
+      expect(cache.read<int>('incident:0'), isNull);
+      expect(cache.read<int>('incident:1'), 1);
+      cache.write('report:r', 'report');
+      cache.write('verification:r', 'proof');
+      cache.write('profile:me', 'profile');
+      cache.removeReports();
+      expect(cache.read<int>('incident:1'), isNull);
+      expect(cache.read<String>('report:r'), isNull);
+      expect(cache.read<String>('verification:r'), isNull);
+      expect(cache.read<String>('profile:me'), 'profile');
+    },
+  );
   test('idle expiry touches access and expires at ten minutes', () {
     var time = DateTime.utc(2026);
     final cache = SessionContentCache(now: () => time);

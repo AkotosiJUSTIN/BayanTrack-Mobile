@@ -30,17 +30,28 @@ class SessionContentCache {
     final keys = _entries.keys
         .where((k) => k.startsWith('$namespace:'))
         .toList();
-    final limit = namespace == 'report' || namespace == 'verification' ? 20 : 1;
+    final limit =
+        const {'report', 'verification', 'incident'}.contains(namespace)
+        ? 20
+        : 1;
     while (keys.length > limit) {
       final removed = keys.removeAt(0);
       _entries.remove(removed);
       if (namespace == 'report') {
         _entries.remove(removed.replaceFirst('report:', 'verification:'));
+        _entries.remove(removed.replaceFirst('report:', 'incident:'));
       }
     }
   }
 
   void remove(String key) => _entries.remove(key);
+  void removeReports() => _entries.removeWhere(
+    (key, _) => const {
+      'report',
+      'verification',
+      'incident',
+    }.contains(key.split(':').first),
+  );
   void close() {
     _closed = true;
     _entries.clear();

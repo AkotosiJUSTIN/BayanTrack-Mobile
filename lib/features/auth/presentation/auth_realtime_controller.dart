@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import '../../../core/providers/session_content_cache.dart';
 
 import '../../../core/constants/api_constants.dart';
@@ -51,7 +52,7 @@ class AuthRealtimeController {
       service.connect(
         serverUrl: ApiConstants.mediaBaseUrl,
         token: token,
-        onEvent: _handleEvent,
+        onEvent: handleEvent,
       );
       _connectedUserId = userId;
     } finally {
@@ -66,7 +67,8 @@ class AuthRealtimeController {
     _service = null;
   }
 
-  void _handleEvent(RealtimeEvent event) {
+  @visibleForTesting
+  void handleEvent(RealtimeEvent event) {
     final targets = invalidationTargets(event);
     if (targets.contains(RealtimeTarget.system)) {
       _ref.invalidate(publishedTermsProvider);
@@ -80,9 +82,16 @@ class AuthRealtimeController {
         final cache = _ref.read(sessionContentCacheProvider);
         cache.remove('report:${event.entityId}');
         cache.remove('verification:${event.entityId}');
+        cache.remove('incident:${event.entityId}');
         _ref.invalidate(reportVerificationProvider(event.entityId));
         _ref.invalidate(reportDetailControllerProvider(event.entityId));
         _ref.invalidate(sharedIncidentProvider(event.entityId));
+      } else if (event.name == 'incident_group.changed') {
+        // Group events omit report IDs, including the newly linked report.
+        _ref.read(sessionContentCacheProvider).removeReports();
+        _ref.invalidate(reportVerificationProvider);
+        _ref.invalidate(reportDetailControllerProvider);
+        _ref.invalidate(sharedIncidentProvider);
       }
     }
     if (targets.contains(RealtimeTarget.notifications)) {

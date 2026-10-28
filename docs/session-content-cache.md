@@ -4,6 +4,14 @@ Report Details, Profile, and Notifications reuse content in memory for the authe
 
 Reopening displays saved content immediately and refreshes in the background. Localized banners distinguish refreshing from an unsuccessful refresh. Failure preserves readable content. Route return, previously visited Profile/Notifications tabs, reconnect while resumed, and app resume trigger refresh. Backend permissions remain authoritative; citizen review requires freshly loaded details.
 
+## Shared incidents
+
+The report detail response supplies automatic-link membership; Mobile does not poll a separate AI matching endpoint. Shared incident summaries now use the same account-scoped memory cache, with 20 entries and the existing 10-minute idle eviction. An unchanged report can reuse a summary for 30 seconds from its fetch time, matching Web's freshness window. Reading a cached entry does not extend that 30-second window. A later detail refresh or reopening fetches an expired summary; no new polling timer is added.
+
+Membership, linked count, representative, snapshot, and report-version changes bypass cached summaries. Ungrouped reports skip the incident endpoint and discard old summaries. Manual incident refresh and mismatch feedback bypass the cache. Failed, cancelled, and late-account responses cannot populate it. Logout and permission changes discard it with the rest of the session.
+
+Report realtime events evict the affected summary. `incident_group.changed` carries only a group ID, so Mobile clears report content/proof/summary caches and invalidates their active providers, including previously ungrouped details that have just been automatically linked. Profile and notification caches remain intact.
+
 ## Verification
 
 The backend supplies `protected_snapshot_token` on details and verification and UTC `verified_at` on successful checks. Success is retained only for the displayed token with current content verified, no known original mismatch, an existing anchor, and no pending/unavailable condition. The timestamp describes the checked version, not continuous chain monitoring. Older backends without tokens cannot supply retained current proof.
