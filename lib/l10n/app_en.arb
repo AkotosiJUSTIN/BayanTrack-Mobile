@@ -783,5 +783,7 @@
   "latitude": "Latitude",
   "longitude": "Longitude",
   "emergencySendDeclaration": "By tapping Send, I confirm this emergency and location are accurate, declare the information is true, and consent to data processing to handle this report.",
-  "emergencyDetailsFull": "This report has reached its details limit."
+  "emergencyDetailsFull": "This report has reached its details limit.",
+  "leadDepartment": "Lead",
+  "supportingDepartments": "Supporting"
 }

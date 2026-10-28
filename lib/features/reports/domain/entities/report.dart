@@ -373,6 +373,17 @@ class Report extends Equatable {
       .where((image) => resolvedProofImageIds.contains(image.id))
       .toList();
 
+  List<String> get supportingDepartmentNames => supportDepartments
+      .where(
+        (task) =>
+            task.state != 'waived' &&
+            task.departmentKey != assignedDepartmentKey,
+      )
+      .map((task) => task.department.trim())
+      .where((name) => name.isNotEmpty && name != assignedDepartment?.trim())
+      .toSet()
+      .toList(growable: false);
+
   /// Check if report is still open (not resolved or rejected)
   bool get isOpen =>
       status != ReportStatus.resolved && status != ReportStatus.rejected;

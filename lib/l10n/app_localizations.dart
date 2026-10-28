@@ -4465,6 +4465,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This report has reached its details limit.'**
   String get emergencyDetailsFull;
+
+  /// No description provided for @leadDepartment.
+  ///
+  /// In en, this message translates to:
+  /// **'Lead'**
+  String get leadDepartment;
+
+  /// No description provided for @supportingDepartments.
+  ///
+  /// In en, this message translates to:
+  /// **'Supporting'**
+  String get supportingDepartments;
 }
 
 class _AppLocalizationsDelegate

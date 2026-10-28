@@ -216,13 +216,13 @@ return $default(_that.taskId,_that.departmentKey,_that.department,_that.task,_th
 @JsonSerializable()
 
 class _SupportTask implements SupportTask {
-  const _SupportTask({@JsonKey(name: 'task_id') this.taskId, @JsonKey(name: 'department_key') required this.departmentKey, required this.department, required this.task, this.required = false, this.state = 'pending', this.note, @JsonKey(name: 'assigned_at') this.assignedAt, @JsonKey(name: 'acknowledged_at') this.acknowledgedAt, @JsonKey(name: 'in_progress_at') this.inProgressAt, @JsonKey(name: 'completed_at') this.completedAt, @JsonKey(name: 'waived_at') this.waivedAt, @JsonKey(name: 'updated_at') this.updatedAt, @JsonKey(name: 'updated_by') this.updatedBy});
+  const _SupportTask({@JsonKey(name: 'task_id') this.taskId, @JsonKey(name: 'department_key') required this.departmentKey, required this.department, this.task = '', this.required = false, this.state = 'pending', this.note, @JsonKey(name: 'assigned_at') this.assignedAt, @JsonKey(name: 'acknowledged_at') this.acknowledgedAt, @JsonKey(name: 'in_progress_at') this.inProgressAt, @JsonKey(name: 'completed_at') this.completedAt, @JsonKey(name: 'waived_at') this.waivedAt, @JsonKey(name: 'updated_at') this.updatedAt, @JsonKey(name: 'updated_by') this.updatedBy});
   factory _SupportTask.fromJson(Map<String, dynamic> json) => _$SupportTaskFromJson(json);
 
 @override@JsonKey(name: 'task_id') final  String? taskId;
 @override@JsonKey(name: 'department_key') final  String departmentKey;
 @override final  String department;
-@override final  String task;
+@override@JsonKey() final  String task;
 @override@JsonKey() final  bool required;
 @override@JsonKey() final  String state;
 @override final  String? note;

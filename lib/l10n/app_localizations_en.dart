@@ -2469,4 +2469,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get emergencyDetailsFull =>
       'This report has reached its details limit.';
+
+  @override
+  String get leadDepartment => 'Lead';
+
+  @override
+  String get supportingDepartments => 'Supporting';
 }

@@ -428,6 +428,8 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
               report.verifiedAt != null ||
               report.resolvedAt != null ||
               report.assignedDepartment != null ||
+              (report.isEmergency &&
+                  report.supportingDepartmentNames.isNotEmpty) ||
               report.respondingAgency != null) ...[
             _buildWorkflowActivity(theme, report),
             const SizedBox(height: 24),
@@ -807,8 +809,17 @@ class _ReportDetailScreenState extends ConsumerState<ReportDetailScreen> {
                 ),
               if (report.assignedDepartment != null)
                 _buildInfoRow(
-                  l10n.currentHandler,
+                  report.isEmergency
+                      ? l10n.leadDepartment
+                      : l10n.currentHandler,
                   report.assignedDepartment!,
+                  theme,
+                ),
+              if (report.isEmergency &&
+                  report.supportingDepartmentNames.isNotEmpty)
+                _buildInfoRow(
+                  l10n.supportingDepartments,
+                  report.supportingDepartmentNames.join('\n'),
                   theme,
                 ),
               if (report.respondingAgency != null)
