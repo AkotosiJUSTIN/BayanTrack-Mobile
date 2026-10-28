@@ -7,6 +7,7 @@ import 'package:bayantrack_mobile/core/domain/failures.dart';
 import 'package:bayantrack_mobile/core/domain/result.dart';
 import 'package:bayantrack_mobile/features/auth/data/auth_models.dart';
 import 'package:bayantrack_mobile/features/auth/presentation/barangays_provider.dart';
+import 'package:bayantrack_mobile/features/home/presentation/widgets/home_report_card.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report_enums.dart';
 import 'package:bayantrack_mobile/features/reports/domain/entities/report_image.dart';
@@ -54,6 +55,8 @@ Report _report({
   DateTime? citizenVerifiedAt,
   bool? citizenConfirmedResolved,
   String? incidentGroupId,
+  bool isEmergency = false,
+  List<SupportTask> supportDepartments = const [],
 }) => Report(
   id: 'RPT-DETAIL-UI-1',
   protectedSnapshotToken: status.name,
@@ -68,6 +71,9 @@ Report _report({
   cityMunicipality: 'Urdaneta City',
   zone: 'Zone 3',
   assignedDepartment: 'City Engineering Office',
+  assignedDepartmentKey: 'municipal_engineering',
+  isEmergency: isEmergency,
+  supportDepartments: supportDepartments,
   images: withProof
       ? const [ReportImage(id: 'proof-1', url: 'https://example.com/proof.jpg')]
       : const [],
@@ -85,6 +91,9 @@ Future<void> _pumpDetail(
   ThemeData? theme,
   Report? report,
   ReportsRepository? repository,
+  Locale locale = const Locale('en'),
+  double textScale = 1,
+  Size size = const Size(360, 800),
 }) async {
   if (repository == null) {
     final mock = _ReportsMock();
@@ -93,7 +102,7 @@ Future<void> _pumpDetail(
     ).thenAnswer((_) async => const Err(ServerFailure('No saved proof')));
     repository = mock;
   }
-  tester.view.physicalSize = const Size(360, 800);
+  tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
 
@@ -115,9 +124,16 @@ Future<void> _pumpDetail(
         ),
       ],
       child: MaterialApp(
+        locale: locale,
         supportedLocales: AppLocalizations.supportedLocales,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         theme: theme ?? AppTheme.light,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
         home: const ReportDetailScreen(reportId: 'RPT-DETAIL-UI-1'),
       ),
     ),
@@ -127,6 +143,96 @@ Future<void> _pumpDetail(
 }
 
 void main() {
+  const supports = [
+    SupportTask(
+      departmentKey: 'mdrrmo',
+      department: 'CDRRMO',
+      task: 'Coordinate rescue',
+    ),
+    SupportTask(
+      departmentKey: 'pnp',
+      department: 'PNP',
+      task: 'Secure the scene',
+    ),
+    SupportTask(
+      departmentKey: 'general_services',
+      department: 'General Services',
+      task: 'Old task',
+      state: 'waived',
+    ),
+    SupportTask(
+      departmentKey: 'mdrrmo',
+      department: 'CDRRMO',
+      task: 'Evacuation support',
+    ),
+    SupportTask(
+      departmentKey: 'bfp',
+      department: 'BFP',
+      task: 'Promoted to lead',
+    ),
+  ];
+  const emergency = Report(
+    id: 'RPT-DETAIL-UI-1',
+    title: 'Building fire',
+    description: 'A building is on fire.',
+    isEmergency: true,
+    status: ReportStatus.assigned,
+    assignedDepartmentKey: 'bfp',
+    assignedDepartment: 'BFP',
+    supportDepartments: supports,
+  );
+
+  for (final language in ['en', 'fil']) {
+    final lead = language == 'fil' ? 'Namumuno' : 'Lead';
+    final support = language == 'fil' ? 'Katuwang' : 'Supporting';
+    testWidgets(
+      'emergency details show only assigned department roles in $language',
+      (tester) async {
+        await _pumpDetail(
+          tester,
+          report: emergency,
+          locale: Locale(language),
+          textScale: 1.8,
+          size: const Size(320, 640),
+        );
+        await tester.scrollUntilVisible(find.text(support), 200);
+        expect(find.text(lead), findsOneWidget);
+        expect(find.text('BFP'), findsOneWidget);
+        expect(find.text('CDRRMO\nPNP'), findsOneWidget);
+        expect(find.text('General Services'), findsNothing);
+        expect(find.text('Coordinate rescue'), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'emergency card identifies lead and support count in $language',
+      (tester) async {
+        tester.view.physicalSize = const Size(320, 640);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(
+          MaterialApp(
+            locale: Locale(language),
+            supportedLocales: AppLocalizations.supportedLocales,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(1.8)),
+              child: child!,
+            ),
+            home: const Scaffold(body: HomeReportCard(report: emergency)),
+          ),
+        );
+        expect(find.text('$lead: BFP'), findsOneWidget);
+        expect(find.text('$support (2): CDRRMO, PNP'), findsOneWidget);
+        expect(find.textContaining('General Services'), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets(
     'automatic cached lookup and manual taps do not duplicate checks',
     (tester) async {

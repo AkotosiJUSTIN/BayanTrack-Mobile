@@ -156,8 +156,25 @@ class HomeReportCard extends StatelessWidget {
                     _buildMetaRow(
                       context,
                       icon: Icons.account_balance_outlined,
-                      value: _departmentLabel!,
+                      value:
+                          report.isEmergency &&
+                              report.assignedDepartment?.trim().isNotEmpty ==
+                                  true
+                          ? '${l10n.leadDepartment}: ${report.assignedDepartment!.trim()}'
+                          : _departmentLabel!,
                       includeTime: false,
+                    ),
+                  ],
+                  if (report.isEmergency &&
+                      report.supportingDepartmentNames.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    _buildMetaRow(
+                      context,
+                      icon: Icons.groups_outlined,
+                      value:
+                          '${l10n.supportingDepartments} (${report.supportingDepartmentNames.length}): ${report.supportingDepartmentNames.join(', ')}',
+                      includeTime: false,
+                      maxLines: 2,
                     ),
                   ],
                   if (needsReview) ...[
@@ -266,6 +283,7 @@ class HomeReportCard extends StatelessWidget {
     required IconData icon,
     required String value,
     required bool includeTime,
+    int maxLines = 1,
   }) {
     final theme = Theme.of(context);
     return Row(
@@ -275,7 +293,7 @@ class HomeReportCard extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            maxLines: 1,
+            maxLines: maxLines,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
@@ -284,10 +302,14 @@ class HomeReportCard extends StatelessWidget {
         ),
         if (includeTime) ...[
           const SizedBox(width: 8),
-          Text(
-            _formatTime(context),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+          Flexible(
+            child: Text(
+              _formatTime(context),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         ],

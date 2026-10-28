@@ -48,6 +48,45 @@ void main() {
   const query = {'page': 1, 'page_size': 20, 'sort_by': 'date'};
 
   test(
+    'citizen emergency roles survive cache without private task fields',
+    () async {
+      final routed = dto.Report.fromJson({
+        'id': 'emergency-roles',
+        'is_emergency': true,
+        'status': 'assigned',
+        'assigned_department': 'BFP',
+        'assigned_department_key': 'bfp',
+        'support_departments': [
+          {
+            'department_key': 'mdrrmo',
+            'department': 'CDRRMO',
+            'state': 'pending',
+          },
+          {
+            'department_key': 'pnp',
+            'department': 'PNP',
+            'state': 'acknowledged',
+          },
+        ],
+      });
+      await cache.writeReport(
+        ownerId: 'owner',
+        reportId: routed.id,
+        report: routed,
+      );
+      final restored = await ReportCacheStore(
+        storage,
+      ).readReport(ownerId: 'owner', reportId: routed.id);
+      final report = ReportMapper.fromDto(restored!);
+      expect(report.isEmergency, isTrue);
+      expect(report.assignedDepartment, 'BFP');
+      expect(report.supportingDepartmentNames, ['CDRRMO', 'PNP']);
+      expect(report.supportDepartments.first.task, isEmpty);
+      expect(report.supportDepartments.last.state, 'acknowledged');
+    },
+  );
+
+  test(
     'routing and support progress survive cache and domain mapping',
     () async {
       final routed = dto.Report.fromJson({

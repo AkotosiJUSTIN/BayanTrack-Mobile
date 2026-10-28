@@ -2485,4 +2485,10 @@ class AppLocalizationsFil extends AppLocalizations {
   @override
   String get emergencyDetailsFull =>
       'Naabot na ng ulat ang limitasyon para sa mga detalye.';
+
+  @override
+  String get leadDepartment => 'Namumuno';
+
+  @override
+  String get supportingDepartments => 'Katuwang';
 }

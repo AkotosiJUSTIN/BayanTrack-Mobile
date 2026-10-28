@@ -10,7 +10,7 @@ _SupportTask _$SupportTaskFromJson(Map<String, dynamic> json) => _SupportTask(
   taskId: json['task_id'] as String?,
   departmentKey: json['department_key'] as String,
   department: json['department'] as String,
-  task: json['task'] as String,
+  task: json['task'] as String? ?? '',
   required: json['required'] as bool? ?? false,
   state: json['state'] as String? ?? 'pending',
   note: json['note'] as String?,

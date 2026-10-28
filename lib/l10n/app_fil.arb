@@ -783,5 +783,7 @@
   "latitude": "Latitude",
   "longitude": "Longitude",
   "emergencySendDeclaration": "Sa pagpindot ng Ipadala, kinukumpirma kong tama ang emerhensiya at lokasyon, totoo ang impormasyon, at pumapayag ako sa pagproseso ng datos para sa ulat na ito.",
-  "emergencyDetailsFull": "Naabot na ng ulat ang limitasyon para sa mga detalye."
+  "emergencyDetailsFull": "Naabot na ng ulat ang limitasyon para sa mga detalye.",
+  "leadDepartment": "Namumuno",
+  "supportingDepartments": "Katuwang"
 }

@@ -202,7 +202,7 @@ sealed class SupportTask with _$SupportTask {
     @JsonKey(name: 'task_id') String? taskId,
     @JsonKey(name: 'department_key') required String departmentKey,
     required String department,
-    required String task,
+    @Default('') String task,
     @Default(false) bool required,
     @Default('pending') String state,
     String? note,
